@@ -1,0 +1,203 @@
+package org.aspose.pdf;
+
+import org.aspose.pdf.engine.cos.COSBase;
+import org.aspose.pdf.engine.cos.COSDictionary;
+import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.cos.COSObjectReference;
+import org.aspose.pdf.engine.cos.NameTree;
+import org.aspose.pdf.engine.parser.PDFParser;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Logger;
+
+/**
+ * Collection of embedded files (attachments) in a PDF document.
+ * <p>
+ * Wraps the {@code /Names → /EmbeddedFiles} name tree in the catalog
+ * (ISO 32000-1:2008, §7.11.4). Traversal and mutation go through
+ * {@link NameTree}, which keeps {@code /Names} sorted and {@code /Limits}
+ * in sync after every insert/delete. Uses 1-based indexing (Aspose
+ * convention).
+ * </p>
+ */
+public class EmbeddedFileCollection implements Iterable<FileSpecification> {
+
+    private static final Logger LOG = Logger.getLogger(EmbeddedFileCollection.class.getName());
+
+    private static final COSName NAMES = COSName.of("Names");
+    private static final COSName EMBEDDED_FILES = COSName.of("EmbeddedFiles");
+
+    private final Document document;
+    private final PDFParser parser;
+    private List<FileSpecification> files;
+
+    EmbeddedFileCollection(Document document, PDFParser parser) {
+        this.document = document;
+        this.parser = parser;
+    }
+
+    /** Returns the file at the given 1-based index. */
+    public FileSpecification get(int index) {
+        ensureLoaded();
+        if (index < 1 || index > files.size())
+            throw new IndexOutOfBoundsException("Index " + index + " out of [1," + files.size() + "]");
+        return files.get(index - 1);
+    }
+
+    /** Returns the number of embedded files. */
+    public int getCount() { ensureLoaded(); return files.size(); }
+
+    /** Returns the number of embedded files (alias). */
+    public int size() { return getCount(); }
+
+    /** Adds a file specification. */
+    public void add(FileSpecification fs) {
+        ensureLoaded();
+        files.add(fs);
+        addToNameTree(fs);
+    }
+
+    /**
+     * Returns the file specification with the given name.
+     * Searches by the /F (file name) entry of each file specification.
+     *
+     * @param name the file name to search for
+     * @return the matching FileSpecification, or null if not found
+     */
+    public FileSpecification get(String name) {
+        ensureLoaded();
+        if (name == null) return null;
+        for (FileSpecification fs : files) {
+            if (name.equals(fs.getName())) return fs;
+        }
+        return null;
+    }
+
+    /** Removes all embedded files. */
+    public void delete() {
+        ensureLoaded();
+        files.clear();
+        try {
+            COSDictionary catalog = document.getCatalog();
+            COSBase names = resolveRef(catalog.get(NAMES));
+            if (names instanceof COSDictionary) {
+                ((COSDictionary) names).remove(EMBEDDED_FILES);
+            }
+        } catch (IOException e) {
+            LOG.warning(() -> "Failed to remove EmbeddedFiles: " + e.getMessage());
+        }
+    }
+
+    /** Removes by 1-based index. */
+    public void delete(int index) {
+        ensureLoaded();
+        FileSpecification removed = files.remove(index - 1);
+        if (removed != null) {
+            removeFromNameTreeByName(removed.getName());
+        }
+    }
+
+    /**
+     * Removes the first embedded file with the given name (Aspose semantics —
+     * if a portfolio carries multiple attachments under the same {@code /F},
+     * only one is removed per call).
+     *
+     * @param name the file name to remove
+     */
+    public void delete(String name) {
+        ensureLoaded();
+        if (name == null) return;
+        for (Iterator<FileSpecification> it = files.iterator(); it.hasNext(); ) {
+            if (name.equals(it.next().getName())) {
+                it.remove();
+                removeFromNameTreeByName(name);
+                return;
+            }
+        }
+    }
+
+    @Override
+    public Iterator<FileSpecification> iterator() {
+        ensureLoaded();
+        return files.iterator();
+    }
+
+    // ────────────────────────────────────────────────────────────────────
+    //  Name-tree backing — all reads and writes go through NameTree
+    // ────────────────────────────────────────────────────────────────────
+
+    private void ensureLoaded() {
+        if (files != null) return;
+        files = new ArrayList<>();
+        try {
+            COSDictionary efRoot = embeddedFilesRoot(false);
+            if (efRoot == null) return;
+            for (Map.Entry<String, COSBase> entry : new NameTree(efRoot).entries()) {
+                COSBase value = entry.getValue();
+                if (value instanceof COSDictionary) {
+                    files.add(new FileSpecification((COSDictionary) value));
+                }
+            }
+        } catch (IOException e) {
+            LOG.warning(() -> "Failed to load embedded files: " + e.getMessage());
+        }
+    }
+
+    private void addToNameTree(FileSpecification fs) {
+        try {
+            COSDictionary efRoot = embeddedFilesRoot(true);
+            if (efRoot == null) return;
+            String name = fs.getName() != null ? fs.getName() : "attachment" + files.size();
+            new NameTree(efRoot).put(name, fs.getCOSDictionary());
+        } catch (IOException e) {
+            LOG.warning(() -> "Failed to add to name tree: " + e.getMessage());
+        }
+    }
+
+    private void removeFromNameTreeByName(String name) {
+        if (name == null) return;
+        try {
+            COSDictionary efRoot = embeddedFilesRoot(false);
+            if (efRoot != null) {
+                new NameTree(efRoot).remove(name);
+            }
+        } catch (IOException e) {
+            LOG.warning(() -> "Failed to remove name-tree entry '" + name + "': " + e.getMessage());
+        }
+    }
+
+    /**
+     * Returns the {@code /Names → /EmbeddedFiles} root dictionary, optionally
+     * creating it (and its parent {@code /Names}) when {@code createIfMissing}
+     * is true.
+     */
+    private COSDictionary embeddedFilesRoot(boolean createIfMissing) throws IOException {
+        COSDictionary catalog = document.getCatalog();
+        COSBase names = resolveRef(catalog.get(NAMES));
+        if (!(names instanceof COSDictionary)) {
+            if (!createIfMissing) return null;
+            COSDictionary fresh = new COSDictionary();
+            catalog.set(NAMES, fresh);
+            names = fresh;
+        }
+        COSBase ef = resolveRef(((COSDictionary) names).get(EMBEDDED_FILES));
+        if (!(ef instanceof COSDictionary)) {
+            if (!createIfMissing) return null;
+            COSDictionary fresh = new COSDictionary();
+            ((COSDictionary) names).set(EMBEDDED_FILES, fresh);
+            ef = fresh;
+        }
+        return (COSDictionary) ef;
+    }
+
+    private COSBase resolveRef(COSBase val) {
+        if (val instanceof COSObjectReference) {
+            try { return ((COSObjectReference) val).dereference(); } catch (Exception e) { return null; }
+        }
+        return val;
+    }
+}

@@ -1,0 +1,26 @@
+package org.aspose.pdf.operators;
+
+import org.aspose.pdf.Operator;
+import org.aspose.pdf.engine.cos.COSBase;
+
+import java.util.List;
+
+/**
+ * End marked content operator (EMC).
+ * <p>
+ * Ends a marked-content sequence begun by a BMC or BDC operator.
+ * See ISO 32000-1:2008, §14.6, Table 320.
+ * </p>
+ */
+public class EMC extends Operator {
+
+    /** Creates an EMC operator. */
+    public EMC() {
+        super("EMC");
+    }
+
+    /** Creates an EMC operator from parsed operands. */
+    public EMC(List<COSBase> operands) {
+        super("EMC", operands);
+    }
+}

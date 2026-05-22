@@ -1,0 +1,263 @@
+package org.aspose.pdf.annotations;
+
+import org.aspose.pdf.*;
+import org.aspose.pdf.engine.cos.*;
+
+import java.nio.charset.StandardCharsets;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+/**
+ * Redaction annotation (ISO 32000-1:2008, Section 12.5.6.23, /Subtype /Redact).
+ * <p>
+ * A redaction annotation identifies content that is intended to be removed from
+ * the document. The intent is to mark regions of a page for redaction prior to
+ * actually applying the redaction (removing the content permanently).
+ * </p>
+ */
+public class RedactionAnnotation extends MarkupAnnotation {
+
+    private static final Logger LOG = Logger.getLogger(RedactionAnnotation.class.getName());
+
+    /**
+     * Constructs a redaction annotation from an existing COS dictionary.
+     *
+     * @param dict the COS dictionary backing this annotation
+     * @param page the page this annotation belongs to
+     */
+    public RedactionAnnotation(COSDictionary dict, Page page) {
+        super(dict, page);
+    }
+
+    /**
+     * Constructs a new redaction annotation with the given rectangle on the specified page.
+     *
+     * @param page the page this annotation belongs to
+     * @param rect the annotation rectangle
+     */
+    public RedactionAnnotation(Page page, Rectangle rect) {
+        super(page, rect);
+        dict.set(COSName.of("Subtype"), COSName.of("Redact"));
+    }
+
+    /**
+     * Returns the overlay text to be displayed over the redacted region after redaction is applied.
+     *
+     * @return the overlay text string, or null if not set
+     */
+    public String getOverlayText() {
+        COSBase ot = dict.get("OverlayText");
+        return (ot instanceof COSString) ? ((COSString) ot).getString() : null;
+    }
+
+    /**
+     * Sets the overlay text to be displayed over the redacted region after redaction is applied.
+     *
+     * @param text the overlay text string, or null to remove
+     */
+    public void setOverlayText(String text) {
+        if (text != null) {
+            dict.set(COSName.of("OverlayText"), new COSString(text.getBytes(StandardCharsets.UTF_8)));
+        } else {
+            dict.remove(COSName.of("OverlayText"));
+        }
+    }
+
+    /**
+     * Returns the fill color used to paint the redacted area after applying redaction.
+     * This is stored as the /IC (interior color) entry per ISO 32000.
+     *
+     * @return the fill color, or null if not set
+     */
+    public Color getFillColor() {
+        COSBase ic = dict.get("IC");
+        if (ic instanceof COSArray) {
+            COSArray arr = (COSArray) ic;
+            if (arr.size() == 3) {
+                return Color.fromRgb(arr.getFloat(0, 0), arr.getFloat(1, 0), arr.getFloat(2, 0));
+            }
+            if (arr.size() == 1) {
+                return Color.fromGray(arr.getFloat(0, 0));
+            }
+            if (arr.size() == 4) {
+                return Color.fromCmyk(arr.getFloat(0, 0), arr.getFloat(1, 0),
+                        arr.getFloat(2, 0), arr.getFloat(3, 0));
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Sets the fill color used to paint the redacted area after applying redaction.
+     * This is stored as the /IC (interior color) entry per ISO 32000.
+     *
+     * @param color the fill color, or null to remove
+     */
+    public void setFillColor(Color color) {
+        if (color == null) {
+            dict.remove(COSName.of("IC"));
+            return;
+        }
+        COSArray arr = new COSArray();
+        arr.add(new COSFloat(color.getR()));
+        arr.add(new COSFloat(color.getG()));
+        arr.add(new COSFloat(color.getB()));
+        dict.set(COSName.of("IC"), arr);
+    }
+
+    /**
+     * Returns the border color of the redaction annotation.
+     * This is the annotation color (/C entry) which defines the border appearance.
+     *
+     * @return the border color, or null if not set
+     */
+    public Color getBorderColor() {
+        return getColor();
+    }
+
+    /**
+     * Sets the border color of the redaction annotation.
+     * This is the annotation color (/C entry) which defines the border appearance.
+     *
+     * @param color the border color, or null to remove
+     */
+    public void setBorderColor(Color color) {
+        setColor(color);
+    }
+
+    /**
+     * Returns the quad points defining the redaction region as an array of {@link Point} objects.
+     *
+     * @return the quad points, or null if not set
+     */
+    public Point[] getQuadPoint() {
+        COSBase qp = dict.get("QuadPoints");
+        if (qp instanceof COSArray) {
+            COSArray arr = (COSArray) qp;
+            int count = arr.size() / 2;
+            if (count == 0) return null;
+            Point[] points = new Point[count];
+            for (int i = 0; i < count; i++) {
+                points[i] = new Point(arr.getFloat(i * 2, 0), arr.getFloat(i * 2 + 1, 0));
+            }
+            return points;
+        }
+        return null;
+    }
+
+    /**
+     * Sets the quad points defining the redaction region from an array of {@link Point} objects.
+     *
+     * @param points the quad points, or null to remove
+     */
+    public void setQuadPoint(Point[] points) {
+        if (points == null) {
+            dict.remove(COSName.of("QuadPoints"));
+            return;
+        }
+        COSArray arr = new COSArray();
+        for (Point p : points) {
+            arr.add(new COSFloat(p.getX()));
+            arr.add(new COSFloat(p.getY()));
+        }
+        dict.set(COSName.of("QuadPoints"), arr);
+    }
+
+    /**
+     * Applies the redaction: draws a filled rectangle over the annotation area
+     * in the page content stream and removes the annotation from the page.
+     * <p>
+     * After calling this method, the content under the redaction area is visually
+     * obscured by a filled rectangle. The annotation itself is removed from the
+     * page's annotation list.
+     * </p>
+     */
+    public void redact() {
+        if (page == null) {
+            LOG.warning("Cannot redact: annotation has no associated page");
+            return;
+        }
+
+        try {
+            Rectangle rect = getRect();
+            if (rect == null) {
+                LOG.warning("Cannot redact: annotation has no rectangle");
+                return;
+            }
+
+            // Determine fill color (default to white if not set)
+            Color fill = getFillColor();
+            double r = 1.0, g = 1.0, b = 1.0;
+            if (fill != null) {
+                r = fill.getR();
+                g = fill.getG();
+                b = fill.getB();
+            }
+
+            // Build content stream operators to draw a filled rectangle
+            StringBuilder sb = new StringBuilder();
+            sb.append("\nq\n");
+            // Set fill color
+            sb.append(formatDouble(r)).append(' ')
+              .append(formatDouble(g)).append(' ')
+              .append(formatDouble(b)).append(" rg\n");
+            // Draw rectangle
+            sb.append(formatDouble(rect.getLLX())).append(' ')
+              .append(formatDouble(rect.getLLY())).append(' ')
+              .append(formatDouble(rect.getWidth())).append(' ')
+              .append(formatDouble(rect.getHeight())).append(" re\n");
+            sb.append("f\n");
+
+            // Draw overlay text if present
+            String overlayText = getOverlayText();
+            if (overlayText != null && !overlayText.isEmpty()) {
+                // Simple overlay text placement at center of rect
+                double cx = rect.getLLX() + rect.getWidth() / 2.0;
+                double cy = rect.getLLY() + rect.getHeight() / 2.0;
+                sb.append("BT\n");
+                sb.append("/Helvetica 10 Tf\n");
+                sb.append("0 0 0 rg\n"); // black text
+                sb.append(formatDouble(cx)).append(' ').append(formatDouble(cy)).append(" Td\n");
+                sb.append('(').append(escapePdfString(overlayText)).append(") Tj\n");
+                sb.append("ET\n");
+            }
+
+            sb.append("Q\n");
+
+            page.appendToContentStream(sb.toString().getBytes(StandardCharsets.US_ASCII));
+
+            // Remove the redaction annotation from the page
+            page.getAnnotations().delete(this);
+
+            LOG.fine("Redaction applied at rect " + rect);
+        } catch (Exception e) {
+            LOG.log(Level.WARNING, "Failed to apply redaction", e);
+        }
+    }
+
+    /**
+     * Formats a double value for PDF content stream output.
+     *
+     * @param val the value to format
+     * @return the formatted string
+     */
+    private static String formatDouble(double val) {
+        if (val == (long) val) {
+            return String.valueOf((long) val);
+        }
+        return String.valueOf(val);
+    }
+
+    /**
+     * Escapes a string for use in a PDF literal string.
+     *
+     * @param s the string to escape
+     * @return the escaped string
+     */
+    private static String escapePdfString(String s) {
+        if (s == null) return "";
+        return s.replace("\\", "\\\\")
+                .replace("(", "\\(")
+                .replace(")", "\\)");
+    }
+}

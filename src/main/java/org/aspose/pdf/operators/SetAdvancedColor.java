@@ -1,0 +1,71 @@
+package org.aspose.pdf.operators;
+
+import org.aspose.pdf.engine.cos.COSBase;
+import org.aspose.pdf.engine.cos.COSName;
+
+import java.util.List;
+
+/**
+ * Set color for non-stroking operations with pattern support operator (scn).
+ * <p>
+ * Similar to {@link SetColor} (sc) but additionally supports Pattern and Separation
+ * color spaces. When the current color space is a Pattern space, the last operand
+ * is a pattern name ({@link COSName}); the preceding operands (if any) are numeric
+ * color components for the underlying color space.
+ * See ISO 32000-1:2008, §8.6.8, Table 74.
+ * </p>
+ */
+public class SetAdvancedColor extends BasicSetColorAndPatternOperator {
+
+    /**
+     * Creates a SetAdvancedColor (scn) operator from parsed operands.
+     * <p>
+     * Operands may be a variable number of numeric values, optionally followed
+     * by a {@link COSName} identifying a pattern.
+     * </p>
+     *
+     * @param operands the operands from the content stream parser
+     */
+    public SetAdvancedColor(List<COSBase> operands) {
+        super("scn", operands);
+    }
+
+    /**
+     * Returns the numeric color components. If the last operand is a pattern name,
+     * it is excluded from the returned array.
+     *
+     * @return the color component values
+     */
+    public double[] getComponents() {
+        List<COSBase> ops = getOperands();
+        if (ops == null || ops.isEmpty()) {
+            return new double[0];
+        }
+        int count = ops.size();
+        if (ops.get(count - 1) instanceof COSName) {
+            count--;
+        }
+        double[] result = new double[count];
+        for (int i = 0; i < count; i++) {
+            result[i] = getNumber(ops.get(i));
+        }
+        return result;
+    }
+
+    /**
+     * Returns the pattern name if the last operand is a {@link COSName}, or {@code null}
+     * if no pattern name is present.
+     *
+     * @return the pattern name, or {@code null}
+     */
+    public String getPatternName() {
+        List<COSBase> ops = getOperands();
+        if (ops != null && !ops.isEmpty()) {
+            COSBase last = ops.get(ops.size() - 1);
+            if (last instanceof COSName) {
+                return ((COSName) last).getName();
+            }
+        }
+        return null;
+    }
+}
