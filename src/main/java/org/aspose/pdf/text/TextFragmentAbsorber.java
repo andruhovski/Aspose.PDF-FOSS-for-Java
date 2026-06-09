@@ -198,6 +198,45 @@ public class TextFragmentAbsorber extends TextAbsorber {
     }
 
     /**
+     * Returns the extracted text of the fragments this absorber matched.
+     *
+     * <p>For the empty/null-phrase "extract everything (optionally within a
+     * {@link TextSearchOptions} rectangle)" mode this returns the matched
+     * fragments — sorted into visual reading order and joined compactly (a single
+     * space across an intra-line gap, a newline across a line break) — which
+     * mirrors Aspose's {@code TextFragmentAbsorber.getText()} and honours the
+     * rectangle filter. The inherited {@link TextAbsorber#getText()} instead
+     * reconstructs a whole-page positional layout (proportional padding spaces,
+     * ignoring the rectangle), which is correct for a plain {@link TextAbsorber}/
+     * Pure extraction but not for a fragment absorber.</p>
+     *
+     * <p>When a real search phrase is set, behaviour is unchanged: it defers to
+     * the inherited positional output so existing phrase-search callers are
+     * unaffected.</p>
+     *
+     * @return the joined text of the matched fragments (empty-phrase mode), or
+     *         the inherited positional text otherwise
+     */
+    @Override
+    public String getText() {
+        boolean extractAll = searchPhrase == null || searchPhrase.isEmpty();
+        if (!extractAll || textFragments.getCount() == 0) {
+            return super.getText();
+        }
+        java.util.List<TextFragment> list = new java.util.ArrayList<>(textFragments.getCount());
+        for (TextFragment f : textFragments) {
+            list.add(f);
+        }
+        // The empty-phrase path collects fragments in content-stream order, which
+        // for column/table layouts is not reading order. Sort visually (top→bottom,
+        // left→right) so buildSpans joins each row left-to-right, as Aspose does.
+        list = TextAbsorber.sortByVisualPosition(list);
+        StringBuilder out = new StringBuilder();
+        buildSpans(list, out);
+        return out.toString();
+    }
+
+    /**
      * Returns the search phrase.
      *
      * @return the search phrase, or null

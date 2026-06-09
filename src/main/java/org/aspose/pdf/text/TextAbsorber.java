@@ -457,7 +457,7 @@ public class TextAbsorber {
         return copy;
     }
 
-    private static java.util.List<TextFragment> sortByVisualPosition(
+    static java.util.List<TextFragment> sortByVisualPosition(
             java.util.List<TextFragment> fragments) {
         if (fragments == null || fragments.size() < 2) return fragments;
         // Quantize Y into 2pt bands so that fragments at near-identical Y

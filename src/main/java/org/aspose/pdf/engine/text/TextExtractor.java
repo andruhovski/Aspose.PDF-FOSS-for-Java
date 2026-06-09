@@ -569,8 +569,18 @@ public class TextExtractor {
         String text = currentText.toString();
         TextFragment fragment = new TextFragment(text);
 
+        // Normalize extracted coordinates to the page-box lower-left origin.
+        // PDF allows a MediaBox/CropBox with a non-zero (even negative) origin,
+        // e.g. [0 -219 572 0]; content is then drawn at negative user-space Y.
+        // Aspose reports text positions/rectangles relative to the page box's
+        // lower-left corner (0-based), so a TextSearchOptions rectangle like
+        // (0,0,1000,1000) matches. We subtract the origin here; for the common
+        // [0 0 w h] case offX=offY=0, leaving coordinates unchanged.
+        double offX = currentPageRect != null ? currentPageRect.getLLX() : 0;
+        double offY = currentPageRect != null ? currentPageRect.getLLY() : 0;
+
         // Set position
-        Position pos = new Position(currentX, currentY);
+        Position pos = new Position(currentX - offX, currentY - offY);
         fragment.setPosition(pos);
 
         // Set text state on the first segment
@@ -618,6 +628,10 @@ public class TextExtractor {
                     fragmentEndCtm != null ? fragmentEndCtm : ctm,
                     width, descent + textRise, ascent + textRise);
             rect = clampToPage(rect);
+            if ((offX != 0 || offY != 0) && rect != null) {
+                rect = new Rectangle(rect.getLLX() - offX, rect.getLLY() - offY,
+                        rect.getURX() - offX, rect.getURY() - offY);
+            }
             seg.setRectangle(rect);
             fragment.setRectangle(rect);
         }

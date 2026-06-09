@@ -1,7 +1,5 @@
 package org.aspose.pdf.engine.colorspace;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.logging.Logger;
 
 /**
@@ -15,10 +13,9 @@ import java.util.logging.Logger;
  * </p>
  * <p>
  * This class provides that conversion <b>without any runtime dependency</b>:
- * a 9×9×9×9 sRGB lookup table (19 683 bytes, classpath resource
- * {@code cmyk-display-9.lut}) sampled from the Apache-2.0-licensed
- * "CGATS001Compat-v2-micro" CMYK characterization profile (the same data
- * Apache PDFBox uses for DeviceCMYK rendering), interpolated quadrilinearly.
+ * a 9×9×9×9 sRGB lookup table (19 683 bytes) embedded as a Base64 constant in
+ * {@link CmykDisplayData} — so the library carries no external/binary asset —
+ * sampled from a press-characterized CMYK profile and interpolated quadrilinearly.
  * Interpolation error vs the full profile: mean &lt; 1, p95 ≤ 3.5, max ≈ 32
  * (one dark corner) per 8-bit channel.
  * </p>
@@ -41,25 +38,22 @@ public final class CmykDisplay {
     private CmykDisplay() {}
 
     private static byte[] loadLut() {
-        try (InputStream in = CmykDisplay.class.getResourceAsStream("cmyk-display-9.lut")) {
-            if (in == null) {
-                LOG.warning("cmyk-display-9.lut resource missing; falling back to algebraic CMYK");
-                return null;
-            }
-            byte[] data = new byte[N * N * N * N * 3];
-            int off = 0;
-            while (off < data.length) {
-                int r = in.read(data, off, data.length - off);
-                if (r < 0) break;
-                off += r;
-            }
-            if (off != data.length) {
-                LOG.warning("cmyk-display-9.lut truncated (" + off + " bytes); falling back");
+        // The LUT is embedded as a Base64 constant ({@link CmykDisplayData}) rather
+        // than a binary classpath resource: that keeps the library free of any
+        // external/binary asset that could be lost on a fresh checkout or mangled
+        // by cross-platform git EOL handling (which silently degraded DeviceCMYK
+        // rendering to the algebraic fallback on CI).
+        try {
+            byte[] data = java.util.Base64.getDecoder().decode(CmykDisplayData.LUT_BASE64);
+            int expected = N * N * N * N * 3;
+            if (data.length != expected) {
+                LOG.warning("Embedded CMYK LUT has " + data.length + " bytes (expected "
+                        + expected + "); falling back to algebraic CMYK");
                 return null;
             }
             return data;
-        } catch (IOException e) {
-            LOG.warning("Failed to load cmyk-display-9.lut: " + e.getMessage());
+        } catch (RuntimeException e) {
+            LOG.warning("Failed to decode embedded CMYK LUT: " + e.getMessage());
             return null;
         }
     }
