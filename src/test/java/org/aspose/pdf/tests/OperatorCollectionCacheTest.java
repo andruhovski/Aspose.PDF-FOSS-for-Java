@@ -5,9 +5,9 @@ import org.aspose.pdf.Operator;
 import org.aspose.pdf.OperatorCollection;
 import org.aspose.pdf.Page;
 import org.aspose.pdf.Rectangle;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 import org.aspose.pdf.operators.ShowText;
 import org.aspose.pdf.text.TextFragment;
 import org.aspose.pdf.text.TextFragmentAbsorber;
@@ -30,25 +30,25 @@ public class OperatorCollectionCacheTest {
 
     /** Builds a standalone Page with a simple content stream and F1=Helvetica. */
     private static Page createPageWithText(String contentStreamText) {
-        COSDictionary fontDict = new COSDictionary();
-        fontDict.set(COSName.TYPE, COSName.of("Font"));
-        fontDict.set(COSName.of("Subtype"), COSName.of("Type1"));
-        fontDict.set(COSName.of("BaseFont"), COSName.of("Helvetica"));
+        PdfDictionary fontDict = new PdfDictionary();
+        fontDict.set(PdfName.TYPE, PdfName.of("Font"));
+        fontDict.set(PdfName.of("Subtype"), PdfName.of("Type1"));
+        fontDict.set(PdfName.of("BaseFont"), PdfName.of("Helvetica"));
 
-        COSDictionary fontsDict = new COSDictionary();
-        fontsDict.set(COSName.of("F1"), fontDict);
+        PdfDictionary fontsDict = new PdfDictionary();
+        fontsDict.set(PdfName.of("F1"), fontDict);
 
-        COSDictionary resourcesDict = new COSDictionary();
-        resourcesDict.set(COSName.of("Font"), fontsDict);
+        PdfDictionary resourcesDict = new PdfDictionary();
+        resourcesDict.set(PdfName.of("Font"), fontsDict);
 
         byte[] streamBytes = contentStreamText.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1);
-        COSStream contentStream = new COSStream(streamBytes);
+        PdfStream contentStream = new PdfStream(streamBytes);
 
-        COSDictionary pageDict = new COSDictionary();
-        pageDict.set(COSName.TYPE, COSName.PAGE);
-        pageDict.set(COSName.MEDIABOX, new Rectangle(0, 0, 595, 842).toCOSArray());
-        pageDict.set(COSName.RESOURCES, resourcesDict);
-        pageDict.set(COSName.CONTENTS, contentStream);
+        PdfDictionary pageDict = new PdfDictionary();
+        pageDict.set(PdfName.TYPE, PdfName.PAGE);
+        pageDict.set(PdfName.MEDIABOX, new Rectangle(0, 0, 595, 842).toPdfArray());
+        pageDict.set(PdfName.RESOURCES, resourcesDict);
+        pageDict.set(PdfName.CONTENTS, contentStream);
 
         return new Page(pageDict, null);
     }
@@ -61,21 +61,21 @@ public class OperatorCollectionCacheTest {
     private static byte[] buildDocBytesWithText(String body) throws IOException {
         Document doc = new Document();
         Page page = doc.getPages().add();
-        COSDictionary pd = page.getCOSDictionary();
+        PdfDictionary pd = page.getPdfDictionary();
 
-        COSDictionary fontDict = new COSDictionary();
-        fontDict.set(COSName.TYPE, COSName.of("Font"));
-        fontDict.set(COSName.of("Subtype"), COSName.of("Type1"));
-        fontDict.set(COSName.of("BaseFont"), COSName.of("Helvetica"));
-        COSDictionary fontsDict = new COSDictionary();
-        fontsDict.set(COSName.of("F1"), fontDict);
-        COSDictionary res = new COSDictionary();
-        res.set(COSName.of("Font"), fontsDict);
-        pd.set(COSName.RESOURCES, res);
+        PdfDictionary fontDict = new PdfDictionary();
+        fontDict.set(PdfName.TYPE, PdfName.of("Font"));
+        fontDict.set(PdfName.of("Subtype"), PdfName.of("Type1"));
+        fontDict.set(PdfName.of("BaseFont"), PdfName.of("Helvetica"));
+        PdfDictionary fontsDict = new PdfDictionary();
+        fontsDict.set(PdfName.of("F1"), fontDict);
+        PdfDictionary res = new PdfDictionary();
+        res.set(PdfName.of("Font"), fontsDict);
+        pd.set(PdfName.RESOURCES, res);
 
         String cs = "BT /F1 12 Tf 100 700 Td (" + body + ") Tj ET";
-        COSStream contents = new COSStream(cs.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1));
-        pd.set(COSName.CONTENTS, contents);
+        PdfStream contents = new PdfStream(cs.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1));
+        pd.set(PdfName.CONTENTS, contents);
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         doc.save(baos);
@@ -90,17 +90,17 @@ public class OperatorCollectionCacheTest {
     private static byte[] buildDocBytesWithRepeatedText(String marker, int count) throws IOException {
         Document doc = new Document();
         Page page = doc.getPages().add();
-        COSDictionary pd = page.getCOSDictionary();
+        PdfDictionary pd = page.getPdfDictionary();
 
-        COSDictionary fontDict = new COSDictionary();
-        fontDict.set(COSName.TYPE, COSName.of("Font"));
-        fontDict.set(COSName.of("Subtype"), COSName.of("Type1"));
-        fontDict.set(COSName.of("BaseFont"), COSName.of("Helvetica"));
-        COSDictionary fontsDict = new COSDictionary();
-        fontsDict.set(COSName.of("F1"), fontDict);
-        COSDictionary res = new COSDictionary();
-        res.set(COSName.of("Font"), fontsDict);
-        pd.set(COSName.RESOURCES, res);
+        PdfDictionary fontDict = new PdfDictionary();
+        fontDict.set(PdfName.TYPE, PdfName.of("Font"));
+        fontDict.set(PdfName.of("Subtype"), PdfName.of("Type1"));
+        fontDict.set(PdfName.of("BaseFont"), PdfName.of("Helvetica"));
+        PdfDictionary fontsDict = new PdfDictionary();
+        fontsDict.set(PdfName.of("F1"), fontDict);
+        PdfDictionary res = new PdfDictionary();
+        res.set(PdfName.of("Font"), fontsDict);
+        pd.set(PdfName.RESOURCES, res);
 
         StringBuilder sb = new StringBuilder("BT /F1 12 Tf ");
         for (int i = 0; i < count; i++) {
@@ -108,8 +108,8 @@ public class OperatorCollectionCacheTest {
             sb.append("1 0 0 1 100 ").append(y).append(" Tm (").append(marker).append(") Tj ");
         }
         sb.append("ET");
-        COSStream contents = new COSStream(sb.toString().getBytes(java.nio.charset.StandardCharsets.ISO_8859_1));
-        pd.set(COSName.CONTENTS, contents);
+        PdfStream contents = new PdfStream(sb.toString().getBytes(java.nio.charset.StandardCharsets.ISO_8859_1));
+        pd.set(PdfName.CONTENTS, contents);
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         doc.save(baos);

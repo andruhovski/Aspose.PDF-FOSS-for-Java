@@ -1,7 +1,7 @@
 package org.aspose.pdf.operators;
 
 import org.aspose.pdf.Operator;
-import org.aspose.pdf.engine.cos.COSBase;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
 
 import java.util.Collections;
 import java.util.List;
@@ -34,7 +34,7 @@ public class SetLineWidth extends Operator {
      *
      * @param operands the operands from the content stream parser
      */
-    public SetLineWidth(List<COSBase> operands) {
+    public SetLineWidth(List<PdfBase> operands) {
         super("w", operands);
         this.width = (operands != null && operands.size() > 0) ? getNumber(operands.get(0)) : 0;
     }

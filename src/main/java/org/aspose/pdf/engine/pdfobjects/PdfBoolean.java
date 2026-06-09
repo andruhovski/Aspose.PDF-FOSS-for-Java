@@ -1,4 +1,4 @@
-package org.aspose.pdf.engine.cos;
+package org.aspose.pdf.engine.pdfobjects;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -11,9 +11,9 @@ import java.util.logging.Logger;
  * exactly two instances exist ({@link #TRUE} and {@link #FALSE}).
  * </p>
  */
-public final class COSBoolean extends COSBase {
+public final class PdfBoolean extends PdfBase {
 
-    private static final Logger LOG = Logger.getLogger(COSBoolean.class.getName());
+    private static final Logger LOG = Logger.getLogger(PdfBoolean.class.getName());
 
     private final boolean value;
 
@@ -21,12 +21,12 @@ public final class COSBoolean extends COSBase {
     private static final byte[] BYTES_FALSE = {'f', 'a', 'l', 's', 'e'};
 
     /** The singleton {@code true} instance. */
-    public static final COSBoolean TRUE = new COSBoolean(true);
+    public static final PdfBoolean TRUE = new PdfBoolean(true);
 
     /** The singleton {@code false} instance. */
-    public static final COSBoolean FALSE = new COSBoolean(false);
+    public static final PdfBoolean FALSE = new PdfBoolean(false);
 
-    private COSBoolean(boolean value) {
+    private PdfBoolean(boolean value) {
         this.value = value;
     }
 
@@ -36,7 +36,7 @@ public final class COSBoolean extends COSBase {
      * @param b the boolean value
      * @return {@link #TRUE} or {@link #FALSE}
      */
-    public static COSBoolean valueOf(boolean b) {
+    public static PdfBoolean valueOf(boolean b) {
         return b ? TRUE : FALSE;
     }
 
@@ -53,7 +53,7 @@ public final class COSBoolean extends COSBase {
      * Flyweight singleton — object key assignment is ignored.
      */
     @Override
-    public void setObjectKey(COSObjectKey key) {
+    public void setObjectKey(PdfObjectKey key) {
         // Flyweight: ignore object key assignment to protect singleton
     }
 
@@ -63,15 +63,15 @@ public final class COSBoolean extends COSBase {
     }
 
     @Override
-    public <T> T accept(ICOSVisitor<T> visitor) {
+    public <T> T accept(IPdfVisitor<T> visitor) {
         return visitor.visitBoolean(this);
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof COSBoolean)) return false;
-        return value == ((COSBoolean) o).value;
+        if (!(o instanceof PdfBoolean)) return false;
+        return value == ((PdfBoolean) o).value;
     }
 
     @Override
@@ -81,6 +81,6 @@ public final class COSBoolean extends COSBase {
 
     @Override
     public String toString() {
-        return "COSBoolean{" + value + "}";
+        return "PdfBoolean{" + value + "}";
     }
 }

@@ -1,7 +1,7 @@
 package org.aspose.pdf.operators;
 
 import org.aspose.pdf.Operator;
-import org.aspose.pdf.engine.cos.COSBase;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
 
 import java.util.Collections;
 import java.util.List;
@@ -37,7 +37,7 @@ public class SetFlat extends Operator {
      *
      * @param operands the operands from the content stream parser
      */
-    public SetFlat(List<COSBase> operands) {
+    public SetFlat(List<PdfBase> operands) {
         super("i", operands);
         this.flatness = (operands != null && operands.size() > 0) ? getNumber(operands.get(0)) : 0;
     }

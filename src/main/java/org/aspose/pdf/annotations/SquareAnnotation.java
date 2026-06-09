@@ -1,7 +1,7 @@
 package org.aspose.pdf.annotations;
 
 import org.aspose.pdf.*;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 /**
  * Square annotation (ISO 32000-1:2008, Section 12.5.6.8, /Subtype /Square).
@@ -14,12 +14,12 @@ import org.aspose.pdf.engine.cos.*;
 public class SquareAnnotation extends MarkupAnnotation {
 
     /**
-     * Constructs a square annotation from an existing COS dictionary.
+     * Constructs a square annotation from an existing PDF dictionary.
      *
-     * @param dict the COS dictionary backing this annotation
+     * @param dict the PDF dictionary backing this annotation
      * @param page the page this annotation belongs to
      */
-    public SquareAnnotation(COSDictionary dict, Page page) {
+    public SquareAnnotation(PdfDictionary dict, Page page) {
         super(dict, page);
     }
 
@@ -33,6 +33,6 @@ public class SquareAnnotation extends MarkupAnnotation {
         super(page, rect);
         // A square is meaningless without a positive-area bounding box.
         requirePositiveArea(rect);
-        dict.set(COSName.of("Subtype"), COSName.of("Square"));
+        dict.set(PdfName.of("Subtype"), PdfName.of("Square"));
     }
 }

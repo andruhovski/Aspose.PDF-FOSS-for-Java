@@ -1,13 +1,13 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSFloat;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfFloat;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 import org.aspose.pdf.engine.parser.PDFParser;
 
 import java.io.IOException;
@@ -28,7 +28,7 @@ public class OutlineItemCollection implements Iterable<OutlineItemCollection> {
 
     private static final Logger LOG = Logger.getLogger(OutlineItemCollection.class.getName());
 
-    private final COSDictionary dict;
+    private final PdfDictionary dict;
     private final OutlineCollection rootOutlines;
     private final PDFParser parser;
     private List<OutlineItemCollection> children;
@@ -41,14 +41,14 @@ public class OutlineItemCollection implements Iterable<OutlineItemCollection> {
     public OutlineItemCollection(OutlineCollection outlines) {
         this.rootOutlines = outlines;
         this.parser = outlines != null ? outlines.getParser() : null;
-        this.dict = new COSDictionary();
+        this.dict = new PdfDictionary();
     }
 
     /**
      * Wraps an existing outline item dictionary.
      */
-    OutlineItemCollection(COSDictionary dict, OutlineCollection root, PDFParser parser) {
-        this.dict = dict != null ? dict : new COSDictionary();
+    OutlineItemCollection(PdfDictionary dict, OutlineCollection root, PDFParser parser) {
+        this.dict = dict != null ? dict : new PdfDictionary();
         this.rootOutlines = root;
         this.parser = parser;
     }
@@ -61,8 +61,8 @@ public class OutlineItemCollection implements Iterable<OutlineItemCollection> {
      * @return the title string
      */
     public String getTitle() {
-        COSBase t = resolve(dict.get("Title"));
-        if (t instanceof COSString) return ((COSString) t).getString();
+        PdfBase t = resolve(dict.get("Title"));
+        if (t instanceof PdfString) return ((PdfString) t).getString();
         return "";
     }
 
@@ -72,8 +72,8 @@ public class OutlineItemCollection implements Iterable<OutlineItemCollection> {
      * @param title the title
      */
     public void setTitle(String title) {
-        dict.set(COSName.of("Title"),
-                title != null ? new COSString(title) : new COSString(new byte[0]));
+        dict.set(PdfName.of("Title"),
+                title != null ? new PdfString(title) : new PdfString(new byte[0]));
     }
 
     // ── Visual properties (§12.3.3, Table 153: /F, /C) ──
@@ -94,7 +94,7 @@ public class OutlineItemCollection implements Iterable<OutlineItemCollection> {
      */
     public void setBold(boolean bold) {
         int flags = dict.getInt("F", 0);
-        dict.set(COSName.of("F"), COSInteger.valueOf(bold ? (flags | 2) : (flags & ~2)));
+        dict.set(PdfName.of("F"), PdfInteger.valueOf(bold ? (flags | 2) : (flags & ~2)));
     }
 
     /**
@@ -113,7 +113,7 @@ public class OutlineItemCollection implements Iterable<OutlineItemCollection> {
      */
     public void setItalic(boolean italic) {
         int flags = dict.getInt("F", 0);
-        dict.set(COSName.of("F"), COSInteger.valueOf(italic ? (flags | 1) : (flags & ~1)));
+        dict.set(PdfName.of("F"), PdfInteger.valueOf(italic ? (flags | 1) : (flags & ~1)));
     }
 
     /**
@@ -122,9 +122,9 @@ public class OutlineItemCollection implements Iterable<OutlineItemCollection> {
      * @return the color (defaults to black)
      */
     public Color getColor() {
-        COSBase c = dict.get("C");
-        if (c instanceof COSArray && ((COSArray) c).size() == 3) {
-            COSArray arr = (COSArray) c;
+        PdfBase c = dict.get("C");
+        if (c instanceof PdfArray && ((PdfArray) c).size() == 3) {
+            PdfArray arr = (PdfArray) c;
             return Color.fromRgb(arr.getFloat(0, 0), arr.getFloat(1, 0), arr.getFloat(2, 0));
         }
         return Color.BLACK;
@@ -137,14 +137,14 @@ public class OutlineItemCollection implements Iterable<OutlineItemCollection> {
      */
     public void setColor(Color color) {
         if (color == null) {
-            dict.remove(COSName.of("C"));
+            dict.remove(PdfName.of("C"));
             return;
         }
-        COSArray c = new COSArray();
-        c.add(new COSFloat(color.getR()));
-        c.add(new COSFloat(color.getG()));
-        c.add(new COSFloat(color.getB()));
-        dict.set(COSName.of("C"), c);
+        PdfArray c = new PdfArray();
+        c.add(new PdfFloat(color.getR()));
+        c.add(new PdfFloat(color.getG()));
+        c.add(new PdfFloat(color.getB()));
+        dict.set(PdfName.of("C"), c);
     }
 
     // ── Destination ──
@@ -156,16 +156,16 @@ public class OutlineItemCollection implements Iterable<OutlineItemCollection> {
      * @throws IOException if parsing fails
      */
     public ExplicitDestination getDestination() throws IOException {
-        COSBase d = resolve(dict.get("Dest"));
-        if (d instanceof COSArray) {
+        PdfBase d = resolve(dict.get("Dest"));
+        if (d instanceof PdfArray) {
             Document doc = rootOutlines != null ? rootOutlines.getDocument() : null;
-            return ExplicitDestination.fromCOSArray((COSArray) d, doc);
+            return ExplicitDestination.fromPdfArray((PdfArray) d, doc);
         }
         // Named destination (string or name)
-        if (d instanceof COSString || d instanceof COSName) {
-            String name = (d instanceof COSString)
-                    ? ((COSString) d).getString()
-                    : ((COSName) d).getName();
+        if (d instanceof PdfString || d instanceof PdfName) {
+            String name = (d instanceof PdfString)
+                    ? ((PdfString) d).getString()
+                    : ((PdfName) d).getName();
             Document doc = rootOutlines != null ? rootOutlines.getDocument() : null;
             if (doc != null) {
                 NamedDestinations nd = doc.getNamedDestinations();
@@ -193,11 +193,11 @@ public class OutlineItemCollection implements Iterable<OutlineItemCollection> {
      */
     public void setDestination(ExplicitDestination dest) {
         if (dest != null) {
-            dict.set(COSName.of("Dest"), dest.toCOSArray());
+            dict.set(PdfName.of("Dest"), dest.toPdfArray());
         } else {
-            dict.remove(COSName.of("Dest"));
+            dict.remove(PdfName.of("Dest"));
         }
-        dict.remove(COSName.of("A"));
+        dict.remove(PdfName.of("A"));
     }
 
     /**
@@ -211,11 +211,11 @@ public class OutlineItemCollection implements Iterable<OutlineItemCollection> {
         if (dest instanceof ExplicitDestination) {
             setDestination((ExplicitDestination) dest);
         } else if (dest instanceof NamedDestination) {
-            dict.set(COSName.of("Dest"), ((NamedDestination) dest).toCos());
-            dict.remove(COSName.of("A"));
+            dict.set(PdfName.of("Dest"), ((NamedDestination) dest).toCos());
+            dict.remove(PdfName.of("A"));
         } else if (dest == null) {
-            dict.remove(COSName.of("Dest"));
-            dict.remove(COSName.of("A"));
+            dict.remove(PdfName.of("Dest"));
+            dict.remove(PdfName.of("A"));
         }
     }
 
@@ -230,16 +230,16 @@ public class OutlineItemCollection implements Iterable<OutlineItemCollection> {
      */
     public int getLevel() {
         int level = 1;
-        COSBase parent = resolve(dict.get("Parent"));
-        while (parent instanceof COSDictionary) {
-            COSDictionary parentDict = (COSDictionary) parent;
+        PdfBase parent = resolve(dict.get("Parent"));
+        while (parent instanceof PdfDictionary) {
+            PdfDictionary parentDict = (PdfDictionary) parent;
             // If the parent has /Type /Outlines it is the root → stop
-            COSBase type = parentDict.get("Type");
-            if (type instanceof COSName && "Outlines".equals(((COSName) type).getName())) {
+            PdfBase type = parentDict.get("Type");
+            if (type instanceof PdfName && "Outlines".equals(((PdfName) type).getName())) {
                 break;
             }
             // Check if parent is the root outlines dict (no Title = root)
-            COSBase titleCheck = parentDict.get("Title");
+            PdfBase titleCheck = parentDict.get("Title");
             if (titleCheck == null) {
                 break;
             }
@@ -336,9 +336,9 @@ public class OutlineItemCollection implements Iterable<OutlineItemCollection> {
      * @return the next sibling, or null
      */
     public OutlineItemCollection getNext() {
-        COSBase next = resolve(dict.get("Next"));
-        if (next instanceof COSDictionary) {
-            return new OutlineItemCollection((COSDictionary) next, rootOutlines, parser);
+        PdfBase next = resolve(dict.get("Next"));
+        if (next instanceof PdfDictionary) {
+            return new OutlineItemCollection((PdfDictionary) next, rootOutlines, parser);
         }
         return null;
     }
@@ -349,9 +349,9 @@ public class OutlineItemCollection implements Iterable<OutlineItemCollection> {
      * @return the previous sibling, or null
      */
     public OutlineItemCollection getPrev() {
-        COSBase prev = resolve(dict.get("Prev"));
-        if (prev instanceof COSDictionary) {
-            return new OutlineItemCollection((COSDictionary) prev, rootOutlines, parser);
+        PdfBase prev = resolve(dict.get("Prev"));
+        if (prev instanceof PdfDictionary) {
+            return new OutlineItemCollection((PdfDictionary) prev, rootOutlines, parser);
         }
         return null;
     }
@@ -365,10 +365,10 @@ public class OutlineItemCollection implements Iterable<OutlineItemCollection> {
      * @throws IOException if parsing fails
      */
     public PdfAction getAction() throws IOException {
-        COSBase a = resolve(dict.get("A"));
-        if (a instanceof COSDictionary) {
+        PdfBase a = resolve(dict.get("A"));
+        if (a instanceof PdfDictionary) {
             Document doc = rootOutlines != null ? rootOutlines.getDocument() : null;
-            return PdfAction.fromDictionary((COSDictionary) a, doc);
+            return PdfAction.fromDictionary((PdfDictionary) a, doc);
         }
         return null;
     }
@@ -380,11 +380,11 @@ public class OutlineItemCollection implements Iterable<OutlineItemCollection> {
      */
     public void setAction(PdfAction action) {
         if (action != null) {
-            dict.set(COSName.of("A"), action.getCOSDictionary());
+            dict.set(PdfName.of("A"), action.getPdfDictionary());
         } else {
-            dict.remove(COSName.of("A"));
+            dict.remove(PdfName.of("A"));
         }
-        dict.remove(COSName.of("Dest"));
+        dict.remove(PdfName.of("Dest"));
     }
 
     // ── Children ──
@@ -455,7 +455,7 @@ public class OutlineItemCollection implements Iterable<OutlineItemCollection> {
      */
     public void setOpen(boolean open) {
         int c = Math.max(1, Math.abs(dict.getInt("Count", 0)));
-        dict.set(COSName.of("Count"), COSInteger.valueOf(open ? c : -c));
+        dict.set(PdfName.of("Count"), PdfInteger.valueOf(open ? c : -c));
     }
 
     /**
@@ -518,22 +518,22 @@ public class OutlineItemCollection implements Iterable<OutlineItemCollection> {
     }
 
     /**
-     * Returns the underlying COS dictionary.
+     * Returns the underlying PDF dictionary.
      *
      * @return the dictionary
      */
-    public COSDictionary getCOSDictionary() { return dict; }
+    public PdfDictionary getPdfDictionary() { return dict; }
 
     // ── Internal ──
 
     private void ensureChildren() {
         if (children != null) return;
         children = new ArrayList<>();
-        COSBase first = resolve(dict.get("First"));
-        COSBase current = first;
+        PdfBase first = resolve(dict.get("First"));
+        PdfBase current = first;
         int guard = 10000;
-        while (current instanceof COSDictionary && guard-- > 0) {
-            COSDictionary childDict = (COSDictionary) current;
+        while (current instanceof PdfDictionary && guard-- > 0) {
+            PdfDictionary childDict = (PdfDictionary) current;
             children.add(new OutlineItemCollection(childDict, rootOutlines, parser));
             current = resolve(childDict.get("Next"));
             if (current == first) break;
@@ -542,27 +542,27 @@ public class OutlineItemCollection implements Iterable<OutlineItemCollection> {
 
     private void rebuildChildLinks() {
         if (children.isEmpty()) {
-            dict.remove(COSName.of("First"));
-            dict.remove(COSName.of("Last"));
-            dict.set(COSName.of("Count"), COSInteger.valueOf(0));
+            dict.remove(PdfName.of("First"));
+            dict.remove(PdfName.of("Last"));
+            dict.set(PdfName.of("Count"), PdfInteger.valueOf(0));
             return;
         }
         for (int i = 0; i < children.size(); i++) {
-            COSDictionary cd = children.get(i).dict;
-            cd.set(COSName.of("Parent"), this.dict);
-            if (i == 0) dict.set(COSName.of("First"), cd);
-            if (i == children.size() - 1) dict.set(COSName.of("Last"), cd);
-            if (i > 0) cd.set(COSName.of("Prev"), children.get(i - 1).dict);
-            else cd.remove(COSName.of("Prev"));
-            if (i < children.size() - 1) cd.set(COSName.of("Next"), children.get(i + 1).dict);
-            else cd.remove(COSName.of("Next"));
+            PdfDictionary cd = children.get(i).dict;
+            cd.set(PdfName.of("Parent"), this.dict);
+            if (i == 0) dict.set(PdfName.of("First"), cd);
+            if (i == children.size() - 1) dict.set(PdfName.of("Last"), cd);
+            if (i > 0) cd.set(PdfName.of("Prev"), children.get(i - 1).dict);
+            else cd.remove(PdfName.of("Prev"));
+            if (i < children.size() - 1) cd.set(PdfName.of("Next"), children.get(i + 1).dict);
+            else cd.remove(PdfName.of("Next"));
         }
-        dict.set(COSName.of("Count"), COSInteger.valueOf(children.size()));
+        dict.set(PdfName.of("Count"), PdfInteger.valueOf(children.size()));
     }
 
-    private COSBase resolve(COSBase val) {
-        if (val instanceof COSObjectReference) {
-            try { return ((COSObjectReference) val).dereference(); }
+    private PdfBase resolve(PdfBase val) {
+        if (val instanceof PdfObjectReference) {
+            try { return ((PdfObjectReference) val).dereference(); }
             catch (Exception e) { return null; }
         }
         return val;

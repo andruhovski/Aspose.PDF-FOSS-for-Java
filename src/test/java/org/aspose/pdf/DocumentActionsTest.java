@@ -1,7 +1,7 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -12,7 +12,7 @@ class DocumentActionsTest {
 
     @Test
     void emptyCatalog_allGettersReturnNull() {
-        COSDictionary catalog = new COSDictionary();
+        PdfDictionary catalog = new PdfDictionary();
         DocumentActions actions = new DocumentActions(catalog, null);
 
         assertNull(actions.getOpenAction());
@@ -25,7 +25,7 @@ class DocumentActionsTest {
 
     @Test
     void setOpenAction_thenGet_roundTrips() throws IOException {
-        COSDictionary catalog = new COSDictionary();
+        PdfDictionary catalog = new PdfDictionary();
         DocumentActions actions = new DocumentActions(catalog, null);
 
         GoToURIAction goTo = new GoToURIAction("https://example.com");
@@ -38,24 +38,24 @@ class DocumentActionsTest {
         assertEquals("https://example.com", ((UriAction) read).getUri());
 
         // Catalog entry actually written
-        assertNotNull(catalog.get(COSName.of("OpenAction")));
+        assertNotNull(catalog.get(PdfName.of("OpenAction")));
     }
 
     @Test
     void setOpenAction_null_removesEntry() {
-        COSDictionary catalog = new COSDictionary();
+        PdfDictionary catalog = new PdfDictionary();
         DocumentActions actions = new DocumentActions(catalog, null);
 
         actions.setOpenAction(new GoToURIAction("https://x"));
-        assertNotNull(catalog.get(COSName.of("OpenAction")));
+        assertNotNull(catalog.get(PdfName.of("OpenAction")));
 
         actions.setOpenAction(null);
-        assertNull(catalog.get(COSName.of("OpenAction")));
+        assertNull(catalog.get(PdfName.of("OpenAction")));
     }
 
     @Test
     void setAfterPrinting_thenGet_roundTrips() throws IOException {
-        COSDictionary catalog = new COSDictionary();
+        PdfDictionary catalog = new PdfDictionary();
         DocumentActions actions = new DocumentActions(catalog, null);
 
         actions.setAfterPrinting(new GoToURIAction("https://done"));
@@ -64,14 +64,14 @@ class DocumentActionsTest {
         assertTrue(read instanceof UriAction);
 
         // /AA dictionary was created with the /DP entry
-        COSDictionary aa = (COSDictionary) catalog.get(COSName.of("AA"));
+        PdfDictionary aa = (PdfDictionary) catalog.get(PdfName.of("AA"));
         assertNotNull(aa);
-        assertNotNull(aa.get(COSName.of("DP")));
+        assertNotNull(aa.get(PdfName.of("DP")));
     }
 
     @Test
     void setAfterPrinting_null_removesEntry_andPrunesAAIfEmpty() {
-        COSDictionary catalog = new COSDictionary();
+        PdfDictionary catalog = new PdfDictionary();
         DocumentActions actions = new DocumentActions(catalog, null);
 
         actions.setAfterPrinting(new GoToURIAction("https://x"));
@@ -79,18 +79,18 @@ class DocumentActionsTest {
 
         // Clear only DP: AA should still exist with WS
         actions.setAfterPrinting(null);
-        COSDictionary aa = (COSDictionary) catalog.get(COSName.of("AA"));
+        PdfDictionary aa = (PdfDictionary) catalog.get(PdfName.of("AA"));
         assertNotNull(aa, "/AA should remain while WS is still set");
-        assertNotNull(aa.get(COSName.of("WS")));
+        assertNotNull(aa.get(PdfName.of("WS")));
 
         // Clear the last one: /AA itself should go away
         actions.setBeforeSaving(null);
-        assertNull(catalog.get(COSName.of("AA")), "/AA should be pruned when empty");
+        assertNull(catalog.get(PdfName.of("AA")), "/AA should be pruned when empty");
     }
 
     @Test
     void allFiveAAEntries_setIndependently() throws IOException {
-        COSDictionary catalog = new COSDictionary();
+        PdfDictionary catalog = new PdfDictionary();
         DocumentActions actions = new DocumentActions(catalog, null);
 
         actions.setBeforeClosing(new GoToURIAction("https://a"));

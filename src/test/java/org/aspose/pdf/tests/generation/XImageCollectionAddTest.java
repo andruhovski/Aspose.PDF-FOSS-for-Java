@@ -4,7 +4,7 @@ import org.aspose.pdf.Document;
 import org.aspose.pdf.Page;
 import org.aspose.pdf.XImage;
 import org.aspose.pdf.XImageCollection;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Stage 1 / Bug A — {@link XImageCollection#add(java.io.InputStream)} must
  * produce a fully-specified Image XObject (ISO 32000-1:2008 §8.9.5 Table 89):
- * the resulting {@code COSStream} must carry {@code /Type /XObject},
+ * the resulting {@code PdfStream} must carry {@code /Type /XObject},
  * {@code /Subtype /Image}, {@code /Filter}, {@code /Width}, {@code /Height},
  * {@code /ColorSpace}, {@code /BitsPerComponent}. Without these entries,
  * strict viewers (Poppler) skip the image with
@@ -48,8 +48,8 @@ class XImageCollectionAddTest {
         return baos.toByteArray();
     }
 
-    /** Saves a single-page doc that embeds {@code data} via {@code XImageCollection.add}, reopens, returns the first XImage's underlying COSStream. */
-    private COSStream embedAndReopen(byte[] data, Path tmp, String label) throws IOException {
+    /** Saves a single-page doc that embeds {@code data} via {@code XImageCollection.add}, reopens, returns the first XImage's underlying PdfStream. */
+    private PdfStream embedAndReopen(byte[] data, Path tmp, String label) throws IOException {
         Path out = tmp.resolve(label + ".pdf");
         try (Document doc = new Document()) {
             Page page = doc.getPages().add();
@@ -61,10 +61,10 @@ class XImageCollectionAddTest {
         XImageCollection images = reopened.getPages().get(1).getResources().getImages();
         assertEquals(1, images.getCount(), "exactly one image should round-trip");
         XImage xi = images.get(1);
-        return xi.getCOSStream();
+        return xi.getPdfStream();
     }
 
-    private void assertSpecRequiredEntries(COSStream s, String expectedFilter) {
+    private void assertSpecRequiredEntries(PdfStream s, String expectedFilter) {
         assertEquals("XObject", s.getNameAsString("Type"),
                 "Type must be /XObject per ISO §8.9.5 Table 89");
         assertEquals("Image",   s.getNameAsString("Subtype"),
@@ -90,14 +90,14 @@ class XImageCollectionAddTest {
     @Test
     @DisplayName("add(jpegStream) sets /Type /Subtype /Filter /Width /Height /ColorSpace /BitsPerComponent")
     void addJpeg_setsRequiredImageDictEntries(@TempDir Path tmp) throws IOException {
-        COSStream s = embedAndReopen(makeImage("JPG"), tmp, "jpeg");
+        PdfStream s = embedAndReopen(makeImage("JPG"), tmp, "jpeg");
         assertSpecRequiredEntries(s, "DCTDecode");
     }
 
     @Test
     @DisplayName("add(pngStream) transcodes to a valid Image XObject")
     void addPng_transcodesToValidXObject(@TempDir Path tmp) throws IOException {
-        COSStream s = embedAndReopen(makeImage("PNG"), tmp, "png");
+        PdfStream s = embedAndReopen(makeImage("PNG"), tmp, "png");
         // PNG path goes through ImageIO decode → FlateDecode re-encoding.
         // (A future variant might re-encode as JPEG; either is spec-valid.)
         assertSpecRequiredEntries(s, null);
@@ -106,14 +106,14 @@ class XImageCollectionAddTest {
     @Test
     @DisplayName("add(bmpStream) transcodes to a valid Image XObject")
     void addBmp_transcodesToValidXObject(@TempDir Path tmp) throws IOException {
-        COSStream s = embedAndReopen(makeImage("BMP"), tmp, "bmp");
+        PdfStream s = embedAndReopen(makeImage("BMP"), tmp, "bmp");
         assertSpecRequiredEntries(s, null);
     }
 
     @Test
     @DisplayName("add(gifStream) transcodes to a valid Image XObject")
     void addGif_transcodesToValidXObject(@TempDir Path tmp) throws IOException {
-        COSStream s = embedAndReopen(makeImage("GIF"), tmp, "gif");
+        PdfStream s = embedAndReopen(makeImage("GIF"), tmp, "gif");
         assertSpecRequiredEntries(s, null);
     }
 

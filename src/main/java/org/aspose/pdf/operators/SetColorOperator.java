@@ -1,7 +1,7 @@
 package org.aspose.pdf.operators;
 
 import org.aspose.pdf.Operator;
-import org.aspose.pdf.engine.cos.COSBase;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
 
 import java.util.List;
 
@@ -30,7 +30,7 @@ public abstract class SetColorOperator extends Operator {
      * @param name     the operator keyword
      * @param operands the operands preceding this operator in the content stream
      */
-    protected SetColorOperator(String name, List<COSBase> operands) {
+    protected SetColorOperator(String name, List<PdfBase> operands) {
         super(name, operands);
     }
 }

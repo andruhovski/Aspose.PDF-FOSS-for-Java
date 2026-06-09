@@ -81,7 +81,7 @@ public class TextMarkupAnnotationCtorTests {
             HighlightAnnotation orig = new HighlightAnnotation(page, new Rectangle(0, 0, 100, 50));
             double[] custom = {1, 2, 3, 4, 5, 6, 7, 8};
             orig.setQuadPoints(custom);
-            HighlightAnnotation reloaded = new HighlightAnnotation(orig.getCOSDictionary(), page);
+            HighlightAnnotation reloaded = new HighlightAnnotation(orig.getPdfDictionary(), page);
             assertArrayEquals(custom, reloaded.getQuadPoints(), 0.001);
         }
     }

@@ -50,9 +50,25 @@ public final class ShadingRenderer {
      * Works for axial, radial, and function-based shadings.
      */
     private static void renderPixelBased(Graphics2D g2d, Shading shading,
-                                          AffineTransform ctm, java.awt.Rectangle clip) {
+                                          AffineTransform ctm, java.awt.Rectangle clipUser) {
+        // ctm maps shading space → DEVICE pixels (base g2d transform × state
+        // CTM), so sampling must walk device pixels. clipUser however is
+        // expressed in g2d USER space — convert the clip (the precise clip
+        // shape when one is set) to device space first. Feeding user-space
+        // coords into the device-space inverse samples the wrong spot and,
+        // with /Extend [false false], returns null everywhere — nothing
+        // painted (corpus 28762: all chart gradient bars missing).
+        AffineTransform base = g2d.getTransform();
+        java.awt.Shape clipShape = g2d.getClip();
+        java.awt.Rectangle clip = base.createTransformedShape(
+                clipShape != null ? clipShape : clipUser).getBounds();
         int w = clip.width;
         int h = clip.height;
+        if (w <= 0 || h <= 0) return;
+        if ((long) w * h > MAX_SHADING_PIXELS) {
+            LOG.fine(() -> "Shading area too large, skipping: " + clip);
+            return;
+        }
         BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
 
         AffineTransform inverse;
@@ -65,6 +81,9 @@ public final class ShadingRenderer {
 
         double[] pt = new double[2];
         for (int py = 0; py < h; py++) {
+            // Cancellation check per row: function-based shadings evaluate a
+            // (possibly PostScript) function per pixel — minutes on big clips.
+            if (Thread.currentThread().isInterrupted()) return;
             for (int px = 0; px < w; px++) {
                 // Transform device pixel to shading coordinate space
                 pt[0] = clip.x + px;
@@ -72,12 +91,26 @@ public final class ShadingRenderer {
                 inverse.transform(pt, 0, pt, 0, 1);
 
                 double[] color = shading.getColorAt(pt[0], pt[1]);
-                int argb = colorToARGB(color);
+                if (color == null) {
+                    continue; // outside the gradient, /Extend false → unpainted
+                }
+                int argb = colorToARGB(color, shading.getColorSpace());
                 img.setRGB(px, py, argb);
             }
         }
-        g2d.drawImage(img, clip.x, clip.y, null);
+        // Paint in device space: reset the transform for the blit. The g2d
+        // clip still applies — Java2D tracks it in device space — so pixels
+        // outside a non-rectangular clip path remain masked.
+        g2d.setTransform(new AffineTransform());
+        try {
+            g2d.drawImage(img, clip.x, clip.y, null);
+        } finally {
+            g2d.setTransform(base);
+        }
     }
+
+    /** Upper bound on the sampled shading raster (≈ a few full pages at 300 dpi). */
+    private static final long MAX_SHADING_PIXELS = 64L * 1024 * 1024;
 
     /**
      * Renders a fallback for mesh shadings (types 4–7): fills with background or gray.
@@ -87,7 +120,7 @@ public final class ShadingRenderer {
         double[] bg = shading.getBackground();
         int argb;
         if (bg != null) {
-            argb = colorToARGB(bg);
+            argb = colorToARGB(bg, shading.getColorSpace());
         } else {
             argb = 0xFF808080; // mid-gray fallback
         }
@@ -97,13 +130,25 @@ public final class ShadingRenderer {
     }
 
     /**
-     * Converts color components (0..1 range) to packed ARGB int.
+     * Converts shading-function output to packed ARGB via the shading's
+     * ColorSpace. The components are in the SHADING's color space — reading
+     * them as RGB renders a DeviceCMYK blue {@code [1 .6 0 0]} as orange
+     * (corpus 29077/10734); Separation/DeviceN need their tint transform.
      */
-    private static int colorToARGB(double[] color) {
+    private static int colorToARGB(double[] color,
+                                   org.aspose.pdf.engine.colorspace.ColorSpaceBase cs) {
         if (color == null || color.length == 0) return 0xFF000000;
-        int r = clamp255(color.length > 0 ? color[0] : 0);
-        int g = clamp255(color.length > 1 ? color[1] : 0);
-        int b = clamp255(color.length > 2 ? color[2] : 0);
+        if (cs != null) {
+            try {
+                return 0xFF000000 | cs.toRGBInt(color);
+            } catch (Exception e) {
+                LOG.fine(() -> "Shading colorspace conversion failed: " + e.getMessage());
+            }
+        }
+        // No colorspace — fall back to mapping by component count.
+        int r = clamp255(color[0]);
+        int g = clamp255(color.length > 1 ? color[1] : color[0]);
+        int b = clamp255(color.length > 2 ? color[2] : color[0]);
         return 0xFF000000 | (r << 16) | (g << 8) | b;
     }
 

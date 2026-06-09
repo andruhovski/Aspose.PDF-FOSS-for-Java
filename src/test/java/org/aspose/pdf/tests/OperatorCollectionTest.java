@@ -2,8 +2,8 @@ package org.aspose.pdf.tests;
 
 import org.aspose.pdf.Operator;
 import org.aspose.pdf.OperatorCollection;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -30,7 +30,7 @@ public class OperatorCollectionTest {
     public void constructFromList() {
         List<Operator> ops = Arrays.asList(
                 new Operator("BT"),
-                new Operator("Tf", Arrays.asList(COSName.of("F1"), COSInteger.valueOf(12))),
+                new Operator("Tf", Arrays.asList(PdfName.of("F1"), PdfInteger.valueOf(12))),
                 new Operator("ET")
         );
         OperatorCollection coll = new OperatorCollection(ops);

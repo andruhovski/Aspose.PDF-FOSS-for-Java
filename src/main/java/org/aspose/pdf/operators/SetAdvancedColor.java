@@ -1,7 +1,7 @@
 package org.aspose.pdf.operators;
 
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 
 import java.util.List;
 
@@ -10,7 +10,7 @@ import java.util.List;
  * <p>
  * Similar to {@link SetColor} (sc) but additionally supports Pattern and Separation
  * color spaces. When the current color space is a Pattern space, the last operand
- * is a pattern name ({@link COSName}); the preceding operands (if any) are numeric
+ * is a pattern name ({@link PdfName}); the preceding operands (if any) are numeric
  * color components for the underlying color space.
  * See ISO 32000-1:2008, §8.6.8, Table 74.
  * </p>
@@ -21,12 +21,12 @@ public class SetAdvancedColor extends BasicSetColorAndPatternOperator {
      * Creates a SetAdvancedColor (scn) operator from parsed operands.
      * <p>
      * Operands may be a variable number of numeric values, optionally followed
-     * by a {@link COSName} identifying a pattern.
+     * by a {@link PdfName} identifying a pattern.
      * </p>
      *
      * @param operands the operands from the content stream parser
      */
-    public SetAdvancedColor(List<COSBase> operands) {
+    public SetAdvancedColor(List<PdfBase> operands) {
         super("scn", operands);
     }
 
@@ -37,12 +37,12 @@ public class SetAdvancedColor extends BasicSetColorAndPatternOperator {
      * @return the color component values
      */
     public double[] getComponents() {
-        List<COSBase> ops = getOperands();
+        List<PdfBase> ops = getOperands();
         if (ops == null || ops.isEmpty()) {
             return new double[0];
         }
         int count = ops.size();
-        if (ops.get(count - 1) instanceof COSName) {
+        if (ops.get(count - 1) instanceof PdfName) {
             count--;
         }
         double[] result = new double[count];
@@ -53,17 +53,17 @@ public class SetAdvancedColor extends BasicSetColorAndPatternOperator {
     }
 
     /**
-     * Returns the pattern name if the last operand is a {@link COSName}, or {@code null}
+     * Returns the pattern name if the last operand is a {@link PdfName}, or {@code null}
      * if no pattern name is present.
      *
      * @return the pattern name, or {@code null}
      */
     public String getPatternName() {
-        List<COSBase> ops = getOperands();
+        List<PdfBase> ops = getOperands();
         if (ops != null && !ops.isEmpty()) {
-            COSBase last = ops.get(ops.size() - 1);
-            if (last instanceof COSName) {
-                return ((COSName) last).getName();
+            PdfBase last = ops.get(ops.size() - 1);
+            if (last instanceof PdfName) {
+                return ((PdfName) last).getName();
             }
         }
         return null;

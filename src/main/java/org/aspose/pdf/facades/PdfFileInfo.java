@@ -2,11 +2,11 @@ package org.aspose.pdf.facades;
 
 import org.aspose.pdf.Document;
 import org.aspose.pdf.DocumentInfo;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 import org.aspose.pdf.engine.parser.PDFParser;
 import org.aspose.pdf.engine.security.PDFEncryptionDict;
 import org.aspose.pdf.engine.security.StandardSecurityHandler;
@@ -508,12 +508,12 @@ public class PdfFileInfo implements Closeable {
         }
         try {
             DocumentInfo info = document.getOrCreateInfo();
-            org.aspose.pdf.engine.cos.COSDictionary infoDict = info.getCOSDictionary();
+            org.aspose.pdf.engine.pdfobjects.PdfDictionary infoDict = info.getPdfDictionary();
             if (value == null) {
-                infoDict.remove(org.aspose.pdf.engine.cos.COSName.of(name));
+                infoDict.remove(org.aspose.pdf.engine.pdfobjects.PdfName.of(name));
             } else {
-                infoDict.set(org.aspose.pdf.engine.cos.COSName.of(name),
-                        new org.aspose.pdf.engine.cos.COSString(
+                infoDict.set(org.aspose.pdf.engine.pdfobjects.PdfName.of(name),
+                        new org.aspose.pdf.engine.pdfobjects.PdfString(
                                 value.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
             }
         } catch (Exception e) {
@@ -680,23 +680,23 @@ public class PdfFileInfo implements Closeable {
     }
 
     private PDFEncryptionDict getEncryptionDict(PDFParser parser) throws IOException {
-        COSBase encryptRef = parser.getTrailer().get(COSName.of("Encrypt"));
+        PdfBase encryptRef = parser.getTrailer().get(PdfName.of("Encrypt"));
         if (encryptRef == null) {
             return null;
         }
-        COSBase encryptObj = parser.resolveReference(encryptRef);
-        if (!(encryptObj instanceof COSDictionary)) {
+        PdfBase encryptObj = parser.resolveReference(encryptRef);
+        if (!(encryptObj instanceof PdfDictionary)) {
             return null;
         }
-        return new PDFEncryptionDict((COSDictionary) encryptObj);
+        return new PDFEncryptionDict((PdfDictionary) encryptObj);
     }
 
     private byte[] getDocumentId(PDFParser parser) {
-        COSBase idArray = parser.getTrailer().get(COSName.of("ID"));
-        if (!(idArray instanceof COSArray) || ((COSArray) idArray).size() == 0) {
+        PdfBase idArray = parser.getTrailer().get(PdfName.of("ID"));
+        if (!(idArray instanceof PdfArray) || ((PdfArray) idArray).size() == 0) {
             return null;
         }
-        COSBase firstId = ((COSArray) idArray).get(0);
-        return firstId instanceof COSString ? ((COSString) firstId).getBytes() : null;
+        PdfBase firstId = ((PdfArray) idArray).get(0);
+        return firstId instanceof PdfString ? ((PdfString) firstId).getBytes() : null;
     }
 }

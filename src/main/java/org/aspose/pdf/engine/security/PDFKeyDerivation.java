@@ -124,6 +124,75 @@ public final class PDFKeyDerivation {
         }
     }
 
+    /**
+     * R=5 (Adobe Extension Level 3) hash: a single SHA-256 of
+     * {@code password + salt [+ userKey]}, with NO Algorithm 2.B iteration.
+     * <p>
+     * This is the crucial difference from {@link #computeHashR6}: R=5 predates
+     * ISO 32000-2 and uses only the initial hash. Using the iterated R=6 hash on
+     * an R=5 file yields the wrong key and AES decryption produces garbage.
+     * </p>
+     */
+    public static byte[] computeHashR5(byte[] password, byte[] salt, byte[] userKey) {
+        try {
+            byte[] truncPw = truncatePassword(password);
+            MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
+            sha256.update(truncPw);
+            if (salt != null) {
+                sha256.update(salt);
+            }
+            if (userKey != null) {
+                sha256.update(userKey);
+            }
+            return sha256.digest();
+        } catch (Exception e) {
+            throw new RuntimeException("R5 hash derivation failed: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Compute the file encryption key for R=5 via the user password
+     * (Adobe Extension Level 3 — single SHA-256, no iteration).
+     */
+    public static byte[] computeEncryptionKeyR5User(byte[] password, PDFEncryptionDict encDict) {
+        try {
+            byte[] u = encDict.getU();
+            byte[] ue = encDict.getUE();
+            if (u == null || u.length < 48 || ue == null || ue.length < 32) {
+                throw new RuntimeException("Missing U/UE for R5 key derivation");
+            }
+            byte[] keySalt = Arrays.copyOfRange(u, 40, 48);
+            byte[] key = computeHashR5(password, keySalt, null);
+            return AESCipher.decryptWithIV(key, new byte[16], ue);
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("R5 user key derivation failed: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Compute the file encryption key for R=5 via the owner password
+     * (Adobe Extension Level 3 — single SHA-256, no iteration).
+     */
+    public static byte[] computeEncryptionKeyR5Owner(byte[] password, PDFEncryptionDict encDict) {
+        try {
+            byte[] o = encDict.getO();
+            byte[] u = encDict.getU();
+            byte[] oe = encDict.getOE();
+            if (o == null || o.length < 48 || oe == null || oe.length < 32 || u == null) {
+                throw new RuntimeException("Missing O/OE/U for R5 owner key derivation");
+            }
+            byte[] keySalt = Arrays.copyOfRange(o, 40, 48);
+            byte[] key = computeHashR5(password, keySalt, Arrays.copyOf(u, Math.min(48, u.length)));
+            return AESCipher.decryptWithIV(key, new byte[16], oe);
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("R5 owner key derivation failed: " + e.getMessage(), e);
+        }
+    }
+
     // ── Write-side: O/U hash generation ──────────────────────────────
 
     /**

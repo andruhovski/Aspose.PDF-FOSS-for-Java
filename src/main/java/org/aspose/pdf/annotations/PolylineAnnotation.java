@@ -1,7 +1,7 @@
 package org.aspose.pdf.annotations;
 
 import org.aspose.pdf.*;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 /**
  * Polyline annotation (ISO 32000-1:2008, Section 12.5.6.9, /Subtype /PolyLine).
@@ -13,12 +13,12 @@ import org.aspose.pdf.engine.cos.*;
 public class PolylineAnnotation extends MarkupAnnotation {
 
     /**
-     * Constructs a polyline annotation from an existing COS dictionary.
+     * Constructs a polyline annotation from an existing PDF dictionary.
      *
-     * @param dict the COS dictionary backing this annotation
+     * @param dict the PDF dictionary backing this annotation
      * @param page the page this annotation belongs to
      */
-    public PolylineAnnotation(COSDictionary dict, Page page) {
+    public PolylineAnnotation(PdfDictionary dict, Page page) {
         super(dict, page);
     }
 
@@ -30,7 +30,7 @@ public class PolylineAnnotation extends MarkupAnnotation {
      */
     public PolylineAnnotation(Page page, Rectangle rect) {
         super(page, rect);
-        dict.set(COSName.of("Subtype"), COSName.of("PolyLine"));
+        dict.set(PdfName.of("Subtype"), PdfName.of("PolyLine"));
     }
 
     /**
@@ -39,9 +39,9 @@ public class PolylineAnnotation extends MarkupAnnotation {
      * @return the vertices array, or null if not set
      */
     public double[] getVertices() {
-        COSBase v = dict.get("Vertices");
-        if (v instanceof COSArray) {
-            COSArray arr = (COSArray) v;
+        PdfBase v = dict.get("Vertices");
+        if (v instanceof PdfArray) {
+            PdfArray arr = (PdfArray) v;
             double[] result = new double[arr.size()];
             for (int i = 0; i < arr.size(); i++) {
                 result[i] = arr.getFloat(i, 0);

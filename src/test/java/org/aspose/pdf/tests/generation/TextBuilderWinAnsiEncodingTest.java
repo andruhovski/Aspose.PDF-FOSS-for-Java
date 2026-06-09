@@ -3,12 +3,12 @@ package org.aspose.pdf.tests.generation;
 import org.aspose.pdf.Color;
 import org.aspose.pdf.Document;
 import org.aspose.pdf.Page;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 import org.aspose.pdf.text.Position;
 import org.aspose.pdf.text.TextBuilder;
 import org.aspose.pdf.text.TextFragment;
@@ -33,19 +33,19 @@ class TextBuilderWinAnsiEncodingTest {
     @TempDir Path tempDir;
 
     private static byte[] contentStreamBytes(Page page) throws IOException {
-        COSBase contents = page.getCOSDictionary().get(COSName.of("Contents"));
-        if (contents instanceof COSObjectReference) {
-            contents = ((COSObjectReference) contents).dereference();
+        PdfBase contents = page.getPdfDictionary().get(PdfName.of("Contents"));
+        if (contents instanceof PdfObjectReference) {
+            contents = ((PdfObjectReference) contents).dereference();
         }
         java.io.ByteArrayOutputStream all = new java.io.ByteArrayOutputStream();
-        if (contents instanceof COSStream) {
-            all.write(((COSStream) contents).getDecodedData());
-        } else if (contents instanceof COSArray) {
-            COSArray arr = (COSArray) contents;
+        if (contents instanceof PdfStream) {
+            all.write(((PdfStream) contents).getDecodedData());
+        } else if (contents instanceof PdfArray) {
+            PdfArray arr = (PdfArray) contents;
             for (int i = 0; i < arr.size(); i++) {
-                COSBase e = arr.get(i);
-                if (e instanceof COSObjectReference) e = ((COSObjectReference) e).dereference();
-                if (e instanceof COSStream) all.write(((COSStream) e).getDecodedData());
+                PdfBase e = arr.get(i);
+                if (e instanceof PdfObjectReference) e = ((PdfObjectReference) e).dereference();
+                if (e instanceof PdfStream) all.write(((PdfStream) e).getDecodedData());
             }
         }
         return all.toByteArray();
@@ -138,16 +138,16 @@ class TextBuilderWinAnsiEncodingTest {
             doc.save(out.toString());
         }
         try (Document r = new Document(out.toString())) {
-            COSDictionary fonts = r.getPages().get(1).ensureResources().getFonts();
+            PdfDictionary fonts = r.getPages().get(1).ensureResources().getFonts();
             assertNotNull(fonts);
             boolean found = false;
-            for (COSName k : fonts.keySet()) {
-                COSBase v = fonts.get(k);
-                if (v instanceof org.aspose.pdf.engine.cos.COSObjectReference) {
-                    v = ((org.aspose.pdf.engine.cos.COSObjectReference) v).dereference();
+            for (PdfName k : fonts.keySet()) {
+                PdfBase v = fonts.get(k);
+                if (v instanceof org.aspose.pdf.engine.pdfobjects.PdfObjectReference) {
+                    v = ((org.aspose.pdf.engine.pdfobjects.PdfObjectReference) v).dereference();
                 }
-                if (v instanceof COSDictionary) {
-                    COSDictionary f = (COSDictionary) v;
+                if (v instanceof PdfDictionary) {
+                    PdfDictionary f = (PdfDictionary) v;
                     if ("WinAnsiEncoding".equals(f.getNameAsString("Encoding"))) {
                         found = true;
                         break;
@@ -165,13 +165,13 @@ class TextBuilderWinAnsiEncodingTest {
         try (Document doc = new Document()) {
             Page page = doc.getPages().add();
             // Pre-attach a Helvetica font dict WITHOUT /Encoding.
-            COSDictionary fonts = new COSDictionary();
-            COSDictionary helv = new COSDictionary();
-            helv.set(COSName.of("Type"), COSName.of("Font"));
-            helv.set(COSName.of("Subtype"), COSName.of("Type1"));
-            helv.set(COSName.of("BaseFont"), COSName.of("Helvetica"));
+            PdfDictionary fonts = new PdfDictionary();
+            PdfDictionary helv = new PdfDictionary();
+            helv.set(PdfName.of("Type"), PdfName.of("Font"));
+            helv.set(PdfName.of("Subtype"), PdfName.of("Type1"));
+            helv.set(PdfName.of("BaseFont"), PdfName.of("Helvetica"));
             fonts.set("F1", helv);
-            page.ensureResources().getCOSDictionary().set(COSName.of("Font"), fonts);
+            page.ensureResources().getPdfDictionary().set(PdfName.of("Font"), fonts);
 
             // Now ask TextBuilder to draw using "Helvetica" — it'll reuse F1
             // and supply the missing /Encoding.
@@ -191,14 +191,14 @@ class TextBuilderWinAnsiEncodingTest {
     void appendText_existingFontWithDifferentEncoding_preserved() throws IOException {
         try (Document doc = new Document()) {
             Page page = doc.getPages().add();
-            COSDictionary fonts = new COSDictionary();
-            COSDictionary helv = new COSDictionary();
-            helv.set(COSName.of("Type"), COSName.of("Font"));
-            helv.set(COSName.of("Subtype"), COSName.of("Type1"));
-            helv.set(COSName.of("BaseFont"), COSName.of("Helvetica"));
-            helv.set(COSName.of("Encoding"), COSName.of("MacRomanEncoding"));
+            PdfDictionary fonts = new PdfDictionary();
+            PdfDictionary helv = new PdfDictionary();
+            helv.set(PdfName.of("Type"), PdfName.of("Font"));
+            helv.set(PdfName.of("Subtype"), PdfName.of("Type1"));
+            helv.set(PdfName.of("BaseFont"), PdfName.of("Helvetica"));
+            helv.set(PdfName.of("Encoding"), PdfName.of("MacRomanEncoding"));
             fonts.set("F1", helv);
-            page.ensureResources().getCOSDictionary().set(COSName.of("Font"), fonts);
+            page.ensureResources().getPdfDictionary().set(PdfName.of("Font"), fonts);
 
             TextFragment f = new TextFragment("Hi");
             f.getTextState().setFontName("Helvetica");

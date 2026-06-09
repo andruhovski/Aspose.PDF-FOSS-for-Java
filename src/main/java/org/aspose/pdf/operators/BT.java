@@ -1,6 +1,6 @@
 package org.aspose.pdf.operators;
 
-import org.aspose.pdf.engine.cos.COSBase;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
 
 import java.util.List;
 
@@ -20,7 +20,7 @@ public class BT extends BlockTextOperator {
     }
 
     /** Creates a BT operator from parsed operands. */
-    public BT(List<COSBase> operands) {
+    public BT(List<PdfBase> operands) {
         super("BT", operands);
     }
 }

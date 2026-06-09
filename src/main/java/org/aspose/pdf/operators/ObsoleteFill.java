@@ -1,7 +1,7 @@
 package org.aspose.pdf.operators;
 
 import org.aspose.pdf.Operator;
-import org.aspose.pdf.engine.cos.COSBase;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
 
 import java.util.List;
 
@@ -20,7 +20,7 @@ public class ObsoleteFill extends Operator {
     }
 
     /** Creates an ObsoleteFill operator from parsed operands. */
-    public ObsoleteFill(List<COSBase> operands) {
+    public ObsoleteFill(List<PdfBase> operands) {
         super("F", operands);
     }
 }

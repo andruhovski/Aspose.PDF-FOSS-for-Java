@@ -1,4 +1,4 @@
-package org.aspose.pdf.engine.cos;
+package org.aspose.pdf.engine.pdfobjects;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -10,20 +10,20 @@ import java.util.logging.Logger;
 /**
  * PDF array object (§7.3.6, ISO 32000-1:2008).
  * <p>
- * An ordered collection of COS objects. Elements may be of different types.
+ * An ordered collection of PDF objects. Elements may be of different types.
  * Provides typed getters for convenience to avoid casts in client code.
  * </p>
  */
-public class COSArray extends COSBase implements Iterable<COSBase> {
+public class PdfArray extends PdfBase implements Iterable<PdfBase> {
 
-    private static final Logger LOG = Logger.getLogger(COSArray.class.getName());
+    private static final Logger LOG = Logger.getLogger(PdfArray.class.getName());
 
-    private final List<COSBase> items;
+    private final List<PdfBase> items;
 
     /**
      * Creates an empty array with default initial capacity.
      */
-    public COSArray() {
+    public PdfArray() {
         this.items = new ArrayList<>(8);
     }
 
@@ -32,7 +32,7 @@ public class COSArray extends COSBase implements Iterable<COSBase> {
      *
      * @param initialCapacity the initial capacity
      */
-    public COSArray(int initialCapacity) {
+    public PdfArray(int initialCapacity) {
         this.items = new ArrayList<>(initialCapacity);
     }
 
@@ -61,7 +61,7 @@ public class COSArray extends COSBase implements Iterable<COSBase> {
      * @return the element
      * @throws IndexOutOfBoundsException if index is out of range
      */
-    public COSBase get(int index) {
+    public PdfBase get(int index) {
         return items.get(index);
     }
 
@@ -71,9 +71,9 @@ public class COSArray extends COSBase implements Iterable<COSBase> {
      * @param item the element to add
      * @throws IllegalArgumentException if item is null
      */
-    public void add(COSBase item) {
+    public void add(PdfBase item) {
         if (item == null) {
-            item = COSNull.INSTANCE;
+            item = PdfNull.INSTANCE;
         }
         items.add(item);
         markDirty();
@@ -83,11 +83,11 @@ public class COSArray extends COSBase implements Iterable<COSBase> {
      * Inserts an element at the given index.
      *
      * @param index the insertion index
-     * @param item  the element to insert; null is treated as COSNull
+     * @param item  the element to insert; null is treated as PdfNull
      */
-    public void add(int index, COSBase item) {
+    public void add(int index, PdfBase item) {
         if (item == null) {
-            item = COSNull.INSTANCE;
+            item = PdfNull.INSTANCE;
         }
         items.add(index, item);
         markDirty();
@@ -97,12 +97,12 @@ public class COSArray extends COSBase implements Iterable<COSBase> {
      * Replaces the element at the given index.
      *
      * @param index the index
-     * @param item  the new element; null is treated as COSNull
+     * @param item  the new element; null is treated as PdfNull
      * @return the previous element
      */
-    public COSBase set(int index, COSBase item) {
+    public PdfBase set(int index, PdfBase item) {
         if (item == null) {
-            item = COSNull.INSTANCE;
+            item = PdfNull.INSTANCE;
         }
         markDirty();
         return items.set(index, item);
@@ -114,7 +114,7 @@ public class COSArray extends COSBase implements Iterable<COSBase> {
      * @param index the index
      * @return the removed element
      */
-    public COSBase remove(int index) {
+    public PdfBase remove(int index) {
         markDirty();
         return items.remove(index);
     }
@@ -137,9 +137,9 @@ public class COSArray extends COSBase implements Iterable<COSBase> {
      */
     public int getInt(int index, int defaultValue) {
         if (index < 0 || index >= items.size()) return defaultValue;
-        COSBase obj = items.get(index);
-        if (obj instanceof COSInteger) return ((COSInteger) obj).intValue();
-        if (obj instanceof COSFloat) return (int) ((COSFloat) obj).doubleValue();
+        PdfBase obj = items.get(index);
+        if (obj instanceof PdfInteger) return ((PdfInteger) obj).intValue();
+        if (obj instanceof PdfFloat) return (int) ((PdfFloat) obj).doubleValue();
         return defaultValue;
     }
 
@@ -152,9 +152,9 @@ public class COSArray extends COSBase implements Iterable<COSBase> {
      */
     public long getLong(int index, long defaultValue) {
         if (index < 0 || index >= items.size()) return defaultValue;
-        COSBase obj = items.get(index);
-        if (obj instanceof COSInteger) return ((COSInteger) obj).longValue();
-        if (obj instanceof COSFloat) return (long) ((COSFloat) obj).doubleValue();
+        PdfBase obj = items.get(index);
+        if (obj instanceof PdfInteger) return ((PdfInteger) obj).longValue();
+        if (obj instanceof PdfFloat) return (long) ((PdfFloat) obj).doubleValue();
         return defaultValue;
     }
 
@@ -167,9 +167,9 @@ public class COSArray extends COSBase implements Iterable<COSBase> {
      */
     public float getFloat(int index, float defaultValue) {
         if (index < 0 || index >= items.size()) return defaultValue;
-        COSBase obj = items.get(index);
-        if (obj instanceof COSFloat) return ((COSFloat) obj).floatValue();
-        if (obj instanceof COSInteger) return ((COSInteger) obj).floatValue();
+        PdfBase obj = items.get(index);
+        if (obj instanceof PdfFloat) return ((PdfFloat) obj).floatValue();
+        if (obj instanceof PdfInteger) return ((PdfInteger) obj).floatValue();
         return defaultValue;
     }
 
@@ -181,8 +181,8 @@ public class COSArray extends COSBase implements Iterable<COSBase> {
      */
     public String getName(int index) {
         if (index < 0 || index >= items.size()) return null;
-        COSBase obj = items.get(index);
-        return (obj instanceof COSName) ? ((COSName) obj).getName() : null;
+        PdfBase obj = items.get(index);
+        return (obj instanceof PdfName) ? ((PdfName) obj).getName() : null;
     }
 
     /**
@@ -193,32 +193,32 @@ public class COSArray extends COSBase implements Iterable<COSBase> {
      */
     public String getString(int index) {
         if (index < 0 || index >= items.size()) return null;
-        COSBase obj = items.get(index);
-        return (obj instanceof COSString) ? ((COSString) obj).getString() : null;
+        PdfBase obj = items.get(index);
+        return (obj instanceof PdfString) ? ((PdfString) obj).getString() : null;
     }
 
     /**
-     * Returns the element at the given index as a COSDictionary, or null.
+     * Returns the element at the given index as a PdfDictionary, or null.
      *
      * @param index the index
      * @return the dictionary or null
      */
-    public COSDictionary getDictionary(int index) {
+    public PdfDictionary getDictionary(int index) {
         if (index < 0 || index >= items.size()) return null;
-        COSBase obj = items.get(index);
-        return (obj instanceof COSDictionary) ? (COSDictionary) obj : null;
+        PdfBase obj = items.get(index);
+        return (obj instanceof PdfDictionary) ? (PdfDictionary) obj : null;
     }
 
     /**
-     * Returns the element at the given index as a COSArray, or null.
+     * Returns the element at the given index as a PdfArray, or null.
      *
      * @param index the index
      * @return the array or null
      */
-    public COSArray getArray(int index) {
+    public PdfArray getArray(int index) {
         if (index < 0 || index >= items.size()) return null;
-        COSBase obj = items.get(index);
-        return (obj instanceof COSArray) ? (COSArray) obj : null;
+        PdfBase obj = items.get(index);
+        return (obj instanceof PdfArray) ? (PdfArray) obj : null;
     }
 
     /**
@@ -248,7 +248,7 @@ public class COSArray extends COSBase implements Iterable<COSBase> {
     }
 
     @Override
-    public Iterator<COSBase> iterator() {
+    public Iterator<PdfBase> iterator() {
         return items.iterator();
     }
 
@@ -266,9 +266,9 @@ public class COSArray extends COSBase implements Iterable<COSBase> {
                 if (i > 0) {
                     os.write(' ');
                 }
-                COSBase item = items.get(i);
+                PdfBase item = items.get(i);
                 // If the item is an indirect object, write as reference to prevent cycles
-                if (item != null && !(item instanceof COSObjectReference)
+                if (item != null && !(item instanceof PdfObjectReference)
                         && item.getObjectKey() != null && item.getObjectKey().getObjectNumber() > 0) {
                     String ref = item.getObjectKey().getObjectNumber() + " "
                             + item.getObjectKey().getGenerationNumber() + " R";
@@ -284,15 +284,15 @@ public class COSArray extends COSBase implements Iterable<COSBase> {
     }
 
     @Override
-    public <T> T accept(ICOSVisitor<T> visitor) {
+    public <T> T accept(IPdfVisitor<T> visitor) {
         return visitor.visitArray(this);
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof COSArray)) return false;
-        return items.equals(((COSArray) o).items);
+        if (!(o instanceof PdfArray)) return false;
+        return items.equals(((PdfArray) o).items);
     }
 
     @Override
@@ -302,6 +302,6 @@ public class COSArray extends COSBase implements Iterable<COSBase> {
 
     @Override
     public String toString() {
-        return "COSArray{size=" + items.size() + "}";
+        return "PdfArray{size=" + items.size() + "}";
     }
 }

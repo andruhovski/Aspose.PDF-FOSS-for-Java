@@ -1,4 +1,4 @@
-package org.aspose.pdf.engine.cos;
+package org.aspose.pdf.engine.pdfobjects;
 
 import org.aspose.pdf.engine.filter.FilterFactory;
 import org.aspose.pdf.engine.security.PDFDecryptor;
@@ -22,9 +22,9 @@ import java.util.logging.Logger;
  * Provides lazy decoding with SoftReference caching.
  * </p>
  */
-public class COSStream extends COSDictionary {
+public class PdfStream extends PdfDictionary {
 
-    private static final Logger LOG = Logger.getLogger(COSStream.class.getName());
+    private static final Logger LOG = Logger.getLogger(PdfStream.class.getName());
 
     private static final byte[] STREAM_KEYWORD = "stream".getBytes(StandardCharsets.US_ASCII);
     private static final byte[] ENDSTREAM_KEYWORD = "endstream".getBytes(StandardCharsets.US_ASCII);
@@ -50,7 +50,7 @@ public class COSStream extends COSDictionary {
     /**
      * Creates an empty stream.
      */
-    public COSStream() {
+    public PdfStream() {
         this.encodedData = new byte[0];
     }
 
@@ -59,7 +59,7 @@ public class COSStream extends COSDictionary {
      *
      * @param encodedData the encoded bytes
      */
-    public COSStream(byte[] encodedData) {
+    public PdfStream(byte[] encodedData) {
         this.encodedData = encodedData != null ? encodedData.clone() : new byte[0];
     }
 
@@ -70,7 +70,7 @@ public class COSStream extends COSDictionary {
      * @param dict        the dictionary with stream metadata
      * @param encodedData the encoded bytes
      */
-    public COSStream(COSDictionary dict, byte[] encodedData) {
+    public PdfStream(PdfDictionary dict, byte[] encodedData) {
         if (dict != null) {
             this.map.putAll(dict.map);
         }
@@ -78,12 +78,12 @@ public class COSStream extends COSDictionary {
     }
 
     /**
-     * Returns this stream as a dictionary. Since COSStream extends COSDictionary,
+     * Returns this stream as a dictionary. Since PdfStream extends PdfDictionary,
      * this method returns {@code this}.
      *
      * @return this stream (which is also a dictionary)
      */
-    public COSDictionary getDictionary() {
+    public PdfDictionary getDictionary() {
         return this;
     }
 
@@ -131,7 +131,7 @@ public class COSStream extends COSDictionary {
         }
 
         // No filters → raw == decoded
-        List<COSName> filters = getFilters();
+        List<PdfName> filters = getFilters();
         if (filters.isEmpty()) {
             decodedData = new SoftReference<>(raw);
             return raw.clone();
@@ -139,9 +139,24 @@ public class COSStream extends COSDictionary {
 
         // Decode through filter chain
         byte[] decoded = decodeWithFilters(raw, filters);
-        decodedData = new SoftReference<>(decoded);
-        return decoded.clone();
+        if (decoded.length <= CACHE_AND_CLONE_LIMIT) {
+            decodedData = new SoftReference<>(decoded);
+            return decoded.clone();
+        }
+        // Huge decoded buffer (big scanned images): hand the only copy to the
+        // caller instead of cache + defensive clone — the clone doubles peak
+        // memory per access (2 × 200 MB for a single image render) and, across
+        // worker threads in mass-corpus runs, ends in OutOfMemoryError. Not
+        // caching keeps the stream consistent: the next call re-decodes.
+        return decoded;
     }
+
+    /**
+     * Decoded buffers up to this size (16 MB) are soft-cached and returned as
+     * defensive clones; larger ones are re-decoded per call — see
+     * {@link #getDecodedData()}.
+     */
+    private static final int CACHE_AND_CLONE_LIMIT = 16 << 20;
 
     /**
      * Returns the decoded data as an InputStream.
@@ -271,21 +286,21 @@ public class COSStream extends COSDictionary {
      *
      * @return the filter names (may be empty)
      */
-    public List<COSName> getFilters() {
-        COSBase filterObj = get(COSName.FILTER);
+    public List<PdfName> getFilters() {
+        PdfBase filterObj = get(PdfName.FILTER);
         if (filterObj == null) {
             return Collections.emptyList();
         }
-        if (filterObj instanceof COSName) {
-            return Collections.singletonList((COSName) filterObj);
+        if (filterObj instanceof PdfName) {
+            return Collections.singletonList((PdfName) filterObj);
         }
-        if (filterObj instanceof COSArray) {
-            COSArray arr = (COSArray) filterObj;
-            List<COSName> result = new ArrayList<>(arr.size());
+        if (filterObj instanceof PdfArray) {
+            PdfArray arr = (PdfArray) filterObj;
+            List<PdfName> result = new ArrayList<>(arr.size());
             for (int i = 0; i < arr.size(); i++) {
-                COSBase item = arr.get(i);
-                if (item instanceof COSName) {
-                    result.add((COSName) item);
+                PdfBase item = arr.get(i);
+                if (item instanceof PdfName) {
+                    result.add((PdfName) item);
                 }
             }
             return result;
@@ -298,11 +313,11 @@ public class COSStream extends COSDictionary {
      *
      * @param filter the filter name
      */
-    public void setFilter(COSName filter) {
+    public void setFilter(PdfName filter) {
         if (filter == null) {
-            set(COSName.FILTER, null);
+            set(PdfName.FILTER, null);
         } else {
-            set(COSName.FILTER, filter);
+            set(PdfName.FILTER, filter);
         }
     }
 
@@ -311,17 +326,17 @@ public class COSStream extends COSDictionary {
      *
      * @param filters the filter names
      */
-    public void setFilters(List<COSName> filters) {
+    public void setFilters(List<PdfName> filters) {
         if (filters == null || filters.isEmpty()) {
-            set(COSName.FILTER, null);
+            set(PdfName.FILTER, null);
         } else if (filters.size() == 1) {
-            set(COSName.FILTER, filters.get(0));
+            set(PdfName.FILTER, filters.get(0));
         } else {
-            COSArray arr = new COSArray(filters.size());
-            for (COSName f : filters) {
+            PdfArray arr = new PdfArray(filters.size());
+            for (PdfName f : filters) {
                 arr.add(f);
             }
-            set(COSName.FILTER, arr);
+            set(PdfName.FILTER, arr);
         }
     }
 
@@ -335,7 +350,7 @@ public class COSStream extends COSDictionary {
      */
     public byte[] prepareEncodedData() throws IOException {
         if (pendingDecodedData != null && encodedData == null) {
-            List<COSName> filters = getFilters();
+            List<PdfName> filters = getFilters();
             if (filters.isEmpty()) {
                 encodedData = pendingDecodedData;
             } else {
@@ -355,7 +370,7 @@ public class COSStream extends COSDictionary {
         }
 
         // Update /Length
-        set(COSName.LENGTH, COSInteger.valueOf(encodedData.length));
+        set(PdfName.LENGTH, PdfInteger.valueOf(encodedData.length));
 
         // Write dictionary
         super.writeTo(os);
@@ -370,20 +385,20 @@ public class COSStream extends COSDictionary {
     }
 
     @Override
-    public <T> T accept(ICOSVisitor<T> visitor) {
+    public <T> T accept(IPdfVisitor<T> visitor) {
         return visitor.visitStream(this);
     }
 
     @Override
     public String toString() {
-        return "COSStream{dictSize=" + map.size() + ", length=" + getLength() + "}";
+        return "PdfStream{dictSize=" + map.size() + ", length=" + getLength() + "}";
     }
 
     /**
      * Decodes data through the filter chain using FilterFactory.
      * Filters are applied left-to-right per §7.4.1.
      */
-    private byte[] decodeWithFilters(byte[] data, List<COSName> filters) throws IOException {
+    private byte[] decodeWithFilters(byte[] data, List<PdfName> filters) throws IOException {
         LOG.fine(() -> "Decoding stream with " + filters.size() + " filter(s)");
         return FilterFactory.decodeChain(data, filters, getEffectiveDecodeParams(filters));
     }
@@ -400,28 +415,28 @@ public class COSStream extends COSDictionary {
      * We materialize that fallback here so the filter receives a self-contained
      * parameter dictionary.</p>
      */
-    private List<COSDictionary> getEffectiveDecodeParams(List<COSName> filters) {
-        List<COSDictionary> base = getDecodeParams();
+    private List<PdfDictionary> getEffectiveDecodeParams(List<PdfName> filters) {
+        List<PdfDictionary> base = getDecodeParams();
         if (filters == null || filters.isEmpty()) return base;
-        List<COSDictionary> result = new ArrayList<>(filters.size());
+        List<PdfDictionary> result = new ArrayList<>(filters.size());
         for (int i = 0; i < filters.size(); i++) {
-            COSName filterName = filters.get(i);
-            COSDictionary parms = (base != null && i < base.size()) ? base.get(i) : null;
+            PdfName filterName = filters.get(i);
+            PdfDictionary parms = (base != null && i < base.size()) ? base.get(i) : null;
             if (filterName != null && "CCITTFaxDecode".equals(filterName.getName())) {
-                COSDictionary augmented = new COSDictionary();
+                PdfDictionary augmented = new PdfDictionary();
                 if (parms != null) {
-                    for (java.util.Map.Entry<COSName, COSBase> e : parms) {
+                    for (java.util.Map.Entry<PdfName, PdfBase> e : parms) {
                         augmented.set(e.getKey(), e.getValue());
                     }
                 }
                 // /Rows fallback ← /Height (image dict, §7.4.6 vs §8.9.5.1)
                 if (augmented.get("Rows") == null) {
-                    COSBase h = get("Height");
+                    PdfBase h = get("Height");
                     if (h != null) augmented.set("Rows", h);
                 }
                 // /Columns fallback ← /Width (some PDFs omit /Columns too)
                 if (augmented.get("Columns") == null) {
-                    COSBase w = get("Width");
+                    PdfBase w = get("Width");
                     if (w != null) augmented.set("Columns", w);
                 }
                 result.add(augmented);
@@ -436,31 +451,31 @@ public class COSStream extends COSDictionary {
      * Encodes data through the filter chain using FilterFactory.
      * Filters are applied right-to-left per §7.4.1.
      */
-    private byte[] encodeWithFilters(byte[] data, List<COSName> filters) throws IOException {
+    private byte[] encodeWithFilters(byte[] data, List<PdfName> filters) throws IOException {
         LOG.fine(() -> "Encoding stream with " + filters.size() + " filter(s)");
         return FilterFactory.encodeChain(data, filters, getEncodeParams(filters));
     }
 
     /**
-     * Reads the /DecodeParms entry and returns it as a list of COSDictionary.
+     * Reads the /DecodeParms entry and returns it as a list of PdfDictionary.
      * If absent, returns null. If a single dictionary, returns a singleton list.
      * If an array, iterates and casts each element.
      */
-    private List<COSDictionary> getDecodeParams() {
-        COSBase dp = get(COSName.DECODE_PARMS);
+    private List<PdfDictionary> getDecodeParams() {
+        PdfBase dp = get(PdfName.DECODE_PARMS);
         if (dp == null) {
             return null;
         }
-        if (dp instanceof COSDictionary) {
-            return Collections.singletonList((COSDictionary) dp);
+        if (dp instanceof PdfDictionary) {
+            return Collections.singletonList((PdfDictionary) dp);
         }
-        if (dp instanceof COSArray) {
-            COSArray arr = (COSArray) dp;
-            List<COSDictionary> result = new ArrayList<>(arr.size());
+        if (dp instanceof PdfArray) {
+            PdfArray arr = (PdfArray) dp;
+            List<PdfDictionary> result = new ArrayList<>(arr.size());
             for (int i = 0; i < arr.size(); i++) {
-                COSBase item = arr.get(i);
-                if (item instanceof COSDictionary) {
-                    result.add((COSDictionary) item);
+                PdfBase item = arr.get(i);
+                if (item instanceof PdfDictionary) {
+                    result.add((PdfDictionary) item);
                 } else {
                     result.add(null);
                 }
@@ -478,17 +493,17 @@ public class COSStream extends COSDictionary {
      * /ColorSpace. We therefore merge each filter's decode-parameter dictionary
      * over a shallow copy of the stream dictionary.</p>
      */
-    private List<COSDictionary> getEncodeParams(List<COSName> filters) {
+    private List<PdfDictionary> getEncodeParams(List<PdfName> filters) {
         if (filters == null || filters.isEmpty()) {
             return null;
         }
-        List<COSDictionary> decodeParams = getDecodeParams();
-        List<COSDictionary> result = new ArrayList<>(filters.size());
+        List<PdfDictionary> decodeParams = getDecodeParams();
+        List<PdfDictionary> result = new ArrayList<>(filters.size());
         for (int i = 0; i < filters.size(); i++) {
-            COSDictionary merged = new COSDictionary(this);
+            PdfDictionary merged = new PdfDictionary(this);
             if (decodeParams != null && i < decodeParams.size() && decodeParams.get(i) != null) {
-                COSDictionary perFilter = decodeParams.get(i);
-                for (java.util.Map.Entry<COSName, COSBase> entry : perFilter) {
+                PdfDictionary perFilter = decodeParams.get(i);
+                for (java.util.Map.Entry<PdfName, PdfBase> entry : perFilter) {
                     merged.set(entry.getKey(), entry.getValue());
                 }
             }

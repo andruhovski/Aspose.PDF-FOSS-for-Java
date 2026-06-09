@@ -1,10 +1,10 @@
 package org.aspose.pdf.engine.pdfa.rules;
 
 import org.aspose.pdf.PdfFormat;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 import org.aspose.pdf.engine.pdfa.PdfARule;
 import org.aspose.pdf.engine.pdfa.PdfAValidationResult;
 import org.aspose.pdf.engine.parser.PDFParser;
@@ -41,7 +41,7 @@ public final class MetadataRules implements PdfARule {
             return;
         }
 
-        COSDictionary catalog;
+        PdfDictionary catalog;
         try {
             catalog = parser.getCatalog();
         } catch (IOException e) {
@@ -52,7 +52,7 @@ public final class MetadataRules implements PdfARule {
         }
 
         // 6.7.2: Catalog must have /Metadata
-        COSBase metadataRef = catalog.get("Metadata");
+        PdfBase metadataRef = catalog.get("Metadata");
         if (metadataRef == null) {
             result.addError("6.7.2",
                     "Catalog must contain /Metadata stream for PDF/A compliance",
@@ -60,15 +60,15 @@ public final class MetadataRules implements PdfARule {
             return;
         }
 
-        COSBase metadata = resolve(metadataRef);
-        if (!(metadata instanceof COSStream)) {
+        PdfBase metadata = resolve(metadataRef);
+        if (!(metadata instanceof PdfStream)) {
             result.addError("6.7.2",
                     "Catalog /Metadata must be a stream object",
                     "catalog/Metadata", "6.7.2");
             return;
         }
 
-        COSStream metaStream = (COSStream) metadata;
+        PdfStream metaStream = (PdfStream) metadata;
 
         // 6.7.2: Metadata stream must not have /Filter
         if (metaStream.get("Filter") != null) {
@@ -87,7 +87,7 @@ public final class MetadataRules implements PdfARule {
      * <p>This is a string-based check on the raw XMP data. If an XmpMetadataHandler
      * is available in the future, it should be used for proper XML parsing.</p>
      */
-    private void checkXmpIdentification(COSStream metaStream, PdfFormat format,
+    private void checkXmpIdentification(PdfStream metaStream, PdfFormat format,
                                          PdfAValidationResult result) {
         byte[] data;
         try {
@@ -192,12 +192,12 @@ public final class MetadataRules implements PdfARule {
     }
 
     /**
-     * Resolves a COSBase value, dereferencing indirect references.
+     * Resolves a PdfBase value, dereferencing indirect references.
      */
-    private static COSBase resolve(COSBase val) {
-        if (val instanceof COSObjectReference) {
+    private static PdfBase resolve(PdfBase val) {
+        if (val instanceof PdfObjectReference) {
             try {
-                val = ((COSObjectReference) val).dereference();
+                val = ((PdfObjectReference) val).dereference();
             } catch (IOException e) {
                 return null;
             }

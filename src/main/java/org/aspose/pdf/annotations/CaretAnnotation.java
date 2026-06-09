@@ -1,7 +1,7 @@
 package org.aspose.pdf.annotations;
 
 import org.aspose.pdf.*;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 /**
  * Caret annotation (ISO 32000-1:2008, Section 12.5.6.11, /Subtype /Caret).
@@ -14,12 +14,12 @@ import org.aspose.pdf.engine.cos.*;
 public class CaretAnnotation extends MarkupAnnotation {
 
     /**
-     * Constructs a caret annotation from an existing COS dictionary.
+     * Constructs a caret annotation from an existing PDF dictionary.
      *
-     * @param dict the COS dictionary backing this annotation
+     * @param dict the PDF dictionary backing this annotation
      * @param page the page this annotation belongs to
      */
-    public CaretAnnotation(COSDictionary dict, Page page) {
+    public CaretAnnotation(PdfDictionary dict, Page page) {
         super(dict, page);
     }
 
@@ -35,7 +35,7 @@ public class CaretAnnotation extends MarkupAnnotation {
         // A caret needs a positive-area box to host its glyph; callers with a
         // single coordinate should use atPoint(Page, Point) instead.
         requirePositiveArea(rect);
-        dict.set(COSName.of("Subtype"), COSName.of("Caret"));
+        dict.set(PdfName.of("Subtype"), PdfName.of("Caret"));
     }
 
     /**

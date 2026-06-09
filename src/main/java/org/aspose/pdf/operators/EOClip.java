@@ -1,7 +1,7 @@
 package org.aspose.pdf.operators;
 
 import org.aspose.pdf.Operator;
-import org.aspose.pdf.engine.cos.COSBase;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
 
 import java.util.List;
 
@@ -21,7 +21,7 @@ public class EOClip extends Operator {
     }
 
     /** Creates an EOClip operator from parsed operands. */
-    public EOClip(List<COSBase> operands) {
+    public EOClip(List<PdfBase> operands) {
         super("W*", operands);
     }
 }

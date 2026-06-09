@@ -3,14 +3,14 @@ package org.aspose.pdf.tests;
 import org.aspose.pdf.CryptoAlgorithm;
 import org.aspose.pdf.Document;
 import org.aspose.pdf.Page;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSNull;
-import org.aspose.pdf.engine.cos.COSObjectKey;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfNull;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectKey;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 import org.aspose.pdf.engine.io.RandomAccessReader;
 import org.aspose.pdf.engine.parser.PDFParser;
 import org.aspose.pdf.engine.security.PDFEncryptionDict;
@@ -210,20 +210,20 @@ public class PDFWriterEncryptionTest {
         PDFParser parser = new PDFParser(reader);
         parser.parse();
 
-        Map<COSObjectKey, COSBase> objects = loadAllObjects(parser);
+        Map<PdfObjectKey, PdfBase> objects = loadAllObjects(parser);
         int maxObjNum = maxObjectNumber(objects);
 
         // Create /Info dictionary with /Title
-        COSDictionary infoDict = new COSDictionary();
-        infoDict.set(COSName.of("Title"), new COSString(title));
-        COSObjectKey infoKey = new COSObjectKey(++maxObjNum, 0);
+        PdfDictionary infoDict = new PdfDictionary();
+        infoDict.set(PdfName.of("Title"), new PdfString(title));
+        PdfObjectKey infoKey = new PdfObjectKey(++maxObjNum, 0);
         objects.put(infoKey, infoDict);
 
         // Update trailer with /Info reference
-        COSDictionary trailer = new COSDictionary(parser.getTrailer());
-        trailer.remove(COSName.of("Prev"));
-        trailer.remove(COSName.of("XRefStm"));
-        trailer.set(COSName.INFO, new COSObjectReference(infoKey, k -> objects.get(k)));
+        PdfDictionary trailer = new PdfDictionary(parser.getTrailer());
+        trailer.remove(PdfName.of("Prev"));
+        trailer.remove(PdfName.of("XRefStm"));
+        trailer.set(PdfName.INFO, new PdfObjectReference(infoKey, k -> objects.get(k)));
 
         try (FileOutputStream fos = new FileOutputStream(path)) {
             PDFWriter writer = new PDFWriter(fos, parser.getVersion());
@@ -242,7 +242,7 @@ public class PDFWriterEncryptionTest {
         PDFParser parser = new PDFParser(reader);
         parser.parse();
 
-        Map<COSObjectKey, COSBase> objects = loadAllObjects(parser);
+        Map<PdfObjectKey, PdfBase> objects = loadAllObjects(parser);
         int maxObjNum = maxObjectNumber(objects);
 
         byte[] userPwBytes = userPw.getBytes(StandardCharsets.UTF_8);
@@ -281,19 +281,19 @@ public class PDFWriterEncryptionTest {
         PDFEncryptor encryptor = new PDFEncryptor(encKey, encDict);
 
         // Register /Encrypt dict as indirect object
-        COSObjectKey encDictKey = new COSObjectKey(++maxObjNum, 0);
-        objects.put(encDictKey, encDict.getCOSDictionary());
+        PdfObjectKey encDictKey = new PdfObjectKey(++maxObjNum, 0);
+        objects.put(encDictKey, encDict.getPdfDictionary());
 
         // Build trailer with /Encrypt and /ID
-        COSDictionary trailer = new COSDictionary(parser.getTrailer());
-        trailer.remove(COSName.of("Prev"));
-        trailer.remove(COSName.of("XRefStm"));
-        trailer.set(COSName.of("Encrypt"), new COSObjectReference(encDictKey, k -> objects.get(k)));
+        PdfDictionary trailer = new PdfDictionary(parser.getTrailer());
+        trailer.remove(PdfName.of("Prev"));
+        trailer.remove(PdfName.of("XRefStm"));
+        trailer.set(PdfName.of("Encrypt"), new PdfObjectReference(encDictKey, k -> objects.get(k)));
 
-        COSArray idArray = new COSArray();
-        idArray.add(new COSString(documentId));
-        idArray.add(new COSString(documentId));
-        trailer.set(COSName.of("ID"), idArray);
+        PdfArray idArray = new PdfArray();
+        idArray.add(new PdfString(documentId));
+        idArray.add(new PdfString(documentId));
+        trailer.set(PdfName.of("ID"), idArray);
 
         // Write encrypted PDF
         try (FileOutputStream fos = new FileOutputStream(output)) {
@@ -305,20 +305,20 @@ public class PDFWriterEncryptionTest {
         reader.close();
     }
 
-    private Map<COSObjectKey, COSBase> loadAllObjects(PDFParser parser) throws IOException {
-        Map<COSObjectKey, COSBase> objects = new LinkedHashMap<>();
-        for (COSObjectKey key : parser.getAllObjectKeys()) {
-            COSBase obj = parser.getObject(key);
-            if (obj != null && !(obj instanceof COSNull)) {
+    private Map<PdfObjectKey, PdfBase> loadAllObjects(PDFParser parser) throws IOException {
+        Map<PdfObjectKey, PdfBase> objects = new LinkedHashMap<>();
+        for (PdfObjectKey key : parser.getAllObjectKeys()) {
+            PdfBase obj = parser.getObject(key);
+            if (obj != null && !(obj instanceof PdfNull)) {
                 objects.put(key, obj);
             }
         }
         return objects;
     }
 
-    private int maxObjectNumber(Map<COSObjectKey, COSBase> objects) {
+    private int maxObjectNumber(Map<PdfObjectKey, PdfBase> objects) {
         return objects.keySet().stream()
-                .mapToInt(COSObjectKey::getObjectNumber)
+                .mapToInt(PdfObjectKey::getObjectNumber)
                 .max().orElse(0);
     }
 

@@ -1,8 +1,8 @@
 package org.aspose.pdf.engine.function;
 
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
 import org.aspose.pdf.engine.parser.PDFParser;
 
 import java.io.IOException;
@@ -21,7 +21,7 @@ public final class StitchingFunction extends PdfFunction {
     private final double[] encode;
 
     /**
-     * Creates a stitching function from a COS dictionary.
+     * Creates a stitching function from a PDF dictionary.
      *
      * @param dict   the function dictionary
      * @param domain the input domain
@@ -29,13 +29,13 @@ public final class StitchingFunction extends PdfFunction {
      * @param parser the PDF parser for resolving subfunctions
      * @throws IOException if subfunctions cannot be parsed
      */
-    public StitchingFunction(COSDictionary dict, double[] domain, double[] range,
+    public StitchingFunction(PdfDictionary dict, double[] domain, double[] range,
                               PDFParser parser) throws IOException {
         super(domain, range);
 
-        COSBase funcsObj = dict.get("Functions");
-        if (funcsObj instanceof COSArray) {
-            COSArray funcsArr = (COSArray) funcsObj;
+        PdfBase funcsObj = dict.get("Functions");
+        if (funcsObj instanceof PdfArray) {
+            PdfArray funcsArr = (PdfArray) funcsObj;
             this.functions = new PdfFunction[funcsArr.size()];
             for (int i = 0; i < funcsArr.size(); i++) {
                 this.functions[i] = PdfFunction.parse(funcsArr.get(i), parser);

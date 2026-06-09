@@ -41,6 +41,8 @@ public class GraphicsState implements Cloneable {
     // ---- Transparency ----
     private float strokingAlpha;
     private float nonStrokingAlpha;
+    /** Blend mode from /BM (§11.3.5); shallow-copied on clone (immutable String). */
+    private String blendMode = "Normal";
 
     // ---- Font / text state ----
     private String fontName;
@@ -153,18 +155,32 @@ public class GraphicsState implements Cloneable {
         this.fillColor = new java.awt.Color(g, g, g);
     }
 
-    /** Sets the fill color from PDF CMYK components (0..1).
-     *  Delegates to {@link org.aspose.pdf.engine.colorspace.DeviceCMYK#toRGBInt},
-     *  which uses the naive subtractive formula (no ICC profile) — see its
-     *  Javadoc for the visual-rendering caveat. */
+    /** Sets the fill color from PDF CMYK components (0..1) via the
+     *  press-characterized display conversion
+     *  ({@link org.aspose.pdf.engine.colorspace.CmykDisplay}). */
     public void setFillColorCMYK(double c, double m, double y, double k) {
-        int argb = org.aspose.pdf.engine.colorspace.DeviceCMYK.INSTANCE
-                .toRGBInt(c, m, y, k);
+        // Press-characterized display conversion (CGATS LUT) - matches what
+        // ICC-aware viewers show; the algebraic formula made print grays
+        // greenish and crushed mid-tone mixes (corpus 10734).
+        int argb = org.aspose.pdf.engine.colorspace.CmykDisplay.toRGBInt(c, m, y, k);
         this.fillColor = new java.awt.Color(argb, false);
     }
 
     /** Sets the fill color directly. */
     public void setFillColor(java.awt.Color color) { this.fillColor = color; }
+
+    // ---- Active color spaces selected by cs/CS (ISO 32000 8.6.8) ----
+    private org.aspose.pdf.engine.colorspace.ColorSpaceBase fillColorSpace;
+    private org.aspose.pdf.engine.colorspace.ColorSpaceBase strokeColorSpace;
+
+    /** Returns the color space selected by the last {@code cs}, or null. */
+    public org.aspose.pdf.engine.colorspace.ColorSpaceBase getFillColorSpace() { return fillColorSpace; }
+    /** Stores the color space selected by {@code cs} for subsequent sc/scn. */
+    public void setFillColorSpace(org.aspose.pdf.engine.colorspace.ColorSpaceBase cs) { this.fillColorSpace = cs; }
+    /** Returns the color space selected by the last {@code CS}, or null. */
+    public org.aspose.pdf.engine.colorspace.ColorSpaceBase getStrokeColorSpace() { return strokeColorSpace; }
+    /** Stores the color space selected by {@code CS} for subsequent SC/SCN. */
+    public void setStrokeColorSpace(org.aspose.pdf.engine.colorspace.ColorSpaceBase cs) { this.strokeColorSpace = cs; }
 
     /** Returns the stroke color as an AWT color. */
     public java.awt.Color getStrokeColor() { return strokeColor; }
@@ -180,12 +196,11 @@ public class GraphicsState implements Cloneable {
         this.strokeColor = new java.awt.Color(g, g, g);
     }
 
-    /** Sets the stroke color from PDF CMYK components (0..1).
-     *  Delegates to {@link org.aspose.pdf.engine.colorspace.DeviceCMYK#toRGBInt}
-     *  (naive subtractive — see {@link #setFillColorCMYK}). */
+    /** Sets the stroke color from PDF CMYK components (0..1) via the
+     *  press-characterized display conversion
+     *  ({@link org.aspose.pdf.engine.colorspace.CmykDisplay}). */
     public void setStrokeColorCMYK(double c, double m, double y, double k) {
-        int argb = org.aspose.pdf.engine.colorspace.DeviceCMYK.INSTANCE
-                .toRGBInt(c, m, y, k);
+        int argb = org.aspose.pdf.engine.colorspace.CmykDisplay.toRGBInt(c, m, y, k);
         this.strokeColor = new java.awt.Color(argb, false);
     }
 
@@ -230,7 +245,13 @@ public class GraphicsState implements Cloneable {
      * @return the stroke
      */
     public BasicStroke createStroke() {
-        float w = Math.max((float) lineWidth, 0.1f);
+        // ISO 32000 §8.4.3.2: a line width of 0 denotes the thinnest line the
+        // device can render (one pixel) — NOT an invisible line. Java2D has
+        // the same convention: a 0-width BasicStroke is a device-space
+        // hairline, immune to CTM scaling (a 0.1 floor here would shrink to
+        // nothing under a down-scaling CTM, e.g. 0.05 in corpus 29903.pdf).
+        // Small positive widths keep the historical 0.1 floor.
+        float w = lineWidth == 0 ? 0f : Math.max((float) lineWidth, 0.1f);
         int cap = mapLineCap(lineCap);
         int join = mapLineJoin(lineJoin);
         float ml = Math.max((float) miterLimit, 1.0f);
@@ -251,6 +272,13 @@ public class GraphicsState implements Cloneable {
     public float getNonStrokingAlpha() { return nonStrokingAlpha; }
     /** Sets the non-stroking alpha. */
     public void setNonStrokingAlpha(float alpha) { this.nonStrokingAlpha = alpha; }
+
+    /** Returns the blend mode (/BM, §11.3.5). Default "Normal". */
+    public String getBlendMode() { return blendMode; }
+    /** Sets the blend mode; null resets to "Normal". */
+    public void setBlendMode(String mode) {
+        this.blendMode = (mode != null && !mode.isEmpty()) ? mode : "Normal";
+    }
 
     // ================ Font / Text state ================
 

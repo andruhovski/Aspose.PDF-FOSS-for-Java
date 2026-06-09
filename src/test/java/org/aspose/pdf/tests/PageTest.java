@@ -3,15 +3,15 @@ package org.aspose.pdf.tests;
 import org.aspose.pdf.Page;
 import org.aspose.pdf.Rectangle;
 import org.aspose.pdf.Resources;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSFloat;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectKey;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfFloat;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectKey;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -21,12 +21,12 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class PageTest {
 
-    private static COSArray makeBox(double llx, double lly, double urx, double ury) {
-        COSArray box = new COSArray(4);
-        box.add(new COSFloat(llx));
-        box.add(new COSFloat(lly));
-        box.add(new COSFloat(urx));
-        box.add(new COSFloat(ury));
+    private static PdfArray makeBox(double llx, double lly, double urx, double ury) {
+        PdfArray box = new PdfArray(4);
+        box.add(new PdfFloat(llx));
+        box.add(new PdfFloat(lly));
+        box.add(new PdfFloat(urx));
+        box.add(new PdfFloat(ury));
         return box;
     }
 
@@ -37,8 +37,8 @@ public class PageTest {
 
     @Test
     public void getMediaBoxFromPageDict() {
-        COSDictionary dict = new COSDictionary();
-        dict.set("Type", COSName.PAGE);
+        PdfDictionary dict = new PdfDictionary();
+        dict.set("Type", PdfName.PAGE);
         dict.set("MediaBox", makeBox(0, 0, 612, 792));
 
         Page page = new Page(dict, null);
@@ -53,13 +53,13 @@ public class PageTest {
     @Test
     public void getMediaBoxInheritedFromParent() {
         // Parent /Pages node has MediaBox
-        COSDictionary parentDict = new COSDictionary();
-        parentDict.set("Type", COSName.PAGES);
+        PdfDictionary parentDict = new PdfDictionary();
+        parentDict.set("Type", PdfName.PAGES);
         parentDict.set("MediaBox", makeBox(0, 0, 595, 842));
 
         // Page dict has NO MediaBox, but /Parent points to parentDict
-        COSDictionary pageDict = new COSDictionary();
-        pageDict.set("Type", COSName.PAGE);
+        PdfDictionary pageDict = new PdfDictionary();
+        pageDict.set("Type", PdfName.PAGE);
         pageDict.set("Parent", parentDict);
 
         Page page = new Page(pageDict, null);
@@ -72,18 +72,18 @@ public class PageTest {
     @Test
     public void getMediaBoxInheritedFromGrandparent() {
         // Grandparent
-        COSDictionary grandparent = new COSDictionary();
-        grandparent.set("Type", COSName.PAGES);
+        PdfDictionary grandparent = new PdfDictionary();
+        grandparent.set("Type", PdfName.PAGES);
         grandparent.set("MediaBox", makeBox(0, 0, 400, 600));
 
         // Parent - no MediaBox
-        COSDictionary parent = new COSDictionary();
-        parent.set("Type", COSName.PAGES);
+        PdfDictionary parent = new PdfDictionary();
+        parent.set("Type", PdfName.PAGES);
         parent.set("Parent", grandparent);
 
         // Page - no MediaBox
-        COSDictionary pageDict = new COSDictionary();
-        pageDict.set("Type", COSName.PAGE);
+        PdfDictionary pageDict = new PdfDictionary();
+        pageDict.set("Type", PdfName.PAGE);
         pageDict.set("Parent", parent);
 
         Page page = new Page(pageDict, null);
@@ -94,7 +94,7 @@ public class PageTest {
 
     @Test
     public void getCropBoxDefaultsToMediaBox() {
-        COSDictionary dict = new COSDictionary();
+        PdfDictionary dict = new PdfDictionary();
         dict.set("MediaBox", makeBox(0, 0, 612, 792));
 
         Page page = new Page(dict, null);
@@ -105,7 +105,7 @@ public class PageTest {
 
     @Test
     public void getCropBoxExplicit() {
-        COSDictionary dict = new COSDictionary();
+        PdfDictionary dict = new PdfDictionary();
         dict.set("MediaBox", makeBox(0, 0, 612, 792));
         dict.set("CropBox", makeBox(10, 10, 600, 780));
 
@@ -118,7 +118,7 @@ public class PageTest {
 
     @Test
     public void getArtBoxDefaultsToCropBox() {
-        COSDictionary dict = new COSDictionary();
+        PdfDictionary dict = new PdfDictionary();
         dict.set("MediaBox", makeBox(0, 0, 612, 792));
 
         Page page = new Page(dict, null);
@@ -128,7 +128,7 @@ public class PageTest {
 
     @Test
     public void getBleedBoxDefaultsToCropBox() {
-        COSDictionary dict = new COSDictionary();
+        PdfDictionary dict = new PdfDictionary();
         dict.set("MediaBox", makeBox(0, 0, 612, 792));
 
         Page page = new Page(dict, null);
@@ -137,7 +137,7 @@ public class PageTest {
 
     @Test
     public void getTrimBoxDefaultsToCropBox() {
-        COSDictionary dict = new COSDictionary();
+        PdfDictionary dict = new PdfDictionary();
         dict.set("MediaBox", makeBox(0, 0, 612, 792));
 
         Page page = new Page(dict, null);
@@ -146,7 +146,7 @@ public class PageTest {
 
     @Test
     public void getArtBoxExplicit() {
-        COSDictionary dict = new COSDictionary();
+        PdfDictionary dict = new PdfDictionary();
         dict.set("MediaBox", makeBox(0, 0, 612, 792));
         dict.set("ArtBox", makeBox(20, 20, 500, 700));
 
@@ -158,7 +158,7 @@ public class PageTest {
 
     @Test
     public void getRectSameAsCropBox() {
-        COSDictionary dict = new COSDictionary();
+        PdfDictionary dict = new PdfDictionary();
         dict.set("MediaBox", makeBox(0, 0, 612, 792));
         dict.set("CropBox", makeBox(5, 5, 607, 787));
 
@@ -168,7 +168,7 @@ public class PageTest {
 
     @Test
     public void getRotateDefault() {
-        COSDictionary dict = new COSDictionary();
+        PdfDictionary dict = new PdfDictionary();
         dict.set("MediaBox", makeBox(0, 0, 612, 792));
 
         Page page = new Page(dict, null);
@@ -177,8 +177,8 @@ public class PageTest {
 
     @Test
     public void getRotateExplicit() {
-        COSDictionary dict = new COSDictionary();
-        dict.set("Rotate", COSInteger.valueOf(90));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set("Rotate", PdfInteger.valueOf(90));
 
         Page page = new Page(dict, null);
         assertEquals(90, page.getRotate());
@@ -186,12 +186,12 @@ public class PageTest {
 
     @Test
     public void getRotateInheritedFromParent() {
-        COSDictionary parent = new COSDictionary();
-        parent.set("Type", COSName.PAGES);
-        parent.set("Rotate", COSInteger.valueOf(180));
+        PdfDictionary parent = new PdfDictionary();
+        parent.set("Type", PdfName.PAGES);
+        parent.set("Rotate", PdfInteger.valueOf(180));
 
-        COSDictionary pageDict = new COSDictionary();
-        pageDict.set("Type", COSName.PAGE);
+        PdfDictionary pageDict = new PdfDictionary();
+        pageDict.set("Type", PdfName.PAGE);
         pageDict.set("Parent", parent);
 
         Page page = new Page(pageDict, null);
@@ -200,40 +200,40 @@ public class PageTest {
 
     @Test
     public void getResourcesFromPageDict() {
-        COSDictionary resourcesDict = new COSDictionary();
-        COSDictionary fontDict = new COSDictionary();
+        PdfDictionary resourcesDict = new PdfDictionary();
+        PdfDictionary fontDict = new PdfDictionary();
         resourcesDict.set("Font", fontDict);
 
-        COSDictionary dict = new COSDictionary();
+        PdfDictionary dict = new PdfDictionary();
         dict.set("Resources", resourcesDict);
 
         Page page = new Page(dict, null);
         Resources res = page.getResources();
         assertNotNull(res);
-        assertSame(resourcesDict, res.getCOSDictionary());
+        assertSame(resourcesDict, res.getPdfDictionary());
     }
 
     @Test
     public void getResourcesInheritedFromParent() {
-        COSDictionary resourcesDict = new COSDictionary();
+        PdfDictionary resourcesDict = new PdfDictionary();
 
-        COSDictionary parent = new COSDictionary();
-        parent.set("Type", COSName.PAGES);
+        PdfDictionary parent = new PdfDictionary();
+        parent.set("Type", PdfName.PAGES);
         parent.set("Resources", resourcesDict);
 
-        COSDictionary pageDict = new COSDictionary();
-        pageDict.set("Type", COSName.PAGE);
+        PdfDictionary pageDict = new PdfDictionary();
+        pageDict.set("Type", PdfName.PAGE);
         pageDict.set("Parent", parent);
 
         Page page = new Page(pageDict, null);
         Resources res = page.getResources();
         assertNotNull(res);
-        assertSame(resourcesDict, res.getCOSDictionary());
+        assertSame(resourcesDict, res.getPdfDictionary());
     }
 
     @Test
     public void getContentsReturnsEmptyWhenAbsent() throws Exception {
-        COSDictionary dict = new COSDictionary();
+        PdfDictionary dict = new PdfDictionary();
         Page page = new Page(dict, null);
         assertNotNull(page.getContents());
         assertEquals(0, page.getContents().size());
@@ -241,14 +241,14 @@ public class PageTest {
 
     @Test
     public void getRawContentsReturnsNullWhenAbsent() {
-        COSDictionary dict = new COSDictionary();
+        PdfDictionary dict = new PdfDictionary();
         Page page = new Page(dict, null);
         assertNull(page.getRawContents());
     }
 
     @Test
     public void getAnnotationsReturnsEmptyWhenAbsent() {
-        COSDictionary dict = new COSDictionary();
+        PdfDictionary dict = new PdfDictionary();
         Page page = new Page(dict, null);
         assertNotNull(page.getAnnotations());
         assertEquals(0, page.getAnnotations().getCount());
@@ -256,11 +256,11 @@ public class PageTest {
 
     @Test
     public void getAnnotationsReturnsCollection() {
-        COSArray annots = new COSArray(2);
-        COSDictionary annotDict = new COSDictionary();
-        annotDict.set(COSName.of("Subtype"), COSName.of("Text"));
+        PdfArray annots = new PdfArray(2);
+        PdfDictionary annotDict = new PdfDictionary();
+        annotDict.set(PdfName.of("Subtype"), PdfName.of("Text"));
         annots.add(annotDict);
-        COSDictionary dict = new COSDictionary();
+        PdfDictionary dict = new PdfDictionary();
         dict.set("Annots", annots);
 
         Page page = new Page(dict, null);
@@ -269,31 +269,31 @@ public class PageTest {
     }
 
     @Test
-    public void getCOSDictionaryReturnsUnderlying() {
-        COSDictionary dict = new COSDictionary();
+    public void getPdfDictionaryReturnsUnderlying() {
+        PdfDictionary dict = new PdfDictionary();
         Page page = new Page(dict, null);
-        assertSame(dict, page.getCOSDictionary());
+        assertSame(dict, page.getPdfDictionary());
     }
 
     @Test
     public void setAndGetNumber() {
-        Page page = new Page(new COSDictionary(), null);
+        Page page = new Page(new PdfDictionary(), null);
         page.setNumber(5);
         assertEquals(5, page.getNumber());
     }
 
     @Test
     public void indirectReferenceParentIsResolved() {
-        // Parent dict behind a COSObjectReference
-        COSDictionary parentDict = new COSDictionary();
-        parentDict.set("Type", COSName.PAGES);
+        // Parent dict behind a PdfObjectReference
+        PdfDictionary parentDict = new PdfDictionary();
+        parentDict.set("Type", PdfName.PAGES);
         parentDict.set("MediaBox", makeBox(0, 0, 300, 400));
 
-        COSObjectKey key = new COSObjectKey(2, 0);
-        COSObjectReference parentRef = new COSObjectReference(key, k -> parentDict);
+        PdfObjectKey key = new PdfObjectKey(2, 0);
+        PdfObjectReference parentRef = new PdfObjectReference(key, k -> parentDict);
 
-        COSDictionary pageDict = new COSDictionary();
-        pageDict.set("Type", COSName.PAGE);
+        PdfDictionary pageDict = new PdfDictionary();
+        pageDict.set("Type", PdfName.PAGE);
         pageDict.set("Parent", parentRef);
 
         Page page = new Page(pageDict, null);
@@ -305,13 +305,13 @@ public class PageTest {
 
     @Test
     public void indirectReferenceMediaBoxIsResolved() {
-        COSArray boxArray = makeBox(0, 0, 500, 700);
-        COSObjectKey key = new COSObjectKey(10, 0);
-        COSObjectReference boxRef = new COSObjectReference(key, k -> boxArray);
+        PdfArray boxArray = makeBox(0, 0, 500, 700);
+        PdfObjectKey key = new PdfObjectKey(10, 0);
+        PdfObjectReference boxRef = new PdfObjectReference(key, k -> boxArray);
 
-        COSDictionary dict = new COSDictionary();
-        dict.set("Type", COSName.PAGE);
-        dict.set(COSName.MEDIABOX, boxRef);
+        PdfDictionary dict = new PdfDictionary();
+        dict.set("Type", PdfName.PAGE);
+        dict.set(PdfName.MEDIABOX, boxRef);
 
         Page page = new Page(dict, null);
         Rectangle mb = page.getMediaBox();

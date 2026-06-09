@@ -2,7 +2,7 @@ package org.aspose.pdf.tests;
 
 import org.aspose.pdf.*;
 import org.aspose.pdf.annotations.*;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 import org.aspose.pdf.forms.*;
 import org.junit.jupiter.api.Test;
 
@@ -20,9 +20,9 @@ public class FlattenTest {
      * Creates a minimal page dictionary with a MediaBox.
      */
     private Page createPage() {
-        COSDictionary pageDict = new COSDictionary();
-        pageDict.set(COSName.TYPE, COSName.PAGE);
-        pageDict.set(COSName.MEDIABOX, new Rectangle(0, 0, 595, 842).toCOSArray());
+        PdfDictionary pageDict = new PdfDictionary();
+        pageDict.set(PdfName.TYPE, PdfName.PAGE);
+        pageDict.set(PdfName.MEDIABOX, new Rectangle(0, 0, 595, 842).toPdfArray());
         return new Page(pageDict, null);
     }
 
@@ -32,21 +32,21 @@ public class FlattenTest {
      * @param rect       the annotation rectangle
      * @param apContent  the appearance stream content bytes
      * @param bbox       the appearance BBox
-     * @return the annotation COS dictionary
+     * @return the annotation PDF dictionary
      */
-    private COSDictionary createAnnotWithAppearance(Rectangle rect, String apContent, Rectangle bbox) {
-        COSDictionary annotDict = new COSDictionary();
-        annotDict.set(COSName.of("Type"), COSName.of("Annot"));
-        annotDict.set(COSName.of("Subtype"), COSName.of("Stamp"));
-        annotDict.set(COSName.of("Rect"), rect.toCOSArray());
+    private PdfDictionary createAnnotWithAppearance(Rectangle rect, String apContent, Rectangle bbox) {
+        PdfDictionary annotDict = new PdfDictionary();
+        annotDict.set(PdfName.of("Type"), PdfName.of("Annot"));
+        annotDict.set(PdfName.of("Subtype"), PdfName.of("Stamp"));
+        annotDict.set(PdfName.of("Rect"), rect.toPdfArray());
 
-        COSStream apStream = new COSStream();
+        PdfStream apStream = new PdfStream();
         apStream.setDecodedData(apContent.getBytes(StandardCharsets.US_ASCII));
-        apStream.set(COSName.BBOX, bbox.toCOSArray());
+        apStream.set(PdfName.BBOX, bbox.toPdfArray());
 
-        COSDictionary apDict = new COSDictionary();
-        apDict.set(COSName.of("N"), apStream);
-        annotDict.set(COSName.of("AP"), apDict);
+        PdfDictionary apDict = new PdfDictionary();
+        apDict.set(PdfName.of("N"), apStream);
+        annotDict.set(PdfName.of("AP"), apDict);
 
         return annotDict;
     }
@@ -54,29 +54,29 @@ public class FlattenTest {
     @Test
     public void testFlattenAnnotationAppendsCTM() throws IOException {
         Page page = createPage();
-        COSDictionary pageDict = page.getCOSDictionary();
+        PdfDictionary pageDict = page.getPdfDictionary();
 
         // Create annotation at (100,200)-(200,300) with a 100x100 BBox appearance
         Rectangle annotRect = new Rectangle(100, 200, 200, 300);
         Rectangle bbox = new Rectangle(0, 0, 100, 100);
         String apContent = "1 0 0 1 0 0 cm";
 
-        COSDictionary annotDict = createAnnotWithAppearance(annotRect, apContent, bbox);
+        PdfDictionary annotDict = createAnnotWithAppearance(annotRect, apContent, bbox);
 
         // Add annotation to page /Annots array
-        COSArray annots = new COSArray();
+        PdfArray annots = new PdfArray();
         annots.add(annotDict);
-        pageDict.set(COSName.ANNOTS, annots);
+        pageDict.set(PdfName.ANNOTS, annots);
 
         // Flatten
         page.flattenAnnotations();
 
         // Verify /Annots is removed
-        assertNull(pageDict.get(COSName.ANNOTS),
+        assertNull(pageDict.get(PdfName.ANNOTS),
                 "Annots should be removed after flattening");
 
         // Verify content stream was created with CTM operators
-        COSBase contents = pageDict.get(COSName.CONTENTS);
+        PdfBase contents = pageDict.get(PdfName.CONTENTS);
         assertNotNull(contents, "Content stream should exist after flattening");
 
         // Read the flattened content
@@ -91,13 +91,13 @@ public class FlattenTest {
         // 32000-1:2008 §12.5.5).
         assertTrue(contentStr.contains("Do"),
                 "Flattened content should invoke the appearance Form XObject via 'Do'");
-        COSDictionary xobjs = page.getResources().getXObjects();
+        PdfDictionary xobjs = page.getResources().getXObjects();
         assertNotNull(xobjs, "Flattening should register the appearance as an XObject");
         boolean apFound = false;
-        for (COSName key : xobjs.keySet()) {
-            COSBase v = xobjs.get(key);
-            if (v instanceof COSStream) {
-                String xc = new String(((COSStream) v).getDecodedData(), StandardCharsets.US_ASCII);
+        for (PdfName key : xobjs.keySet()) {
+            PdfBase v = xobjs.get(key);
+            if (v instanceof PdfStream) {
+                String xc = new String(((PdfStream) v).getDecodedData(), StandardCharsets.US_ASCII);
                 if (xc.contains(apContent)) { apFound = true; break; }
             }
         }
@@ -107,47 +107,47 @@ public class FlattenTest {
     @Test
     public void testFlattenSkipsHiddenAnnotation() throws IOException {
         Page page = createPage();
-        COSDictionary pageDict = page.getCOSDictionary();
+        PdfDictionary pageDict = page.getPdfDictionary();
 
         // Create hidden annotation (flag bit 2 = 0x02)
         Rectangle annotRect = new Rectangle(10, 10, 50, 50);
         Rectangle bbox = new Rectangle(0, 0, 40, 40);
-        COSDictionary annotDict = createAnnotWithAppearance(annotRect, "0 0 m", bbox);
-        annotDict.set(COSName.of("F"), COSInteger.valueOf(0x02)); // Hidden
+        PdfDictionary annotDict = createAnnotWithAppearance(annotRect, "0 0 m", bbox);
+        annotDict.set(PdfName.of("F"), PdfInteger.valueOf(0x02)); // Hidden
 
-        COSArray annots = new COSArray();
+        PdfArray annots = new PdfArray();
         annots.add(annotDict);
-        pageDict.set(COSName.ANNOTS, annots);
+        pageDict.set(PdfName.ANNOTS, annots);
 
         page.flattenAnnotations();
 
         // /Annots should still be removed (array is cleared)
-        assertNull(pageDict.get(COSName.ANNOTS));
+        assertNull(pageDict.get(PdfName.ANNOTS));
 
         // No content should have been appended (hidden annotation was skipped)
-        COSBase contents = pageDict.get(COSName.CONTENTS);
+        PdfBase contents = pageDict.get(PdfName.CONTENTS);
         assertNull(contents, "No content should be added for hidden annotations");
     }
 
     @Test
     public void testFlattenAnnotationWithNoAppearance() throws IOException {
         Page page = createPage();
-        COSDictionary pageDict = page.getCOSDictionary();
+        PdfDictionary pageDict = page.getPdfDictionary();
 
         // Create annotation without /AP
-        COSDictionary annotDict = new COSDictionary();
-        annotDict.set(COSName.of("Type"), COSName.of("Annot"));
-        annotDict.set(COSName.of("Subtype"), COSName.of("Text"));
-        annotDict.set(COSName.of("Rect"), new Rectangle(0, 0, 50, 50).toCOSArray());
+        PdfDictionary annotDict = new PdfDictionary();
+        annotDict.set(PdfName.of("Type"), PdfName.of("Annot"));
+        annotDict.set(PdfName.of("Subtype"), PdfName.of("Text"));
+        annotDict.set(PdfName.of("Rect"), new Rectangle(0, 0, 50, 50).toPdfArray());
 
-        COSArray annots = new COSArray();
+        PdfArray annots = new PdfArray();
         annots.add(annotDict);
-        pageDict.set(COSName.ANNOTS, annots);
+        pageDict.set(PdfName.ANNOTS, annots);
 
         page.flattenAnnotations();
 
-        assertNull(pageDict.get(COSName.ANNOTS));
-        assertNull(pageDict.get(COSName.CONTENTS),
+        assertNull(pageDict.get(PdfName.ANNOTS));
+        assertNull(pageDict.get(PdfName.CONTENTS),
                 "No content should be added when annotation has no appearance");
     }
 
@@ -157,40 +157,40 @@ public class FlattenTest {
         Document doc = new Document();
         PageCollection pages = doc.getPages();
         Page page = pages.add();
-        COSDictionary pageDict = page.getCOSDictionary();
+        PdfDictionary pageDict = page.getPdfDictionary();
 
         // Create a text field with appearance
-        COSDictionary fieldDict = new COSDictionary();
-        fieldDict.set(COSName.of("Type"), COSName.of("Annot"));
-        fieldDict.set(COSName.of("Subtype"), COSName.of("Widget"));
-        fieldDict.set(COSName.of("FT"), COSName.of("Tx"));
-        fieldDict.set(COSName.of("T"), new COSString("field1".getBytes(StandardCharsets.UTF_8)));
+        PdfDictionary fieldDict = new PdfDictionary();
+        fieldDict.set(PdfName.of("Type"), PdfName.of("Annot"));
+        fieldDict.set(PdfName.of("Subtype"), PdfName.of("Widget"));
+        fieldDict.set(PdfName.of("FT"), PdfName.of("Tx"));
+        fieldDict.set(PdfName.of("T"), new PdfString("field1".getBytes(StandardCharsets.UTF_8)));
         Rectangle fieldRect = new Rectangle(50, 700, 200, 720);
-        fieldDict.set(COSName.of("Rect"), fieldRect.toCOSArray());
+        fieldDict.set(PdfName.of("Rect"), fieldRect.toPdfArray());
 
         // Create appearance stream for the field
-        COSStream apStream = new COSStream();
+        PdfStream apStream = new PdfStream();
         apStream.setDecodedData("BT /F1 12 Tf (Hello) Tj ET".getBytes(StandardCharsets.US_ASCII));
-        apStream.set(COSName.BBOX, new Rectangle(0, 0, 150, 20).toCOSArray());
+        apStream.set(PdfName.BBOX, new Rectangle(0, 0, 150, 20).toPdfArray());
 
-        COSDictionary apDict = new COSDictionary();
-        apDict.set(COSName.of("N"), apStream);
-        fieldDict.set(COSName.of("AP"), apDict);
+        PdfDictionary apDict = new PdfDictionary();
+        apDict.set(PdfName.of("N"), apStream);
+        fieldDict.set(PdfName.of("AP"), apDict);
 
         // Add widget annotation to the page's /Annots
-        COSArray annots = new COSArray();
+        PdfArray annots = new PdfArray();
         annots.add(fieldDict);
-        pageDict.set(COSName.ANNOTS, annots);
+        pageDict.set(PdfName.ANNOTS, annots);
 
         // Flatten annotations on the page directly
         page.flattenAnnotations();
 
         // Verify annotations are removed
-        assertNull(pageDict.get(COSName.ANNOTS),
+        assertNull(pageDict.get(PdfName.ANNOTS),
                 "Annots should be removed after field flattening");
 
         // Verify content was appended
-        COSBase contents = pageDict.get(COSName.CONTENTS);
+        PdfBase contents = pageDict.get(PdfName.CONTENTS);
         assertNotNull(contents, "Content stream should exist after field flattening");
     }
 
@@ -200,59 +200,59 @@ public class FlattenTest {
         Document doc = new Document();
         PageCollection pages = doc.getPages();
         Page page = pages.add();
-        COSDictionary pageDict = page.getCOSDictionary();
+        PdfDictionary pageDict = page.getPdfDictionary();
 
         // Add a stamp annotation with appearance
         Rectangle annotRect = new Rectangle(100, 100, 200, 200);
         Rectangle bbox = new Rectangle(0, 0, 100, 100);
-        COSDictionary annotDict = createAnnotWithAppearance(annotRect, "0 1 0 rg 0 0 100 100 re f", bbox);
+        PdfDictionary annotDict = createAnnotWithAppearance(annotRect, "0 1 0 rg 0 0 100 100 re f", bbox);
 
-        COSArray annots = new COSArray();
+        PdfArray annots = new PdfArray();
         annots.add(annotDict);
-        pageDict.set(COSName.ANNOTS, annots);
+        pageDict.set(PdfName.ANNOTS, annots);
 
         // Flatten the whole document
         doc.flatten();
 
         // Verify annotations removed
-        assertNull(pageDict.get(COSName.ANNOTS),
+        assertNull(pageDict.get(PdfName.ANNOTS),
                 "Annots should be removed after document.flatten()");
 
         // Verify content was generated
-        COSBase contents = pageDict.get(COSName.CONTENTS);
+        PdfBase contents = pageDict.get(PdfName.CONTENTS);
         assertNotNull(contents, "Content stream should exist after document.flatten()");
     }
 
     @Test
     public void testAppendToContentStreamSingleStream() {
         Page page = createPage();
-        COSDictionary pageDict = page.getCOSDictionary();
+        PdfDictionary pageDict = page.getPdfDictionary();
 
         // Set initial content
-        COSStream initial = new COSStream();
+        PdfStream initial = new PdfStream();
         initial.setDecodedData("BT (Hello) Tj ET".getBytes(StandardCharsets.US_ASCII));
-        pageDict.set(COSName.CONTENTS, initial);
+        pageDict.set(PdfName.CONTENTS, initial);
 
         // Append new content
         page.appendToContentStream("q 1 0 0 1 0 0 cm Q".getBytes(StandardCharsets.US_ASCII));
 
-        // Should now be a COSArray with 2 entries
-        COSBase contents = pageDict.get(COSName.CONTENTS);
-        assertTrue(contents instanceof COSArray, "Contents should be an array after append");
-        assertEquals(2, ((COSArray) contents).size());
+        // Should now be a PdfArray with 2 entries
+        PdfBase contents = pageDict.get(PdfName.CONTENTS);
+        assertTrue(contents instanceof PdfArray, "Contents should be an array after append");
+        assertEquals(2, ((PdfArray) contents).size());
     }
 
     @Test
     public void testAppendToContentStreamExistingArray() {
         Page page = createPage();
-        COSDictionary pageDict = page.getCOSDictionary();
+        PdfDictionary pageDict = page.getPdfDictionary();
 
         // Set initial content as array
-        COSArray arr = new COSArray();
-        COSStream s1 = new COSStream();
+        PdfArray arr = new PdfArray();
+        PdfStream s1 = new PdfStream();
         s1.setDecodedData("BT ET".getBytes(StandardCharsets.US_ASCII));
         arr.add(s1);
-        pageDict.set(COSName.CONTENTS, arr);
+        pageDict.set(PdfName.CONTENTS, arr);
 
         // Append
         page.appendToContentStream("q Q".getBytes(StandardCharsets.US_ASCII));
@@ -262,19 +262,19 @@ public class FlattenTest {
 
     @Test
     public void testGetNormalAppearance() {
-        COSDictionary annotDict = new COSDictionary();
-        annotDict.set(COSName.of("Subtype"), COSName.of("Stamp"));
+        PdfDictionary annotDict = new PdfDictionary();
+        annotDict.set(PdfName.of("Subtype"), PdfName.of("Stamp"));
 
         // No AP -> null
         Annotation annot = Annotation.fromDictionary(annotDict, null);
         assertNull(annot.getNormalAppearanceStream());
 
         // Add AP/N stream
-        COSStream apStream = new COSStream();
+        PdfStream apStream = new PdfStream();
         apStream.setDecodedData("test".getBytes(StandardCharsets.US_ASCII));
-        COSDictionary apDict = new COSDictionary();
-        apDict.set(COSName.of("N"), apStream);
-        annotDict.set(COSName.of("AP"), apDict);
+        PdfDictionary apDict = new PdfDictionary();
+        apDict.set(PdfName.of("N"), apStream);
+        annotDict.set(PdfName.of("AP"), apDict);
 
         annot = Annotation.fromDictionary(annotDict, null);
         assertNotNull(annot.getNormalAppearanceStream());
@@ -282,19 +282,19 @@ public class FlattenTest {
     }
 
     /**
-     * Helper: extracts text from a content stream COS object (COSStream or COSArray).
+     * Helper: extracts text from a content stream PDF object (PdfStream or PdfArray).
      */
-    private String getContentString(COSBase contents) throws IOException {
-        if (contents instanceof COSStream) {
-            return new String(((COSStream) contents).getDecodedData(), StandardCharsets.US_ASCII);
+    private String getContentString(PdfBase contents) throws IOException {
+        if (contents instanceof PdfStream) {
+            return new String(((PdfStream) contents).getDecodedData(), StandardCharsets.US_ASCII);
         }
-        if (contents instanceof COSArray) {
+        if (contents instanceof PdfArray) {
             StringBuilder sb = new StringBuilder();
-            COSArray arr = (COSArray) contents;
+            PdfArray arr = (PdfArray) contents;
             for (int i = 0; i < arr.size(); i++) {
-                COSBase item = arr.get(i);
-                if (item instanceof COSStream) {
-                    sb.append(new String(((COSStream) item).getDecodedData(), StandardCharsets.US_ASCII));
+                PdfBase item = arr.get(i);
+                if (item instanceof PdfStream) {
+                    sb.append(new String(((PdfStream) item).getDecodedData(), StandardCharsets.US_ASCII));
                 }
             }
             return sb.toString();

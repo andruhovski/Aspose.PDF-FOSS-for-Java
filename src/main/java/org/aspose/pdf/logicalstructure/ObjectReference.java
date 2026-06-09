@@ -1,8 +1,8 @@
 package org.aspose.pdf.logicalstructure;
 
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
 
 import java.io.IOException;
 
@@ -14,8 +14,8 @@ import java.io.IOException;
  */
 public class ObjectReference {
 
-    private final COSDictionary referencedObject;
-    private final COSDictionary page;
+    private final PdfDictionary referencedObject;
+    private final PdfDictionary page;
 
     /**
      * Creates an object reference.
@@ -23,34 +23,34 @@ public class ObjectReference {
      * @param referencedObject the referenced object dictionary
      * @param page             the page dictionary (may be null)
      */
-    public ObjectReference(COSDictionary referencedObject, COSDictionary page) {
+    public ObjectReference(PdfDictionary referencedObject, PdfDictionary page) {
         this.referencedObject = referencedObject;
         this.page = page;
     }
 
     /** Returns the referenced object dictionary. */
-    public COSDictionary getReferencedObject() { return referencedObject; }
+    public PdfDictionary getReferencedObject() { return referencedObject; }
 
     /** Returns the page dictionary, or {@code null}. */
-    public COSDictionary getPage() { return page; }
+    public PdfDictionary getPage() { return page; }
 
     /**
-     * Parses an OBJR from a COS dictionary.
+     * Parses an OBJR from a PDF dictionary.
      *
      * @param dict the OBJR dictionary
      * @return the object reference
      */
-    public static ObjectReference fromDictionary(COSDictionary dict) {
-        COSBase obj = resolve(dict.get("Obj"));
-        COSBase pg = resolve(dict.get("Pg"));
+    public static ObjectReference fromDictionary(PdfDictionary dict) {
+        PdfBase obj = resolve(dict.get("Obj"));
+        PdfBase pg = resolve(dict.get("Pg"));
         return new ObjectReference(
-                (obj instanceof COSDictionary) ? (COSDictionary) obj : null,
-                (pg instanceof COSDictionary) ? (COSDictionary) pg : null);
+                (obj instanceof PdfDictionary) ? (PdfDictionary) obj : null,
+                (pg instanceof PdfDictionary) ? (PdfDictionary) pg : null);
     }
 
-    private static COSBase resolve(COSBase obj) {
-        if (obj instanceof COSObjectReference) {
-            try { return ((COSObjectReference) obj).dereference(); }
+    private static PdfBase resolve(PdfBase obj) {
+        if (obj instanceof PdfObjectReference) {
+            try { return ((PdfObjectReference) obj).dereference(); }
             catch (IOException e) { return null; }
         }
         return obj;

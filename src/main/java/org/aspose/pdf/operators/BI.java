@@ -1,7 +1,7 @@
 package org.aspose.pdf.operators;
 
 import org.aspose.pdf.Operator;
-import org.aspose.pdf.engine.cos.COSBase;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
 
 import java.util.List;
 
@@ -27,12 +27,12 @@ public class BI extends Operator {
      * Creates a BI operator from parsed operands.
      * <p>
      * When produced by the parser, operands may contain the inline image dictionary
-     * (operands[0]) and the image data as a COS string (operands[1]).
+     * (operands[0]) and the image data as a PDF string (operands[1]).
      * </p>
      *
      * @param operands the operands from the content stream parser
      */
-    public BI(List<COSBase> operands) {
+    public BI(List<PdfBase> operands) {
         super("BI", operands);
     }
 }

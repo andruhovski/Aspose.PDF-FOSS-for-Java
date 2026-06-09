@@ -4,12 +4,12 @@ import org.aspose.pdf.Document;
 import org.aspose.pdf.Page;
 import org.aspose.pdf.Rectangle;
 import org.aspose.pdf.annotations.Annotation;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 import org.aspose.pdf.forms.TextBoxField;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -320,28 +320,28 @@ class WriterByteCorrectnessTest {
         try (Document reopened = new Document(out.toString())) {
             // The widget is the first annotation on page 1.
             Annotation widget = reopened.getPages().get(1).getAnnotations().get(1);
-            COSDictionary dict = widget.getCOSDictionary();
-            COSBase ap = dict.get(COSName.of("AP"));
+            PdfDictionary dict = widget.getPdfDictionary();
+            PdfBase ap = dict.get(PdfName.of("AP"));
             assertNotNull(ap, "widget must have an /AP entry");
             // Resolve /AP if it's itself an indirect reference.
-            COSDictionary apDict;
-            if (ap instanceof COSObjectReference) {
-                apDict = (COSDictionary) ((COSObjectReference) ap).dereference();
+            PdfDictionary apDict;
+            if (ap instanceof PdfObjectReference) {
+                apDict = (PdfDictionary) ((PdfObjectReference) ap).dereference();
             } else {
-                apDict = (COSDictionary) ap;
+                apDict = (PdfDictionary) ap;
             }
-            COSBase n = apDict.get(COSName.of("N"));
+            PdfBase n = apDict.get(PdfName.of("N"));
             assertNotNull(n, "/AP must have an /N entry");
             // The fix says: /AP/N must be either an indirect reference OR (on
             // disk) the stream MUST have been promoted to an indirect object —
             // the latter case is tested at the byte level by
             // assertNoInlineStreams.
-            if (n instanceof COSStream) {
-                assertNotNull(((COSStream) n).getObjectKey(),
-                        "/AP/N COSStream must carry an object key (= it was promoted to indirect)");
+            if (n instanceof PdfStream) {
+                assertNotNull(((PdfStream) n).getObjectKey(),
+                        "/AP/N PdfStream must carry an object key (= it was promoted to indirect)");
             } else {
-                assertTrue(n instanceof COSObjectReference,
-                        "/AP/N must be COSObjectReference or a keyed COSStream, got "
+                assertTrue(n instanceof PdfObjectReference,
+                        "/AP/N must be PdfObjectReference or a keyed PdfStream, got "
                                 + n.getClass().getSimpleName());
             }
         }
@@ -358,24 +358,24 @@ class WriterByteCorrectnessTest {
         }
         // Walk the bytes: every stream must be properly indirect.
         assertNoInlineStreams(out);
-        // Also verify at the COS layer.
+        // Also verify at the PDF object layer.
         try (Document reopened = new Document(out.toString())) {
-            COSBase contents = reopened.getPages().get(1).getCOSDictionary().get(COSName.CONTENTS);
+            PdfBase contents = reopened.getPages().get(1).getPdfDictionary().get(PdfName.CONTENTS);
             assertNotNull(contents, "page must have /Contents");
-            if (contents instanceof COSObjectReference) {
+            if (contents instanceof PdfObjectReference) {
                 // Fine — indirect ref to a stream
-            } else if (contents instanceof COSArray) {
-                COSArray arr = (COSArray) contents;
+            } else if (contents instanceof PdfArray) {
+                PdfArray arr = (PdfArray) contents;
                 for (int i = 0; i < arr.size(); i++) {
-                    COSBase elem = arr.get(i);
-                    assertTrue(elem instanceof COSObjectReference,
-                            "/Contents[" + i + "] must be COSObjectReference, got "
+                    PdfBase elem = arr.get(i);
+                    assertTrue(elem instanceof PdfObjectReference,
+                            "/Contents[" + i + "] must be PdfObjectReference, got "
                                     + elem.getClass().getSimpleName());
                 }
-            } else if (contents instanceof COSStream) {
+            } else if (contents instanceof PdfStream) {
                 // OK only if the stream itself has an object key.
-                assertNotNull(((COSStream) contents).getObjectKey(),
-                        "/Contents COSStream must carry an object key");
+                assertNotNull(((PdfStream) contents).getObjectKey(),
+                        "/Contents PdfStream must carry an object key");
             } else {
                 fail("/Contents has unexpected type: " + contents.getClass().getSimpleName());
             }
@@ -400,7 +400,7 @@ class WriterByteCorrectnessTest {
         // The second file must reopen cleanly and have a properly-formed widget /AP.
         try (Document second2 = new Document(second.toString())) {
             Annotation widget = second2.getPages().get(1).getAnnotations().get(1);
-            COSBase ap = widget.getCOSDictionary().get(COSName.of("AP"));
+            PdfBase ap = widget.getPdfDictionary().get(PdfName.of("AP"));
             assertNotNull(ap, "widget /AP must survive double round-trip");
         }
         assertNoInlineStreams(second);
@@ -442,7 +442,7 @@ class WriterByteCorrectnessTest {
             Page p = r.getPages().get(1);
             assertEquals(1, p.getAnnotations().size());
             Annotation widget = p.getAnnotations().get(1);
-            COSBase ap = widget.getCOSDictionary().get(COSName.of("AP"));
+            PdfBase ap = widget.getPdfDictionary().get(PdfName.of("AP"));
             assertNotNull(ap, "widget /AP must reopen non-null");
         }
     }

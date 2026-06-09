@@ -1,7 +1,7 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 
 /** FitBH explicit destination — fit bounding box width, position at top. */
 public class FitBHExplicitDestination extends ExplicitDestination {
@@ -11,10 +11,10 @@ public class FitBHExplicitDestination extends ExplicitDestination {
     public double getTop() { return top; }
 
     @Override
-    public COSArray toCOSArray() {
-        COSArray arr = new COSArray();
-        arr.add(page != null ? page.getCOSDictionary() : org.aspose.pdf.engine.cos.COSNull.INSTANCE);
-        arr.add(COSName.of("FitBH"));
+    public PdfArray toPdfArray() {
+        PdfArray arr = new PdfArray();
+        arr.add(page != null ? page.getPdfDictionary() : org.aspose.pdf.engine.pdfobjects.PdfNull.INSTANCE);
+        arr.add(PdfName.of("FitBH"));
         arr.add(numOrNull(top));
         return arr;
     }

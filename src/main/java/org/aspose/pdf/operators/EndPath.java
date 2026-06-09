@@ -1,7 +1,7 @@
 package org.aspose.pdf.operators;
 
 import org.aspose.pdf.Operator;
-import org.aspose.pdf.engine.cos.COSBase;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
 
 import java.util.List;
 
@@ -21,7 +21,7 @@ public class EndPath extends Operator {
     }
 
     /** Creates an EndPath operator from parsed operands. */
-    public EndPath(List<COSBase> operands) {
+    public EndPath(List<PdfBase> operands) {
         super("n", operands);
     }
 }

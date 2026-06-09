@@ -2,14 +2,14 @@ package org.aspose.pdf.tests;
 
 import org.aspose.pdf.Matrix;
 import org.aspose.pdf.Rectangle;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSBoolean;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSFloat;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfBoolean;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfFloat;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 import org.aspose.pdf.engine.function.ExponentialFunction;
 import org.aspose.pdf.engine.pattern.*;
 import org.junit.jupiter.api.Test;
@@ -29,10 +29,10 @@ public class PatternShadingTest {
 
     @Test
     public void tilingPatternParsePaintAndTilingType() throws IOException {
-        COSStream dict = new COSStream();
-        dict.set(COSName.of("PatternType"), COSInteger.valueOf(1));
-        dict.set(COSName.of("PaintType"), COSInteger.valueOf(2));
-        dict.set(COSName.of("TilingType"), COSInteger.valueOf(3));
+        PdfStream dict = new PdfStream();
+        dict.set(PdfName.of("PatternType"), PdfInteger.valueOf(1));
+        dict.set(PdfName.of("PaintType"), PdfInteger.valueOf(2));
+        dict.set(PdfName.of("TilingType"), PdfInteger.valueOf(3));
 
         TilingPattern tp = new TilingPattern(dict, null);
         assertEquals(1, tp.getPatternType());
@@ -42,14 +42,14 @@ public class PatternShadingTest {
 
     @Test
     public void tilingPatternBBoxAndSteps() throws IOException {
-        COSStream dict = new COSStream();
-        dict.set(COSName.of("PatternType"), COSInteger.valueOf(1));
-        COSArray bbox = new COSArray();
-        bbox.add(new COSFloat(0)); bbox.add(new COSFloat(0));
-        bbox.add(new COSFloat(100)); bbox.add(new COSFloat(50));
-        dict.set(COSName.of("BBox"), bbox);
-        dict.set(COSName.of("XStep"), new COSFloat(100));
-        dict.set(COSName.of("YStep"), new COSFloat(50));
+        PdfStream dict = new PdfStream();
+        dict.set(PdfName.of("PatternType"), PdfInteger.valueOf(1));
+        PdfArray bbox = new PdfArray();
+        bbox.add(new PdfFloat(0)); bbox.add(new PdfFloat(0));
+        bbox.add(new PdfFloat(100)); bbox.add(new PdfFloat(50));
+        dict.set(PdfName.of("BBox"), bbox);
+        dict.set(PdfName.of("XStep"), new PdfFloat(100));
+        dict.set(PdfName.of("YStep"), new PdfFloat(50));
 
         TilingPattern tp = new TilingPattern(dict, null);
         Rectangle bb = tp.getBBox();
@@ -61,11 +61,11 @@ public class PatternShadingTest {
 
     @Test
     public void tilingPatternResources() throws IOException {
-        COSStream dict = new COSStream();
-        dict.set(COSName.of("PatternType"), COSInteger.valueOf(1));
-        COSDictionary res = new COSDictionary();
-        res.set(COSName.of("ProcSet"), new COSArray());
-        dict.set(COSName.of("Resources"), res);
+        PdfStream dict = new PdfStream();
+        dict.set(PdfName.of("PatternType"), PdfInteger.valueOf(1));
+        PdfDictionary res = new PdfDictionary();
+        res.set(PdfName.of("ProcSet"), new PdfArray());
+        dict.set(PdfName.of("Resources"), res);
 
         TilingPattern tp = new TilingPattern(dict, null);
         assertNotNull(tp.getResources());
@@ -77,17 +77,17 @@ public class PatternShadingTest {
 
     @Test
     public void shadingPatternParseReturnsShading() throws IOException {
-        COSDictionary shadingDict = new COSDictionary();
-        shadingDict.set(COSName.of("ShadingType"), COSInteger.valueOf(2));
-        COSArray coords = new COSArray();
-        coords.add(new COSFloat(0)); coords.add(new COSFloat(0));
-        coords.add(new COSFloat(100)); coords.add(new COSFloat(0));
-        shadingDict.set(COSName.of("Coords"), coords);
-        shadingDict.set(COSName.of("ColorSpace"), COSName.of("DeviceRGB"));
+        PdfDictionary shadingDict = new PdfDictionary();
+        shadingDict.set(PdfName.of("ShadingType"), PdfInteger.valueOf(2));
+        PdfArray coords = new PdfArray();
+        coords.add(new PdfFloat(0)); coords.add(new PdfFloat(0));
+        coords.add(new PdfFloat(100)); coords.add(new PdfFloat(0));
+        shadingDict.set(PdfName.of("Coords"), coords);
+        shadingDict.set(PdfName.of("ColorSpace"), PdfName.of("DeviceRGB"));
 
-        COSDictionary patDict = new COSDictionary();
-        patDict.set(COSName.of("PatternType"), COSInteger.valueOf(2));
-        patDict.set(COSName.of("Shading"), shadingDict);
+        PdfDictionary patDict = new PdfDictionary();
+        patDict.set(PdfName.of("PatternType"), PdfInteger.valueOf(2));
+        patDict.set(PdfName.of("Shading"), shadingDict);
 
         ShadingPattern sp = new ShadingPattern(patDict, null);
         assertNotNull(sp.getShading());
@@ -100,7 +100,7 @@ public class PatternShadingTest {
 
     @Test
     public void axialShadingParseCoords() throws IOException {
-        COSDictionary dict = createAxialShadingDict(0, 0, 100, 0);
+        PdfDictionary dict = createAxialShadingDict(0, 0, 100, 0);
         AxialShading as = new AxialShading(dict, null);
         assertEquals(2, as.getShadingType());
         assertEquals(0, as.getX0(), 0.01);
@@ -116,7 +116,7 @@ public class PatternShadingTest {
                 new double[]{0, 1}, new double[]{0, 1, 0, 1, 0, 1},
                 new double[]{0, 0, 1}, new double[]{1, 0, 0}, 1.0);
 
-        COSDictionary dict = createAxialShadingDict(0, 0, 100, 0);
+        PdfDictionary dict = createAxialShadingDict(0, 0, 100, 0);
         // We can't easily inject the function into the dict, so test via getColorAt
         // Create a simple axial shading with background fallback
         AxialShading as = new AxialShading(dict, null);
@@ -128,7 +128,7 @@ public class PatternShadingTest {
 
     @Test
     public void axialShadingColorAtStart() throws IOException {
-        COSDictionary dict = createAxialShadingDict(0, 0, 100, 0);
+        PdfDictionary dict = createAxialShadingDict(0, 0, 100, 0);
         AxialShading as = new AxialShading(dict, null);
         double[] color = as.getColorAt(0, 0); // t=0 on axis
         assertNotNull(color);
@@ -136,7 +136,7 @@ public class PatternShadingTest {
 
     @Test
     public void axialShadingColorAtEnd() throws IOException {
-        COSDictionary dict = createAxialShadingDict(0, 0, 100, 0);
+        PdfDictionary dict = createAxialShadingDict(0, 0, 100, 0);
         AxialShading as = new AxialShading(dict, null);
         double[] color = as.getColorAt(100, 0); // t=1 on axis
         assertNotNull(color);
@@ -148,13 +148,13 @@ public class PatternShadingTest {
 
     @Test
     public void radialShadingParseCoords() throws IOException {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("ShadingType"), COSInteger.valueOf(3));
-        COSArray coords = new COSArray();
-        coords.add(new COSFloat(50)); coords.add(new COSFloat(50)); coords.add(new COSFloat(0));
-        coords.add(new COSFloat(50)); coords.add(new COSFloat(50)); coords.add(new COSFloat(100));
-        dict.set(COSName.of("Coords"), coords);
-        dict.set(COSName.of("ColorSpace"), COSName.of("DeviceRGB"));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("ShadingType"), PdfInteger.valueOf(3));
+        PdfArray coords = new PdfArray();
+        coords.add(new PdfFloat(50)); coords.add(new PdfFloat(50)); coords.add(new PdfFloat(0));
+        coords.add(new PdfFloat(50)); coords.add(new PdfFloat(50)); coords.add(new PdfFloat(100));
+        dict.set(PdfName.of("Coords"), coords);
+        dict.set(PdfName.of("ColorSpace"), PdfName.of("DeviceRGB"));
 
         RadialShading rs = new RadialShading(dict, null);
         assertEquals(3, rs.getShadingType());
@@ -170,9 +170,9 @@ public class PatternShadingTest {
 
     @Test
     public void functionBasedShadingGetColorAt() throws IOException {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("ShadingType"), COSInteger.valueOf(1));
-        dict.set(COSName.of("ColorSpace"), COSName.of("DeviceRGB"));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("ShadingType"), PdfInteger.valueOf(1));
+        dict.set(PdfName.of("ColorSpace"), PdfName.of("DeviceRGB"));
         // No function → returns background/default
         FunctionBasedShading fbs = new FunctionBasedShading(dict, null);
         assertEquals(1, fbs.getShadingType());
@@ -186,7 +186,7 @@ public class PatternShadingTest {
 
     @Test
     public void shadingParseType2ReturnsAxial() throws IOException {
-        COSDictionary dict = createAxialShadingDict(0, 0, 1, 0);
+        PdfDictionary dict = createAxialShadingDict(0, 0, 1, 0);
         Shading s = Shading.parse(dict, null);
         assertNotNull(s);
         assertTrue(s instanceof AxialShading);
@@ -195,12 +195,12 @@ public class PatternShadingTest {
 
     @Test
     public void shadingParseType3ReturnsRadial() throws IOException {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("ShadingType"), COSInteger.valueOf(3));
-        COSArray coords = new COSArray();
-        for (int i = 0; i < 6; i++) coords.add(new COSFloat(i));
-        dict.set(COSName.of("Coords"), coords);
-        dict.set(COSName.of("ColorSpace"), COSName.of("DeviceRGB"));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("ShadingType"), PdfInteger.valueOf(3));
+        PdfArray coords = new PdfArray();
+        for (int i = 0; i < 6; i++) coords.add(new PdfFloat(i));
+        dict.set(PdfName.of("Coords"), coords);
+        dict.set(PdfName.of("ColorSpace"), PdfName.of("DeviceRGB"));
 
         Shading s = Shading.parse(dict, null);
         assertTrue(s instanceof RadialShading);
@@ -212,8 +212,8 @@ public class PatternShadingTest {
 
     @Test
     public void patternParseType1ReturnsTiling() throws IOException {
-        COSStream dict = new COSStream();
-        dict.set(COSName.of("PatternType"), COSInteger.valueOf(1));
+        PdfStream dict = new PdfStream();
+        dict.set(PdfName.of("PatternType"), PdfInteger.valueOf(1));
         PdfPattern p = PdfPattern.parse(dict, null);
         assertNotNull(p);
         assertTrue(p instanceof TilingPattern);
@@ -221,17 +221,17 @@ public class PatternShadingTest {
 
     @Test
     public void patternParseType2ReturnsShading() throws IOException {
-        COSDictionary shadingDict = new COSDictionary();
-        shadingDict.set(COSName.of("ShadingType"), COSInteger.valueOf(2));
-        COSArray coords = new COSArray();
-        coords.add(new COSFloat(0)); coords.add(new COSFloat(0));
-        coords.add(new COSFloat(1)); coords.add(new COSFloat(0));
-        shadingDict.set(COSName.of("Coords"), coords);
-        shadingDict.set(COSName.of("ColorSpace"), COSName.of("DeviceRGB"));
+        PdfDictionary shadingDict = new PdfDictionary();
+        shadingDict.set(PdfName.of("ShadingType"), PdfInteger.valueOf(2));
+        PdfArray coords = new PdfArray();
+        coords.add(new PdfFloat(0)); coords.add(new PdfFloat(0));
+        coords.add(new PdfFloat(1)); coords.add(new PdfFloat(0));
+        shadingDict.set(PdfName.of("Coords"), coords);
+        shadingDict.set(PdfName.of("ColorSpace"), PdfName.of("DeviceRGB"));
 
-        COSDictionary patDict = new COSDictionary();
-        patDict.set(COSName.of("PatternType"), COSInteger.valueOf(2));
-        patDict.set(COSName.of("Shading"), shadingDict);
+        PdfDictionary patDict = new PdfDictionary();
+        patDict.set(PdfName.of("PatternType"), PdfInteger.valueOf(2));
+        patDict.set(PdfName.of("Shading"), shadingDict);
 
         PdfPattern p = PdfPattern.parse(patDict, null);
         assertNotNull(p);
@@ -245,9 +245,9 @@ public class PatternShadingTest {
     @Test
     public void meshShadingStubsReturnFallbackColor() throws IOException {
         for (int type = 4; type <= 7; type++) {
-            COSDictionary dict = new COSDictionary();
-            dict.set(COSName.of("ShadingType"), COSInteger.valueOf(type));
-            dict.set(COSName.of("ColorSpace"), COSName.of("DeviceRGB"));
+            PdfDictionary dict = new PdfDictionary();
+            dict.set(PdfName.of("ShadingType"), PdfInteger.valueOf(type));
+            dict.set(PdfName.of("ColorSpace"), PdfName.of("DeviceRGB"));
 
             Shading s = Shading.parse(dict, null);
             assertNotNull(s, "Shading type " + type + " should parse");
@@ -264,8 +264,8 @@ public class PatternShadingTest {
 
     @Test
     public void patternMatrixDefaultIsIdentity() throws IOException {
-        COSStream dict = new COSStream();
-        dict.set(COSName.of("PatternType"), COSInteger.valueOf(1));
+        PdfStream dict = new PdfStream();
+        dict.set(PdfName.of("PatternType"), PdfInteger.valueOf(1));
         TilingPattern tp = new TilingPattern(dict, null);
         Matrix m = tp.getMatrix();
         assertNotNull(m);
@@ -278,16 +278,80 @@ public class PatternShadingTest {
     //  Helpers
     // ═══════════════════════════════════════════════════════════════
 
-    private COSDictionary createAxialShadingDict(double x0, double y0, double x1, double y1) {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("ShadingType"), COSInteger.valueOf(2));
-        COSArray coords = new COSArray();
-        coords.add(new COSFloat((float) x0));
-        coords.add(new COSFloat((float) y0));
-        coords.add(new COSFloat((float) x1));
-        coords.add(new COSFloat((float) y1));
-        dict.set(COSName.of("Coords"), coords);
-        dict.set(COSName.of("ColorSpace"), COSName.of("DeviceRGB"));
+    private PdfDictionary createAxialShadingDict(double x0, double y0, double x1, double y1) {
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("ShadingType"), PdfInteger.valueOf(2));
+        PdfArray coords = new PdfArray();
+        coords.add(new PdfFloat((float) x0));
+        coords.add(new PdfFloat((float) y0));
+        coords.add(new PdfFloat((float) x1));
+        coords.add(new PdfFloat((float) y1));
+        dict.set(PdfName.of("Coords"), coords);
+        dict.set(PdfName.of("ColorSpace"), PdfName.of("DeviceRGB"));
         return dict;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  ShadingRenderer — device/user space consistency
+    // ═══════════════════════════════════════════════════════════════
+
+    /**
+     * The {@code sh} operator paints under a scaled+flipped base transform
+     * (PngDevice at any DPI). The renderer samples device pixels through the
+     * inverse of (base × CTM); the clip however is set in g2d user space.
+     * Regression: corpus 28762.pdf — user-space clip bounds were fed into the
+     * device-space inverse, every sample fell outside the axis span and, with
+     * /Extend [false false], the bar gradients painted nothing at all.
+     */
+    @Test
+    public void shadingRendererPaintsUnderScaledFlippedBaseTransform() throws IOException {
+        // Axial gradient along x: 10 → 40 (user space), red → blue, no extend.
+        PdfDictionary dict = createAxialShadingDict(10, 0, 40, 0);
+        PdfDictionary fn = new PdfDictionary();
+        fn.set(PdfName.of("FunctionType"), PdfInteger.valueOf(2));
+        PdfArray domain = new PdfArray();
+        domain.add(new PdfFloat(0)); domain.add(new PdfFloat(1));
+        fn.set(PdfName.of("Domain"), domain);
+        PdfArray c0 = new PdfArray();
+        c0.add(new PdfFloat(1)); c0.add(new PdfFloat(0)); c0.add(new PdfFloat(0));
+        fn.set(PdfName.of("C0"), c0);
+        PdfArray c1 = new PdfArray();
+        c1.add(new PdfFloat(0)); c1.add(new PdfFloat(0)); c1.add(new PdfFloat(1));
+        fn.set(PdfName.of("C1"), c1);
+        dict.set(PdfName.of("Function"), fn);
+
+        Shading shading = Shading.parse(dict, null);
+        assertNotNull(shading);
+
+        java.awt.image.BufferedImage img =
+                new java.awt.image.BufferedImage(120, 120, java.awt.image.BufferedImage.TYPE_INT_RGB);
+        java.awt.Graphics2D g2d = img.createGraphics();
+        g2d.setColor(java.awt.Color.WHITE);
+        g2d.fillRect(0, 0, 120, 120);
+        // Page-style base transform: 2× scale with Y flip (user 60×60 → device 120×120).
+        g2d.translate(0, 120);
+        g2d.scale(2, -2);
+        // Clip = the gradient's span, in USER space (as `re W n` would set it).
+        g2d.setClip(new java.awt.Rectangle(10, 10, 30, 20));
+        java.awt.geom.AffineTransform shadingToDevice =
+                new java.awt.geom.AffineTransform(g2d.getTransform()); // state CTM = identity
+
+        ShadingRenderer.render(g2d, shading, shadingToDevice, g2d.getClipBounds());
+
+        // The base transform must be restored after the device-space blit.
+        assertEquals(new java.awt.geom.AffineTransform(2, 0, 0, -2, 0, 120), g2d.getTransform());
+        g2d.dispose();
+
+        // User (25, 20) = gradient midpoint → device (50, 80): must be painted
+        // (≈ half red / half blue), not white.
+        int mid = img.getRGB(50, 80);
+        assertNotEquals(0xFFFFFFFF, mid, "gradient midpoint must be painted");
+        int r = (mid >> 16) & 0xFF, g = (mid >> 8) & 0xFF, b = mid & 0xFF;
+        assertTrue(r > 60 && r < 200, "midpoint red ≈ 50%: " + r);
+        assertTrue(b > 60 && b < 200, "midpoint blue ≈ 50%: " + b);
+        assertTrue(g < 60, "midpoint green ≈ 0: " + g);
+
+        // Outside the clip stays untouched: user (5, 20) → device (10, 80).
+        assertEquals(0xFFFFFFFF, img.getRGB(10, 80), "outside the clip must stay white");
     }
 }

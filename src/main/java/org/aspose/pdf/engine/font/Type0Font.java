@@ -1,9 +1,9 @@
 package org.aspose.pdf.engine.font;
 
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 import org.aspose.pdf.engine.parser.PDFParser;
 
 import java.io.IOException;
@@ -32,7 +32,7 @@ public class Type0Font extends PdfFont {
      * @param parser   the PDF parser
      * @throws IOException if reading font data fails
      */
-    public Type0Font(COSDictionary fontDict, PDFParser parser) throws IOException {
+    public Type0Font(PdfDictionary fontDict, PDFParser parser) throws IOException {
         super(fontDict, parser);
 
         // Parse /DescendantFonts — always an array with exactly one element
@@ -131,6 +131,16 @@ public class Type0Font extends PdfFont {
         return encodingName;
     }
 
+    /**
+     * Returns true when the encoding CMap is Identity-H or Identity-V,
+     * i.e. each 2-byte code in the content stream IS the CID.
+     *
+     * @return true for Identity encodings
+     */
+    public boolean isIdentityEncoding() {
+        return isIdentity;
+    }
+
     private void appendCidDecoded(StringBuilder sb, int cid) {
         // 1. ToUnicode CMap (highest priority when present)
         if (toUnicode != null) {
@@ -162,22 +172,22 @@ public class Type0Font extends PdfFont {
     }
 
     private void initDescendantFont() throws IOException {
-        COSBase dfVal = resolve(fontDict.get("DescendantFonts"));
-        if (dfVal instanceof COSArray) {
-            COSArray arr = (COSArray) dfVal;
+        PdfBase dfVal = resolve(fontDict.get("DescendantFonts"));
+        if (dfVal instanceof PdfArray) {
+            PdfArray arr = (PdfArray) dfVal;
             if (arr.size() > 0) {
-                COSBase firstFont = resolve(arr.get(0));
-                if (firstFont instanceof COSDictionary) {
-                    this.descendantFont = new CIDFont((COSDictionary) firstFont, parser);
+                PdfBase firstFont = resolve(arr.get(0));
+                if (firstFont instanceof PdfDictionary) {
+                    this.descendantFont = new CIDFont((PdfDictionary) firstFont, parser);
                 }
             }
         }
     }
 
     private void initEncodingCMap() {
-        COSBase encVal = resolve(fontDict.get("Encoding"));
-        if (encVal instanceof COSName) {
-            this.encodingName = ((COSName) encVal).getName();
+        PdfBase encVal = resolve(fontDict.get("Encoding"));
+        if (encVal instanceof PdfName) {
+            this.encodingName = ((PdfName) encVal).getName();
         } else {
             this.encodingName = "Identity-H";
         }

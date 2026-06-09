@@ -1,13 +1,13 @@
 package org.aspose.pdf.tests.engine.writer;
 import org.aspose.pdf.engine.writer.*;
 
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectKey;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectKey;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 import org.aspose.pdf.engine.io.RandomAccessReader;
 import org.aspose.pdf.engine.parser.PDFParser;
 import org.junit.jupiter.api.Test;
@@ -34,27 +34,27 @@ public class PDFWriterTest {
         PDFWriter writer = new PDFWriter(bos, 1.7f);
 
         // Create objects
-        Map<COSObjectKey, COSBase> objects = new LinkedHashMap<>();
+        Map<PdfObjectKey, PdfBase> objects = new LinkedHashMap<>();
 
         // Object 1: Catalog
-        COSDictionary catalog = new COSDictionary();
-        catalog.set(COSName.of("Type"), COSName.of("Catalog"));
-        objects.put(new COSObjectKey(1, 0), catalog);
+        PdfDictionary catalog = new PdfDictionary();
+        catalog.set(PdfName.of("Type"), PdfName.of("Catalog"));
+        objects.put(new PdfObjectKey(1, 0), catalog);
 
         // Object 2: Pages
-        COSDictionary pages = new COSDictionary();
-        pages.set(COSName.of("Type"), COSName.of("Pages"));
-        pages.set(COSName.of("Count"), COSInteger.valueOf(0));
-        objects.put(new COSObjectKey(2, 0), pages);
+        PdfDictionary pages = new PdfDictionary();
+        pages.set(PdfName.of("Type"), PdfName.of("Pages"));
+        pages.set(PdfName.of("Count"), PdfInteger.valueOf(0));
+        objects.put(new PdfObjectKey(2, 0), pages);
 
         // Object 3: Info
-        COSDictionary info = new COSDictionary();
-        info.set(COSName.of("Producer"), new COSString("OpenPDF Test"));
-        objects.put(new COSObjectKey(3, 0), info);
+        PdfDictionary info = new PdfDictionary();
+        info.set(PdfName.of("Producer"), new PdfString("OpenPDF Test"));
+        objects.put(new PdfObjectKey(3, 0), info);
 
         // Trailer
-        COSDictionary trailer = new COSDictionary();
-        trailer.set(COSName.of("Root"), COSInteger.valueOf(1)); // simplified ref
+        PdfDictionary trailer = new PdfDictionary();
+        trailer.set(PdfName.of("Root"), PdfInteger.valueOf(1)); // simplified ref
 
         writer.write(trailer, objects);
 
@@ -85,11 +85,11 @@ public class PDFWriterTest {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         PDFWriter writer = new PDFWriter(bos, 1.7f);
 
-        Map<COSObjectKey, COSBase> objects = new LinkedHashMap<>();
-        COSDictionary catalog = new COSDictionary();
-        objects.put(new COSObjectKey(1, 0), catalog);
+        Map<PdfObjectKey, PdfBase> objects = new LinkedHashMap<>();
+        PdfDictionary catalog = new PdfDictionary();
+        objects.put(new PdfObjectKey(1, 0), catalog);
 
-        COSDictionary trailer = new COSDictionary();
+        PdfDictionary trailer = new PdfDictionary();
         writer.write(trailer, objects);
 
         String pdf = new String(bos.toByteArray(), StandardCharsets.ISO_8859_1);
@@ -113,11 +113,11 @@ public class PDFWriterTest {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         PDFWriter writer = new PDFWriter(bos, 1.4f);
 
-        Map<COSObjectKey, COSBase> objects = new LinkedHashMap<>();
-        COSDictionary obj1 = new COSDictionary();
-        objects.put(new COSObjectKey(1, 0), obj1);
+        Map<PdfObjectKey, PdfBase> objects = new LinkedHashMap<>();
+        PdfDictionary obj1 = new PdfDictionary();
+        objects.put(new PdfObjectKey(1, 0), obj1);
 
-        COSDictionary trailer = new COSDictionary();
+        PdfDictionary trailer = new PdfDictionary();
         writer.write(trailer, objects);
 
         String pdf = new String(bos.toByteArray(), StandardCharsets.ISO_8859_1);
@@ -142,20 +142,20 @@ public class PDFWriterTest {
         PDFWriter writer = new PDFWriter(bos, 1.4f);
 
         // Create a minimal valid PDF
-        Map<COSObjectKey, COSBase> objects = new LinkedHashMap<>();
+        Map<PdfObjectKey, PdfBase> objects = new LinkedHashMap<>();
 
-        COSDictionary catalog = new COSDictionary();
-        catalog.set(COSName.of("Type"), COSName.of("Catalog"));
-        objects.put(new COSObjectKey(1, 0), catalog);
+        PdfDictionary catalog = new PdfDictionary();
+        catalog.set(PdfName.of("Type"), PdfName.of("Catalog"));
+        objects.put(new PdfObjectKey(1, 0), catalog);
 
-        COSDictionary pages = new COSDictionary();
-        pages.set(COSName.of("Type"), COSName.of("Pages"));
-        pages.set(COSName.of("Count"), COSInteger.valueOf(0));
-        COSArray kids = new COSArray();
-        pages.set(COSName.of("Kids"), kids);
-        objects.put(new COSObjectKey(2, 0), pages);
+        PdfDictionary pages = new PdfDictionary();
+        pages.set(PdfName.of("Type"), PdfName.of("Pages"));
+        pages.set(PdfName.of("Count"), PdfInteger.valueOf(0));
+        PdfArray kids = new PdfArray();
+        pages.set(PdfName.of("Kids"), kids);
+        objects.put(new PdfObjectKey(2, 0), pages);
 
-        COSDictionary trailer = new COSDictionary();
+        PdfDictionary trailer = new PdfDictionary();
         // Use a simplified reference — in a real PDF /Root would be "1 0 R"
         // but for this test we check that the written PDF can be re-parsed
         writer.write(trailer, objects);
@@ -170,12 +170,12 @@ public class PDFWriterTest {
         assertNotNull(parser.getTrailer());
 
         // Load object 1 and verify it's a catalog
-        COSBase obj1 = parser.getObject(1);
-        assertTrue(obj1 instanceof COSDictionary);
-        COSDictionary parsedCatalog = (COSDictionary) obj1;
-        COSBase type = parsedCatalog.get(COSName.of("Type"));
-        assertTrue(type instanceof COSName);
-        assertEquals("Catalog", ((COSName) type).getValue());
+        PdfBase obj1 = parser.getObject(1);
+        assertTrue(obj1 instanceof PdfDictionary);
+        PdfDictionary parsedCatalog = (PdfDictionary) obj1;
+        PdfBase type = parsedCatalog.get(PdfName.of("Type"));
+        assertTrue(type instanceof PdfName);
+        assertEquals("Catalog", ((PdfName) type).getValue());
     }
 
     /**
@@ -186,14 +186,14 @@ public class PDFWriterTest {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         PDFWriter writer = new PDFWriter(bos, 1.7f);
 
-        Map<COSObjectKey, COSBase> objects = new LinkedHashMap<>();
+        Map<PdfObjectKey, PdfBase> objects = new LinkedHashMap<>();
         for (int i = 1; i <= 100; i++) {
-            COSDictionary dict = new COSDictionary();
-            dict.set(COSName.of("Index"), COSInteger.valueOf(i));
-            objects.put(new COSObjectKey(i, 0), dict);
+            PdfDictionary dict = new PdfDictionary();
+            dict.set(PdfName.of("Index"), PdfInteger.valueOf(i));
+            objects.put(new PdfObjectKey(i, 0), dict);
         }
 
-        COSDictionary trailer = new COSDictionary();
+        PdfDictionary trailer = new PdfDictionary();
         writer.write(trailer, objects);
 
         String pdf = new String(bos.toByteArray(), StandardCharsets.ISO_8859_1);
@@ -218,8 +218,8 @@ public class PDFWriterTest {
     @Test
     public void testAllocateObjectNumber() {
         PDFWriter writer = new PDFWriter(new ByteArrayOutputStream(), 1.7f);
-        COSObjectKey k1 = writer.allocateObjectNumber();
-        COSObjectKey k2 = writer.allocateObjectNumber();
+        PdfObjectKey k1 = writer.allocateObjectNumber();
+        PdfObjectKey k2 = writer.allocateObjectNumber();
         assertEquals(1, k1.getObjectNumber());
         assertEquals(2, k2.getObjectNumber());
         assertEquals(0, k1.getGenerationNumber());

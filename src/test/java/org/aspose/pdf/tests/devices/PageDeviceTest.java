@@ -34,7 +34,7 @@ public class PageDeviceTest {
         PngDevice device = new PngDevice(new Resolution(72));
         assertThrows(IllegalArgumentException.class, () -> device.process(
                 new org.aspose.pdf.Page(
-                        new org.aspose.pdf.engine.cos.COSDictionary(), null),
+                        new org.aspose.pdf.engine.pdfobjects.PdfDictionary(), null),
                 null));
     }
 

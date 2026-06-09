@@ -1,6 +1,6 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,11 +17,11 @@ public class FileSpecification {
 
     private static final Logger LOG = Logger.getLogger(FileSpecification.class.getName());
 
-    private final COSDictionary dict;
+    private final PdfDictionary dict;
 
     /** Wraps an existing file specification dictionary. */
-    public FileSpecification(COSDictionary dict) {
-        this.dict = dict != null ? dict : new COSDictionary();
+    public FileSpecification(PdfDictionary dict) {
+        this.dict = dict != null ? dict : new PdfDictionary();
     }
 
     /**
@@ -41,8 +41,8 @@ public class FileSpecification {
      * @param description the human-readable description of the file
      */
     public FileSpecification(String file, String description) {
-        this.dict = new COSDictionary();
-        dict.set(COSName.of("Type"), COSName.of("Filespec"));
+        this.dict = new PdfDictionary();
+        dict.set(PdfName.of("Type"), PdfName.of("Filespec"));
         if (file != null) {
             Path path = Path.of(file);
             String storedName = path.getFileName() != null ? path.getFileName().toString() : file;
@@ -63,8 +63,8 @@ public class FileSpecification {
 
     /** Creates a file specification from an InputStream. */
     public FileSpecification(InputStream stream, String name) throws IOException {
-        this.dict = new COSDictionary();
-        dict.set(COSName.of("Type"), COSName.of("Filespec"));
+        this.dict = new PdfDictionary();
+        dict.set(PdfName.of("Type"), PdfName.of("Filespec"));
         setName(name);
         setUnicodeFileName(name);
         setEmbeddedFileData(readAll(stream));
@@ -74,37 +74,37 @@ public class FileSpecification {
 
     /** /F — file name. */
     public String getName() {
-        COSBase f = dict.get("F");
-        if (f instanceof COSString) return ((COSString) f).getString();
-        if (f instanceof COSName) return ((COSName) f).getName();
+        PdfBase f = dict.get("F");
+        if (f instanceof PdfString) return ((PdfString) f).getString();
+        if (f instanceof PdfName) return ((PdfName) f).getName();
         return null;
     }
 
     /** Sets the file name (/F). */
     public void setName(String name) {
-        dict.set(COSName.of("F"), new COSString(name.getBytes(StandardCharsets.UTF_8)));
+        dict.set(PdfName.of("F"), new PdfString(name.getBytes(StandardCharsets.UTF_8)));
     }
 
     /** /UF — Unicode file name. */
     public String getUnicodeFileName() {
-        COSBase uf = dict.get("UF");
-        return (uf instanceof COSString) ? ((COSString) uf).getString() : null;
+        PdfBase uf = dict.get("UF");
+        return (uf instanceof PdfString) ? ((PdfString) uf).getString() : null;
     }
 
     /** Sets the Unicode file name (/UF). */
     public void setUnicodeFileName(String name) {
-        dict.set(COSName.of("UF"), new COSString(name.getBytes(StandardCharsets.UTF_8)));
+        dict.set(PdfName.of("UF"), new PdfString(name.getBytes(StandardCharsets.UTF_8)));
     }
 
     /** /Desc — description. */
     public String getDescription() {
-        COSBase desc = dict.get("Desc");
-        return (desc instanceof COSString) ? ((COSString) desc).getString() : null;
+        PdfBase desc = dict.get("Desc");
+        return (desc instanceof PdfString) ? ((PdfString) desc).getString() : null;
     }
 
     /** Sets the description (/Desc). */
     public void setDescription(String desc) {
-        dict.set(COSName.of("Desc"), new COSString(desc.getBytes(StandardCharsets.UTF_8)));
+        dict.set(PdfName.of("Desc"), new PdfString(desc.getBytes(StandardCharsets.UTF_8)));
     }
 
     /** /AFRelationship. */
@@ -112,27 +112,27 @@ public class FileSpecification {
 
     /** Sets the AF relationship. */
     public void setRelationship(String rel) {
-        dict.set(COSName.of("AFRelationship"), COSName.of(rel));
+        dict.set(PdfName.of("AFRelationship"), PdfName.of(rel));
     }
 
     /** MIME type from embedded stream /Subtype. */
     public String getMIMEType() {
-        COSStream s = getEmbeddedStream();
+        PdfStream s = getEmbeddedStream();
         return s != null ? s.getNameAsString("Subtype") : null;
     }
 
     /** Sets the MIME type on the embedded stream. */
     public void setMIMEType(String mimeType) {
-        COSStream s = getEmbeddedStream();
-        if (s != null) s.set(COSName.of("Subtype"), COSName.of(mimeType));
+        PdfStream s = getEmbeddedStream();
+        if (s != null) s.set(PdfName.of("Subtype"), PdfName.of(mimeType));
     }
 
     /** Returns file params (size, dates, checksum). */
     public FileParams getParams() {
-        COSStream s = getEmbeddedStream();
+        PdfStream s = getEmbeddedStream();
         if (s == null) return null;
-        COSBase p = s.get("Params");
-        return (p instanceof COSDictionary) ? new FileParams((COSDictionary) p) : null;
+        PdfBase p = s.get("Params");
+        return (p instanceof PdfDictionary) ? new FileParams((PdfDictionary) p) : null;
     }
 
     /**
@@ -166,37 +166,37 @@ public class FileSpecification {
 
     /** Returns the embedded file data. */
     public byte[] getData() throws IOException {
-        COSStream s = getEmbeddedStream();
+        PdfStream s = getEmbeddedStream();
         return s != null ? s.getDecodedData() : null;
     }
 
     /** Returns the embedded file stream from /EF/F. */
-    public COSStream getEmbeddedStream() {
-        COSBase ef = dict.get("EF");
-        if (ef instanceof COSDictionary) {
-            COSBase f = resolveRef(((COSDictionary) ef).get("F"));
-            if (f instanceof COSStream) return (COSStream) f;
+    public PdfStream getEmbeddedStream() {
+        PdfBase ef = dict.get("EF");
+        if (ef instanceof PdfDictionary) {
+            PdfBase f = resolveRef(((PdfDictionary) ef).get("F"));
+            if (f instanceof PdfStream) return (PdfStream) f;
         }
         return null;
     }
 
     private void setEmbeddedFileData(byte[] data) {
-        COSStream stream = new COSStream(new COSDictionary(), data);
-        stream.set(COSName.of("Type"), COSName.of("EmbeddedFile"));
-        COSDictionary params = new COSDictionary();
-        params.set(COSName.of("Size"), COSInteger.valueOf(data.length));
-        stream.set(COSName.of("Params"), params);
-        COSDictionary ef = new COSDictionary();
-        ef.set(COSName.of("F"), stream);
-        dict.set(COSName.of("EF"), ef);
+        PdfStream stream = new PdfStream(new PdfDictionary(), data);
+        stream.set(PdfName.of("Type"), PdfName.of("EmbeddedFile"));
+        PdfDictionary params = new PdfDictionary();
+        params.set(PdfName.of("Size"), PdfInteger.valueOf(data.length));
+        stream.set(PdfName.of("Params"), params);
+        PdfDictionary ef = new PdfDictionary();
+        ef.set(PdfName.of("F"), stream);
+        dict.set(PdfName.of("EF"), ef);
     }
 
     /** Returns the underlying dictionary. */
-    public COSDictionary getCOSDictionary() { return dict; }
+    public PdfDictionary getPdfDictionary() { return dict; }
 
-    private COSBase resolveRef(COSBase val) {
-        if (val instanceof COSObjectReference) {
-            try { return ((COSObjectReference) val).dereference(); } catch (Exception e) { return null; }
+    private PdfBase resolveRef(PdfBase val) {
+        if (val instanceof PdfObjectReference) {
+            try { return ((PdfObjectReference) val).dereference(); } catch (Exception e) { return null; }
         }
         return val;
     }

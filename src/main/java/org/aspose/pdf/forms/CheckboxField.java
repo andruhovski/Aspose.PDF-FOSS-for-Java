@@ -1,7 +1,7 @@
 package org.aspose.pdf.forms;
 
 import org.aspose.pdf.*;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,13 +19,13 @@ public class CheckboxField extends Field {
     private BoxStyle style = BoxStyle.Check;
 
     /**
-     * Constructs a checkbox field from an existing COS dictionary.
+     * Constructs a checkbox field from an existing PDF dictionary.
      *
-     * @param dict     the COS dictionary backing this field
+     * @param dict     the PDF dictionary backing this field
      * @param page     the page this field belongs to (may be null)
      * @param fullName the fully-qualified dotted name
      */
-    public CheckboxField(COSDictionary dict, Page page, String fullName) {
+    public CheckboxField(PdfDictionary dict, Page page, String fullName) {
         super(dict, page, fullName);
     }
 
@@ -41,17 +41,17 @@ public class CheckboxField extends Field {
      * {@link #setExportValue(String)} / {@link #setStyle(BoxStyle)}).</p>
      */
     public CheckboxField() {
-        super(new COSDictionary(), null, "");
-        dict.set(COSName.of("Type"), COSName.of("Annot"));
-        dict.set(COSName.of("Subtype"), COSName.of("Widget"));
-        dict.set(COSName.of("FT"), COSName.of("Btn"));
+        super(new PdfDictionary(), null, "");
+        dict.set(PdfName.of("Type"), PdfName.of("Annot"));
+        dict.set(PdfName.of("Subtype"), PdfName.of("Widget"));
+        dict.set(PdfName.of("FT"), PdfName.of("Btn"));
         // Reserve /AP/N as a dictionary so getAllowedStates / state discovery
         // works even before regenerateAppearance() runs. Empty so the next
         // regenerate cleanly populates it.
-        COSDictionary apN = new COSDictionary();
-        COSDictionary ap = new COSDictionary();
-        ap.set(COSName.of("N"), apN);
-        dict.set(COSName.of("AP"), ap);
+        PdfDictionary apN = new PdfDictionary();
+        PdfDictionary ap = new PdfDictionary();
+        ap.set(PdfName.of("N"), apN);
+        dict.set(PdfName.of("AP"), ap);
     }
 
     /**
@@ -84,8 +84,8 @@ public class CheckboxField extends Field {
         Rectangle r = getRect();
         if (r == null) return;
         String onState = getOnValue();
-        COSStream onStream = FieldAppearanceBuilder.buildCheckboxAppearance(r, true, style);
-        COSStream offStream = FieldAppearanceBuilder.buildCheckboxAppearance(r, false, style);
+        PdfStream onStream = FieldAppearanceBuilder.buildCheckboxAppearance(r, true, style);
+        PdfStream offStream = FieldAppearanceBuilder.buildCheckboxAppearance(r, false, style);
         FieldAppearanceBuilder.installAppearance(dict, onStream, onState, offStream);
     }
 
@@ -155,10 +155,10 @@ public class CheckboxField extends Field {
         String onValue = getOnValue();
         if (checked) {
             setValue(onValue);
-            dict.set(COSName.of("AS"), COSName.of(onValue));
+            dict.set(PdfName.of("AS"), PdfName.of(onValue));
         } else {
             setValue("Off");
-            dict.set(COSName.of("AS"), COSName.of("Off"));
+            dict.set(PdfName.of("AS"), PdfName.of("Off"));
         }
     }
 
@@ -180,15 +180,15 @@ public class CheckboxField extends Field {
         if (exportValue == null || exportValue.isEmpty()) {
             return;
         }
-        COSDictionary ap = ensureAppearanceDictionary();
-        COSDictionary apN = ensureNormalAppearanceDictionary(ap);
+        PdfDictionary ap = ensureAppearanceDictionary();
+        PdfDictionary apN = ensureNormalAppearanceDictionary(ap);
         String oldOnValue = getOnValue();
-        COSBase oldState = apN.get(oldOnValue);
-        apN.remove(COSName.of(oldOnValue));
-        apN.set(COSName.of(exportValue), oldState != null ? oldState : COSNull.INSTANCE);
+        PdfBase oldState = apN.get(oldOnValue);
+        apN.remove(PdfName.of(oldOnValue));
+        apN.set(PdfName.of(exportValue), oldState != null ? oldState : PdfNull.INSTANCE);
         if (oldOnValue.equals(getValue())) {
             setValue(exportValue);
-            dict.set(COSName.of("AS"), COSName.of(exportValue));
+            dict.set(PdfName.of("AS"), PdfName.of(exportValue));
         }
         // F-10 fix: regenerate streams so the on-state name matches the rendered glyph.
         regenerateAppearance();
@@ -203,9 +203,9 @@ public class CheckboxField extends Field {
         if (optionValue == null || optionValue.isEmpty()) {
             return;
         }
-        COSDictionary ap = ensureAppearanceDictionary();
-        COSDictionary apN = ensureNormalAppearanceDictionary(ap);
-        apN.set(COSName.of(optionValue), COSNull.INSTANCE);
+        PdfDictionary ap = ensureAppearanceDictionary();
+        PdfDictionary apN = ensureNormalAppearanceDictionary(ap);
+        apN.set(PdfName.of(optionValue), PdfNull.INSTANCE);
     }
 
     /**
@@ -216,11 +216,11 @@ public class CheckboxField extends Field {
      */
     public List<String> getAllowedStates() {
         List<String> states = new ArrayList<>();
-        COSBase ap = dict.get("AP");
-        if (ap instanceof COSDictionary) {
-            COSBase n = ((COSDictionary) ap).get("N");
-            if (n instanceof COSDictionary) {
-                for (COSName key : ((COSDictionary) n).keySet()) {
+        PdfBase ap = dict.get("AP");
+        if (ap instanceof PdfDictionary) {
+            PdfBase n = ((PdfDictionary) ap).get("N");
+            if (n instanceof PdfDictionary) {
+                for (PdfName key : ((PdfDictionary) n).keySet()) {
                     states.add(key.getName());
                 }
             }
@@ -236,11 +236,11 @@ public class CheckboxField extends Field {
      * Falls back to "Yes" if no appearance states are found.
      */
     private String getOnValue() {
-        COSBase ap = dict.get("AP");
-        if (ap instanceof COSDictionary) {
-            COSBase n = ((COSDictionary) ap).get("N");
-            if (n instanceof COSDictionary) {
-                for (COSName key : ((COSDictionary) n).keySet()) {
+        PdfBase ap = dict.get("AP");
+        if (ap instanceof PdfDictionary) {
+            PdfBase n = ((PdfDictionary) ap).get("N");
+            if (n instanceof PdfDictionary) {
+                for (PdfName key : ((PdfDictionary) n).keySet()) {
                     if (!"Off".equals(key.getName())) return key.getName();
                 }
             }
@@ -251,31 +251,31 @@ public class CheckboxField extends Field {
     @Override
     public void setValue(String value) {
         if (value != null && !"Off".equals(value)) {
-            dict.set(COSName.of("V"), COSName.of(value));
-            dict.set(COSName.of("AS"), COSName.of(value));
+            dict.set(PdfName.of("V"), PdfName.of(value));
+            dict.set(PdfName.of("AS"), PdfName.of(value));
         } else {
-            dict.set(COSName.of("V"), COSName.of("Off"));
-            dict.set(COSName.of("AS"), COSName.of("Off"));
+            dict.set(PdfName.of("V"), PdfName.of("Off"));
+            dict.set(PdfName.of("AS"), PdfName.of("Off"));
         }
     }
 
-    private COSDictionary ensureAppearanceDictionary() {
-        COSBase ap = dict.get("AP");
-        if (ap instanceof COSDictionary) {
-            return (COSDictionary) ap;
+    private PdfDictionary ensureAppearanceDictionary() {
+        PdfBase ap = dict.get("AP");
+        if (ap instanceof PdfDictionary) {
+            return (PdfDictionary) ap;
         }
-        COSDictionary result = new COSDictionary();
-        dict.set(COSName.of("AP"), result);
+        PdfDictionary result = new PdfDictionary();
+        dict.set(PdfName.of("AP"), result);
         return result;
     }
 
-    private COSDictionary ensureNormalAppearanceDictionary(COSDictionary ap) {
-        COSBase n = ap.get("N");
-        if (n instanceof COSDictionary && !(n instanceof COSStream)) {
-            return (COSDictionary) n;
+    private PdfDictionary ensureNormalAppearanceDictionary(PdfDictionary ap) {
+        PdfBase n = ap.get("N");
+        if (n instanceof PdfDictionary && !(n instanceof PdfStream)) {
+            return (PdfDictionary) n;
         }
-        COSDictionary result = new COSDictionary();
-        ap.set(COSName.of("N"), result);
+        PdfDictionary result = new PdfDictionary();
+        ap.set(PdfName.of("N"), result);
         return result;
     }
 }

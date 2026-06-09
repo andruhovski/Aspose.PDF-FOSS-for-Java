@@ -2,16 +2,16 @@ package org.aspose.pdf.engine.pdfa.fixes;
 
 import org.aspose.pdf.ConvertErrorAction;
 import org.aspose.pdf.PdfFormat;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSBoolean;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectKey;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSStream;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfBoolean;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectKey;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 import org.aspose.pdf.engine.pdfa.PdfAValidationResult;
 import org.aspose.pdf.engine.parser.PDFParser;
 
@@ -57,11 +57,11 @@ public final class GraphicsFixes {
      */
     public void addOutputIntent(PDFParser parser, PdfFormat format,
                                 ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
-        COSDictionary catalog = parser.getCatalog();
-        COSBase existing = catalog.get("OutputIntents");
+        PdfDictionary catalog = parser.getCatalog();
+        PdfBase existing = catalog.get("OutputIntents");
         if (existing != null) {
-            COSBase resolved = parser.resolveReference(existing);
-            if (resolved instanceof COSArray && ((COSArray) resolved).size() > 0) {
+            PdfBase resolved = parser.resolveReference(existing);
+            if (resolved instanceof PdfArray && ((PdfArray) resolved).size() > 0) {
                 LOG.fine("Catalog already has /OutputIntents");
                 return;
             }
@@ -74,31 +74,31 @@ public final class GraphicsFixes {
         byte[] iccData = srgb.getData();
         byte[] compressedIcc = flateCompress(iccData);
 
-        COSStream iccStream = new COSStream();
+        PdfStream iccStream = new PdfStream();
         iccStream.setDecodedData(iccData);
-        iccStream.setFilter(COSName.FLATE_DECODE);
-        iccStream.set("N", COSInteger.valueOf(3)); // 3 components for RGB
-        iccStream.set(COSName.LENGTH, COSInteger.valueOf(compressedIcc.length));
+        iccStream.setFilter(PdfName.FLATE_DECODE);
+        iccStream.set("N", PdfInteger.valueOf(3)); // 3 components for RGB
+        iccStream.set(PdfName.LENGTH, PdfInteger.valueOf(compressedIcc.length));
 
         // Register ICC stream as indirect object
         int maxObj = findMaxObjectNumber(parser);
-        COSObjectKey iccKey = new COSObjectKey(maxObj + 1, 0);
-        COSObjectReference iccRef = new COSObjectReference(iccKey, k -> iccStream);
+        PdfObjectKey iccKey = new PdfObjectKey(maxObj + 1, 0);
+        PdfObjectReference iccRef = new PdfObjectReference(iccKey, k -> iccStream);
 
         // Build OutputIntent dictionary
-        COSDictionary intent = new COSDictionary();
-        intent.set("Type", COSName.of("OutputIntent"));
-        intent.set("S", COSName.of("GTS_PDFA1"));
-        intent.set("OutputConditionIdentifier", new COSString("sRGB IEC61966-2.1"));
-        intent.set("RegistryName", new COSString("http://www.color.org"));
-        intent.set("Info", new COSString("sRGB IEC61966-2.1"));
+        PdfDictionary intent = new PdfDictionary();
+        intent.set("Type", PdfName.of("OutputIntent"));
+        intent.set("S", PdfName.of("GTS_PDFA1"));
+        intent.set("OutputConditionIdentifier", new PdfString("sRGB IEC61966-2.1"));
+        intent.set("RegistryName", new PdfString("http://www.color.org"));
+        intent.set("Info", new PdfString("sRGB IEC61966-2.1"));
         intent.set("DestOutputProfile", iccRef);
 
         // Register intent as indirect object
-        COSObjectKey intentKey = new COSObjectKey(maxObj + 2, 0);
-        COSObjectReference intentRef = new COSObjectReference(intentKey, k -> intent);
+        PdfObjectKey intentKey = new PdfObjectKey(maxObj + 2, 0);
+        PdfObjectReference intentRef = new PdfObjectReference(intentKey, k -> intent);
 
-        COSArray intents = new COSArray(1);
+        PdfArray intents = new PdfArray(1);
         intents.add(intentRef);
         catalog.set("OutputIntents", intents);
 
@@ -120,17 +120,17 @@ public final class GraphicsFixes {
      */
     public void removeImageAlternates(PDFParser parser, PdfFormat format,
                                       ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
-        for (COSObjectKey key : parser.getAllObjectKeys()) {
-            COSBase obj;
+        for (PdfObjectKey key : parser.getAllObjectKeys()) {
+            PdfBase obj;
             try {
                 obj = parser.getObject(key);
             } catch (IOException e) {
                 continue;
             }
-            if (!(obj instanceof COSStream)) {
+            if (!(obj instanceof PdfStream)) {
                 continue;
             }
-            COSStream stream = (COSStream) obj;
+            PdfStream stream = (PdfStream) obj;
             if (!"XObject".equals(stream.getNameAsString("Type"))
                     && !"Image".equals(stream.getNameAsString("Subtype"))) {
                 // Check Subtype alone — many images lack /Type
@@ -160,17 +160,17 @@ public final class GraphicsFixes {
      */
     public void removeOPI(PDFParser parser, PdfFormat format,
                           ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
-        for (COSObjectKey key : parser.getAllObjectKeys()) {
-            COSBase obj;
+        for (PdfObjectKey key : parser.getAllObjectKeys()) {
+            PdfBase obj;
             try {
                 obj = parser.getObject(key);
             } catch (IOException e) {
                 continue;
             }
-            if (!(obj instanceof COSStream)) {
+            if (!(obj instanceof PdfStream)) {
                 continue;
             }
-            COSStream stream = (COSStream) obj;
+            PdfStream stream = (PdfStream) obj;
             String subtype = stream.getNameAsString("Subtype");
             if (!"Image".equals(subtype) && !"Form".equals(subtype)) {
                 continue;
@@ -197,23 +197,23 @@ public final class GraphicsFixes {
      */
     public void fixInterpolate(PDFParser parser, PdfFormat format,
                                ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
-        for (COSObjectKey key : parser.getAllObjectKeys()) {
-            COSBase obj;
+        for (PdfObjectKey key : parser.getAllObjectKeys()) {
+            PdfBase obj;
             try {
                 obj = parser.getObject(key);
             } catch (IOException e) {
                 continue;
             }
-            if (!(obj instanceof COSStream)) {
+            if (!(obj instanceof PdfStream)) {
                 continue;
             }
-            COSStream stream = (COSStream) obj;
+            PdfStream stream = (PdfStream) obj;
             if (!"Image".equals(stream.getNameAsString("Subtype"))) {
                 continue;
             }
-            COSBase interpVal = stream.get("Interpolate");
-            if (interpVal instanceof COSBoolean && ((COSBoolean) interpVal).getValue()) {
-                stream.set("Interpolate", COSBoolean.FALSE);
+            PdfBase interpVal = stream.get("Interpolate");
+            if (interpVal instanceof PdfBoolean && ((PdfBoolean) interpVal).getValue()) {
+                stream.set("Interpolate", PdfBoolean.FALSE);
                 result.addWarning("gfx.4", "Set /Interpolate to false on image",
                         "obj " + key.getObjectNumber(), "ISO 19005-1:2005, 6.2.4");
             }
@@ -225,7 +225,7 @@ public final class GraphicsFixes {
      */
     private static int findMaxObjectNumber(PDFParser parser) {
         int maxObj = 0;
-        for (COSObjectKey k : parser.getAllObjectKeys()) {
+        for (PdfObjectKey k : parser.getAllObjectKeys()) {
             maxObj = Math.max(maxObj, k.getObjectNumber());
         }
         return maxObj;

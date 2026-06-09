@@ -1,8 +1,8 @@
 package org.aspose.pdf.operators;
 
 import org.aspose.pdf.Operator;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 
 import java.util.Collections;
 import java.util.List;
@@ -26,7 +26,7 @@ public class SetColorRenderingIntent extends Operator {
      * @throws IllegalArgumentException if intent is null or empty
      */
     public SetColorRenderingIntent(String intent) {
-        super("ri", Collections.singletonList(COSName.of(intent)));
+        super("ri", Collections.singletonList(PdfName.of(intent)));
         if (intent == null || intent.isEmpty()) {
             throw new IllegalArgumentException("Intent name must not be null or empty");
         }
@@ -36,15 +36,15 @@ public class SetColorRenderingIntent extends Operator {
     /**
      * Creates a SetColorRenderingIntent (ri) operator from parsed operands.
      * <p>
-     * Expects one operand: a {@link COSName} for the intent.
+     * Expects one operand: a {@link PdfName} for the intent.
      * </p>
      *
      * @param operands the operands from the content stream parser
      */
-    public SetColorRenderingIntent(List<COSBase> operands) {
+    public SetColorRenderingIntent(List<PdfBase> operands) {
         super("ri", operands);
-        this.intent = (operands != null && operands.size() > 0 && operands.get(0) instanceof COSName)
-                ? ((COSName) operands.get(0)).getName()
+        this.intent = (operands != null && operands.size() > 0 && operands.get(0) instanceof PdfName)
+                ? ((PdfName) operands.get(0)).getName()
                 : "";
     }
 

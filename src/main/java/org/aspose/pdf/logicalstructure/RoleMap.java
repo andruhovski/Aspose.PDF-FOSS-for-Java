@@ -1,8 +1,8 @@
 package org.aspose.pdf.logicalstructure;
 
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -20,19 +20,19 @@ public class RoleMap {
     private final Map<String, StructureTypeStandard> map = new LinkedHashMap<>();
 
     /**
-     * Parses a RoleMap from a COS dictionary.
+     * Parses a RoleMap from a PDF dictionary.
      *
      * @param roleMapDict the /RoleMap dictionary (may be null)
      * @return the parsed role map
      */
-    public static RoleMap parse(COSDictionary roleMapDict) {
+    public static RoleMap parse(PdfDictionary roleMapDict) {
         RoleMap rm = new RoleMap();
         if (roleMapDict == null) return rm;
-        for (COSName key : roleMapDict.keySet()) {
-            COSBase val = roleMapDict.get(key);
-            if (val instanceof COSName) {
+        for (PdfName key : roleMapDict.keySet()) {
+            PdfBase val = roleMapDict.get(key);
+            if (val instanceof PdfName) {
                 rm.map.put(key.getName(),
-                        StructureTypeStandard.fromName(((COSName) val).getName()));
+                        StructureTypeStandard.fromName(((PdfName) val).getName()));
             }
         }
         return rm;

@@ -1,7 +1,7 @@
 package org.aspose.pdf.operators;
 
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 
 import java.util.Collections;
 import java.util.List;
@@ -25,7 +25,7 @@ public class SetColorSpaceStroke extends SetColorOperator {
      * @throws IllegalArgumentException if colorSpaceName is null or empty
      */
     public SetColorSpaceStroke(String colorSpaceName) {
-        super("CS", Collections.singletonList(COSName.of(colorSpaceName)));
+        super("CS", Collections.singletonList(PdfName.of(colorSpaceName)));
         if (colorSpaceName == null || colorSpaceName.isEmpty()) {
             throw new IllegalArgumentException("Color space name must not be null or empty");
         }
@@ -35,16 +35,16 @@ public class SetColorSpaceStroke extends SetColorOperator {
     /**
      * Creates a SetColorSpaceStroke (CS) operator from parsed operands.
      * <p>
-     * Expects one operand: a {@link COSName} identifying the color space.
+     * Expects one operand: a {@link PdfName} identifying the color space.
      * </p>
      *
      * @param operands the operands from the content stream parser
      */
-    public SetColorSpaceStroke(List<COSBase> operands) {
+    public SetColorSpaceStroke(List<PdfBase> operands) {
         super("CS", operands);
         this.colorSpaceName = (operands != null && operands.size() > 0
-                && operands.get(0) instanceof COSName)
-                ? ((COSName) operands.get(0)).getName()
+                && operands.get(0) instanceof PdfName)
+                ? ((PdfName) operands.get(0)).getName()
                 : "";
     }
 

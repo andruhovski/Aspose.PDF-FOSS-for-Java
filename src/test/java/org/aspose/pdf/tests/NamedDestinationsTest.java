@@ -1,7 +1,7 @@
 package org.aspose.pdf.tests;
 
 import org.aspose.pdf.*;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -20,7 +20,7 @@ public class NamedDestinationsTest {
 
     @Test
     public void emptyDestsDictReturnsNull() throws IOException {
-        COSDictionary catalog = new COSDictionary();
+        PdfDictionary catalog = new PdfDictionary();
         NamedDestinations nd = new NamedDestinations(catalog, null, null);
         assertNull(nd.get("nonexistent"));
     }
@@ -28,14 +28,14 @@ public class NamedDestinationsTest {
     @Test
     public void destsDictResolvesDestination() throws IOException {
         // Build catalog with /Dests dict containing a named destination
-        COSDictionary catalog = new COSDictionary();
-        COSDictionary dests = new COSDictionary();
+        PdfDictionary catalog = new PdfDictionary();
+        PdfDictionary dests = new PdfDictionary();
         // Destination value: explicit array [null /Fit]
-        COSArray destArr = new COSArray();
-        destArr.add(COSNull.INSTANCE);
-        destArr.add(COSName.of("Fit"));
-        dests.set(COSName.of("chapter1"), destArr);
-        catalog.set(COSName.of("Dests"), dests);
+        PdfArray destArr = new PdfArray();
+        destArr.add(PdfNull.INSTANCE);
+        destArr.add(PdfName.of("Fit"));
+        dests.set(PdfName.of("chapter1"), destArr);
+        catalog.set(PdfName.of("Dests"), dests);
 
         NamedDestinations nd = new NamedDestinations(catalog, null, null);
         ExplicitDestination dest = nd.get("chapter1");
@@ -45,16 +45,16 @@ public class NamedDestinationsTest {
     @Test
     public void destsDictWithDestDictionary() throws IOException {
         // /Dests entry can be a dict with /D pointing to the explicit dest
-        COSDictionary catalog = new COSDictionary();
-        COSDictionary dests = new COSDictionary();
-        COSDictionary destDict = new COSDictionary();
-        COSArray destArr = new COSArray();
-        destArr.add(COSNull.INSTANCE);
-        destArr.add(COSName.of("FitH"));
-        destArr.add(COSInteger.valueOf(500));
-        destDict.set(COSName.of("D"), destArr);
-        dests.set(COSName.of("section2"), destDict);
-        catalog.set(COSName.of("Dests"), dests);
+        PdfDictionary catalog = new PdfDictionary();
+        PdfDictionary dests = new PdfDictionary();
+        PdfDictionary destDict = new PdfDictionary();
+        PdfArray destArr = new PdfArray();
+        destArr.add(PdfNull.INSTANCE);
+        destArr.add(PdfName.of("FitH"));
+        destArr.add(PdfInteger.valueOf(500));
+        destDict.set(PdfName.of("D"), destArr);
+        dests.set(PdfName.of("section2"), destDict);
+        catalog.set(PdfName.of("Dests"), dests);
 
         NamedDestinations nd = new NamedDestinations(catalog, null, null);
         ExplicitDestination dest = nd.get("section2");
@@ -67,9 +67,9 @@ public class NamedDestinationsTest {
 
     @Test
     public void nameTreeResolvesDestination() throws IOException {
-        COSDictionary catalog = buildCatalogWithNameTree(
+        PdfDictionary catalog = buildCatalogWithNameTree(
                 new String[]{"alpha", "beta"},
-                new COSBase[]{
+                new PdfBase[]{
                         buildFitDest(),
                         buildFitDest()
                 });
@@ -83,22 +83,22 @@ public class NamedDestinationsTest {
     @Test
     public void nameTreeWithLimitsRangeCheck() throws IOException {
         // Build a name tree node with /Limits ["alpha", "beta"]
-        COSDictionary catalog = new COSDictionary();
-        COSDictionary namesDict = new COSDictionary();
-        COSDictionary destsTree = new COSDictionary();
+        PdfDictionary catalog = new PdfDictionary();
+        PdfDictionary namesDict = new PdfDictionary();
+        PdfDictionary destsTree = new PdfDictionary();
 
-        COSArray limits = new COSArray();
-        limits.add(new COSString("alpha"));
-        limits.add(new COSString("beta"));
-        destsTree.set(COSName.of("Limits"), limits);
+        PdfArray limits = new PdfArray();
+        limits.add(new PdfString("alpha"));
+        limits.add(new PdfString("beta"));
+        destsTree.set(PdfName.of("Limits"), limits);
 
-        COSArray names = new COSArray();
-        names.add(new COSString("alpha")); names.add(buildFitDest());
-        names.add(new COSString("beta")); names.add(buildFitDest());
-        destsTree.set(COSName.of("Names"), names);
+        PdfArray names = new PdfArray();
+        names.add(new PdfString("alpha")); names.add(buildFitDest());
+        names.add(new PdfString("beta")); names.add(buildFitDest());
+        destsTree.set(PdfName.of("Names"), names);
 
-        namesDict.set(COSName.of("Dests"), destsTree);
-        catalog.set(COSName.of("Names"), namesDict);
+        namesDict.set(PdfName.of("Dests"), destsTree);
+        catalog.set(PdfName.of("Names"), namesDict);
 
         NamedDestinations nd = new NamedDestinations(catalog, null, null);
         assertNotNull(nd.get("alpha"));
@@ -110,36 +110,36 @@ public class NamedDestinationsTest {
     @Test
     public void nameTreeWithKidsMultiLevel() throws IOException {
         // Build a two-level name tree with /Kids
-        COSDictionary catalog = new COSDictionary();
-        COSDictionary namesDict = new COSDictionary();
+        PdfDictionary catalog = new PdfDictionary();
+        PdfDictionary namesDict = new PdfDictionary();
 
         // Leaf 1: "alpha"
-        COSDictionary leaf1 = new COSDictionary();
-        COSArray names1 = new COSArray();
-        names1.add(new COSString("alpha")); names1.add(buildFitDest());
-        leaf1.set(COSName.of("Names"), names1);
-        COSArray limits1 = new COSArray();
-        limits1.add(new COSString("alpha")); limits1.add(new COSString("alpha"));
-        leaf1.set(COSName.of("Limits"), limits1);
+        PdfDictionary leaf1 = new PdfDictionary();
+        PdfArray names1 = new PdfArray();
+        names1.add(new PdfString("alpha")); names1.add(buildFitDest());
+        leaf1.set(PdfName.of("Names"), names1);
+        PdfArray limits1 = new PdfArray();
+        limits1.add(new PdfString("alpha")); limits1.add(new PdfString("alpha"));
+        leaf1.set(PdfName.of("Limits"), limits1);
 
         // Leaf 2: "beta"
-        COSDictionary leaf2 = new COSDictionary();
-        COSArray names2 = new COSArray();
-        names2.add(new COSString("beta")); names2.add(buildFitDest());
-        leaf2.set(COSName.of("Names"), names2);
-        COSArray limits2 = new COSArray();
-        limits2.add(new COSString("beta")); limits2.add(new COSString("beta"));
-        leaf2.set(COSName.of("Limits"), limits2);
+        PdfDictionary leaf2 = new PdfDictionary();
+        PdfArray names2 = new PdfArray();
+        names2.add(new PdfString("beta")); names2.add(buildFitDest());
+        leaf2.set(PdfName.of("Names"), names2);
+        PdfArray limits2 = new PdfArray();
+        limits2.add(new PdfString("beta")); limits2.add(new PdfString("beta"));
+        leaf2.set(PdfName.of("Limits"), limits2);
 
         // Root with /Kids
-        COSDictionary root = new COSDictionary();
-        COSArray kids = new COSArray();
+        PdfDictionary root = new PdfDictionary();
+        PdfArray kids = new PdfArray();
         kids.add(leaf1);
         kids.add(leaf2);
-        root.set(COSName.of("Kids"), kids);
+        root.set(PdfName.of("Kids"), kids);
 
-        namesDict.set(COSName.of("Dests"), root);
-        catalog.set(COSName.of("Names"), namesDict);
+        namesDict.set(PdfName.of("Dests"), root);
+        catalog.set(PdfName.of("Names"), namesDict);
 
         NamedDestinations nd = new NamedDestinations(catalog, null, null);
         assertNotNull(nd.get("alpha"));
@@ -153,19 +153,19 @@ public class NamedDestinationsTest {
 
     @Test
     public void getNamesFromBothSources() throws IOException {
-        COSDictionary catalog = new COSDictionary();
+        PdfDictionary catalog = new PdfDictionary();
         // /Dests dict
-        COSDictionary dests = new COSDictionary();
-        dests.set(COSName.of("fromDict"), buildFitDest());
-        catalog.set(COSName.of("Dests"), dests);
+        PdfDictionary dests = new PdfDictionary();
+        dests.set(PdfName.of("fromDict"), buildFitDest());
+        catalog.set(PdfName.of("Dests"), dests);
         // /Names → /Dests tree
-        COSDictionary namesDict = new COSDictionary();
-        COSDictionary destsTree = new COSDictionary();
-        COSArray names = new COSArray();
-        names.add(new COSString("fromTree")); names.add(buildFitDest());
-        destsTree.set(COSName.of("Names"), names);
-        namesDict.set(COSName.of("Dests"), destsTree);
-        catalog.set(COSName.of("Names"), namesDict);
+        PdfDictionary namesDict = new PdfDictionary();
+        PdfDictionary destsTree = new PdfDictionary();
+        PdfArray names = new PdfArray();
+        names.add(new PdfString("fromTree")); names.add(buildFitDest());
+        destsTree.set(PdfName.of("Names"), names);
+        namesDict.set(PdfName.of("Dests"), destsTree);
+        catalog.set(PdfName.of("Names"), namesDict);
 
         NamedDestinations nd = new NamedDestinations(catalog, null, null);
         List<String> allNames = nd.getNames();
@@ -176,7 +176,7 @@ public class NamedDestinationsTest {
 
     @Test
     public void nonExistentNameReturnsNull() throws IOException {
-        COSDictionary catalog = new COSDictionary();
+        PdfDictionary catalog = new PdfDictionary();
         NamedDestinations nd = new NamedDestinations(catalog, null, null);
         assertNull(nd.get("doesNotExist"));
     }
@@ -187,11 +187,11 @@ public class NamedDestinationsTest {
 
     @Test
     public void linkAnnotationWithStringDest() throws IOException {
-        // LinkAnnotation with /Dest as COSString (named dest)
+        // LinkAnnotation with /Dest as PdfString (named dest)
         // Without a Document with named dests, should return null
-        COSDictionary linkDict = new COSDictionary();
-        linkDict.set(COSName.of("Subtype"), COSName.of("Link"));
-        linkDict.set(COSName.of("Dest"), new COSString("chapter1"));
+        PdfDictionary linkDict = new PdfDictionary();
+        linkDict.set(PdfName.of("Subtype"), PdfName.of("Link"));
+        linkDict.set(PdfName.of("Dest"), new PdfString("chapter1"));
 
         org.aspose.pdf.annotations.LinkAnnotation link =
                 new org.aspose.pdf.annotations.LinkAnnotation(linkDict, null);
@@ -205,10 +205,10 @@ public class NamedDestinationsTest {
 
     @Test
     public void goToActionWithNameDest() throws IOException {
-        // GoToAction with /D as COSName (named dest)
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("S"), COSName.of("GoTo"));
-        dict.set(COSName.of("D"), COSName.of("chapter1"));
+        // GoToAction with /D as PdfName (named dest)
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("S"), PdfName.of("GoTo"));
+        dict.set(PdfName.of("D"), PdfName.of("chapter1"));
 
         GoToAction action = new GoToAction(dict, null);
         // Without doc, named dest can't be resolved → null destination
@@ -369,25 +369,25 @@ public class NamedDestinationsTest {
     //  Helpers
     // ═══════════════════════════════════════════════════════════════
 
-    private COSArray buildFitDest() {
-        COSArray arr = new COSArray();
-        arr.add(COSNull.INSTANCE);
-        arr.add(COSName.of("Fit"));
+    private PdfArray buildFitDest() {
+        PdfArray arr = new PdfArray();
+        arr.add(PdfNull.INSTANCE);
+        arr.add(PdfName.of("Fit"));
         return arr;
     }
 
-    private COSDictionary buildCatalogWithNameTree(String[] keys, COSBase[] values) {
-        COSDictionary catalog = new COSDictionary();
-        COSDictionary namesDict = new COSDictionary();
-        COSDictionary destsTree = new COSDictionary();
-        COSArray names = new COSArray();
+    private PdfDictionary buildCatalogWithNameTree(String[] keys, PdfBase[] values) {
+        PdfDictionary catalog = new PdfDictionary();
+        PdfDictionary namesDict = new PdfDictionary();
+        PdfDictionary destsTree = new PdfDictionary();
+        PdfArray names = new PdfArray();
         for (int i = 0; i < keys.length; i++) {
-            names.add(new COSString(keys[i]));
+            names.add(new PdfString(keys[i]));
             names.add(values[i]);
         }
-        destsTree.set(COSName.of("Names"), names);
-        namesDict.set(COSName.of("Dests"), destsTree);
-        catalog.set(COSName.of("Names"), namesDict);
+        destsTree.set(PdfName.of("Names"), names);
+        namesDict.set(PdfName.of("Dests"), destsTree);
+        catalog.set(PdfName.of("Names"), namesDict);
         return catalog;
     }
 }

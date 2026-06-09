@@ -6,7 +6,7 @@ import java.util.logging.Logger;
  * Represents a single violation found during PDF/A validation.
  * <p>
  * Each violation carries a rule identifier, severity, human-readable message,
- * the COS object path where the violation was detected, and a reference to the
+ * the PDF object path where the violation was detected, and a reference to the
  * relevant ISO clause.
  * </p>
  */
@@ -36,7 +36,7 @@ public final class PdfAViolation {
      * @param ruleId     the rule identifier (e.g. "6.1.3")
      * @param severity   the severity level
      * @param message    a human-readable description of the violation
-     * @param objectPath the COS object path where the violation was found (e.g. "page[0]/resources/font[0]")
+     * @param objectPath the PDF object path where the violation was found (e.g. "page[0]/resources/font[0]")
      * @param clause     the ISO clause reference (e.g. "ISO 19005-1:2005, 6.1.3")
      * @throws IllegalArgumentException if ruleId, severity, or message is {@code null}
      */
@@ -85,7 +85,7 @@ public final class PdfAViolation {
     }
 
     /**
-     * Returns the COS object path where the violation was detected, or {@code null}.
+     * Returns the PDF object path where the violation was detected, or {@code null}.
      *
      * @return the object path
      */

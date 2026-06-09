@@ -3,7 +3,7 @@ package org.aspose.pdf.facades;
 import org.aspose.pdf.Document;
 import org.aspose.pdf.Page;
 import org.aspose.pdf.Rectangle;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 import org.aspose.pdf.forms.Field;
 import org.aspose.pdf.forms.Form;
 import org.aspose.pdf.forms.Signature;
@@ -424,8 +424,8 @@ public class PdfFileSignature implements AutoCloseable {
         var sigDict = sf.getSignatureDictionary();
         if (sigDict == null) return null;
         var val = sigDict.get("ContactInfo");
-        if (val instanceof org.aspose.pdf.engine.cos.COSString) {
-            return ((org.aspose.pdf.engine.cos.COSString) val).getString();
+        if (val instanceof org.aspose.pdf.engine.pdfobjects.PdfString) {
+            return ((org.aspose.pdf.engine.pdfobjects.PdfString) val).getString();
         }
         return null;
     }
@@ -614,16 +614,16 @@ public class PdfFileSignature implements AutoCloseable {
     public boolean containsUsageRights() {
         if (document == null) return false;
         try {
-            COSDictionary catalog = document.getCatalog();
+            PdfDictionary catalog = document.getCatalog();
             if (catalog == null) return false;
-            COSBase perms = catalog.get("Perms");
-            if (perms instanceof COSObjectReference) {
-                perms = ((COSObjectReference) perms).dereference();
+            PdfBase perms = catalog.get("Perms");
+            if (perms instanceof PdfObjectReference) {
+                perms = ((PdfObjectReference) perms).dereference();
             }
-            if (perms instanceof COSDictionary) {
-                COSBase ur3 = ((COSDictionary) perms).get("UR3");
+            if (perms instanceof PdfDictionary) {
+                PdfBase ur3 = ((PdfDictionary) perms).get("UR3");
                 if (ur3 == null) {
-                    ur3 = ((COSDictionary) perms).get("UR");
+                    ur3 = ((PdfDictionary) perms).get("UR");
                 }
                 return ur3 != null;
             }
@@ -642,16 +642,16 @@ public class PdfFileSignature implements AutoCloseable {
     public void removeUsageRights() {
         if (document == null) return;
         try {
-            COSDictionary catalog = document.getCatalog();
+            PdfDictionary catalog = document.getCatalog();
             if (catalog == null) return;
-            COSBase perms = catalog.get("Perms");
-            if (perms instanceof COSObjectReference) {
-                perms = ((COSObjectReference) perms).dereference();
+            PdfBase perms = catalog.get("Perms");
+            if (perms instanceof PdfObjectReference) {
+                perms = ((PdfObjectReference) perms).dereference();
             }
-            if (perms instanceof COSDictionary) {
-                COSDictionary permsDict = (COSDictionary) perms;
-                permsDict.remove(COSName.of("UR3"));
-                permsDict.remove(COSName.of("UR"));
+            if (perms instanceof PdfDictionary) {
+                PdfDictionary permsDict = (PdfDictionary) perms;
+                permsDict.remove(PdfName.of("UR3"));
+                permsDict.remove(PdfName.of("UR"));
                 LOG.fine("Removed usage rights from document");
             }
         } catch (Exception e) {
@@ -799,22 +799,22 @@ public class PdfFileSignature implements AutoCloseable {
     private void ensureSignatureField(String fieldName, int pageNumber,
                                        boolean visible, Rectangle rect) throws IOException {
         Form form = document.getForm();
-        COSDictionary fieldDict = new COSDictionary();
-        fieldDict.set(COSName.of("Type"), COSName.of("Annot"));
-        fieldDict.set(COSName.of("Subtype"), COSName.of("Widget"));
-        fieldDict.set(COSName.of("FT"), COSName.of("Sig"));
-        fieldDict.set(COSName.of("T"),
-                new COSString(fieldName.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+        PdfDictionary fieldDict = new PdfDictionary();
+        fieldDict.set(PdfName.of("Type"), PdfName.of("Annot"));
+        fieldDict.set(PdfName.of("Subtype"), PdfName.of("Widget"));
+        fieldDict.set(PdfName.of("FT"), PdfName.of("Sig"));
+        fieldDict.set(PdfName.of("T"),
+                new PdfString(fieldName.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
 
         if (visible && rect != null) {
-            fieldDict.set(COSName.of("Rect"), rect.toCOSArray());
+            fieldDict.set(PdfName.of("Rect"), rect.toPdfArray());
         } else {
-            COSArray zeroRect = new COSArray();
-            zeroRect.add(COSInteger.valueOf(0));
-            zeroRect.add(COSInteger.valueOf(0));
-            zeroRect.add(COSInteger.valueOf(0));
-            zeroRect.add(COSInteger.valueOf(0));
-            fieldDict.set(COSName.of("Rect"), zeroRect);
+            PdfArray zeroRect = new PdfArray();
+            zeroRect.add(PdfInteger.valueOf(0));
+            zeroRect.add(PdfInteger.valueOf(0));
+            zeroRect.add(PdfInteger.valueOf(0));
+            zeroRect.add(PdfInteger.valueOf(0));
+            fieldDict.set(PdfName.of("Rect"), zeroRect);
         }
 
         Page page = document.getPages().get(pageNumber);
@@ -873,24 +873,24 @@ public class PdfFileSignature implements AutoCloseable {
      */
     private boolean verifyX509RsaSha1(org.aspose.pdf.forms.SignatureField sf,
                                        byte[] sigBytes, byte[] signedData) throws Exception {
-        COSDictionary sigDict = sf.getSignatureDictionary();
+        PdfDictionary sigDict = sf.getSignatureDictionary();
         if (sigDict == null) return false;
-        COSBase certEntry = sigDict.get("Cert");
-        if (certEntry instanceof COSObjectReference) {
-            certEntry = ((COSObjectReference) certEntry).dereference();
+        PdfBase certEntry = sigDict.get("Cert");
+        if (certEntry instanceof PdfObjectReference) {
+            certEntry = ((PdfObjectReference) certEntry).dereference();
         }
         byte[] certBytes;
-        if (certEntry instanceof COSString) {
-            certBytes = ((COSString) certEntry).getBytes();
-        } else if (certEntry instanceof COSArray) {
-            COSArray arr = (COSArray) certEntry;
+        if (certEntry instanceof PdfString) {
+            certBytes = ((PdfString) certEntry).getBytes();
+        } else if (certEntry instanceof PdfArray) {
+            PdfArray arr = (PdfArray) certEntry;
             if (arr.size() == 0) return false;
-            COSBase first = arr.get(0);
-            if (first instanceof COSObjectReference) {
-                first = ((COSObjectReference) first).dereference();
+            PdfBase first = arr.get(0);
+            if (first instanceof PdfObjectReference) {
+                first = ((PdfObjectReference) first).dereference();
             }
-            if (!(first instanceof COSString)) return false;
-            certBytes = ((COSString) first).getBytes();
+            if (!(first instanceof PdfString)) return false;
+            certBytes = ((PdfString) first).getBytes();
         } else {
             LOG.fine("adbe.x509.rsa_sha1: missing /Cert entry");
             return false;

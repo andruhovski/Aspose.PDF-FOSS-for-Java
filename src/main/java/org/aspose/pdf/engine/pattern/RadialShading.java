@@ -1,6 +1,6 @@
 package org.aspose.pdf.engine.pattern;
 
-import org.aspose.pdf.engine.cos.COSDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
 import org.aspose.pdf.engine.function.PdfFunction;
 import org.aspose.pdf.engine.parser.PDFParser;
 
@@ -24,7 +24,7 @@ public final class RadialShading extends Shading {
      * @param parser the PDF parser
      * @throws IOException if the function cannot be parsed
      */
-    public RadialShading(COSDictionary dict, PDFParser parser) throws IOException {
+    public RadialShading(PdfDictionary dict, PDFParser parser) throws IOException {
         super(dict, parser);
         double[] coords = getNumberArray(dict, "Coords");
         if (coords == null || coords.length < 6) coords = new double[]{0, 0, 0, 0, 0, 1};
@@ -53,22 +53,32 @@ public final class RadialShading extends Shading {
         double dist0 = Math.sqrt((x - x0) * (x - x0) + (y - y0) * (y - y0));
         double dist1 = Math.sqrt((x - x1) * (x - x1) + (y - y1) * (y - y1));
 
-        double t;
+        double s;
         if (Math.abs(r1 - r0) < 1e-10 && dist0 + dist1 > 1e-10) {
-            t = dist0 / (dist0 + dist1);
+            s = dist0 / (dist0 + dist1);
         } else {
             // For concentric circles: t based on distance from center0 relative to radii
             if (r1 > r0 + 1e-10) {
-                t = (dist0 - r0) / (r1 - r0);
+                s = (dist0 - r0) / (r1 - r0);
             } else if (r0 > r1 + 1e-10) {
-                t = 1.0 - (dist1 - r1) / (r0 - r1);
+                s = 1.0 - (dist1 - r1) / (r0 - r1);
             } else {
-                t = 0.5;
+                s = 0.5;
             }
         }
-        t = t0 + t * (t1 - t0);
-        if (t < t0) t = extendStart ? t0 : t0;
-        if (t > t1) t = extendEnd ? t1 : t1;
+        // Outside the gradient with /Extend false -> NOT painted (ISO 32000
+        // 8.7.4.5.3). Clamping instead floods everything beyond the end
+        // circle with the end color - corpus 10734 paints its banner
+        // gradients via hundreds of tiny sh tiles whose out-of-range
+        // neighbours must stay empty.
+        if (s < 0) {
+            if (!extendStart) return null;
+            s = 0;
+        } else if (s > 1) {
+            if (!extendEnd) return null;
+            s = 1;
+        }
+        double t = t0 + s * (t1 - t0);
         t = Math.max(t0, Math.min(t1, t));
 
         if (function == null) return background != null ? background : new double[]{0, 0, 0};

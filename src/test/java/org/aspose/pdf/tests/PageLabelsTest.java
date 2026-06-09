@@ -1,11 +1,11 @@
 package org.aspose.pdf.tests;
 
 import org.aspose.pdf.PageLabels;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -19,7 +19,7 @@ public class PageLabelsTest {
 
     @Test
     public void noPageLabelsReturnsNull() throws IOException {
-        COSDictionary catalog = new COSDictionary();
+        PdfDictionary catalog = new PdfDictionary();
         assertNull(PageLabels.parse(catalog));
     }
 
@@ -82,24 +82,24 @@ public class PageLabelsTest {
     @Test
     public void multipleRanges() throws IOException {
         // Pages 0-3: roman, pages 4+: decimal
-        COSDictionary catalog = new COSDictionary();
-        COSDictionary pageLabelsTree = new COSDictionary();
-        COSArray nums = new COSArray();
+        PdfDictionary catalog = new PdfDictionary();
+        PdfDictionary pageLabelsTree = new PdfDictionary();
+        PdfArray nums = new PdfArray();
 
         // Range 1: page 0, roman
-        nums.add(COSInteger.valueOf(0));
-        COSDictionary range1 = new COSDictionary();
-        range1.set(COSName.of("S"), COSName.of("r"));
+        nums.add(PdfInteger.valueOf(0));
+        PdfDictionary range1 = new PdfDictionary();
+        range1.set(PdfName.of("S"), PdfName.of("r"));
         nums.add(range1);
 
         // Range 2: page 4, decimal
-        nums.add(COSInteger.valueOf(4));
-        COSDictionary range2 = new COSDictionary();
-        range2.set(COSName.of("S"), COSName.of("D"));
+        nums.add(PdfInteger.valueOf(4));
+        PdfDictionary range2 = new PdfDictionary();
+        range2.set(PdfName.of("S"), PdfName.of("D"));
         nums.add(range2);
 
-        pageLabelsTree.set(COSName.of("Nums"), nums);
-        catalog.set(COSName.of("PageLabels"), pageLabelsTree);
+        pageLabelsTree.set(PdfName.of("Nums"), nums);
+        catalog.set(PdfName.of("PageLabels"), pageLabelsTree);
 
         PageLabels labels = PageLabels.parse(catalog);
         assertNotNull(labels);
@@ -151,17 +151,17 @@ public class PageLabelsTest {
 
     private PageLabels createLabels(int startPage, String style, String prefix, int startNum)
             throws IOException {
-        COSDictionary catalog = new COSDictionary();
-        COSDictionary tree = new COSDictionary();
-        COSArray nums = new COSArray();
-        nums.add(COSInteger.valueOf(startPage));
-        COSDictionary rangeDict = new COSDictionary();
-        if (style != null) rangeDict.set(COSName.of("S"), COSName.of(style));
-        if (prefix != null) rangeDict.set(COSName.of("P"), new COSString(prefix));
-        rangeDict.set(COSName.of("St"), COSInteger.valueOf(startNum));
+        PdfDictionary catalog = new PdfDictionary();
+        PdfDictionary tree = new PdfDictionary();
+        PdfArray nums = new PdfArray();
+        nums.add(PdfInteger.valueOf(startPage));
+        PdfDictionary rangeDict = new PdfDictionary();
+        if (style != null) rangeDict.set(PdfName.of("S"), PdfName.of(style));
+        if (prefix != null) rangeDict.set(PdfName.of("P"), new PdfString(prefix));
+        rangeDict.set(PdfName.of("St"), PdfInteger.valueOf(startNum));
         nums.add(rangeDict);
-        tree.set(COSName.of("Nums"), nums);
-        catalog.set(COSName.of("PageLabels"), tree);
+        tree.set(PdfName.of("Nums"), nums);
+        catalog.set(PdfName.of("PageLabels"), tree);
         return PageLabels.parse(catalog);
     }
 }

@@ -1,13 +1,13 @@
 package org.aspose.pdf.engine.pdfa.rules;
 
 import org.aspose.pdf.PdfFormat;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSBoolean;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfBoolean;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 import org.aspose.pdf.engine.pdfa.PdfARule;
 import org.aspose.pdf.engine.pdfa.PdfAValidationResult;
 import org.aspose.pdf.engine.parser.PDFParser;
@@ -60,21 +60,21 @@ public final class GraphicsRules implements PdfARule {
      * Checks whether the catalog has an OutputIntent with /S = GTS_PDFA1.
      */
     private boolean hasGtsPdfA1OutputIntent(PDFParser parser) {
-        COSDictionary catalog;
+        PdfDictionary catalog;
         try {
             catalog = parser.getCatalog();
         } catch (IOException e) {
             return false;
         }
 
-        COSBase oiRef = catalog.get("OutputIntents");
-        COSArray outputIntents = resolveArray(oiRef);
+        PdfBase oiRef = catalog.get("OutputIntents");
+        PdfArray outputIntents = resolveArray(oiRef);
         if (outputIntents == null) {
             return false;
         }
 
         for (int i = 0; i < outputIntents.size(); i++) {
-            COSDictionary oi = resolveDict(outputIntents.get(i));
+            PdfDictionary oi = resolveDict(outputIntents.get(i));
             if (oi == null) {
                 continue;
             }
@@ -91,7 +91,7 @@ public final class GraphicsRules implements PdfARule {
      */
     private void checkPages(PDFParser parser, PdfFormat format,
                             PdfAValidationResult result, boolean hasOutputIntent) {
-        COSDictionary catalog;
+        PdfDictionary catalog;
         try {
             catalog = parser.getCatalog();
         } catch (IOException e) {
@@ -99,22 +99,22 @@ public final class GraphicsRules implements PdfARule {
             return;
         }
 
-        COSDictionary pages = resolveDict(catalog.get("Pages"));
+        PdfDictionary pages = resolveDict(catalog.get("Pages"));
         if (pages == null) {
             return;
         }
-        COSArray kids = pages.getArray("Kids");
+        PdfArray kids = pages.getArray("Kids");
         if (kids == null) {
             return;
         }
 
         for (int i = 0; i < kids.size(); i++) {
-            COSDictionary page = resolveDict(kids.get(i));
+            PdfDictionary page = resolveDict(kids.get(i));
             if (page == null) {
                 continue;
             }
             String pagePath = "page[" + i + "]";
-            COSDictionary resources = resolveDict(page.get("Resources"));
+            PdfDictionary resources = resolveDict(page.get("Resources"));
             if (resources == null) {
                 continue;
             }
@@ -128,28 +128,28 @@ public final class GraphicsRules implements PdfARule {
     /**
      * 6.2.2: If DeviceRGB/CMYK/Gray used without OutputIntent, report error.
      */
-    private void checkDeviceColorSpaces(COSDictionary resources, String pagePath,
+    private void checkDeviceColorSpaces(PdfDictionary resources, String pagePath,
                                          PdfAValidationResult result, boolean hasOutputIntent) {
         if (hasOutputIntent) {
             return; // device color spaces are acceptable when OutputIntent present
         }
 
-        COSDictionary colorSpaces = resolveDict(resources.get("ColorSpace"));
+        PdfDictionary colorSpaces = resolveDict(resources.get("ColorSpace"));
         if (colorSpaces == null) {
             return;
         }
 
-        for (COSName key : colorSpaces.keySet()) {
-            COSBase val = colorSpaces.get(key.getName());
-            if (val instanceof COSObjectReference) {
+        for (PdfName key : colorSpaces.keySet()) {
+            PdfBase val = colorSpaces.get(key.getName());
+            if (val instanceof PdfObjectReference) {
                 try {
-                    val = ((COSObjectReference) val).dereference();
+                    val = ((PdfObjectReference) val).dereference();
                 } catch (IOException e) {
                     continue;
                 }
             }
-            if (val instanceof COSName) {
-                String name = ((COSName) val).getName();
+            if (val instanceof PdfName) {
+                String name = ((PdfName) val).getName();
                 if ("DeviceRGB".equals(name) || "DeviceCMYK".equals(name)
                         || "DeviceGray".equals(name)) {
                     result.addError("6.2.2",
@@ -165,15 +165,15 @@ public final class GraphicsRules implements PdfARule {
     /**
      * 6.2.4, 6.2.5, 6.2.7: Check XObject entries.
      */
-    private void checkXObjects(COSDictionary resources, String pagePath,
+    private void checkXObjects(PdfDictionary resources, String pagePath,
                                 PdfFormat format, PdfAValidationResult result) {
-        COSDictionary xObjects = resolveDict(resources.get("XObject"));
+        PdfDictionary xObjects = resolveDict(resources.get("XObject"));
         if (xObjects == null) {
             return;
         }
 
-        for (COSName key : xObjects.keySet()) {
-            COSDictionary xObj = resolveDict(xObjects.get(key.getName()));
+        for (PdfName key : xObjects.keySet()) {
+            PdfDictionary xObj = resolveDict(xObjects.get(key.getName()));
             if (xObj == null) {
                 continue;
             }
@@ -196,7 +196,7 @@ public final class GraphicsRules implements PdfARule {
     /**
      * 6.2.4: Image dicts: no /Alternates, no /OPI, /Interpolate must be false.
      */
-    private void checkImage(COSDictionary image, String path, PdfAValidationResult result) {
+    private void checkImage(PdfDictionary image, String path, PdfAValidationResult result) {
         if (image.get("Alternates") != null) {
             result.addError("6.2.4",
                     "Image XObject must not have /Alternates key",
@@ -207,15 +207,15 @@ public final class GraphicsRules implements PdfARule {
                     "Image XObject must not have /OPI key",
                     path, "6.2.4");
         }
-        COSBase interpolate = image.get("Interpolate");
-        if (interpolate instanceof COSObjectReference) {
+        PdfBase interpolate = image.get("Interpolate");
+        if (interpolate instanceof PdfObjectReference) {
             try {
-                interpolate = ((COSObjectReference) interpolate).dereference();
+                interpolate = ((PdfObjectReference) interpolate).dereference();
             } catch (IOException e) {
                 return;
             }
         }
-        if (interpolate instanceof COSBoolean && ((COSBoolean) interpolate).getValue()) {
+        if (interpolate instanceof PdfBoolean && ((PdfBoolean) interpolate).getValue()) {
             result.addError("6.2.4",
                     "Image XObject /Interpolate must be false",
                     path, "6.2.4");
@@ -225,7 +225,7 @@ public final class GraphicsRules implements PdfARule {
     /**
      * 6.2.5: Form XObjects: no /OPI, no /Subtype2=PS, no /PS.
      */
-    private void checkFormXObject(COSDictionary form, String path,
+    private void checkFormXObject(PdfDictionary form, String path,
                                    PdfAValidationResult result) {
         if (form.get("OPI") != null) {
             result.addError("6.2.5",
@@ -248,15 +248,15 @@ public final class GraphicsRules implements PdfARule {
     /**
      * 6.2.8: ExtGState: no /TR; /TR2 must be Default; /RI must be valid.
      */
-    private void checkExtGState(COSDictionary resources, String pagePath,
+    private void checkExtGState(PdfDictionary resources, String pagePath,
                                  PdfAValidationResult result) {
-        COSDictionary extGStates = resolveDict(resources.get("ExtGState"));
+        PdfDictionary extGStates = resolveDict(resources.get("ExtGState"));
         if (extGStates == null) {
             return;
         }
 
-        for (COSName key : extGStates.keySet()) {
-            COSDictionary gs = resolveDict(extGStates.get(key.getName()));
+        for (PdfName key : extGStates.keySet()) {
+            PdfDictionary gs = resolveDict(extGStates.get(key.getName()));
             if (gs == null) {
                 continue;
             }
@@ -270,17 +270,17 @@ public final class GraphicsRules implements PdfARule {
             }
 
             // /TR2 must be "Default" if present
-            COSBase tr2 = gs.get("TR2");
+            PdfBase tr2 = gs.get("TR2");
             if (tr2 != null) {
-                if (tr2 instanceof COSObjectReference) {
+                if (tr2 instanceof PdfObjectReference) {
                     try {
-                        tr2 = ((COSObjectReference) tr2).dereference();
+                        tr2 = ((PdfObjectReference) tr2).dereference();
                     } catch (IOException e) {
                         // skip
                     }
                 }
-                if (tr2 instanceof COSName) {
-                    if (!"Default".equals(((COSName) tr2).getName())) {
+                if (tr2 instanceof PdfName) {
+                    if (!"Default".equals(((PdfName) tr2).getName())) {
                         result.addError("6.2.8",
                                 "ExtGState /TR2 must be 'Default'",
                                 gsPath, "6.2.8");
@@ -303,30 +303,30 @@ public final class GraphicsRules implements PdfARule {
     }
 
     /**
-     * Resolves a COSBase to a COSDictionary, dereferencing indirect references.
+     * Resolves a PdfBase to a PdfDictionary, dereferencing indirect references.
      */
-    private static COSDictionary resolveDict(COSBase val) {
-        if (val instanceof COSObjectReference) {
+    private static PdfDictionary resolveDict(PdfBase val) {
+        if (val instanceof PdfObjectReference) {
             try {
-                val = ((COSObjectReference) val).dereference();
+                val = ((PdfObjectReference) val).dereference();
             } catch (IOException e) {
                 return null;
             }
         }
-        return (val instanceof COSDictionary) ? (COSDictionary) val : null;
+        return (val instanceof PdfDictionary) ? (PdfDictionary) val : null;
     }
 
     /**
-     * Resolves a COSBase to a COSArray, dereferencing indirect references.
+     * Resolves a PdfBase to a PdfArray, dereferencing indirect references.
      */
-    private static COSArray resolveArray(COSBase val) {
-        if (val instanceof COSObjectReference) {
+    private static PdfArray resolveArray(PdfBase val) {
+        if (val instanceof PdfObjectReference) {
             try {
-                val = ((COSObjectReference) val).dereference();
+                val = ((PdfObjectReference) val).dereference();
             } catch (IOException e) {
                 return null;
             }
         }
-        return (val instanceof COSArray) ? (COSArray) val : null;
+        return (val instanceof PdfArray) ? (PdfArray) val : null;
     }
 }

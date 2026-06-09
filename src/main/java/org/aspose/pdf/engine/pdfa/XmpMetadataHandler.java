@@ -1,10 +1,10 @@
 package org.aspose.pdf.engine.pdfa;
 
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -82,22 +82,22 @@ public final class XmpMetadataHandler {
      *         if no metadata stream is found
      * @throws IllegalArgumentException if catalog is {@code null}
      */
-    public static XmpMetadataHandler readFromCatalog(COSDictionary catalog) {
+    public static XmpMetadataHandler readFromCatalog(PdfDictionary catalog) {
         if (catalog == null) {
             throw new IllegalArgumentException("catalog must not be null");
         }
 
         try {
-            COSBase metaObj = catalog.get(COSName.of("Metadata"));
-            if (metaObj instanceof COSObjectReference) {
-                metaObj = ((COSObjectReference) metaObj).dereference();
+            PdfBase metaObj = catalog.get(PdfName.of("Metadata"));
+            if (metaObj instanceof PdfObjectReference) {
+                metaObj = ((PdfObjectReference) metaObj).dereference();
             }
-            if (!(metaObj instanceof COSStream)) {
+            if (!(metaObj instanceof PdfStream)) {
                 LOG.fine("No /Metadata stream found in catalog");
                 return new XmpMetadataHandler(null);
             }
 
-            COSStream metaStream = (COSStream) metaObj;
+            PdfStream metaStream = (PdfStream) metaObj;
             // XMP metadata streams must not be filtered (PDF/A requirement)
             byte[] xmlBytes = metaStream.getDecodedData();
             return parseXmpBytes(xmlBytes);

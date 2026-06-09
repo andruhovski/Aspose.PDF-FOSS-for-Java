@@ -1,7 +1,7 @@
 package org.aspose.pdf.annotations;
 
 import org.aspose.pdf.*;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 /**
  * Line annotation (ISO 32000-1:2008, Section 12.5.6.7, /Subtype /Line).
@@ -16,12 +16,12 @@ public class LineAnnotation extends MarkupAnnotation {
     private Point ending;
 
     /**
-     * Constructs a line annotation from an existing COS dictionary.
+     * Constructs a line annotation from an existing PDF dictionary.
      *
-     * @param dict the COS dictionary backing this annotation
+     * @param dict the PDF dictionary backing this annotation
      * @param page the page this annotation belongs to
      */
-    public LineAnnotation(COSDictionary dict, Page page) {
+    public LineAnnotation(PdfDictionary dict, Page page) {
         super(dict, page);
     }
 
@@ -33,7 +33,7 @@ public class LineAnnotation extends MarkupAnnotation {
      */
     public LineAnnotation(Page page, Rectangle rect) {
         super(page, rect);
-        dict.set(COSName.of("Subtype"), COSName.of("Line"));
+        dict.set(PdfName.of("Subtype"), PdfName.of("Line"));
     }
 
     /**
@@ -48,13 +48,13 @@ public class LineAnnotation extends MarkupAnnotation {
      */
     public LineAnnotation(Page page, Rectangle rect, double x1, double y1, double x2, double y2) {
         super(page, rect);
-        dict.set(COSName.of("Subtype"), COSName.of("Line"));
-        COSArray l = new COSArray();
-        l.add(new COSFloat(x1));
-        l.add(new COSFloat(y1));
-        l.add(new COSFloat(x2));
-        l.add(new COSFloat(y2));
-        dict.set(COSName.of("L"), l);
+        dict.set(PdfName.of("Subtype"), PdfName.of("Line"));
+        PdfArray l = new PdfArray();
+        l.add(new PdfFloat(x1));
+        l.add(new PdfFloat(y1));
+        l.add(new PdfFloat(x2));
+        l.add(new PdfFloat(y2));
+        dict.set(PdfName.of("L"), l);
         this.starting = new Point(x1, y1);
         this.ending = new Point(x2, y2);
     }
@@ -81,9 +81,9 @@ public class LineAnnotation extends MarkupAnnotation {
      * @return the line coordinates, or null if not set
      */
     public double[] getLine() {
-        COSBase l = dict.get("L");
-        if (l instanceof COSArray) {
-            COSArray arr = (COSArray) l;
+        PdfBase l = dict.get("L");
+        if (l instanceof PdfArray) {
+            PdfArray arr = (PdfArray) l;
             if (arr.size() >= 4) {
                 return new double[]{
                         arr.getFloat(0, 0), arr.getFloat(1, 0),
@@ -163,9 +163,9 @@ public class LineAnnotation extends MarkupAnnotation {
      */
     public void setIntent(LineIntent intent) {
         if (intent == null || intent == LineIntent.Undefined) {
-            dict.remove(COSName.of("IT"));
+            dict.remove(PdfName.of("IT"));
         } else {
-            dict.set(COSName.of("IT"), COSName.of(intent.name()));
+            dict.set(PdfName.of("IT"), PdfName.of(intent.name()));
         }
     }
 
@@ -206,11 +206,11 @@ public class LineAnnotation extends MarkupAnnotation {
     }
 
     private LineEnding getLineEndingFromLE(int index) {
-        COSBase le = dict.get("LE");
-        if (le instanceof COSArray && ((COSArray) le).size() > index) {
-            COSBase val = ((COSArray) le).get(index);
-            if (val instanceof COSName) {
-                String name = ((COSName) val).getName();
+        PdfBase le = dict.get("LE");
+        if (le instanceof PdfArray && ((PdfArray) le).size() > index) {
+            PdfBase val = ((PdfArray) le).get(index);
+            if (val instanceof PdfName) {
+                String name = ((PdfName) val).getName();
                 try {
                     return LineEnding.valueOf(name);
                 } catch (IllegalArgumentException e) {
@@ -222,30 +222,30 @@ public class LineAnnotation extends MarkupAnnotation {
     }
 
     private void setLineEndingInLE(int index, LineEnding style) {
-        COSBase existing = dict.get("LE");
-        COSArray le;
-        if (existing instanceof COSArray && ((COSArray) existing).size() >= 2) {
-            le = (COSArray) existing;
+        PdfBase existing = dict.get("LE");
+        PdfArray le;
+        if (existing instanceof PdfArray && ((PdfArray) existing).size() >= 2) {
+            le = (PdfArray) existing;
         } else {
-            le = new COSArray();
-            le.add(COSName.of("None"));
-            le.add(COSName.of("None"));
+            le = new PdfArray();
+            le.add(PdfName.of("None"));
+            le.add(PdfName.of("None"));
         }
-        le.set(index, COSName.of(style != null ? style.name() : "None"));
-        dict.set(COSName.of("LE"), le);
+        le.set(index, PdfName.of(style != null ? style.name() : "None"));
+        dict.set(PdfName.of("LE"), le);
     }
 
     /**
-     * Updates the /L array in the COS dictionary from the current starting/ending points.
+     * Updates the /L array in the PDF dictionary from the current starting/ending points.
      */
     private void updateLineArray() {
         Point s = starting != null ? starting : new Point(0, 0);
         Point e = ending != null ? ending : new Point(0, 0);
-        COSArray l = new COSArray();
-        l.add(new COSFloat(s.getX()));
-        l.add(new COSFloat(s.getY()));
-        l.add(new COSFloat(e.getX()));
-        l.add(new COSFloat(e.getY()));
-        dict.set(COSName.of("L"), l);
+        PdfArray l = new PdfArray();
+        l.add(new PdfFloat(s.getX()));
+        l.add(new PdfFloat(s.getY()));
+        l.add(new PdfFloat(e.getX()));
+        l.add(new PdfFloat(e.getY()));
+        dict.set(PdfName.of("L"), l);
     }
 }

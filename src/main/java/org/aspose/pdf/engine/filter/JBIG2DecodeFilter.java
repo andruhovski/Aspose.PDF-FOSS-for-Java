@@ -1,9 +1,9 @@
 package org.aspose.pdf.engine.filter;
 
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -36,7 +36,7 @@ import java.util.logging.Logger;
  *   <li>/JBIG2Globals: optional stream containing global segments (symbol dictionaries)</li>
  * </ul>
  */
-public final class JBIG2DecodeFilter implements COSFilter {
+public final class JBIG2DecodeFilter implements PdfFilter {
 
     private static final Logger LOG = Logger.getLogger(JBIG2DecodeFilter.class.getName());
     private static final int MAX_JBIG2_DIMENSION = 100_000;
@@ -1100,7 +1100,7 @@ public final class JBIG2DecodeFilter implements COSFilter {
     // ═══════════════════════════════════════════════════════════════
 
     @Override
-    public byte[] decode(byte[] encoded, COSDictionary params) throws IOException {
+    public byte[] decode(byte[] encoded, PdfDictionary params) throws IOException {
         if (encoded == null || encoded.length == 0) return new byte[0];
 
         try {
@@ -1111,16 +1111,16 @@ public final class JBIG2DecodeFilter implements COSFilter {
         }
     }
 
-    private byte[] decodeJBIG2(byte[] encoded, COSDictionary params) throws IOException {
+    private byte[] decodeJBIG2(byte[] encoded, PdfDictionary params) throws IOException {
         // Collect all segments: globals first, then page data
         List<Segment> allSegments = new ArrayList<>();
 
         // Parse global segments from /JBIG2Globals if present
         byte[] globalsData = null;
         if (params != null) {
-            COSBase globalsObj = params.get("JBIG2Globals");
-            if (globalsObj instanceof COSStream) {
-                globalsData = ((COSStream) globalsObj).getDecodedData();
+            PdfBase globalsObj = params.get("JBIG2Globals");
+            if (globalsObj instanceof PdfStream) {
+                globalsData = ((PdfStream) globalsObj).getDecodedData();
                 if (globalsData != null && globalsData.length > 0) {
                     List<Segment> globalSegs = parseSegments(globalsData, 0, globalsData.length);
                     for (Segment gs : globalSegs) {
@@ -1342,15 +1342,15 @@ public final class JBIG2DecodeFilter implements COSFilter {
              | ((data[off + 2] & 0xFF) << 8) | (data[off + 3] & 0xFF);
     }
 
-    // ─── COSFilter interface ─────────────────────────────────────
+    // ─── PdfFilter interface ─────────────────────────────────────
 
     @Override
-    public byte[] encode(byte[] decoded, COSDictionary params) throws IOException {
+    public byte[] encode(byte[] decoded, PdfDictionary params) throws IOException {
         throw new IOException("JBIG2Decode encoding not implemented");
     }
 
     @Override
-    public COSName getName() {
-        return COSName.of("JBIG2Decode");
+    public PdfName getName() {
+        return PdfName.of("JBIG2Decode");
     }
 }

@@ -1,7 +1,7 @@
 package org.aspose.pdf.operators;
 
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 
 import java.util.Arrays;
 import java.util.List;
@@ -27,7 +27,7 @@ public class SelectFont extends TextStateOperator {
      * @throws IllegalArgumentException if fontName is null or empty
      */
     public SelectFont(String fontName, double size) {
-        super("Tf", Arrays.asList(COSName.of(fontName), num(size)));
+        super("Tf", Arrays.asList(PdfName.of(fontName), num(size)));
         if (fontName == null || fontName.isEmpty()) {
             throw new IllegalArgumentException("Font name must not be null or empty");
         }
@@ -38,15 +38,15 @@ public class SelectFont extends TextStateOperator {
     /**
      * Creates a SelectFont (Tf) operator from parsed operands.
      * <p>
-     * Expects two operands: a {@link COSName} for the font name and a number for the size.
+     * Expects two operands: a {@link PdfName} for the font name and a number for the size.
      * </p>
      *
      * @param operands the operands from the content stream parser
      */
-    public SelectFont(List<COSBase> operands) {
+    public SelectFont(List<PdfBase> operands) {
         super("Tf", operands);
-        this.fontName = (operands != null && operands.size() > 0 && operands.get(0) instanceof COSName)
-                ? ((COSName) operands.get(0)).getName()
+        this.fontName = (operands != null && operands.size() > 0 && operands.get(0) instanceof PdfName)
+                ? ((PdfName) operands.get(0)).getName()
                 : "";
         this.size = (operands != null && operands.size() > 1)
                 ? getNumber(operands.get(1))

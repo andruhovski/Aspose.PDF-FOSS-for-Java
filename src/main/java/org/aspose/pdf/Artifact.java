@@ -1,10 +1,10 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 
 import org.aspose.pdf.text.Position;
 
@@ -103,7 +103,7 @@ public class Artifact {
      *
      * @param properties the properties dictionary from the BDC operator; may be {@code null}
      */
-    public Artifact(COSDictionary properties) {
+    public Artifact(PdfDictionary properties) {
         this.contents = new ArrayList<>();
         if (properties != null) {
             parseProperties(properties);
@@ -444,29 +444,29 @@ public class Artifact {
     /**
      * Parses artifact properties from a BDC properties dictionary.
      */
-    private void parseProperties(COSDictionary props) {
+    private void parseProperties(PdfDictionary props) {
         // Parse /Type
-        COSBase typeVal = props.get("Type");
-        if (typeVal instanceof COSName) {
-            String typeName = ((COSName) typeVal).getName();
+        PdfBase typeVal = props.get("Type");
+        if (typeVal instanceof PdfName) {
+            String typeName = ((PdfName) typeVal).getName();
             this.type = parseArtifactType(typeName);
         }
 
         // Parse /Subtype
-        COSBase subtypeVal = props.get("Subtype");
-        if (subtypeVal instanceof COSName) {
-            String subtypeName = ((COSName) subtypeVal).getName();
+        PdfBase subtypeVal = props.get("Subtype");
+        if (subtypeVal instanceof PdfName) {
+            String subtypeName = ((PdfName) subtypeVal).getName();
             this.subtype = parseArtifactSubtype(subtypeName);
         } else {
             this.subtype = ArtifactSubtype.None;
         }
 
         // Parse /BBox
-        COSBase bboxVal = props.get("BBox");
-        if (bboxVal instanceof COSArray) {
-            COSArray bboxArr = (COSArray) bboxVal;
+        PdfBase bboxVal = props.get("BBox");
+        if (bboxVal instanceof PdfArray) {
+            PdfArray bboxArr = (PdfArray) bboxVal;
             if (bboxArr.size() == 4) {
-                this.rectangle = Rectangle.fromCOSArray(bboxArr);
+                this.rectangle = Rectangle.fromPdfArray(bboxArr);
             }
         }
 
@@ -526,21 +526,21 @@ public class Artifact {
             if ("Tj".equals(name)) {
                 // Tj has one operand: a string
                 if (!op.getOperands().isEmpty()) {
-                    COSBase operand = op.getOperands().get(0);
-                    if (operand instanceof COSString) {
-                        sb.append(((COSString) operand).getString());
+                    PdfBase operand = op.getOperands().get(0);
+                    if (operand instanceof PdfString) {
+                        sb.append(((PdfString) operand).getString());
                     }
                 }
             } else if ("TJ".equals(name)) {
                 // TJ has one operand: an array of strings and numbers
                 if (!op.getOperands().isEmpty()) {
-                    COSBase operand = op.getOperands().get(0);
-                    if (operand instanceof COSArray) {
-                        COSArray arr = (COSArray) operand;
+                    PdfBase operand = op.getOperands().get(0);
+                    if (operand instanceof PdfArray) {
+                        PdfArray arr = (PdfArray) operand;
                         for (int i = 0; i < arr.size(); i++) {
-                            COSBase elem = arr.get(i);
-                            if (elem instanceof COSString) {
-                                sb.append(((COSString) elem).getString());
+                            PdfBase elem = arr.get(i);
+                            if (elem instanceof PdfString) {
+                                sb.append(((PdfString) elem).getString());
                             }
                         }
                     }

@@ -1,7 +1,7 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 
 /**
  * XYZ explicit destination (ISO 32000-1:2008, Table 151).
@@ -65,13 +65,13 @@ public class XYZExplicitDestination extends ExplicitDestination {
     public double getZoom() { return Double.isNaN(zoom) ? 0.0 : zoom; }
 
     @Override
-    public COSArray toCOSArray() {
-        COSArray arr = new COSArray();
-        arr.add(page != null ? page.getCOSDictionary() : org.aspose.pdf.engine.cos.COSNull.INSTANCE);
-        arr.add(COSName.of("XYZ"));
+    public PdfArray toPdfArray() {
+        PdfArray arr = new PdfArray();
+        arr.add(page != null ? page.getPdfDictionary() : org.aspose.pdf.engine.pdfobjects.PdfNull.INSTANCE);
+        arr.add(PdfName.of("XYZ"));
         arr.add(numOrNull(left));
         arr.add(numOrNull(top));
-        arr.add(Double.isNaN(zoom) || zoom == 0 ? org.aspose.pdf.engine.cos.COSNull.INSTANCE : numOrNull(zoom));
+        arr.add(Double.isNaN(zoom) || zoom == 0 ? org.aspose.pdf.engine.pdfobjects.PdfNull.INSTANCE : numOrNull(zoom));
         return arr;
     }
 }

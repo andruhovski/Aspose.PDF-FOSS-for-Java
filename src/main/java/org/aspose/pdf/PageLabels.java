@@ -1,12 +1,12 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSString;
-import org.aspose.pdf.engine.cos.NumberTree;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
+import org.aspose.pdf.engine.pdfobjects.NumberTree;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -34,8 +34,8 @@ public class PageLabels {
     private static final Logger LOG = Logger.getLogger(PageLabels.class.getName());
 
     private final List<LabelRange> ranges = new ArrayList<>();
-    private COSDictionary catalog;
-    private COSDictionary pageLabelsDict;
+    private PdfDictionary catalog;
+    private PdfDictionary pageLabelsDict;
 
     /**
      * A labelling range starting at a page index.
@@ -73,17 +73,17 @@ public class PageLabels {
      * @return the page labels, or {@code null} if not present
      * @throws IOException if parsing fails
      */
-    public static PageLabels parse(COSDictionary catalog) throws IOException {
-        COSBase plObj = resolve(catalog.get("PageLabels"));
-        if (!(plObj instanceof COSDictionary)) return null;
+    public static PageLabels parse(PdfDictionary catalog) throws IOException {
+        PdfBase plObj = resolve(catalog.get("PageLabels"));
+        if (!(plObj instanceof PdfDictionary)) return null;
 
         PageLabels labels = new PageLabels();
         labels.catalog = catalog;
-        labels.pageLabelsDict = (COSDictionary) plObj;
-        for (Map.Entry<Integer, COSBase> entry : new NumberTree((COSDictionary) plObj).entries()) {
-            COSBase labelDict = entry.getValue();
-            if (labelDict instanceof COSDictionary) {
-                COSDictionary ld = (COSDictionary) labelDict;
+        labels.pageLabelsDict = (PdfDictionary) plObj;
+        for (Map.Entry<Integer, PdfBase> entry : new NumberTree((PdfDictionary) plObj).entries()) {
+            PdfBase labelDict = entry.getValue();
+            if (labelDict instanceof PdfDictionary) {
+                PdfDictionary ld = (PdfDictionary) labelDict;
                 String style = ld.getNameAsString("S");
                 String prefix = ld.getString("P");
                 int start = ld.getInt("St", 1);
@@ -209,9 +209,9 @@ public class PageLabels {
     //  Utilities
     // ═══════════════════════════════════════════════════════════════
 
-    private static COSBase resolve(COSBase obj) throws IOException {
-        if (obj instanceof COSObjectReference) {
-            return ((COSObjectReference) obj).dereference();
+    private static PdfBase resolve(PdfBase obj) throws IOException {
+        if (obj instanceof PdfObjectReference) {
+            return ((PdfObjectReference) obj).dereference();
         }
         return obj;
     }
@@ -221,8 +221,8 @@ public class PageLabels {
             return;
         }
         if (pageLabelsDict == null) {
-            pageLabelsDict = new COSDictionary();
-            catalog.set(COSName.of("PageLabels"), pageLabelsDict);
+            pageLabelsDict = new PdfDictionary();
+            catalog.set(PdfName.of("PageLabels"), pageLabelsDict);
         }
         NumberTree tree = new NumberTree(pageLabelsDict);
         // We rebuild from the in-memory ranges list (already sorted by
@@ -231,15 +231,15 @@ public class PageLabels {
         // sorted order.
         tree.clear();
         for (LabelRange range : ranges) {
-            COSDictionary labelDict = new COSDictionary();
+            PdfDictionary labelDict = new PdfDictionary();
             if (range.style != null && !range.style.isEmpty()) {
-                labelDict.set(COSName.of("S"), COSName.of(range.style));
+                labelDict.set(PdfName.of("S"), PdfName.of(range.style));
             }
             if (range.prefix != null && !range.prefix.isEmpty()) {
-                labelDict.set(COSName.of("P"), new COSString(range.prefix));
+                labelDict.set(PdfName.of("P"), new PdfString(range.prefix));
             }
             if (range.startNumber > 1) {
-                labelDict.set(COSName.of("St"), COSInteger.valueOf(range.startNumber));
+                labelDict.set(PdfName.of("St"), PdfInteger.valueOf(range.startNumber));
             }
             tree.put(range.startPage, labelDict);
         }

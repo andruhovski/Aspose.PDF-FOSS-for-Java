@@ -1,4 +1,4 @@
-package org.aspose.pdf.engine.cos;
+package org.aspose.pdf.engine.pdfobjects;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -16,9 +16,9 @@ import java.util.regex.Pattern;
  * {@code <48656C6C6F>} form. Supports Unicode via BOM (0xFE 0xFF) + UTF-16BE encoding.
  * </p>
  */
-public final class COSString extends COSBase {
+public final class PdfString extends PdfBase {
 
-    private static final Logger LOG = Logger.getLogger(COSString.class.getName());
+    private static final Logger LOG = Logger.getLogger(PdfString.class.getName());
 
     private final byte[] bytes;
     private boolean forceHex;
@@ -87,12 +87,12 @@ public final class COSString extends COSBase {
     }
 
     /**
-     * Creates a COSString from raw bytes.
+     * Creates a PdfString from raw bytes.
      *
      * @param bytes the raw PDF string bytes
      * @throws IllegalArgumentException if bytes is null
      */
-    public COSString(byte[] bytes) {
+    public PdfString(byte[] bytes) {
         if (bytes == null) {
             throw new IllegalArgumentException("Bytes must not be null");
         }
@@ -100,13 +100,13 @@ public final class COSString extends COSBase {
     }
 
     /**
-     * Creates a COSString from a Java string.
+     * Creates a PdfString from a Java string.
      * Uses PDFDocEncoding if possible, otherwise UTF-16BE with BOM.
      *
      * @param text the string value
      * @throws IllegalArgumentException if text is null
      */
-    public COSString(String text) {
+    public PdfString(String text) {
         if (text == null) {
             throw new IllegalArgumentException("Text must not be null");
         }
@@ -129,13 +129,13 @@ public final class COSString extends COSBase {
     }
 
     /**
-     * Creates a COSString from a hex string (without angle brackets).
+     * Creates a PdfString from a hex string (without angle brackets).
      *
      * @param hex the hex string (e.g. "48656C6C6F")
-     * @return the COSString
+     * @return the PdfString
      * @throws IllegalArgumentException if hex is null
      */
-    public static COSString fromHex(String hex) {
+    public static PdfString fromHex(String hex) {
         if (hex == null) {
             throw new IllegalArgumentException("Hex string must not be null");
         }
@@ -154,7 +154,7 @@ public final class COSString extends COSBase {
             }
             result[i] = (byte) ((hi << 4) | lo);
         }
-        COSString s = new COSString(result);
+        PdfString s = new PdfString(result);
         s.forceHex = true;
         return s;
     }
@@ -269,15 +269,15 @@ public final class COSString extends COSBase {
     }
 
     @Override
-    public <T> T accept(ICOSVisitor<T> visitor) {
+    public <T> T accept(IPdfVisitor<T> visitor) {
         return visitor.visitString(this);
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof COSString)) return false;
-        return Arrays.equals(bytes, ((COSString) o).bytes);
+        if (!(o instanceof PdfString)) return false;
+        return Arrays.equals(bytes, ((PdfString) o).bytes);
     }
 
     @Override
@@ -287,7 +287,7 @@ public final class COSString extends COSBase {
 
     @Override
     public String toString() {
-        return "COSString{" + getString() + "}";
+        return "PdfString{" + getString() + "}";
     }
 
     private void writeLiteral(OutputStream os) throws IOException {

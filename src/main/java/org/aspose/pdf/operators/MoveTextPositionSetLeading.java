@@ -1,6 +1,6 @@
 package org.aspose.pdf.operators;
 
-import org.aspose.pdf.engine.cos.COSBase;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
 
 import java.util.List;
 
@@ -39,7 +39,7 @@ public class MoveTextPositionSetLeading extends TextPlaceOperator {
      *
      * @param operands the operands from the content stream parser
      */
-    public MoveTextPositionSetLeading(List<COSBase> operands) {
+    public MoveTextPositionSetLeading(List<PdfBase> operands) {
         super("TD", operands);
         this.x = (operands != null && operands.size() > 0) ? getNumber(operands.get(0)) : 0;
         this.y = (operands != null && operands.size() > 1) ? getNumber(operands.get(1)) : 0;

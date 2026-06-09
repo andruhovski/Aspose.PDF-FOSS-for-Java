@@ -1,10 +1,10 @@
 package org.aspose.pdf.engine.font;
 
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 
 import java.util.logging.Logger;
 
@@ -82,7 +82,7 @@ public class FontEncoding {
      * @param encDict the encoding dictionary
      * @return the constructed encoding
      */
-    public static FontEncoding fromDictionary(COSDictionary encDict) {
+    public static FontEncoding fromDictionary(PdfDictionary encDict) {
         if (encDict == null) return null;
 
         // Get base encoding
@@ -96,9 +96,9 @@ public class FontEncoding {
         }
 
         // Apply /Differences if present
-        COSBase diffVal = encDict.get("Differences");
-        if (diffVal instanceof COSArray) {
-            return base.withDifferences((COSArray) diffVal);
+        PdfBase diffVal = encDict.get("Differences");
+        if (diffVal instanceof PdfArray) {
+            return base.withDifferences((PdfArray) diffVal);
         }
 
         return base;
@@ -143,20 +143,20 @@ public class FontEncoding {
      * names to consecutive codes (ISO 32000, §9.6.6.1).
      * </p>
      *
-     * @param differences the /Differences COSArray
+     * @param differences the /Differences PdfArray
      * @return a new encoding with differences applied
      */
-    public FontEncoding withDifferences(COSArray differences) {
+    public FontEncoding withDifferences(PdfArray differences) {
         FontEncoding result = new FontEncoding(this.name + "+Diff");
         System.arraycopy(this.codeToName, 0, result.codeToName, 0, 256);
         int currentCode = 0;
         for (int i = 0; i < differences.size(); i++) {
-            COSBase elem = differences.get(i);
-            if (elem instanceof COSInteger) {
-                currentCode = ((COSInteger) elem).intValue();
-            } else if (elem instanceof COSName) {
+            PdfBase elem = differences.get(i);
+            if (elem instanceof PdfInteger) {
+                currentCode = ((PdfInteger) elem).intValue();
+            } else if (elem instanceof PdfName) {
                 if (currentCode >= 0 && currentCode < 256) {
-                    result.codeToName[currentCode] = ((COSName) elem).getName();
+                    result.codeToName[currentCode] = ((PdfName) elem).getName();
                     currentCode++;
                 }
             }

@@ -3,8 +3,8 @@ package org.aspose.pdf.tests;
 import org.aspose.pdf.Document;
 import org.aspose.pdf.Page;
 import org.aspose.pdf.Resources;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 import org.aspose.pdf.text.Position;
 import org.aspose.pdf.text.TextBuilder;
 import org.aspose.pdf.text.TextFragment;
@@ -129,16 +129,16 @@ public class TextBuilderTest {
         Resources resources = page.getResources();
         assertNotNull(resources, "Page should have resources after appending text");
 
-        COSDictionary fonts = resources.getFonts();
+        PdfDictionary fonts = resources.getFonts();
         assertNotNull(fonts, "Page resources should have a /Font dictionary");
         assertFalse(fonts.isEmpty(), "Font dictionary should not be empty");
 
         // Find the font entry for Times-Roman
         boolean foundTimesRoman = false;
-        for (COSName key : fonts.keySet()) {
-            org.aspose.pdf.engine.cos.COSBase val = fonts.get(key);
-            if (val instanceof COSDictionary) {
-                COSDictionary fontDict = (COSDictionary) val;
+        for (PdfName key : fonts.keySet()) {
+            org.aspose.pdf.engine.pdfobjects.PdfBase val = fonts.get(key);
+            if (val instanceof PdfDictionary) {
+                PdfDictionary fontDict = (PdfDictionary) val;
                 String baseFontName = fontDict.getNameAsString("BaseFont");
                 if ("Times-Roman".equals(baseFontName)) {
                     foundTimesRoman = true;
@@ -179,7 +179,7 @@ public class TextBuilderTest {
         f3.setPosition(new Position(50, 660));
         builder.appendText(f3);
 
-        COSDictionary fonts = page.getResources().getFonts();
+        PdfDictionary fonts = page.getResources().getFonts();
         assertNotNull(fonts);
         // Should have exactly 2 font entries (Helvetica and Courier), not 3
         assertEquals(2, fonts.size(), "Should have 2 distinct fonts registered");
@@ -274,20 +274,20 @@ public class TextBuilderTest {
      * Helper to extract raw content bytes from a page.
      */
     private byte[] getPageContentBytes(Page page) throws IOException {
-        org.aspose.pdf.engine.cos.COSBase raw = page.getRawContents();
-        if (raw instanceof org.aspose.pdf.engine.cos.COSStream) {
-            return ((org.aspose.pdf.engine.cos.COSStream) raw).getDecodedData();
+        org.aspose.pdf.engine.pdfobjects.PdfBase raw = page.getRawContents();
+        if (raw instanceof org.aspose.pdf.engine.pdfobjects.PdfStream) {
+            return ((org.aspose.pdf.engine.pdfobjects.PdfStream) raw).getDecodedData();
         }
-        if (raw instanceof org.aspose.pdf.engine.cos.COSArray) {
-            org.aspose.pdf.engine.cos.COSArray arr = (org.aspose.pdf.engine.cos.COSArray) raw;
+        if (raw instanceof org.aspose.pdf.engine.pdfobjects.PdfArray) {
+            org.aspose.pdf.engine.pdfobjects.PdfArray arr = (org.aspose.pdf.engine.pdfobjects.PdfArray) raw;
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             for (int i = 0; i < arr.size(); i++) {
-                org.aspose.pdf.engine.cos.COSBase item = arr.get(i);
-                if (item instanceof org.aspose.pdf.engine.cos.COSObjectReference) {
-                    item = ((org.aspose.pdf.engine.cos.COSObjectReference) item).dereference();
+                org.aspose.pdf.engine.pdfobjects.PdfBase item = arr.get(i);
+                if (item instanceof org.aspose.pdf.engine.pdfobjects.PdfObjectReference) {
+                    item = ((org.aspose.pdf.engine.pdfobjects.PdfObjectReference) item).dereference();
                 }
-                if (item instanceof org.aspose.pdf.engine.cos.COSStream) {
-                    baos.write(((org.aspose.pdf.engine.cos.COSStream) item).getDecodedData());
+                if (item instanceof org.aspose.pdf.engine.pdfobjects.PdfStream) {
+                    baos.write(((org.aspose.pdf.engine.pdfobjects.PdfStream) item).getDecodedData());
                     baos.write('\n');
                 }
             }

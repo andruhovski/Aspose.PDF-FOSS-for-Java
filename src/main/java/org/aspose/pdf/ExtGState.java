@@ -1,8 +1,8 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
 
 import java.util.logging.Logger;
 
@@ -18,7 +18,7 @@ public class ExtGState {
 
     private static final Logger LOG = Logger.getLogger(ExtGState.class.getName());
 
-    private final COSDictionary dict;
+    private final PdfDictionary dict;
 
     /**
      * Creates an ExtGState from a graphics state parameter dictionary.
@@ -26,7 +26,7 @@ public class ExtGState {
      * @param dict the /ExtGState dictionary
      * @throws IllegalArgumentException if dict is null
      */
-    public ExtGState(COSDictionary dict) {
+    public ExtGState(PdfDictionary dict) {
         if (dict == null) {
             throw new IllegalArgumentException("ExtGState dictionary must not be null");
         }
@@ -62,11 +62,11 @@ public class ExtGState {
     }
 
     /**
-     * Returns the soft mask (/SMask) value — may be COSName("None") or COSDictionary.
+     * Returns the soft mask (/SMask) value — may be PdfName("None") or PdfDictionary.
      *
      * @return the soft mask object, or null
      */
-    public COSBase getSoftMask() {
+    public PdfBase getSoftMask() {
         return dict.get("SMask");
     }
 
@@ -111,9 +111,9 @@ public class ExtGState {
      *
      * @return the font array, or null
      */
-    public COSArray getFont() {
-        COSBase val = dict.get("Font");
-        return val instanceof COSArray ? (COSArray) val : null;
+    public PdfArray getFont() {
+        PdfBase val = dict.get("Font");
+        return val instanceof PdfArray ? (PdfArray) val : null;
     }
 
     /**
@@ -135,11 +135,11 @@ public class ExtGState {
     }
 
     /**
-     * Returns the underlying COS dictionary.
+     * Returns the underlying PDF dictionary.
      *
      * @return the raw dictionary
      */
-    public COSDictionary getCOSDictionary() {
+    public PdfDictionary getPdfDictionary() {
         return dict;
     }
 }

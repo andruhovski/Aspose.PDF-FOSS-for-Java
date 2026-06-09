@@ -1,8 +1,8 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
 
 import java.io.IOException;
 import java.util.logging.Logger;
@@ -20,14 +20,14 @@ public abstract class PdfAction {
     private static final Logger LOG = Logger.getLogger(PdfAction.class.getName());
 
     /** The underlying action dictionary. */
-    protected COSDictionary actionDict;
+    protected PdfDictionary actionDict;
 
     /**
      * Returns the underlying action dictionary.
      *
-     * @return the COS dictionary
+     * @return the PDF dictionary
      */
-    public COSDictionary getCOSDictionary() { return actionDict; }
+    public PdfDictionary getPdfDictionary() { return actionDict; }
 
     /**
      * Returns the action type (/S entry).
@@ -46,9 +46,9 @@ public abstract class PdfAction {
      */
     public PdfAction getNext() throws IOException {
         if (actionDict == null) return null;
-        COSBase next = resolve(actionDict.get("Next"));
-        if (next instanceof COSDictionary) {
-            return fromDictionary((COSDictionary) next, null);
+        PdfBase next = resolve(actionDict.get("Next"));
+        if (next instanceof PdfDictionary) {
+            return fromDictionary((PdfDictionary) next, null);
         }
         return null;
     }
@@ -61,7 +61,7 @@ public abstract class PdfAction {
      * @return the parsed action, or a GenericAction for unknown types
      * @throws IOException if parsing fails
      */
-    public static PdfAction fromDictionary(COSDictionary dict, Document doc) throws IOException {
+    public static PdfAction fromDictionary(PdfDictionary dict, Document doc) throws IOException {
         if (dict == null) return null;
         String type = dict.getNameAsString("S");
         if (type == null) return new GenericAction(dict);
@@ -90,9 +90,9 @@ public abstract class PdfAction {
     /**
      * Resolves indirect references.
      */
-    protected static COSBase resolve(COSBase val) {
-        if (val instanceof COSObjectReference) {
-            try { return ((COSObjectReference) val).dereference(); }
+    protected static PdfBase resolve(PdfBase val) {
+        if (val instanceof PdfObjectReference) {
+            try { return ((PdfObjectReference) val).dereference(); }
             catch (IOException e) { return null; }
         }
         return val;

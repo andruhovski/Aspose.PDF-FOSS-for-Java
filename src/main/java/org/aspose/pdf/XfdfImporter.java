@@ -1,7 +1,7 @@
 package org.aspose.pdf;
 
 import org.aspose.pdf.annotations.*;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 import org.aspose.pdf.forms.Field;
 import org.aspose.pdf.forms.Form;
 
@@ -334,12 +334,12 @@ public final class XfdfImporter {
                 double[] s = parseNumberList(start, ',');
                 double[] e = parseNumberList(end, ',');
                 if (s != null && s.length >= 2 && e != null && e.length >= 2) {
-                    COSArray l = new COSArray();
-                    l.add(new COSFloat(s[0]));
-                    l.add(new COSFloat(s[1]));
-                    l.add(new COSFloat(e[0]));
-                    l.add(new COSFloat(e[1]));
-                    annot.getCOSDictionary().set(COSName.of("L"), l);
+                    PdfArray l = new PdfArray();
+                    l.add(new PdfFloat(s[0]));
+                    l.add(new PdfFloat(s[1]));
+                    l.add(new PdfFloat(e[0]));
+                    l.add(new PdfFloat(e[1]));
+                    annot.getPdfDictionary().set(PdfName.of("L"), l);
                 }
             }
         }
@@ -350,23 +350,23 @@ public final class XfdfImporter {
             if (inklistNodes.getLength() > 0) {
                 Element inklistElem = (Element) inklistNodes.item(0);
                 NodeList gestures = inklistElem.getElementsByTagName("gesture");
-                COSArray outerArray = new COSArray();
+                PdfArray outerArray = new PdfArray();
                 for (int g = 0; g < gestures.getLength(); g++) {
                     String gestureText = gestures.item(g).getTextContent();
                     if (gestureText == null || gestureText.isEmpty()) continue;
                     String[] points = gestureText.split(";");
-                    COSArray innerArray = new COSArray();
+                    PdfArray innerArray = new PdfArray();
                     for (String point : points) {
                         String[] xy = point.split(",");
                         for (String coord : xy) {
                             try {
-                                innerArray.add(new COSFloat(Double.parseDouble(coord.trim())));
+                                innerArray.add(new PdfFloat(Double.parseDouble(coord.trim())));
                             } catch (NumberFormatException ignored) { }
                         }
                     }
                     outerArray.add(innerArray);
                 }
-                annot.getCOSDictionary().set(COSName.of("InkList"), outerArray);
+                annot.getPdfDictionary().set(PdfName.of("InkList"), outerArray);
             }
         }
 
@@ -376,9 +376,9 @@ public final class XfdfImporter {
             if (verticesText != null) {
                 double[] verts = parseNumberList(verticesText, ',');
                 if (verts != null) {
-                    COSArray arr = new COSArray();
-                    for (double v : verts) arr.add(new COSFloat(v));
-                    annot.getCOSDictionary().set(COSName.of("Vertices"), arr);
+                    PdfArray arr = new PdfArray();
+                    for (double v : verts) arr.add(new PdfFloat(v));
+                    annot.getPdfDictionary().set(PdfName.of("Vertices"), arr);
                 }
             }
         }

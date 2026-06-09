@@ -66,10 +66,10 @@ public class TOCElement extends Element {
             throw new IllegalArgumentException("Reference target must not be null");
         }
         LOG.fine(() -> "Adding Ref from TOC to " + target.getStructureElement().getStructureType());
-        // Store the reference in the COS dictionary
-        structureElement.getCOSDictionary().set(
-            org.aspose.pdf.engine.cos.COSName.of("Ref"),
-            target.getStructureElement().getCOSDictionary());
+        // Store the reference in the PDF dictionary
+        structureElement.getPdfDictionary().set(
+            org.aspose.pdf.engine.pdfobjects.PdfName.of("Ref"),
+            target.getStructureElement().getPdfDictionary());
     }
 
     /**

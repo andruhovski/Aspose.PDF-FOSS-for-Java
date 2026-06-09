@@ -1,8 +1,8 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSFloat;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfFloat;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 
 /**
  * Package-private helpers used by {@link BackgroundArtifact} and
@@ -23,16 +23,16 @@ final class ArtifactSupport {
      */
     static String ensureStandardFont(Page page, String baseFont) {
         Resources res = page.ensureResources();
-        COSDictionary fonts = res.getFonts();
+        PdfDictionary fonts = res.getFonts();
         if (fonts == null) {
-            fonts = new COSDictionary();
-            res.getCOSDictionary().set(COSName.of("Font"), fonts);
+            fonts = new PdfDictionary();
+            res.getPdfDictionary().set(PdfName.of("Font"), fonts);
         }
         // Re-use any existing /BaseFont match.
-        for (COSName key : fonts.keySet()) {
-            org.aspose.pdf.engine.cos.COSBase val = fonts.get(key);
-            if (val instanceof COSDictionary) {
-                String existingBase = ((COSDictionary) val).getNameAsString("BaseFont");
+        for (PdfName key : fonts.keySet()) {
+            org.aspose.pdf.engine.pdfobjects.PdfBase val = fonts.get(key);
+            if (val instanceof PdfDictionary) {
+                String existingBase = ((PdfDictionary) val).getNameAsString("BaseFont");
                 if (baseFont.equals(existingBase)) return key.getName();
             }
         }
@@ -42,14 +42,14 @@ final class ArtifactSupport {
             while (fonts.get(name + n) != null) n++;
             name = name + n;
         }
-        COSDictionary f = new COSDictionary();
-        f.set(COSName.of("Type"), COSName.of("Font"));
-        f.set(COSName.of("Subtype"), COSName.of("Type1"));
-        f.set(COSName.of("BaseFont"), COSName.of(baseFont));
+        PdfDictionary f = new PdfDictionary();
+        f.set(PdfName.of("Type"), PdfName.of("Font"));
+        f.set(PdfName.of("Subtype"), PdfName.of("Type1"));
+        f.set(PdfName.of("BaseFont"), PdfName.of(baseFont));
         if (!"ZapfDingbats".equals(baseFont) && !"Symbol".equals(baseFont)) {
-            f.set(COSName.of("Encoding"), COSName.of("WinAnsiEncoding"));
+            f.set(PdfName.of("Encoding"), PdfName.of("WinAnsiEncoding"));
         }
-        fonts.set(COSName.of(name), f);
+        fonts.set(PdfName.of(name), f);
         return name;
     }
 
@@ -60,16 +60,16 @@ final class ArtifactSupport {
      */
     static String ensureOpacityExtGState(Page page, double alpha) {
         Resources res = page.ensureResources();
-        COSDictionary extGs = res.getExtGState();
+        PdfDictionary extGs = res.getExtGState();
         if (extGs == null) {
-            extGs = new COSDictionary();
-            res.getCOSDictionary().set(COSName.of("ExtGState"), extGs);
+            extGs = new PdfDictionary();
+            res.getPdfDictionary().set(PdfName.of("ExtGState"), extGs);
         }
         // Re-use any existing entry whose /ca and /CA match.
-        for (COSName key : extGs.keySet()) {
-            org.aspose.pdf.engine.cos.COSBase val = extGs.get(key);
-            if (val instanceof COSDictionary) {
-                COSDictionary gs = (COSDictionary) val;
+        for (PdfName key : extGs.keySet()) {
+            org.aspose.pdf.engine.pdfobjects.PdfBase val = extGs.get(key);
+            if (val instanceof PdfDictionary) {
+                PdfDictionary gs = (PdfDictionary) val;
                 double caVal = gs.getFloat("ca", -1f);
                 double upperCa = gs.getFloat("CA", -1f);
                 if (Math.abs(caVal - alpha) < 1e-6 && Math.abs(upperCa - alpha) < 1e-6) {
@@ -85,11 +85,11 @@ final class ArtifactSupport {
             name = "GS" + String.format(java.util.Locale.ROOT, "%02d",
                     (int) Math.round(alpha * 100)) + "_" + suffix++;
         }
-        COSDictionary gs = new COSDictionary();
-        gs.set(COSName.of("Type"), COSName.of("ExtGState"));
-        gs.set(COSName.of("ca"), new COSFloat(alpha));
-        gs.set(COSName.of("CA"), new COSFloat(alpha));
-        extGs.set(COSName.of(name), gs);
+        PdfDictionary gs = new PdfDictionary();
+        gs.set(PdfName.of("Type"), PdfName.of("ExtGState"));
+        gs.set(PdfName.of("ca"), new PdfFloat(alpha));
+        gs.set(PdfName.of("CA"), new PdfFloat(alpha));
+        extGs.set(PdfName.of(name), gs);
         return name;
     }
 

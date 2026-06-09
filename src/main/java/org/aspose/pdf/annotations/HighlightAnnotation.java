@@ -1,7 +1,7 @@
 package org.aspose.pdf.annotations;
 
 import org.aspose.pdf.*;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 /**
  * Highlight annotation (ISO 32000-1:2008, Section 12.5.6.10, /Subtype /Highlight).
@@ -14,12 +14,12 @@ import org.aspose.pdf.engine.cos.*;
 public class HighlightAnnotation extends MarkupAnnotation {
 
     /**
-     * Constructs a highlight annotation from an existing COS dictionary.
+     * Constructs a highlight annotation from an existing PDF dictionary.
      *
-     * @param dict the COS dictionary backing this annotation
+     * @param dict the PDF dictionary backing this annotation
      * @param page the page this annotation belongs to
      */
-    public HighlightAnnotation(COSDictionary dict, Page page) {
+    public HighlightAnnotation(PdfDictionary dict, Page page) {
         super(dict, page);
     }
 
@@ -31,7 +31,7 @@ public class HighlightAnnotation extends MarkupAnnotation {
      */
     public HighlightAnnotation(Page page, Rectangle rect) {
         super(page, rect);
-        dict.set(COSName.of("Subtype"), COSName.of("Highlight"));
+        dict.set(PdfName.of("Subtype"), PdfName.of("Highlight"));
         // Auto-derive QuadPoints from rect (matches C# Aspose behavior).
         // Order: top-left, top-right, bottom-left, bottom-right
         // (counter-clockwise from top-left, per ISO 32000-1:2008 §12.5.6.10).
@@ -53,9 +53,9 @@ public class HighlightAnnotation extends MarkupAnnotation {
      * @return the quad points array, or null if not set
      */
     public double[] getQuadPoints() {
-        COSBase qp = dict.get("QuadPoints");
-        if (qp instanceof COSArray) {
-            COSArray arr = (COSArray) qp;
+        PdfBase qp = dict.get("QuadPoints");
+        if (qp instanceof PdfArray) {
+            PdfArray arr = (PdfArray) qp;
             double[] result = new double[arr.size()];
             for (int i = 0; i < arr.size(); i++) {
                 result[i] = arr.getFloat(i, 0);
@@ -72,11 +72,11 @@ public class HighlightAnnotation extends MarkupAnnotation {
      */
     public void setQuadPoints(double[] points) {
         if (points == null) return;
-        COSArray arr = new COSArray();
+        PdfArray arr = new PdfArray();
         for (double p : points) {
-            arr.add(new COSFloat(p));
+            arr.add(new PdfFloat(p));
         }
-        dict.set(COSName.of("QuadPoints"), arr);
+        dict.set(PdfName.of("QuadPoints"), arr);
     }
 
     /**
@@ -91,7 +91,7 @@ public class HighlightAnnotation extends MarkupAnnotation {
      */
     public void setQuadPoints(double[][] quads) {
         if (quads == null) {
-            dict.set(COSName.of("QuadPoints"), (COSBase) null);
+            dict.set(PdfName.of("QuadPoints"), (PdfBase) null);
             return;
         }
         int total = 0;

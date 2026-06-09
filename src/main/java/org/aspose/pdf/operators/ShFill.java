@@ -1,8 +1,8 @@
 package org.aspose.pdf.operators;
 
 import org.aspose.pdf.Operator;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 
 import java.util.Collections;
 import java.util.List;
@@ -25,7 +25,7 @@ public class ShFill extends Operator {
      * @throws IllegalArgumentException if shadingName is null or empty
      */
     public ShFill(String shadingName) {
-        super("sh", Collections.singletonList(COSName.of(shadingName)));
+        super("sh", Collections.singletonList(PdfName.of(shadingName)));
         if (shadingName == null || shadingName.isEmpty()) {
             throw new IllegalArgumentException("Shading name must not be null or empty");
         }
@@ -35,15 +35,15 @@ public class ShFill extends Operator {
     /**
      * Creates a ShFill (sh) operator from parsed operands.
      * <p>
-     * Expects one operand: a {@link COSName} identifying the shading resource.
+     * Expects one operand: a {@link PdfName} identifying the shading resource.
      * </p>
      *
      * @param operands the operands from the content stream parser
      */
-    public ShFill(List<COSBase> operands) {
+    public ShFill(List<PdfBase> operands) {
         super("sh", operands);
-        this.shadingName = (operands != null && operands.size() > 0 && operands.get(0) instanceof COSName)
-                ? ((COSName) operands.get(0)).getName()
+        this.shadingName = (operands != null && operands.size() > 0 && operands.get(0) instanceof PdfName)
+                ? ((PdfName) operands.get(0)).getName()
                 : "";
     }
 

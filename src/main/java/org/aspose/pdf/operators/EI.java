@@ -1,7 +1,7 @@
 package org.aspose.pdf.operators;
 
 import org.aspose.pdf.Operator;
-import org.aspose.pdf.engine.cos.COSBase;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
 
 import java.util.List;
 
@@ -26,7 +26,7 @@ public class EI extends Operator {
      *
      * @param operands the operands from the content stream parser
      */
-    public EI(List<COSBase> operands) {
+    public EI(List<PdfBase> operands) {
         super("EI", operands);
     }
 }

@@ -3,8 +3,8 @@ package org.aspose.pdf.forms;
 import org.aspose.pdf.Document;
 import org.aspose.pdf.Page;
 import org.aspose.pdf.Rectangle;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -14,10 +14,10 @@ class RadioButtonOptionFieldCtorTest {
     @Test
     void noArgCtor_createsValidWidget() {
         RadioButtonOptionField opt = new RadioButtonOptionField();
-        COSDictionary d = opt.getCOSDictionary();
-        assertEquals("Annot",  ((COSName) d.get("Type")).getName());
-        assertEquals("Widget", ((COSName) d.get("Subtype")).getName());
-        assertEquals("Btn",    ((COSName) d.get("FT")).getName());
+        PdfDictionary d = opt.getPdfDictionary();
+        assertEquals("Annot",  ((PdfName) d.get("Type")).getName());
+        assertEquals("Widget", ((PdfName) d.get("Subtype")).getName());
+        assertEquals("Btn",    ((PdfName) d.get("FT")).getName());
         assertNull(opt.getRect());
     }
 
@@ -36,14 +36,14 @@ class RadioButtonOptionFieldCtorTest {
             assertEquals(40, got.getURY(), 1e-6);
 
             // /P entry points to the page dict
-            assertSame(page.getCOSDictionary(), opt.getCOSDictionary().get("P"));
+            assertSame(page.getPdfDictionary(), opt.getPdfDictionary().get("P"));
         }
     }
 
     @Test
     void pageRectCtor_nullPage_nullRect_doesNotThrow() {
         RadioButtonOptionField opt = new RadioButtonOptionField((Page) null, (Rectangle) null);
-        assertNotNull(opt.getCOSDictionary());
+        assertNotNull(opt.getPdfDictionary());
         assertNull(opt.getRect());
     }
 
@@ -53,11 +53,11 @@ class RadioButtonOptionFieldCtorTest {
         opt.setOptionName("Yes");
 
         // /AS active state
-        assertEquals("Yes", ((COSName) opt.getCOSDictionary().get("AS")).getName());
+        assertEquals("Yes", ((PdfName) opt.getPdfDictionary().get("AS")).getName());
 
         // /AP/N contains both "Yes" and "Off"
-        COSDictionary ap = (COSDictionary) opt.getCOSDictionary().get("AP");
-        COSDictionary n = (COSDictionary) ap.get("N");
+        PdfDictionary ap = (PdfDictionary) opt.getPdfDictionary().get("AP");
+        PdfDictionary n = (PdfDictionary) ap.get("N");
         assertNotNull(n.get("Yes"));
         assertNotNull(n.get("Off"));
 
@@ -73,7 +73,7 @@ class RadioButtonOptionFieldCtorTest {
         opt.setOptionName("Maybe");
 
         assertEquals("Maybe", opt.getOptionName());
-        COSDictionary n = (COSDictionary) ((COSDictionary) opt.getCOSDictionary().get("AP")).get("N");
+        PdfDictionary n = (PdfDictionary) ((PdfDictionary) opt.getPdfDictionary().get("AP")).get("N");
         // "Yes" should be gone, "Maybe" and "Off" remain
         assertNull(n.get("Yes"));
         assertNotNull(n.get("Maybe"));
@@ -86,8 +86,8 @@ class RadioButtonOptionFieldCtorTest {
         opt.setOptionName("Yes");
         opt.setOptionName(null);
 
-        assertNull(opt.getCOSDictionary().get("AS"));
-        COSDictionary n = (COSDictionary) ((COSDictionary) opt.getCOSDictionary().get("AP")).get("N");
+        assertNull(opt.getPdfDictionary().get("AS"));
+        PdfDictionary n = (PdfDictionary) ((PdfDictionary) opt.getPdfDictionary().get("AP")).get("N");
         assertNotNull(n.get("Off"));
     }
 

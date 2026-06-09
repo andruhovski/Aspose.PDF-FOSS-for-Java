@@ -1,6 +1,6 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
 import org.aspose.pdf.facades.FormattedText;
 import org.aspose.pdf.text.TextFormattingOptions;
 import org.aspose.pdf.text.TextState;
@@ -25,7 +25,7 @@ public class TextStamp extends Stamp {
     private TextState textState;
     private TextFormattingOptions.WordWrapMode wordWrapMode = TextFormattingOptions.WordWrapMode.Undefined;
     private HorizontalAlignment textAlignment = HorizontalAlignment.None;
-    private transient COSObjectReference cachedFormReference;
+    private transient PdfObjectReference cachedFormReference;
     private transient Document cachedTargetDocument;
 
     /**
@@ -146,7 +146,7 @@ public class TextStamp extends Stamp {
         this.textAlignment = textAlignment != null ? textAlignment : HorizontalAlignment.None;
     }
 
-    COSObjectReference getCachedFormReference() {
+    PdfObjectReference getCachedFormReference() {
         return cachedFormReference;
     }
 
@@ -154,7 +154,7 @@ public class TextStamp extends Stamp {
         return cachedTargetDocument;
     }
 
-    void cacheFormReference(Document targetDocument, COSObjectReference formReference) {
+    void cacheFormReference(Document targetDocument, PdfObjectReference formReference) {
         this.cachedTargetDocument = targetDocument;
         this.cachedFormReference = formReference;
     }

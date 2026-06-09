@@ -302,7 +302,7 @@ public class FormEditor {
      * if not found there, every page's widget annotations (some PDFs declare
      * fields only as annotations and never register them in /AcroForm/Fields —
      * 27304-1.pdf is one such case). The annotation dictionary is deep-cloned
-     * via {@link org.aspose.pdf.engine.cos.COSCloner}, retargeted at the
+     * via {@link org.aspose.pdf.engine.pdfobjects.PdfObjectCloner}, retargeted at the
      * destination page, and inserted into both the page's /Annots array and
      * the bound document's /AcroForm/Fields array (which is created on demand).
      * </p>
@@ -319,7 +319,7 @@ public class FormEditor {
         }
         if (fieldName == null || fieldName.isEmpty()) return false;
         try (Document srcDoc = new Document(sourceFile)) {
-            org.aspose.pdf.engine.cos.COSDictionary srcFieldDict =
+            org.aspose.pdf.engine.pdfobjects.PdfDictionary srcFieldDict =
                     findFieldDictByName(srcDoc, fieldName);
             if (srcFieldDict == null) {
                 LOG.warning("copyOuterField: source field '" + fieldName + "' not found in " + sourceFile);
@@ -327,20 +327,20 @@ public class FormEditor {
             }
             // Deep-clone the field/annotation through the registry that
             // installs new indirect references in the target document.
-            org.aspose.pdf.engine.cos.COSCloner cloner =
-                    new org.aspose.pdf.engine.cos.COSCloner(document::registerImportedObject);
-            org.aspose.pdf.engine.cos.COSDictionary cloned =
+            org.aspose.pdf.engine.pdfobjects.PdfObjectCloner cloner =
+                    new org.aspose.pdf.engine.pdfobjects.PdfObjectCloner(document::registerImportedObject);
+            org.aspose.pdf.engine.pdfobjects.PdfDictionary cloned =
                     cloner.cloneAnnotationDict(srcFieldDict);
 
             // Make sure /Subtype /Annot /Type are present so the destination
             // recognises this as a widget annotation.
             if (cloned.get("Type") == null) {
-                cloned.set(org.aspose.pdf.engine.cos.COSName.of("Type"),
-                        org.aspose.pdf.engine.cos.COSName.of("Annot"));
+                cloned.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("Type"),
+                        org.aspose.pdf.engine.pdfobjects.PdfName.of("Annot"));
             }
             if (cloned.get("Subtype") == null) {
-                cloned.set(org.aspose.pdf.engine.cos.COSName.of("Subtype"),
-                        org.aspose.pdf.engine.cos.COSName.of("Widget"));
+                cloned.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("Subtype"),
+                        org.aspose.pdf.engine.pdfobjects.PdfName.of("Widget"));
             }
 
             org.aspose.pdf.PageCollection pages = document.getPages();
@@ -352,50 +352,50 @@ public class FormEditor {
 
             // Register the cloned dict as an indirect object so /Annots can
             // reference it and so /AcroForm/Fields holds a stable identity.
-            org.aspose.pdf.engine.cos.COSObjectReference annotRef =
+            org.aspose.pdf.engine.pdfobjects.PdfObjectReference annotRef =
                     document.registerImportedObject(cloned);
             // Set /P to point at the destination page.
-            cloned.set(org.aspose.pdf.engine.cos.COSName.of("P"),
+            cloned.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("P"),
                     pageRefOf(targetPage));
 
             // Append to page /Annots.
-            org.aspose.pdf.engine.cos.COSDictionary pageDict = targetPage.getCOSDictionary();
-            org.aspose.pdf.engine.cos.COSBase annotsBase = pageDict.get("Annots");
-            if (annotsBase instanceof org.aspose.pdf.engine.cos.COSObjectReference) {
-                annotsBase = ((org.aspose.pdf.engine.cos.COSObjectReference) annotsBase).dereference();
+            org.aspose.pdf.engine.pdfobjects.PdfDictionary pageDict = targetPage.getPdfDictionary();
+            org.aspose.pdf.engine.pdfobjects.PdfBase annotsBase = pageDict.get("Annots");
+            if (annotsBase instanceof org.aspose.pdf.engine.pdfobjects.PdfObjectReference) {
+                annotsBase = ((org.aspose.pdf.engine.pdfobjects.PdfObjectReference) annotsBase).dereference();
             }
-            org.aspose.pdf.engine.cos.COSArray annots;
-            if (annotsBase instanceof org.aspose.pdf.engine.cos.COSArray) {
-                annots = (org.aspose.pdf.engine.cos.COSArray) annotsBase;
+            org.aspose.pdf.engine.pdfobjects.PdfArray annots;
+            if (annotsBase instanceof org.aspose.pdf.engine.pdfobjects.PdfArray) {
+                annots = (org.aspose.pdf.engine.pdfobjects.PdfArray) annotsBase;
             } else {
-                annots = new org.aspose.pdf.engine.cos.COSArray();
-                pageDict.set(org.aspose.pdf.engine.cos.COSName.of("Annots"), annots);
+                annots = new org.aspose.pdf.engine.pdfobjects.PdfArray();
+                pageDict.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("Annots"), annots);
             }
             annots.add(annotRef);
 
             // Append to /AcroForm/Fields (creating /AcroForm if necessary).
-            org.aspose.pdf.engine.cos.COSDictionary catalog = document.getCatalog();
-            org.aspose.pdf.engine.cos.COSBase acBase = catalog.get("AcroForm");
-            if (acBase instanceof org.aspose.pdf.engine.cos.COSObjectReference) {
-                acBase = ((org.aspose.pdf.engine.cos.COSObjectReference) acBase).dereference();
+            org.aspose.pdf.engine.pdfobjects.PdfDictionary catalog = document.getCatalog();
+            org.aspose.pdf.engine.pdfobjects.PdfBase acBase = catalog.get("AcroForm");
+            if (acBase instanceof org.aspose.pdf.engine.pdfobjects.PdfObjectReference) {
+                acBase = ((org.aspose.pdf.engine.pdfobjects.PdfObjectReference) acBase).dereference();
             }
-            org.aspose.pdf.engine.cos.COSDictionary acroForm;
-            if (acBase instanceof org.aspose.pdf.engine.cos.COSDictionary) {
-                acroForm = (org.aspose.pdf.engine.cos.COSDictionary) acBase;
+            org.aspose.pdf.engine.pdfobjects.PdfDictionary acroForm;
+            if (acBase instanceof org.aspose.pdf.engine.pdfobjects.PdfDictionary) {
+                acroForm = (org.aspose.pdf.engine.pdfobjects.PdfDictionary) acBase;
             } else {
-                acroForm = new org.aspose.pdf.engine.cos.COSDictionary();
-                catalog.set(org.aspose.pdf.engine.cos.COSName.of("AcroForm"), acroForm);
+                acroForm = new org.aspose.pdf.engine.pdfobjects.PdfDictionary();
+                catalog.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("AcroForm"), acroForm);
             }
-            org.aspose.pdf.engine.cos.COSBase fieldsBase = acroForm.get("Fields");
-            if (fieldsBase instanceof org.aspose.pdf.engine.cos.COSObjectReference) {
-                fieldsBase = ((org.aspose.pdf.engine.cos.COSObjectReference) fieldsBase).dereference();
+            org.aspose.pdf.engine.pdfobjects.PdfBase fieldsBase = acroForm.get("Fields");
+            if (fieldsBase instanceof org.aspose.pdf.engine.pdfobjects.PdfObjectReference) {
+                fieldsBase = ((org.aspose.pdf.engine.pdfobjects.PdfObjectReference) fieldsBase).dereference();
             }
-            org.aspose.pdf.engine.cos.COSArray fields;
-            if (fieldsBase instanceof org.aspose.pdf.engine.cos.COSArray) {
-                fields = (org.aspose.pdf.engine.cos.COSArray) fieldsBase;
+            org.aspose.pdf.engine.pdfobjects.PdfArray fields;
+            if (fieldsBase instanceof org.aspose.pdf.engine.pdfobjects.PdfArray) {
+                fields = (org.aspose.pdf.engine.pdfobjects.PdfArray) fieldsBase;
             } else {
-                fields = new org.aspose.pdf.engine.cos.COSArray();
-                acroForm.set(org.aspose.pdf.engine.cos.COSName.of("Fields"), fields);
+                fields = new org.aspose.pdf.engine.pdfobjects.PdfArray();
+                acroForm.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("Fields"), fields);
             }
             fields.add(annotRef);
 
@@ -418,21 +418,21 @@ public class FormEditor {
      * /Fields array first; falls back to scanning every page's widget
      * annotations for a /T entry that matches.
      */
-    private static org.aspose.pdf.engine.cos.COSDictionary findFieldDictByName(
+    private static org.aspose.pdf.engine.pdfobjects.PdfDictionary findFieldDictByName(
             Document source, String fieldName) throws java.io.IOException {
-        org.aspose.pdf.engine.cos.COSBase ac = source.getCatalog().get("AcroForm");
-        if (ac instanceof org.aspose.pdf.engine.cos.COSObjectReference) {
-            ac = ((org.aspose.pdf.engine.cos.COSObjectReference) ac).dereference();
+        org.aspose.pdf.engine.pdfobjects.PdfBase ac = source.getCatalog().get("AcroForm");
+        if (ac instanceof org.aspose.pdf.engine.pdfobjects.PdfObjectReference) {
+            ac = ((org.aspose.pdf.engine.pdfobjects.PdfObjectReference) ac).dereference();
         }
-        if (ac instanceof org.aspose.pdf.engine.cos.COSDictionary) {
-            org.aspose.pdf.engine.cos.COSBase fields =
-                    ((org.aspose.pdf.engine.cos.COSDictionary) ac).get("Fields");
-            if (fields instanceof org.aspose.pdf.engine.cos.COSObjectReference) {
-                fields = ((org.aspose.pdf.engine.cos.COSObjectReference) fields).dereference();
+        if (ac instanceof org.aspose.pdf.engine.pdfobjects.PdfDictionary) {
+            org.aspose.pdf.engine.pdfobjects.PdfBase fields =
+                    ((org.aspose.pdf.engine.pdfobjects.PdfDictionary) ac).get("Fields");
+            if (fields instanceof org.aspose.pdf.engine.pdfobjects.PdfObjectReference) {
+                fields = ((org.aspose.pdf.engine.pdfobjects.PdfObjectReference) fields).dereference();
             }
-            if (fields instanceof org.aspose.pdf.engine.cos.COSArray) {
-                org.aspose.pdf.engine.cos.COSDictionary hit =
-                        scanFieldsArray((org.aspose.pdf.engine.cos.COSArray) fields, fieldName);
+            if (fields instanceof org.aspose.pdf.engine.pdfobjects.PdfArray) {
+                org.aspose.pdf.engine.pdfobjects.PdfDictionary hit =
+                        scanFieldsArray((org.aspose.pdf.engine.pdfobjects.PdfArray) fields, fieldName);
                 if (hit != null) return hit;
             }
         }
@@ -440,21 +440,21 @@ public class FormEditor {
         org.aspose.pdf.PageCollection pages = source.getPages();
         for (int i = 1; i <= pages.getCount(); i++) {
             org.aspose.pdf.Page p = pages.get(i);
-            org.aspose.pdf.engine.cos.COSDictionary pageDict = p.getCOSDictionary();
-            org.aspose.pdf.engine.cos.COSBase annots = pageDict.get("Annots");
-            if (annots instanceof org.aspose.pdf.engine.cos.COSObjectReference) {
-                annots = ((org.aspose.pdf.engine.cos.COSObjectReference) annots).dereference();
+            org.aspose.pdf.engine.pdfobjects.PdfDictionary pageDict = p.getPdfDictionary();
+            org.aspose.pdf.engine.pdfobjects.PdfBase annots = pageDict.get("Annots");
+            if (annots instanceof org.aspose.pdf.engine.pdfobjects.PdfObjectReference) {
+                annots = ((org.aspose.pdf.engine.pdfobjects.PdfObjectReference) annots).dereference();
             }
-            if (!(annots instanceof org.aspose.pdf.engine.cos.COSArray)) continue;
-            org.aspose.pdf.engine.cos.COSArray arr = (org.aspose.pdf.engine.cos.COSArray) annots;
+            if (!(annots instanceof org.aspose.pdf.engine.pdfobjects.PdfArray)) continue;
+            org.aspose.pdf.engine.pdfobjects.PdfArray arr = (org.aspose.pdf.engine.pdfobjects.PdfArray) annots;
             for (int j = 0; j < arr.size(); j++) {
-                org.aspose.pdf.engine.cos.COSBase a = arr.get(j);
-                if (a instanceof org.aspose.pdf.engine.cos.COSObjectReference) {
-                    a = ((org.aspose.pdf.engine.cos.COSObjectReference) a).dereference();
+                org.aspose.pdf.engine.pdfobjects.PdfBase a = arr.get(j);
+                if (a instanceof org.aspose.pdf.engine.pdfobjects.PdfObjectReference) {
+                    a = ((org.aspose.pdf.engine.pdfobjects.PdfObjectReference) a).dereference();
                 }
-                if (!(a instanceof org.aspose.pdf.engine.cos.COSDictionary)) continue;
-                org.aspose.pdf.engine.cos.COSDictionary ad =
-                        (org.aspose.pdf.engine.cos.COSDictionary) a;
+                if (!(a instanceof org.aspose.pdf.engine.pdfobjects.PdfDictionary)) continue;
+                org.aspose.pdf.engine.pdfobjects.PdfDictionary ad =
+                        (org.aspose.pdf.engine.pdfobjects.PdfDictionary) a;
                 String subtype = ad.getNameAsString("Subtype");
                 if (!"Widget".equals(subtype)) continue;
                 String t = stringValue(ad.get("T"));
@@ -464,48 +464,48 @@ public class FormEditor {
         return null;
     }
 
-    private static org.aspose.pdf.engine.cos.COSDictionary scanFieldsArray(
-            org.aspose.pdf.engine.cos.COSArray fields, String fieldName) throws java.io.IOException {
+    private static org.aspose.pdf.engine.pdfobjects.PdfDictionary scanFieldsArray(
+            org.aspose.pdf.engine.pdfobjects.PdfArray fields, String fieldName) throws java.io.IOException {
         for (int i = 0; i < fields.size(); i++) {
-            org.aspose.pdf.engine.cos.COSBase f = fields.get(i);
-            if (f instanceof org.aspose.pdf.engine.cos.COSObjectReference) {
-                f = ((org.aspose.pdf.engine.cos.COSObjectReference) f).dereference();
+            org.aspose.pdf.engine.pdfobjects.PdfBase f = fields.get(i);
+            if (f instanceof org.aspose.pdf.engine.pdfobjects.PdfObjectReference) {
+                f = ((org.aspose.pdf.engine.pdfobjects.PdfObjectReference) f).dereference();
             }
-            if (!(f instanceof org.aspose.pdf.engine.cos.COSDictionary)) continue;
-            org.aspose.pdf.engine.cos.COSDictionary fd =
-                    (org.aspose.pdf.engine.cos.COSDictionary) f;
+            if (!(f instanceof org.aspose.pdf.engine.pdfobjects.PdfDictionary)) continue;
+            org.aspose.pdf.engine.pdfobjects.PdfDictionary fd =
+                    (org.aspose.pdf.engine.pdfobjects.PdfDictionary) f;
             String t = stringValue(fd.get("T"));
             if (fieldName.equals(t)) return fd;
-            org.aspose.pdf.engine.cos.COSBase kids = fd.get("Kids");
-            if (kids instanceof org.aspose.pdf.engine.cos.COSObjectReference) {
-                kids = ((org.aspose.pdf.engine.cos.COSObjectReference) kids).dereference();
+            org.aspose.pdf.engine.pdfobjects.PdfBase kids = fd.get("Kids");
+            if (kids instanceof org.aspose.pdf.engine.pdfobjects.PdfObjectReference) {
+                kids = ((org.aspose.pdf.engine.pdfobjects.PdfObjectReference) kids).dereference();
             }
-            if (kids instanceof org.aspose.pdf.engine.cos.COSArray) {
-                org.aspose.pdf.engine.cos.COSDictionary nested =
-                        scanFieldsArray((org.aspose.pdf.engine.cos.COSArray) kids, fieldName);
+            if (kids instanceof org.aspose.pdf.engine.pdfobjects.PdfArray) {
+                org.aspose.pdf.engine.pdfobjects.PdfDictionary nested =
+                        scanFieldsArray((org.aspose.pdf.engine.pdfobjects.PdfArray) kids, fieldName);
                 if (nested != null) return nested;
             }
         }
         return null;
     }
 
-    private static String stringValue(org.aspose.pdf.engine.cos.COSBase v) {
-        if (v instanceof org.aspose.pdf.engine.cos.COSString) {
-            return ((org.aspose.pdf.engine.cos.COSString) v).getString();
+    private static String stringValue(org.aspose.pdf.engine.pdfobjects.PdfBase v) {
+        if (v instanceof org.aspose.pdf.engine.pdfobjects.PdfString) {
+            return ((org.aspose.pdf.engine.pdfobjects.PdfString) v).getString();
         }
-        if (v instanceof org.aspose.pdf.engine.cos.COSName) {
-            return ((org.aspose.pdf.engine.cos.COSName) v).getName();
+        if (v instanceof org.aspose.pdf.engine.pdfobjects.PdfName) {
+            return ((org.aspose.pdf.engine.pdfobjects.PdfName) v).getName();
         }
         return null;
     }
 
     /**
-     * Returns an indirect reference to the page's COSDictionary, registering
+     * Returns an indirect reference to the page's PdfDictionary, registering
      * the dict as an indirect object first if it isn't already.
      */
-    private org.aspose.pdf.engine.cos.COSObjectReference pageRefOf(
+    private org.aspose.pdf.engine.pdfobjects.PdfObjectReference pageRefOf(
             org.aspose.pdf.Page page) {
-        return document.registerImportedObject(page.getCOSDictionary());
+        return document.registerImportedObject(page.getPdfDictionary());
     }
 
     /** Returns the visual-style facade applied to subsequently-created fields. */
@@ -598,15 +598,15 @@ public class FormEditor {
                     newField = new org.aspose.pdf.forms.ButtonField(page, rect);
                     break;
                 case Signature:
-                    org.aspose.pdf.engine.cos.COSDictionary sigDict =
-                            new org.aspose.pdf.engine.cos.COSDictionary();
-                    sigDict.set(org.aspose.pdf.engine.cos.COSName.of("Type"),
-                            org.aspose.pdf.engine.cos.COSName.of("Annot"));
-                    sigDict.set(org.aspose.pdf.engine.cos.COSName.of("Subtype"),
-                            org.aspose.pdf.engine.cos.COSName.of("Widget"));
-                    sigDict.set(org.aspose.pdf.engine.cos.COSName.of("FT"),
-                            org.aspose.pdf.engine.cos.COSName.of("Sig"));
-                    sigDict.set(org.aspose.pdf.engine.cos.COSName.of("Rect"), rect.toCOSArray());
+                    org.aspose.pdf.engine.pdfobjects.PdfDictionary sigDict =
+                            new org.aspose.pdf.engine.pdfobjects.PdfDictionary();
+                    sigDict.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("Type"),
+                            org.aspose.pdf.engine.pdfobjects.PdfName.of("Annot"));
+                    sigDict.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("Subtype"),
+                            org.aspose.pdf.engine.pdfobjects.PdfName.of("Widget"));
+                    sigDict.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("FT"),
+                            org.aspose.pdf.engine.pdfobjects.PdfName.of("Sig"));
+                    sigDict.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("Rect"), rect.toPdfArray());
                     newField = new org.aspose.pdf.forms.SignatureField(sigDict, page, fieldName);
                     break;
                 default:
@@ -678,22 +678,22 @@ public class FormEditor {
             // Attach SubmitForm action as /A.
             org.aspose.pdf.SubmitFormAction action =
                     new org.aspose.pdf.SubmitFormAction(url != null ? url : "");
-            btn.getCOSDictionary().set(
-                    org.aspose.pdf.engine.cos.COSName.of("A"),
-                    action.getCOSDictionary());
+            btn.getPdfDictionary().set(
+                    org.aspose.pdf.engine.pdfobjects.PdfName.of("A"),
+                    action.getPdfDictionary());
 
             // Build /AP /N appearance Form XObject. The content stream uses
             // /Helv 12.5 — the exact font name and size the C# regression test
             // PDFNEWNET-31552 asserts the operator stream contains.
             double width  = urx - llx;
             double height = ury - lly;
-            org.aspose.pdf.engine.cos.COSStream apStream =
+            org.aspose.pdf.engine.pdfobjects.PdfStream apStream =
                     buildPushButtonAppearance(caption, width, height);
-            org.aspose.pdf.engine.cos.COSDictionary ap =
-                    new org.aspose.pdf.engine.cos.COSDictionary();
-            ap.set(org.aspose.pdf.engine.cos.COSName.of("N"), apStream);
-            btn.getCOSDictionary().set(
-                    org.aspose.pdf.engine.cos.COSName.of("AP"), ap);
+            org.aspose.pdf.engine.pdfobjects.PdfDictionary ap =
+                    new org.aspose.pdf.engine.pdfobjects.PdfDictionary();
+            ap.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("N"), apStream);
+            btn.getPdfDictionary().set(
+                    org.aspose.pdf.engine.pdfobjects.PdfName.of("AP"), ap);
 
             document.getForm().add(btn, pageNumber);
             LOG.fine("addSubmitBtn: created '" + fieldName + "' on page " + pageNumber);
@@ -705,11 +705,11 @@ public class FormEditor {
     }
 
     /**
-     * Builds a Form XObject COSStream that renders {@code caption} with
+     * Builds a Form XObject PdfStream that renders {@code caption} with
      * {@code /Helv 12.5}. Used as the /AP /N entry of push buttons created via
      * {@link #addSubmitBtn(String, int, String, String, double, double, double, double)}.
      */
-    private static org.aspose.pdf.engine.cos.COSStream
+    private static org.aspose.pdf.engine.pdfobjects.PdfStream
     buildPushButtonAppearance(String caption, double width, double height) {
         String text = caption != null ? caption : "";
         StringBuilder sb = new StringBuilder();
@@ -734,46 +734,46 @@ public class FormEditor {
         sb.append("Q\n");
         byte[] data = sb.toString().getBytes(java.nio.charset.StandardCharsets.ISO_8859_1);
 
-        org.aspose.pdf.engine.cos.COSStream stream =
-                new org.aspose.pdf.engine.cos.COSStream();
-        stream.set(org.aspose.pdf.engine.cos.COSName.of("Type"),
-                org.aspose.pdf.engine.cos.COSName.of("XObject"));
-        stream.set(org.aspose.pdf.engine.cos.COSName.of("Subtype"),
-                org.aspose.pdf.engine.cos.COSName.of("Form"));
-        stream.set(org.aspose.pdf.engine.cos.COSName.of("FormType"),
-                org.aspose.pdf.engine.cos.COSInteger.valueOf(1));
-        org.aspose.pdf.engine.cos.COSArray bbox =
-                new org.aspose.pdf.engine.cos.COSArray(4);
-        bbox.add(org.aspose.pdf.engine.cos.COSInteger.valueOf(0));
-        bbox.add(org.aspose.pdf.engine.cos.COSInteger.valueOf(0));
-        bbox.add(new org.aspose.pdf.engine.cos.COSFloat((float) width));
-        bbox.add(new org.aspose.pdf.engine.cos.COSFloat((float) height));
-        stream.set(org.aspose.pdf.engine.cos.COSName.of("BBox"), bbox);
+        org.aspose.pdf.engine.pdfobjects.PdfStream stream =
+                new org.aspose.pdf.engine.pdfobjects.PdfStream();
+        stream.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("Type"),
+                org.aspose.pdf.engine.pdfobjects.PdfName.of("XObject"));
+        stream.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("Subtype"),
+                org.aspose.pdf.engine.pdfobjects.PdfName.of("Form"));
+        stream.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("FormType"),
+                org.aspose.pdf.engine.pdfobjects.PdfInteger.valueOf(1));
+        org.aspose.pdf.engine.pdfobjects.PdfArray bbox =
+                new org.aspose.pdf.engine.pdfobjects.PdfArray(4);
+        bbox.add(org.aspose.pdf.engine.pdfobjects.PdfInteger.valueOf(0));
+        bbox.add(org.aspose.pdf.engine.pdfobjects.PdfInteger.valueOf(0));
+        bbox.add(new org.aspose.pdf.engine.pdfobjects.PdfFloat((float) width));
+        bbox.add(new org.aspose.pdf.engine.pdfobjects.PdfFloat((float) height));
+        stream.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("BBox"), bbox);
 
         // /Resources /Font /Helv → standard Type1 Helvetica so /Helv resolves
         // when the appearance is rendered.
-        org.aspose.pdf.engine.cos.COSDictionary helv =
-                new org.aspose.pdf.engine.cos.COSDictionary();
-        helv.set(org.aspose.pdf.engine.cos.COSName.of("Type"),
-                org.aspose.pdf.engine.cos.COSName.of("Font"));
-        helv.set(org.aspose.pdf.engine.cos.COSName.of("Subtype"),
-                org.aspose.pdf.engine.cos.COSName.of("Type1"));
-        helv.set(org.aspose.pdf.engine.cos.COSName.of("BaseFont"),
-                org.aspose.pdf.engine.cos.COSName.of("Helvetica"));
-        helv.set(org.aspose.pdf.engine.cos.COSName.of("Encoding"),
-                org.aspose.pdf.engine.cos.COSName.of("WinAnsiEncoding"));
-        org.aspose.pdf.engine.cos.COSDictionary fontDict =
-                new org.aspose.pdf.engine.cos.COSDictionary();
-        fontDict.set(org.aspose.pdf.engine.cos.COSName.of("Helv"), helv);
-        org.aspose.pdf.engine.cos.COSDictionary resources =
-                new org.aspose.pdf.engine.cos.COSDictionary();
-        resources.set(org.aspose.pdf.engine.cos.COSName.of("Font"), fontDict);
-        org.aspose.pdf.engine.cos.COSArray procset =
-                new org.aspose.pdf.engine.cos.COSArray(2);
-        procset.add(org.aspose.pdf.engine.cos.COSName.of("PDF"));
-        procset.add(org.aspose.pdf.engine.cos.COSName.of("Text"));
-        resources.set(org.aspose.pdf.engine.cos.COSName.of("ProcSet"), procset);
-        stream.set(org.aspose.pdf.engine.cos.COSName.of("Resources"), resources);
+        org.aspose.pdf.engine.pdfobjects.PdfDictionary helv =
+                new org.aspose.pdf.engine.pdfobjects.PdfDictionary();
+        helv.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("Type"),
+                org.aspose.pdf.engine.pdfobjects.PdfName.of("Font"));
+        helv.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("Subtype"),
+                org.aspose.pdf.engine.pdfobjects.PdfName.of("Type1"));
+        helv.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("BaseFont"),
+                org.aspose.pdf.engine.pdfobjects.PdfName.of("Helvetica"));
+        helv.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("Encoding"),
+                org.aspose.pdf.engine.pdfobjects.PdfName.of("WinAnsiEncoding"));
+        org.aspose.pdf.engine.pdfobjects.PdfDictionary fontDict =
+                new org.aspose.pdf.engine.pdfobjects.PdfDictionary();
+        fontDict.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("Helv"), helv);
+        org.aspose.pdf.engine.pdfobjects.PdfDictionary resources =
+                new org.aspose.pdf.engine.pdfobjects.PdfDictionary();
+        resources.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("Font"), fontDict);
+        org.aspose.pdf.engine.pdfobjects.PdfArray procset =
+                new org.aspose.pdf.engine.pdfobjects.PdfArray(2);
+        procset.add(org.aspose.pdf.engine.pdfobjects.PdfName.of("PDF"));
+        procset.add(org.aspose.pdf.engine.pdfobjects.PdfName.of("Text"));
+        resources.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("ProcSet"), procset);
+        stream.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("Resources"), resources);
 
         stream.setDecodedData(data);
         return stream;
@@ -836,48 +836,48 @@ public class FormEditor {
 
     /**
      * Writes the current facade's background colour, border style and font
-     * attributes onto the field's underlying COS dictionary so that PDF
+     * attributes onto the field's underlying PDF dictionary so that PDF
      * viewers render the widget with the configured skin.
      */
     private void applyFacadeTo(org.aspose.pdf.forms.Field field) {
         if (facade == null || field == null) return;
-        org.aspose.pdf.engine.cos.COSDictionary dict = field.getCOSDictionary();
+        org.aspose.pdf.engine.pdfobjects.PdfDictionary dict = field.getPdfDictionary();
         // /MK { /BG [...] /BC [...] }
-        org.aspose.pdf.engine.cos.COSBase mkBase = dict.get("MK");
-        if (mkBase instanceof org.aspose.pdf.engine.cos.COSObjectReference) {
-            try { mkBase = ((org.aspose.pdf.engine.cos.COSObjectReference) mkBase).dereference(); }
+        org.aspose.pdf.engine.pdfobjects.PdfBase mkBase = dict.get("MK");
+        if (mkBase instanceof org.aspose.pdf.engine.pdfobjects.PdfObjectReference) {
+            try { mkBase = ((org.aspose.pdf.engine.pdfobjects.PdfObjectReference) mkBase).dereference(); }
             catch (java.io.IOException ignored) { mkBase = null; }
         }
-        org.aspose.pdf.engine.cos.COSDictionary mk;
-        if (mkBase instanceof org.aspose.pdf.engine.cos.COSDictionary) {
-            mk = (org.aspose.pdf.engine.cos.COSDictionary) mkBase;
+        org.aspose.pdf.engine.pdfobjects.PdfDictionary mk;
+        if (mkBase instanceof org.aspose.pdf.engine.pdfobjects.PdfDictionary) {
+            mk = (org.aspose.pdf.engine.pdfobjects.PdfDictionary) mkBase;
         } else {
-            mk = new org.aspose.pdf.engine.cos.COSDictionary();
-            dict.set(org.aspose.pdf.engine.cos.COSName.of("MK"), mk);
+            mk = new org.aspose.pdf.engine.pdfobjects.PdfDictionary();
+            dict.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("MK"), mk);
         }
         if (facade.getBackgroundColor() != null) {
-            mk.set(org.aspose.pdf.engine.cos.COSName.of("BG"),
+            mk.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("BG"),
                     colorToCosArray(facade.getBackgroundColor()));
         }
         if (facade.getBorderColor() != null) {
-            mk.set(org.aspose.pdf.engine.cos.COSName.of("BC"),
+            mk.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("BC"),
                     colorToCosArray(facade.getBorderColor()));
         }
         // /BS { /S /<Solid|Dashed|Beveled|Inset|Underline> /W <width> }
         if (facade.getBorderStyle() != FormFieldFacade.BorderStyleSolid
                 || facade.getBorderWidth() > 0) {
-            org.aspose.pdf.engine.cos.COSDictionary bs =
-                    new org.aspose.pdf.engine.cos.COSDictionary();
-            bs.set(org.aspose.pdf.engine.cos.COSName.of("Type"),
-                    org.aspose.pdf.engine.cos.COSName.of("Border"));
-            bs.set(org.aspose.pdf.engine.cos.COSName.of("S"),
-                    org.aspose.pdf.engine.cos.COSName.of(borderStyleName(facade.getBorderStyle())));
+            org.aspose.pdf.engine.pdfobjects.PdfDictionary bs =
+                    new org.aspose.pdf.engine.pdfobjects.PdfDictionary();
+            bs.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("Type"),
+                    org.aspose.pdf.engine.pdfobjects.PdfName.of("Border"));
+            bs.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("S"),
+                    org.aspose.pdf.engine.pdfobjects.PdfName.of(borderStyleName(facade.getBorderStyle())));
             if (facade.getBorderWidth() > 0) {
-                bs.set(org.aspose.pdf.engine.cos.COSName.of("W"),
-                        new org.aspose.pdf.engine.cos.COSFloat(
+                bs.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("W"),
+                        new org.aspose.pdf.engine.pdfobjects.PdfFloat(
                                 (float) facade.getBorderWidth()));
             }
-            dict.set(org.aspose.pdf.engine.cos.COSName.of("BS"), bs);
+            dict.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("BS"), bs);
         }
     }
 
@@ -891,13 +891,13 @@ public class FormEditor {
         }
     }
 
-    private static org.aspose.pdf.engine.cos.COSArray colorToCosArray(
+    private static org.aspose.pdf.engine.pdfobjects.PdfArray colorToCosArray(
             org.aspose.pdf.Color color) {
         double[] components = color.getComponents();
-        org.aspose.pdf.engine.cos.COSArray arr =
-                new org.aspose.pdf.engine.cos.COSArray(components.length);
+        org.aspose.pdf.engine.pdfobjects.PdfArray arr =
+                new org.aspose.pdf.engine.pdfobjects.PdfArray(components.length);
         for (double c : components) {
-            arr.add(new org.aspose.pdf.engine.cos.COSFloat((float) c));
+            arr.add(new org.aspose.pdf.engine.pdfobjects.PdfFloat((float) c));
         }
         return arr;
     }

@@ -1,6 +1,6 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
 
 import java.io.IOException;
 
@@ -14,7 +14,7 @@ import java.io.IOException;
 public class PdfPageStamp extends Stamp {
 
     private Page sourcePage;
-    private transient COSObjectReference cachedFormReference;
+    private transient PdfObjectReference cachedFormReference;
     private transient Document cachedTargetDocument;
 
     /**
@@ -44,7 +44,7 @@ public class PdfPageStamp extends Stamp {
         this.sourcePage = page;
     }
 
-    COSObjectReference getCachedFormReference() {
+    PdfObjectReference getCachedFormReference() {
         return cachedFormReference;
     }
 
@@ -52,7 +52,7 @@ public class PdfPageStamp extends Stamp {
         return cachedTargetDocument;
     }
 
-    void cacheFormReference(Document targetDocument, COSObjectReference formReference) {
+    void cacheFormReference(Document targetDocument, PdfObjectReference formReference) {
         this.cachedTargetDocument = targetDocument;
         this.cachedFormReference = formReference;
     }

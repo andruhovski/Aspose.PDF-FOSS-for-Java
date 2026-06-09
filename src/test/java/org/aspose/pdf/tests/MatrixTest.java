@@ -1,9 +1,9 @@
 package org.aspose.pdf.tests;
 
 import org.aspose.pdf.Matrix;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSFloat;
-import org.aspose.pdf.engine.cos.COSInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfFloat;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -102,47 +102,47 @@ public class MatrixTest {
     }
 
     @Test
-    public void fromCOSArray() {
-        COSArray arr = new COSArray(6);
-        arr.add(new COSFloat(1));
-        arr.add(new COSFloat(0));
-        arr.add(new COSFloat(0));
-        arr.add(new COSFloat(1));
-        arr.add(new COSFloat(10));
-        arr.add(new COSFloat(20));
-        Matrix m = Matrix.fromCOSArray(arr);
+    public void fromPdfArray() {
+        PdfArray arr = new PdfArray(6);
+        arr.add(new PdfFloat(1));
+        arr.add(new PdfFloat(0));
+        arr.add(new PdfFloat(0));
+        arr.add(new PdfFloat(1));
+        arr.add(new PdfFloat(10));
+        arr.add(new PdfFloat(20));
+        Matrix m = Matrix.fromPdfArray(arr);
         assertEquals(1, m.getA(), 1e-10);
         assertEquals(10, m.getE(), 1e-10);
         assertEquals(20, m.getF(), 1e-10);
     }
 
     @Test
-    public void fromCOSArrayWithIntegers() {
-        COSArray arr = new COSArray(6);
+    public void fromPdfArrayWithIntegers() {
+        PdfArray arr = new PdfArray(6);
         for (int i = 0; i < 6; i++) {
-            arr.add(COSInteger.valueOf(i));
+            arr.add(PdfInteger.valueOf(i));
         }
-        Matrix m = Matrix.fromCOSArray(arr);
+        Matrix m = Matrix.fromPdfArray(arr);
         assertEquals(0, m.getA(), 1e-10);
         assertEquals(5, m.getF(), 1e-10);
     }
 
     @Test
-    public void fromCOSArrayNullThrows() {
-        assertThrows(IllegalArgumentException.class, () -> Matrix.fromCOSArray(null));
+    public void fromPdfArrayNullThrows() {
+        assertThrows(IllegalArgumentException.class, () -> Matrix.fromPdfArray(null));
     }
 
     @Test
-    public void fromCOSArrayWrongSizeThrows() {
-        COSArray arr = new COSArray();
-        arr.add(new COSFloat(1));
-        assertThrows(IllegalArgumentException.class, () -> Matrix.fromCOSArray(arr));
+    public void fromPdfArrayWrongSizeThrows() {
+        PdfArray arr = new PdfArray();
+        arr.add(new PdfFloat(1));
+        assertThrows(IllegalArgumentException.class, () -> Matrix.fromPdfArray(arr));
     }
 
     @Test
-    public void toCOSArray() {
+    public void toPdfArray() {
         Matrix m = new Matrix(1, 2, 3, 4, 5, 6);
-        COSArray arr = m.toCOSArray();
+        PdfArray arr = m.toPdfArray();
         assertEquals(6, arr.size());
         assertEquals(1f, arr.getFloat(0, 0f), 1e-10);
         assertEquals(6f, arr.getFloat(5, 0f), 1e-10);
@@ -151,8 +151,8 @@ public class MatrixTest {
     @Test
     public void roundTrip() {
         Matrix original = new Matrix(1.5, 2.5, 3.5, 4.5, 5.5, 6.5);
-        COSArray arr = original.toCOSArray();
-        Matrix restored = Matrix.fromCOSArray(arr);
+        PdfArray arr = original.toPdfArray();
+        Matrix restored = Matrix.fromPdfArray(arr);
         assertEquals(original, restored);
     }
 

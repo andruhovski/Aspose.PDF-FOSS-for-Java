@@ -1,13 +1,13 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSFloat;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSNull;
-import org.aspose.pdf.engine.cos.COSObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfFloat;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfNull;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
 
 import java.io.IOException;
 import java.util.logging.Logger;
@@ -63,29 +63,29 @@ public abstract class ExplicitDestination implements IAppointment {
     public int getPageNumber() { return pageNumber; }
 
     /**
-     * Converts this destination to a COS array for serialization.
+     * Converts this destination to a PDF array for serialization.
      *
-     * @return the COS array representation
+     * @return the PDF array representation
      */
-    public abstract COSArray toCOSArray();
+    public abstract PdfArray toPdfArray();
 
     /**
-     * Parses an ExplicitDestination from a COS array.
+     * Parses an ExplicitDestination from a PDF array.
      *
-     * @param arr the COS array [pageRef /Type params...]
+     * @param arr the PDF array [pageRef /Type params...]
      * @param doc the document for resolving page references (may be null)
      * @return the parsed destination, or null if invalid
      * @throws IOException if resolution fails
      */
-    public static ExplicitDestination fromCOSArray(COSArray arr, Document doc) throws IOException {
+    public static ExplicitDestination fromPdfArray(PdfArray arr, Document doc) throws IOException {
         if (arr == null || arr.size() < 2) return null;
 
-        COSBase pageRef = arr.get(0);
+        PdfBase pageRef = arr.get(0);
         Page page = resolvePageRef(pageRef, doc);
         int pageNum = page != null ? page.getNumber() : extractPageNumber(pageRef);
 
-        COSBase typeObj = arr.get(1);
-        String type = typeObj instanceof COSName ? ((COSName) typeObj).getName() : "";
+        PdfBase typeObj = arr.get(1);
+        String type = typeObj instanceof PdfName ? ((PdfName) typeObj).getName() : "";
 
         switch (type) {
             case "XYZ":
@@ -112,45 +112,45 @@ public abstract class ExplicitDestination implements IAppointment {
     }
 
     /**
-     * Helper: creates a COSBase number or COSNull for NaN.
+     * Helper: creates a PdfBase number or PdfNull for NaN.
      */
-    protected static COSBase numOrNull(double v) {
-        if (Double.isNaN(v)) return COSNull.INSTANCE;
+    protected static PdfBase numOrNull(double v) {
+        if (Double.isNaN(v)) return PdfNull.INSTANCE;
         if (v == Math.floor(v) && !Double.isInfinite(v) && Math.abs(v) < Integer.MAX_VALUE) {
-            return COSInteger.valueOf((long) v);
+            return PdfInteger.valueOf((long) v);
         }
-        return new COSFloat(v);
+        return new PdfFloat(v);
     }
 
     /**
      * Helper: gets a numeric value from array at index, or NaN.
      */
-    private static double getNum(COSArray arr, int index) {
+    private static double getNum(PdfArray arr, int index) {
         if (index >= arr.size()) return Double.NaN;
-        COSBase val = arr.get(index);
-        if (val instanceof COSInteger) return ((COSInteger) val).intValue();
-        if (val instanceof COSFloat) return ((COSFloat) val).doubleValue();
+        PdfBase val = arr.get(index);
+        if (val instanceof PdfInteger) return ((PdfInteger) val).intValue();
+        if (val instanceof PdfFloat) return ((PdfFloat) val).doubleValue();
         return Double.NaN; // null entries
     }
 
-    private static Page resolvePageRef(COSBase pageRef, Document doc) throws IOException {
+    private static Page resolvePageRef(PdfBase pageRef, Document doc) throws IOException {
         if (doc == null) return null;
-        if (pageRef instanceof COSObjectReference) {
-            pageRef = ((COSObjectReference) pageRef).dereference();
+        if (pageRef instanceof PdfObjectReference) {
+            pageRef = ((PdfObjectReference) pageRef).dereference();
         }
-        if (pageRef instanceof COSDictionary) {
-            COSDictionary pageDict = (COSDictionary) pageRef;
+        if (pageRef instanceof PdfDictionary) {
+            PdfDictionary pageDict = (PdfDictionary) pageRef;
             // Find matching page in document
             PageCollection pages = doc.getPages();
             for (int i = 1; i <= pages.getCount(); i++) {
-                if (pages.get(i).getCOSDictionary() == pageDict) {
+                if (pages.get(i).getPdfDictionary() == pageDict) {
                     return pages.get(i);
                 }
             }
         }
         // Try as page index (integer)
-        if (pageRef instanceof COSInteger) {
-            int idx = ((COSInteger) pageRef).intValue();
+        if (pageRef instanceof PdfInteger) {
+            int idx = ((PdfInteger) pageRef).intValue();
             PageCollection pages = doc.getPages();
             if (idx >= 0 && idx < pages.getCount()) {
                 return pages.get(idx + 1); // convert 0-based to 1-based
@@ -159,8 +159,8 @@ public abstract class ExplicitDestination implements IAppointment {
         return null;
     }
 
-    private static int extractPageNumber(COSBase pageRef) {
-        if (pageRef instanceof COSInteger) return ((COSInteger) pageRef).intValue() + 1;
+    private static int extractPageNumber(PdfBase pageRef) {
+        if (pageRef instanceof PdfInteger) return ((PdfInteger) pageRef).intValue() + 1;
         return 1;
     }
 }

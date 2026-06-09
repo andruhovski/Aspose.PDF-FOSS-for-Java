@@ -1,7 +1,7 @@
 package org.aspose.pdf.annotations;
 
 import org.aspose.pdf.*;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 /**
  * Screen annotation (ISO 32000-1:2008, Section 12.5.6.18, /Subtype /Screen).
@@ -14,12 +14,12 @@ import org.aspose.pdf.engine.cos.*;
 public class ScreenAnnotation extends Annotation {
 
     /**
-     * Constructs a screen annotation from an existing COS dictionary.
+     * Constructs a screen annotation from an existing PDF dictionary.
      *
-     * @param dict the COS dictionary backing this annotation
+     * @param dict the PDF dictionary backing this annotation
      * @param page the page this annotation belongs to
      */
-    public ScreenAnnotation(COSDictionary dict, Page page) {
+    public ScreenAnnotation(PdfDictionary dict, Page page) {
         super(dict, page);
     }
 
@@ -31,6 +31,6 @@ public class ScreenAnnotation extends Annotation {
      */
     public ScreenAnnotation(Page page, Rectangle rect) {
         super(page, rect);
-        dict.set(COSName.of("Subtype"), COSName.of("Screen"));
+        dict.set(PdfName.of("Subtype"), PdfName.of("Screen"));
     }
 }

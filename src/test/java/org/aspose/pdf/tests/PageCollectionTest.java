@@ -2,13 +2,13 @@ package org.aspose.pdf.tests;
 
 import org.aspose.pdf.Page;
 import org.aspose.pdf.PageCollection;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSFloat;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectKey;
-import org.aspose.pdf.engine.cos.COSObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfFloat;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectKey;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
 import org.junit.jupiter.api.Test;
 
 import java.util.Iterator;
@@ -20,18 +20,18 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class PageCollectionTest {
 
-    private static COSArray makeBox(double llx, double lly, double urx, double ury) {
-        COSArray box = new COSArray(4);
-        box.add(new COSFloat(llx));
-        box.add(new COSFloat(lly));
-        box.add(new COSFloat(urx));
-        box.add(new COSFloat(ury));
+    private static PdfArray makeBox(double llx, double lly, double urx, double ury) {
+        PdfArray box = new PdfArray(4);
+        box.add(new PdfFloat(llx));
+        box.add(new PdfFloat(lly));
+        box.add(new PdfFloat(urx));
+        box.add(new PdfFloat(ury));
         return box;
     }
 
-    private static COSDictionary makePageDict(COSDictionary parent) {
-        COSDictionary page = new COSDictionary();
-        page.set("Type", COSName.PAGE);
+    private static PdfDictionary makePageDict(PdfDictionary parent) {
+        PdfDictionary page = new PdfDictionary();
+        page.set("Type", PdfName.PAGE);
         page.set("MediaBox", makeBox(0, 0, 612, 792));
         if (parent != null) {
             page.set("Parent", parent);
@@ -46,13 +46,13 @@ public class PageCollectionTest {
 
     @Test
     public void singlePageDocument() {
-        COSDictionary pagesDict = new COSDictionary();
-        pagesDict.set("Type", COSName.PAGES);
-        pagesDict.set("Count", COSInteger.valueOf(1));
+        PdfDictionary pagesDict = new PdfDictionary();
+        pagesDict.set("Type", PdfName.PAGES);
+        pagesDict.set("Count", PdfInteger.valueOf(1));
 
-        COSDictionary pageDict = makePageDict(pagesDict);
+        PdfDictionary pageDict = makePageDict(pagesDict);
 
-        COSArray kids = new COSArray(1);
+        PdfArray kids = new PdfArray(1);
         kids.add(pageDict);
         pagesDict.set("Kids", kids);
 
@@ -68,15 +68,15 @@ public class PageCollectionTest {
 
     @Test
     public void multiplePages() {
-        COSDictionary pagesDict = new COSDictionary();
-        pagesDict.set("Type", COSName.PAGES);
+        PdfDictionary pagesDict = new PdfDictionary();
+        pagesDict.set("Type", PdfName.PAGES);
 
-        COSArray kids = new COSArray(3);
+        PdfArray kids = new PdfArray(3);
         for (int i = 0; i < 3; i++) {
             kids.add(makePageDict(pagesDict));
         }
         pagesDict.set("Kids", kids);
-        pagesDict.set("Count", COSInteger.valueOf(3));
+        pagesDict.set("Count", PdfInteger.valueOf(3));
 
         PageCollection pc = new PageCollection(pagesDict, null);
         assertEquals(3, pc.size());
@@ -90,28 +90,28 @@ public class PageCollectionTest {
     @Test
     public void nestedPageTree() {
         // Root /Pages
-        COSDictionary root = new COSDictionary();
-        root.set("Type", COSName.PAGES);
+        PdfDictionary root = new PdfDictionary();
+        root.set("Type", PdfName.PAGES);
 
         // Intermediate /Pages node
-        COSDictionary intermediate = new COSDictionary();
-        intermediate.set("Type", COSName.PAGES);
+        PdfDictionary intermediate = new PdfDictionary();
+        intermediate.set("Type", PdfName.PAGES);
         intermediate.set("Parent", root);
 
-        COSArray intermediateKids = new COSArray(2);
+        PdfArray intermediateKids = new PdfArray(2);
         intermediateKids.add(makePageDict(intermediate));
         intermediateKids.add(makePageDict(intermediate));
         intermediate.set("Kids", intermediateKids);
-        intermediate.set("Count", COSInteger.valueOf(2));
+        intermediate.set("Count", PdfInteger.valueOf(2));
 
         // Direct page under root
-        COSDictionary directPage = makePageDict(root);
+        PdfDictionary directPage = makePageDict(root);
 
-        COSArray rootKids = new COSArray(2);
+        PdfArray rootKids = new PdfArray(2);
         rootKids.add(intermediate);
         rootKids.add(directPage);
         root.set("Kids", rootKids);
-        root.set("Count", COSInteger.valueOf(3));
+        root.set("Count", PdfInteger.valueOf(3));
 
         PageCollection pc = new PageCollection(root, null);
         assertEquals(3, pc.size());
@@ -122,9 +122,9 @@ public class PageCollectionTest {
 
     @Test
     public void oneBasedIndexing() {
-        COSDictionary pagesDict = new COSDictionary();
-        pagesDict.set("Type", COSName.PAGES);
-        COSArray kids = new COSArray(1);
+        PdfDictionary pagesDict = new PdfDictionary();
+        pagesDict.set("Type", PdfName.PAGES);
+        PdfArray kids = new PdfArray(1);
         kids.add(makePageDict(pagesDict));
         pagesDict.set("Kids", kids);
 
@@ -137,9 +137,9 @@ public class PageCollectionTest {
 
     @Test
     public void iteratorWalksAllPages() {
-        COSDictionary pagesDict = new COSDictionary();
-        pagesDict.set("Type", COSName.PAGES);
-        COSArray kids = new COSArray(2);
+        PdfDictionary pagesDict = new PdfDictionary();
+        pagesDict.set("Type", PdfName.PAGES);
+        PdfArray kids = new PdfArray(2);
         kids.add(makePageDict(pagesDict));
         kids.add(makePageDict(pagesDict));
         pagesDict.set("Kids", kids);
@@ -155,14 +155,14 @@ public class PageCollectionTest {
 
     @Test
     public void indirectReferenceKidsAreResolved() {
-        COSDictionary pagesDict = new COSDictionary();
-        pagesDict.set("Type", COSName.PAGES);
+        PdfDictionary pagesDict = new PdfDictionary();
+        pagesDict.set("Type", PdfName.PAGES);
 
-        COSDictionary pageDict = makePageDict(pagesDict);
-        COSObjectKey key = new COSObjectKey(3, 0);
-        COSObjectReference pageRef = new COSObjectReference(key, k -> pageDict);
+        PdfDictionary pageDict = makePageDict(pagesDict);
+        PdfObjectKey key = new PdfObjectKey(3, 0);
+        PdfObjectReference pageRef = new PdfObjectReference(key, k -> pageDict);
 
-        COSArray kids = new COSArray(1);
+        PdfArray kids = new PdfArray(1);
         kids.add(pageRef);
         pagesDict.set("Kids", kids);
 
@@ -174,26 +174,26 @@ public class PageCollectionTest {
     @Test
     public void deeplyNestedTree() {
         // 3 levels deep
-        COSDictionary root = new COSDictionary();
-        root.set("Type", COSName.PAGES);
+        PdfDictionary root = new PdfDictionary();
+        root.set("Type", PdfName.PAGES);
 
-        COSDictionary level1 = new COSDictionary();
-        level1.set("Type", COSName.PAGES);
+        PdfDictionary level1 = new PdfDictionary();
+        level1.set("Type", PdfName.PAGES);
         level1.set("Parent", root);
 
-        COSDictionary level2 = new COSDictionary();
-        level2.set("Type", COSName.PAGES);
+        PdfDictionary level2 = new PdfDictionary();
+        level2.set("Type", PdfName.PAGES);
         level2.set("Parent", level1);
 
-        COSArray level2Kids = new COSArray(1);
+        PdfArray level2Kids = new PdfArray(1);
         level2Kids.add(makePageDict(level2));
         level2.set("Kids", level2Kids);
 
-        COSArray level1Kids = new COSArray(1);
+        PdfArray level1Kids = new PdfArray(1);
         level1Kids.add(level2);
         level1.set("Kids", level1Kids);
 
-        COSArray rootKids = new COSArray(1);
+        PdfArray rootKids = new PdfArray(1);
         rootKids.add(level1);
         root.set("Kids", rootKids);
 

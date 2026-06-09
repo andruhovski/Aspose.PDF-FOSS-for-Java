@@ -1,7 +1,7 @@
 package org.aspose.pdf.annotations;
 
 import org.aspose.pdf.*;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
@@ -20,12 +20,12 @@ public class RedactionAnnotation extends MarkupAnnotation {
     private static final Logger LOG = Logger.getLogger(RedactionAnnotation.class.getName());
 
     /**
-     * Constructs a redaction annotation from an existing COS dictionary.
+     * Constructs a redaction annotation from an existing PDF dictionary.
      *
-     * @param dict the COS dictionary backing this annotation
+     * @param dict the PDF dictionary backing this annotation
      * @param page the page this annotation belongs to
      */
-    public RedactionAnnotation(COSDictionary dict, Page page) {
+    public RedactionAnnotation(PdfDictionary dict, Page page) {
         super(dict, page);
     }
 
@@ -37,7 +37,7 @@ public class RedactionAnnotation extends MarkupAnnotation {
      */
     public RedactionAnnotation(Page page, Rectangle rect) {
         super(page, rect);
-        dict.set(COSName.of("Subtype"), COSName.of("Redact"));
+        dict.set(PdfName.of("Subtype"), PdfName.of("Redact"));
     }
 
     /**
@@ -46,8 +46,8 @@ public class RedactionAnnotation extends MarkupAnnotation {
      * @return the overlay text string, or null if not set
      */
     public String getOverlayText() {
-        COSBase ot = dict.get("OverlayText");
-        return (ot instanceof COSString) ? ((COSString) ot).getString() : null;
+        PdfBase ot = dict.get("OverlayText");
+        return (ot instanceof PdfString) ? ((PdfString) ot).getString() : null;
     }
 
     /**
@@ -57,9 +57,9 @@ public class RedactionAnnotation extends MarkupAnnotation {
      */
     public void setOverlayText(String text) {
         if (text != null) {
-            dict.set(COSName.of("OverlayText"), new COSString(text.getBytes(StandardCharsets.UTF_8)));
+            dict.set(PdfName.of("OverlayText"), new PdfString(text.getBytes(StandardCharsets.UTF_8)));
         } else {
-            dict.remove(COSName.of("OverlayText"));
+            dict.remove(PdfName.of("OverlayText"));
         }
     }
 
@@ -70,9 +70,9 @@ public class RedactionAnnotation extends MarkupAnnotation {
      * @return the fill color, or null if not set
      */
     public Color getFillColor() {
-        COSBase ic = dict.get("IC");
-        if (ic instanceof COSArray) {
-            COSArray arr = (COSArray) ic;
+        PdfBase ic = dict.get("IC");
+        if (ic instanceof PdfArray) {
+            PdfArray arr = (PdfArray) ic;
             if (arr.size() == 3) {
                 return Color.fromRgb(arr.getFloat(0, 0), arr.getFloat(1, 0), arr.getFloat(2, 0));
             }
@@ -95,14 +95,14 @@ public class RedactionAnnotation extends MarkupAnnotation {
      */
     public void setFillColor(Color color) {
         if (color == null) {
-            dict.remove(COSName.of("IC"));
+            dict.remove(PdfName.of("IC"));
             return;
         }
-        COSArray arr = new COSArray();
-        arr.add(new COSFloat(color.getR()));
-        arr.add(new COSFloat(color.getG()));
-        arr.add(new COSFloat(color.getB()));
-        dict.set(COSName.of("IC"), arr);
+        PdfArray arr = new PdfArray();
+        arr.add(new PdfFloat(color.getR()));
+        arr.add(new PdfFloat(color.getG()));
+        arr.add(new PdfFloat(color.getB()));
+        dict.set(PdfName.of("IC"), arr);
     }
 
     /**
@@ -131,9 +131,9 @@ public class RedactionAnnotation extends MarkupAnnotation {
      * @return the quad points, or null if not set
      */
     public Point[] getQuadPoint() {
-        COSBase qp = dict.get("QuadPoints");
-        if (qp instanceof COSArray) {
-            COSArray arr = (COSArray) qp;
+        PdfBase qp = dict.get("QuadPoints");
+        if (qp instanceof PdfArray) {
+            PdfArray arr = (PdfArray) qp;
             int count = arr.size() / 2;
             if (count == 0) return null;
             Point[] points = new Point[count];
@@ -152,15 +152,15 @@ public class RedactionAnnotation extends MarkupAnnotation {
      */
     public void setQuadPoint(Point[] points) {
         if (points == null) {
-            dict.remove(COSName.of("QuadPoints"));
+            dict.remove(PdfName.of("QuadPoints"));
             return;
         }
-        COSArray arr = new COSArray();
+        PdfArray arr = new PdfArray();
         for (Point p : points) {
-            arr.add(new COSFloat(p.getX()));
-            arr.add(new COSFloat(p.getY()));
+            arr.add(new PdfFloat(p.getX()));
+            arr.add(new PdfFloat(p.getY()));
         }
-        dict.set(COSName.of("QuadPoints"), arr);
+        dict.set(PdfName.of("QuadPoints"), arr);
     }
 
     /**

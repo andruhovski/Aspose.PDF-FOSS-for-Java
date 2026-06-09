@@ -1,4 +1,4 @@
-package org.aspose.pdf.engine.cos;
+package org.aspose.pdf.engine.pdfobjects;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -11,16 +11,16 @@ import java.util.logging.Logger;
  * Singleton: use {@link #INSTANCE} or {@link #getInstance()}.
  * </p>
  */
-public final class COSNull extends COSBase {
+public final class PdfNull extends PdfBase {
 
-    private static final Logger LOG = Logger.getLogger(COSNull.class.getName());
+    private static final Logger LOG = Logger.getLogger(PdfNull.class.getName());
 
     private static final byte[] BYTES = {'n', 'u', 'l', 'l'};
 
     /** The singleton null instance. */
-    public static final COSNull INSTANCE = new COSNull();
+    public static final PdfNull INSTANCE = new PdfNull();
 
-    private COSNull() {
+    private PdfNull() {
     }
 
     /**
@@ -28,7 +28,7 @@ public final class COSNull extends COSBase {
      *
      * @return the null instance
      */
-    public static COSNull getInstance() {
+    public static PdfNull getInstance() {
         return INSTANCE;
     }
 
@@ -36,7 +36,7 @@ public final class COSNull extends COSBase {
      * Flyweight singleton — object key assignment is ignored.
      */
     @Override
-    public void setObjectKey(COSObjectKey key) {
+    public void setObjectKey(PdfObjectKey key) {
         // Flyweight: ignore object key assignment to protect singleton
     }
 
@@ -46,13 +46,13 @@ public final class COSNull extends COSBase {
     }
 
     @Override
-    public <T> T accept(ICOSVisitor<T> visitor) {
+    public <T> T accept(IPdfVisitor<T> visitor) {
         return visitor.visitNull(this);
     }
 
     @Override
     public boolean equals(Object o) {
-        return o instanceof COSNull;
+        return o instanceof PdfNull;
     }
 
     @Override

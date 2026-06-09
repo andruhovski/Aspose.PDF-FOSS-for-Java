@@ -2,11 +2,11 @@ package org.aspose.pdf.tests;
 
 import org.aspose.pdf.Page;
 import org.aspose.pdf.Rectangle;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSFloat;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfFloat;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -17,15 +17,15 @@ import static org.junit.jupiter.api.Assertions.*;
 public class PageMutationTest {
 
     private Page createEmptyPage() {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.TYPE, COSName.PAGE);
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.TYPE, PdfName.PAGE);
         // Default A4 media box
-        COSArray mediaBox = new COSArray(4);
-        mediaBox.add(COSInteger.valueOf(0));
-        mediaBox.add(COSInteger.valueOf(0));
-        mediaBox.add(new COSFloat(595.0));
-        mediaBox.add(new COSFloat(842.0));
-        dict.set(COSName.MEDIABOX, mediaBox);
+        PdfArray mediaBox = new PdfArray(4);
+        mediaBox.add(PdfInteger.valueOf(0));
+        mediaBox.add(PdfInteger.valueOf(0));
+        mediaBox.add(new PdfFloat(595.0));
+        mediaBox.add(new PdfFloat(842.0));
+        dict.set(PdfName.MEDIABOX, mediaBox);
         return new Page(dict, null);
     }
 
@@ -157,20 +157,20 @@ public class PageMutationTest {
 
     @Test
     public void setBoxUpdatesUnderlyingDictionary() {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.TYPE, COSName.PAGE);
-        COSArray mediaBox = new COSArray(4);
-        mediaBox.add(COSInteger.valueOf(0));
-        mediaBox.add(COSInteger.valueOf(0));
-        mediaBox.add(COSInteger.valueOf(100));
-        mediaBox.add(COSInteger.valueOf(100));
-        dict.set(COSName.MEDIABOX, mediaBox);
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.TYPE, PdfName.PAGE);
+        PdfArray mediaBox = new PdfArray(4);
+        mediaBox.add(PdfInteger.valueOf(0));
+        mediaBox.add(PdfInteger.valueOf(0));
+        mediaBox.add(PdfInteger.valueOf(100));
+        mediaBox.add(PdfInteger.valueOf(100));
+        dict.set(PdfName.MEDIABOX, mediaBox);
         Page page = new Page(dict, null);
 
         page.setMediaBox(new Rectangle(0, 0, 200, 300));
 
         // Verify the underlying dictionary was updated
-        COSArray updated = (COSArray) dict.get(COSName.MEDIABOX);
+        PdfArray updated = (PdfArray) dict.get(PdfName.MEDIABOX);
         assertNotNull(updated);
         assertEquals(4, updated.size());
     }

@@ -1,7 +1,7 @@
 package org.aspose.pdf.operators;
 
 import org.aspose.pdf.Operator;
-import org.aspose.pdf.engine.cos.COSBase;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
 
 import java.util.List;
 
@@ -21,7 +21,7 @@ public class BX extends Operator {
     }
 
     /** Creates a BX operator from parsed operands. */
-    public BX(List<COSBase> operands) {
+    public BX(List<PdfBase> operands) {
         super("BX", operands);
     }
 }

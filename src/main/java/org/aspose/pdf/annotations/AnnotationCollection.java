@@ -1,7 +1,7 @@
 package org.aspose.pdf.annotations;
 
 import org.aspose.pdf.Page;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 import org.aspose.pdf.engine.parser.PDFParser;
 import java.io.IOException;
 import java.util.*;
@@ -13,20 +13,20 @@ import java.util.logging.Logger;
  */
 public class AnnotationCollection implements Iterable<Annotation> {
     private static final Logger LOG = Logger.getLogger(AnnotationCollection.class.getName());
-    private final COSArray annotsArray;
+    private final PdfArray annotsArray;
     private final Page page;
     private final PDFParser parser;
     private List<Annotation> annotations;
 
     /**
-     * Constructs an annotation collection wrapping the given /Annots COSArray.
+     * Constructs an annotation collection wrapping the given /Annots PdfArray.
      *
-     * @param annotsArray the COS array of annotation dictionaries (or references); if null, an empty array is used
+     * @param annotsArray the PDF array of annotation dictionaries (or references); if null, an empty array is used
      * @param page        the page these annotations belong to
      * @param parser      the PDF parser for resolving indirect references
      */
-    public AnnotationCollection(COSArray annotsArray, Page page, PDFParser parser) {
-        this.annotsArray = annotsArray != null ? annotsArray : new COSArray();
+    public AnnotationCollection(PdfArray annotsArray, Page page, PDFParser parser) {
+        this.annotsArray = annotsArray != null ? annotsArray : new PdfArray();
         this.page = page;
         this.parser = parser;
     }
@@ -60,7 +60,7 @@ public class AnnotationCollection implements Iterable<Annotation> {
     public int size() { return getCount(); }
 
     /**
-     * Adds an annotation to this collection and the underlying COS array.
+     * Adds an annotation to this collection and the underlying PDF array.
      *
      * @param annotation the annotation to add
      */
@@ -68,12 +68,12 @@ public class AnnotationCollection implements Iterable<Annotation> {
         // Do NOT force ensureLoaded() here: each Page.getAnnotations() hands back a
         // fresh, unloaded wrapper, so loading the whole /Annots array on every add()
         // makes a sequence of N adds cost O(N^2) (e.g. HTML→PDF with thousands of
-        // <a href> links — see PDFNET_40534). Appending to the COS array is enough;
+        // <a href> links — see PDFNET_40534). Appending to the PDF array is enough;
         // a later ensureLoaded() rebuilds the list from the array, new entry included.
         if (annotations != null) {
             annotations.add(annotation);
         }
-        annotsArray.add(annotation.getCOSDictionary());
+        annotsArray.add(annotation.getPdfDictionary());
     }
 
     /**
@@ -87,10 +87,10 @@ public class AnnotationCollection implements Iterable<Annotation> {
         if (index < 1 || index > annotations.size())
             throw new IndexOutOfBoundsException("Index " + index + " out of [1," + annotations.size() + "]");
         Annotation removed = annotations.remove(index - 1);
-        // Remove matching dict from COSArray
+        // Remove matching dict from PdfArray
         for (int i = 0; i < annotsArray.size(); i++) {
-            COSBase item = resolveRef(annotsArray.get(i));
-            if (item == removed.getCOSDictionary()) { annotsArray.remove(i); break; }
+            PdfBase item = resolveRef(annotsArray.get(i));
+            if (item == removed.getPdfDictionary()) { annotsArray.remove(i); break; }
         }
     }
 
@@ -103,8 +103,8 @@ public class AnnotationCollection implements Iterable<Annotation> {
         ensureLoaded();
         annotations.remove(annotation);
         for (int i = 0; i < annotsArray.size(); i++) {
-            COSBase item = resolveRef(annotsArray.get(i));
-            if (item == annotation.getCOSDictionary()) { annotsArray.remove(i); break; }
+            PdfBase item = resolveRef(annotsArray.get(i));
+            if (item == annotation.getPdfDictionary()) { annotsArray.remove(i); break; }
         }
     }
 
@@ -120,16 +120,16 @@ public class AnnotationCollection implements Iterable<Annotation> {
         if (annotations != null) return;
         annotations = new ArrayList<>();
         for (int i = 0; i < annotsArray.size(); i++) {
-            COSBase item = resolveRef(annotsArray.get(i));
-            if (item instanceof COSDictionary) {
-                annotations.add(Annotation.fromDictionary((COSDictionary) item, page));
+            PdfBase item = resolveRef(annotsArray.get(i));
+            if (item instanceof PdfDictionary) {
+                annotations.add(Annotation.fromDictionary((PdfDictionary) item, page));
             }
         }
     }
 
-    private COSBase resolveRef(COSBase val) {
-        if (val instanceof COSObjectReference) {
-            try { return ((COSObjectReference) val).dereference(); }
+    private PdfBase resolveRef(PdfBase val) {
+        if (val instanceof PdfObjectReference) {
+            try { return ((PdfObjectReference) val).dereference(); }
             catch (Exception e) { return null; }
         }
         return val;

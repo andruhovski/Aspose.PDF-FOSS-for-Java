@@ -1,7 +1,7 @@
 package org.aspose.pdf.tests.engine.filter;
 
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 import org.aspose.pdf.engine.filter.ArithmeticDecoder;
 import org.aspose.pdf.engine.filter.JBIG2DecodeFilter;
 import org.junit.jupiter.api.Test;
@@ -447,8 +447,8 @@ public class JBIG2DecodeFilterTest {
 
         byte[] pageBytes = pageStream.toByteArray();
 
-        COSDictionary params = new COSDictionary();
-        COSStream globalsObj = new COSStream();
+        PdfDictionary params = new PdfDictionary();
+        PdfStream globalsObj = new PdfStream();
         globalsObj.setDecodedData(globalsBytes);
         params.set("JBIG2Globals", globalsObj);
 

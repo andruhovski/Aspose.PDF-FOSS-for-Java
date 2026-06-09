@@ -1,7 +1,7 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
 
 /**
  * Transition action — controls page transitions during presentations
@@ -14,7 +14,7 @@ public class TransitionAction extends PdfAction {
      *
      * @param dict the action dictionary
      */
-    public TransitionAction(COSDictionary dict) {
+    public TransitionAction(PdfDictionary dict) {
         this.actionDict = dict;
     }
 
@@ -23,8 +23,8 @@ public class TransitionAction extends PdfAction {
      *
      * @return the transition dictionary, or {@code null}
      */
-    public COSDictionary getTransition() {
-        COSBase t = resolve(actionDict.get("Trans"));
-        return (t instanceof COSDictionary) ? (COSDictionary) t : null;
+    public PdfDictionary getTransition() {
+        PdfBase t = resolve(actionDict.get("Trans"));
+        return (t instanceof PdfDictionary) ? (PdfDictionary) t : null;
     }
 }

@@ -1,7 +1,7 @@
 package org.aspose.pdf.engine.filter;
 
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -18,7 +18,7 @@ import java.util.logging.Logger;
  * </ul>
  * </p>
  */
-public final class RunLengthFilter implements COSFilter {
+public final class RunLengthFilter implements PdfFilter {
 
     private static final Logger LOG = Logger.getLogger(RunLengthFilter.class.getName());
 
@@ -35,15 +35,20 @@ public final class RunLengthFilter implements COSFilter {
      * {@inheritDoc}
      */
     @Override
-    public byte[] decode(byte[] encoded, COSDictionary params) throws IOException {
+    public byte[] decode(byte[] encoded, PdfDictionary params) throws IOException {
         if (encoded == null || encoded.length == 0) {
             return new byte[0];
         }
 
-        ByteArrayOutputStream out = new ByteArrayOutputStream(encoded.length * 2);
+        // encoded.length * 2 overflows int for raw streams over 1 GB; clamp the
+        // initial capacity — BAOS doubles on demand anyway.
+        ByteArrayOutputStream out = new ByteArrayOutputStream(
+                (int) Math.min(Math.max(encoded.length * 2L, 64), 1L << 20));
+        long limit = DecodeLimits.maxDecodedBytes();
         int pos = 0;
 
         while (pos < encoded.length) {
+            DecodeLimits.check(out.size(), limit, "RunLengthDecode");
             int length = encoded[pos++] & 0xFF;
 
             if (length < EOD) {
@@ -79,7 +84,7 @@ public final class RunLengthFilter implements COSFilter {
      * {@inheritDoc}
      */
     @Override
-    public byte[] encode(byte[] decoded, COSDictionary params) throws IOException {
+    public byte[] encode(byte[] decoded, PdfDictionary params) throws IOException {
         if (decoded == null || decoded.length == 0) {
             return new byte[]{(byte) EOD};
         }
@@ -133,7 +138,7 @@ public final class RunLengthFilter implements COSFilter {
      * {@inheritDoc}
      */
     @Override
-    public COSName getName() {
-        return COSName.RUN_LENGTH_DECODE;
+    public PdfName getName() {
+        return PdfName.RUN_LENGTH_DECODE;
     }
 }

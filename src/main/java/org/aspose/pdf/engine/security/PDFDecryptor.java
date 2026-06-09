@@ -61,6 +61,12 @@ public class PDFDecryptor {
             if (customHandler != null) {
                 return customHandler.decrypt(data, objectNumber, generationNumber, encryptionKey);
             }
+            // /StmF (or /StrF) = /Identity: this object's data is not encrypted.
+            // Must be checked before the R>=5 branch, since an R5/R6 file may still
+            // declare /Identity crypt filters.
+            if (cipherType == PDFEncryptionDict.CipherType.IDENTITY) {
+                return data;
+            }
             if (revision >= 5) {
                 // R=5/R=6: AES-256 with file key directly
                 return AESCipher.decrypt(encryptionKey, data);

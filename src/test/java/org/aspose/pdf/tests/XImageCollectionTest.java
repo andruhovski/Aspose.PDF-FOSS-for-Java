@@ -2,7 +2,7 @@ package org.aspose.pdf.tests;
 
 import org.aspose.pdf.XImage;
 import org.aspose.pdf.XImageCollection;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 import org.junit.jupiter.api.Test;
 
 import javax.imageio.ImageIO;
@@ -17,27 +17,27 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class XImageCollectionTest {
 
-    private COSDictionary createXObjectDict() {
-        COSDictionary xobjects = new COSDictionary();
+    private PdfDictionary createXObjectDict() {
+        PdfDictionary xobjects = new PdfDictionary();
 
         // Image XObject
-        COSStream img1 = new COSStream();
-        img1.set(COSName.of("Subtype"), COSName.of("Image"));
-        img1.set(COSName.of("Width"), COSInteger.valueOf(100));
-        img1.set(COSName.of("Height"), COSInteger.valueOf(50));
-        xobjects.set(COSName.of("Im1"), img1);
+        PdfStream img1 = new PdfStream();
+        img1.set(PdfName.of("Subtype"), PdfName.of("Image"));
+        img1.set(PdfName.of("Width"), PdfInteger.valueOf(100));
+        img1.set(PdfName.of("Height"), PdfInteger.valueOf(50));
+        xobjects.set(PdfName.of("Im1"), img1);
 
         // Another image
-        COSStream img2 = new COSStream();
-        img2.set(COSName.of("Subtype"), COSName.of("Image"));
-        img2.set(COSName.of("Width"), COSInteger.valueOf(200));
-        img2.set(COSName.of("Height"), COSInteger.valueOf(100));
-        xobjects.set(COSName.of("Im2"), img2);
+        PdfStream img2 = new PdfStream();
+        img2.set(PdfName.of("Subtype"), PdfName.of("Image"));
+        img2.set(PdfName.of("Width"), PdfInteger.valueOf(200));
+        img2.set(PdfName.of("Height"), PdfInteger.valueOf(100));
+        xobjects.set(PdfName.of("Im2"), img2);
 
         // Form XObject (should NOT be included in images)
-        COSStream form = new COSStream();
-        form.set(COSName.of("Subtype"), COSName.of("Form"));
-        xobjects.set(COSName.of("Fm1"), form);
+        PdfStream form = new PdfStream();
+        form.set(PdfName.of("Subtype"), PdfName.of("Form"));
+        xobjects.set(PdfName.of("Fm1"), form);
 
         return xobjects;
     }
@@ -96,7 +96,7 @@ public class XImageCollectionTest {
 
     @Test
     public void testEmptyCollection() {
-        XImageCollection coll = new XImageCollection(new COSDictionary(), null);
+        XImageCollection coll = new XImageCollection(new PdfDictionary(), null);
         assertEquals(0, coll.getCount());
     }
 
@@ -109,7 +109,7 @@ public class XImageCollectionTest {
     @Test
     public void testFormXObjectNotIncluded() {
         // Verify that Form XObjects are filtered out
-        COSDictionary xobjects = createXObjectDict();
+        PdfDictionary xobjects = createXObjectDict();
         XImageCollection coll = new XImageCollection(xobjects, null);
         // Dict has 3 entries (Im1, Im2, Fm1) but only 2 images
         assertEquals(2, coll.getCount());
@@ -120,7 +120,7 @@ public class XImageCollectionTest {
 
     @Test
     public void testDeleteByIndexRemovesImage() {
-        COSDictionary xobjects = createXObjectDict();
+        PdfDictionary xobjects = createXObjectDict();
         XImageCollection coll = new XImageCollection(xobjects, null);
 
         coll.delete(2);
@@ -157,7 +157,7 @@ public class XImageCollectionTest {
 
     @Test
     public void testReplaceByIndexUpdatesImageMetadata() throws Exception {
-        COSDictionary xobjects = createXObjectDict();
+        PdfDictionary xobjects = createXObjectDict();
         XImageCollection coll = new XImageCollection(xobjects, null);
 
         BufferedImage image = new BufferedImage(4, 3, BufferedImage.TYPE_INT_RGB);
@@ -169,7 +169,7 @@ public class XImageCollectionTest {
         XImage replaced = coll.get(2);
         assertEquals(4, replaced.getWidth());
         assertEquals(3, replaced.getHeight());
-        assertArrayEquals(jpeg.toByteArray(), replaced.getCOSStream().getEncodedData());
-        assertEquals("DCTDecode", ((COSName) replaced.getCOSStream().get(COSName.of("Filter"))).getName());
+        assertArrayEquals(jpeg.toByteArray(), replaced.getPdfStream().getEncodedData());
+        assertEquals("DCTDecode", ((PdfName) replaced.getPdfStream().get(PdfName.of("Filter"))).getName());
     }
 }

@@ -22,9 +22,9 @@ import org.aspose.pdf.Row;
 import org.aspose.pdf.Table;
 import org.aspose.pdf.TextStamp;
 import org.aspose.pdf.TocInfo;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 import org.aspose.pdf.text.TextFragment;
 import org.aspose.pdf.text.TextSegment;
 import org.aspose.pdf.text.TextState;
@@ -181,8 +181,8 @@ public class LayoutEngine {
     /**
      * Performs layout on a page, converting its paragraphs into a PDF content stream.
      * <p>
-     * After this method completes, the page's COS dictionary will have its /Contents
-     * entry set to a new COSStream containing the rendered content, and its /Resources
+     * After this method completes, the page's PDF dictionary will have its /Contents
+     * entry set to a new PdfStream containing the rendered content, and its /Resources
      * entry set to the built resources dictionary.
      * </p>
      *
@@ -287,11 +287,11 @@ public class LayoutEngine {
 
         // 7. Build content stream and set on page
         byte[] contentBytes = builder.toByteArray();
-        COSStream contentStream = new COSStream();
+        PdfStream contentStream = new PdfStream();
         contentStream.setDecodedData(contentBytes);
 
-        COSDictionary pageDict = page.getCOSDictionary();
-        pageDict.set(COSName.CONTENTS, contentStream);
+        PdfDictionary pageDict = page.getPdfDictionary();
+        pageDict.set(PdfName.CONTENTS, contentStream);
 
         // 8. Build resources dictionary and set on page
         // Sync font registrations from builder to resources
@@ -303,8 +303,8 @@ public class LayoutEngine {
             }
         }
 
-        COSDictionary resourcesDict = resources.buildResourcesDictionary();
-        pageDict.set(COSName.RESOURCES, resourcesDict);
+        PdfDictionary resourcesDict = resources.buildResourcesDictionary();
+        pageDict.set(PdfName.RESOURCES, resourcesDict);
 
         LOG.fine(() -> "Layout complete: " + contentBytes.length + " bytes of content stream");
     }
@@ -319,9 +319,9 @@ public class LayoutEngine {
         /** Content-stream bytes drawing the header/footer in page user space. */
         public final byte[] content;
         /** The {@code /Resources} dictionary (fonts, image XObjects) referenced by {@link #content}. */
-        public final COSDictionary resources;
+        public final PdfDictionary resources;
 
-        HeaderFooterOverlay(byte[] content, COSDictionary resources) {
+        HeaderFooterOverlay(byte[] content, PdfDictionary resources) {
             this.content = content;
             this.resources = resources;
         }
@@ -1805,18 +1805,18 @@ public class LayoutEngine {
     }
 
     /**
-     * Wraps a {@link DecodedImage} into a PDF Image XObject COSStream ready
+     * Wraps a {@link DecodedImage} into a PDF Image XObject PdfStream ready
      * for registration through {@link ResourceBuilder#addImage}.
      */
-    private org.aspose.pdf.engine.cos.COSStream buildImageXObject(DecodedImage di) {
-        org.aspose.pdf.engine.cos.COSStream s = new org.aspose.pdf.engine.cos.COSStream();
-        s.set(COSName.of("Type"), COSName.of("XObject"));
-        s.set(COSName.of("Subtype"), COSName.of("Image"));
-        s.set(COSName.of("Width"), org.aspose.pdf.engine.cos.COSInteger.valueOf(di.width));
-        s.set(COSName.of("Height"), org.aspose.pdf.engine.cos.COSInteger.valueOf(di.height));
-        s.set(COSName.of("BitsPerComponent"), org.aspose.pdf.engine.cos.COSInteger.valueOf(8));
-        s.set(COSName.of("ColorSpace"), COSName.of(di.colorSpace));
-        s.set(COSName.of("Filter"), COSName.of(di.filter));
+    private org.aspose.pdf.engine.pdfobjects.PdfStream buildImageXObject(DecodedImage di) {
+        org.aspose.pdf.engine.pdfobjects.PdfStream s = new org.aspose.pdf.engine.pdfobjects.PdfStream();
+        s.set(PdfName.of("Type"), PdfName.of("XObject"));
+        s.set(PdfName.of("Subtype"), PdfName.of("Image"));
+        s.set(PdfName.of("Width"), org.aspose.pdf.engine.pdfobjects.PdfInteger.valueOf(di.width));
+        s.set(PdfName.of("Height"), org.aspose.pdf.engine.pdfobjects.PdfInteger.valueOf(di.height));
+        s.set(PdfName.of("BitsPerComponent"), org.aspose.pdf.engine.pdfobjects.PdfInteger.valueOf(8));
+        s.set(PdfName.of("ColorSpace"), PdfName.of(di.colorSpace));
+        s.set(PdfName.of("Filter"), PdfName.of(di.filter));
         s.setEncodedData(di.encodedBytes);
         return s;
     }

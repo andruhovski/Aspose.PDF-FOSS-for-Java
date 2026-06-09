@@ -1,9 +1,9 @@
 package org.aspose.pdf.engine.colorspace;
 
 import org.aspose.pdf.Resources;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 import org.aspose.pdf.engine.function.PdfFunction;
 import org.aspose.pdf.engine.parser.PDFParser;
 
@@ -40,7 +40,7 @@ public final class SeparationColorSpace extends ColorSpaceBase {
     }
 
     /**
-     * Parses a Separation color space from a COS array.
+     * Parses a Separation color space from a PDF array.
      *
      * @param arr       the array {@code [/Separation name alternateCS tintTransform]}
      * @param resources the page resources
@@ -48,12 +48,12 @@ public final class SeparationColorSpace extends ColorSpaceBase {
      * @return the parsed color space
      * @throws IOException if parsing fails
      */
-    public static SeparationColorSpace fromArray(COSArray arr, Resources resources,
+    public static SeparationColorSpace fromArray(PdfArray arr, Resources resources,
                                                   PDFParser parser) throws IOException {
         String name = "Unknown";
         if (arr.size() > 1) {
-            COSBase nameObj = resolveRef(arr.get(1));
-            if (nameObj instanceof COSName) name = ((COSName) nameObj).getName();
+            PdfBase nameObj = resolveRef(arr.get(1));
+            if (nameObj instanceof PdfName) name = ((PdfName) nameObj).getName();
         }
         ColorSpaceBase altCS = DeviceRGB.INSTANCE;
         if (arr.size() > 2) {
@@ -87,6 +87,13 @@ public final class SeparationColorSpace extends ColorSpaceBase {
 
     @Override
     public int getNumberOfComponents() { return 1; }
+
+    /** Tint → alternate components (via tint transform) → alternate's RGB. */
+    @Override
+    public int toRGBInt(double[] comps) {
+        if (comps == null || comps.length == 0) return 0xFF000000;
+        return alternateCS.toRGBInt(tintToAlternate(comps[0]));
+    }
 
     /** Returns the colorant name. */
     public String getColorantName() { return colorantName; }

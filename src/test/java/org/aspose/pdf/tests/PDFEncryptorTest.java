@@ -1,8 +1,8 @@
 package org.aspose.pdf.tests;
 
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 import org.aspose.pdf.engine.security.PDFDecryptor;
 import org.aspose.pdf.engine.security.PDFEncryptionDict;
 import org.aspose.pdf.engine.security.PDFEncryptor;
@@ -238,26 +238,26 @@ public class PDFEncryptorTest {
 
     /** V=2, R=3 → RC4-128 */
     private PDFEncryptionDict buildRC4Dict() {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("V"), COSInteger.valueOf(2));
-        dict.set(COSName.of("R"), COSInteger.valueOf(3));
-        dict.set(COSName.of("Length"), COSInteger.valueOf(128));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("V"), PdfInteger.valueOf(2));
+        dict.set(PdfName.of("R"), PdfInteger.valueOf(3));
+        dict.set(PdfName.of("Length"), PdfInteger.valueOf(128));
         return new PDFEncryptionDict(dict);
     }
 
     /** V=4, R=4 → AES-128 with StdCF/AESV2 */
     private PDFEncryptionDict buildAES128Dict() {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("V"), COSInteger.valueOf(4));
-        dict.set(COSName.of("R"), COSInteger.valueOf(4));
-        dict.set(COSName.of("Length"), COSInteger.valueOf(128));
-        dict.set(COSName.of("StmF"), COSName.of("StdCF"));
-        dict.set(COSName.of("StrF"), COSName.of("StdCF"));
-        COSDictionary stdCF = new COSDictionary();
-        stdCF.set(COSName.of("CFM"), COSName.of("AESV2"));
-        COSDictionary cf = new COSDictionary();
-        cf.set(COSName.of("StdCF"), stdCF);
-        dict.set(COSName.of("CF"), cf);
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("V"), PdfInteger.valueOf(4));
+        dict.set(PdfName.of("R"), PdfInteger.valueOf(4));
+        dict.set(PdfName.of("Length"), PdfInteger.valueOf(128));
+        dict.set(PdfName.of("StmF"), PdfName.of("StdCF"));
+        dict.set(PdfName.of("StrF"), PdfName.of("StdCF"));
+        PdfDictionary stdCF = new PdfDictionary();
+        stdCF.set(PdfName.of("CFM"), PdfName.of("AESV2"));
+        PdfDictionary cf = new PdfDictionary();
+        cf.set(PdfName.of("StdCF"), stdCF);
+        dict.set(PdfName.of("CF"), cf);
         return new PDFEncryptionDict(dict);
     }
 }

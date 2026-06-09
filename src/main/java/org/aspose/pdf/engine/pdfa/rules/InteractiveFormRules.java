@@ -1,11 +1,11 @@
 package org.aspose.pdf.engine.pdfa.rules;
 
 import org.aspose.pdf.PdfFormat;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
 import org.aspose.pdf.engine.pdfa.PdfARule;
 import org.aspose.pdf.engine.pdfa.PdfAValidationResult;
 import org.aspose.pdf.engine.parser.PDFParser;
@@ -41,7 +41,7 @@ public final class InteractiveFormRules implements PdfARule {
             return;
         }
 
-        COSDictionary catalog;
+        PdfDictionary catalog;
         try {
             catalog = parser.getCatalog();
         } catch (IOException e) {
@@ -49,7 +49,7 @@ public final class InteractiveFormRules implements PdfARule {
             return;
         }
 
-        COSDictionary acroForm = resolveDict(catalog.get("AcroForm"));
+        PdfDictionary acroForm = resolveDict(catalog.get("AcroForm"));
         if (acroForm == null) {
             // No AcroForm means no form-related violations
             // But still check NeedsRendering
@@ -75,7 +75,7 @@ public final class InteractiveFormRules implements PdfARule {
     /**
      * 6.9.1: AcroForm /NeedAppearances must be absent or false.
      */
-    private void checkNeedAppearances(COSDictionary acroForm, PdfAValidationResult result) {
+    private void checkNeedAppearances(PdfDictionary acroForm, PdfAValidationResult result) {
         boolean needAppearances = acroForm.getBoolean("NeedAppearances", false);
         if (needAppearances) {
             result.addError("6.9.1",
@@ -87,8 +87,8 @@ public final class InteractiveFormRules implements PdfARule {
     /**
      * 6.9.2: Widget/Field dicts must not have /AA.
      */
-    private void checkFieldActions(COSDictionary acroForm, PdfAValidationResult result) {
-        COSArray fields = resolveArray(acroForm.get("Fields"));
+    private void checkFieldActions(PdfDictionary acroForm, PdfAValidationResult result) {
+        PdfArray fields = resolveArray(acroForm.get("Fields"));
         if (fields == null) {
             return;
         }
@@ -101,9 +101,9 @@ public final class InteractiveFormRules implements PdfARule {
     /**
      * Recursively checks a field and its children for /AA.
      */
-    private void checkFieldRecursive(COSBase fieldRef, String path,
+    private void checkFieldRecursive(PdfBase fieldRef, String path,
                                       PdfAValidationResult result) {
-        COSDictionary field = resolveDict(fieldRef);
+        PdfDictionary field = resolveDict(fieldRef);
         if (field == null) {
             return;
         }
@@ -116,7 +116,7 @@ public final class InteractiveFormRules implements PdfARule {
         }
 
         // Recurse into /Kids
-        COSArray kids = resolveArray(field.get("Kids"));
+        PdfArray kids = resolveArray(field.get("Kids"));
         if (kids != null) {
             for (int i = 0; i < kids.size(); i++) {
                 checkFieldRecursive(kids.get(i), path + "/Kids[" + i + "]", result);
@@ -127,7 +127,7 @@ public final class InteractiveFormRules implements PdfARule {
     /**
      * 6.9.4: PDF/A-2+: AcroForm must not have /XFA.
      */
-    private void checkXfa(COSDictionary acroForm, PdfAValidationResult result) {
+    private void checkXfa(PdfDictionary acroForm, PdfAValidationResult result) {
         if (acroForm.get("XFA") != null) {
             result.addError("6.9.4",
                     "AcroForm must not contain /XFA for PDF/A-2+ compliance",
@@ -138,7 +138,7 @@ public final class InteractiveFormRules implements PdfARule {
     /**
      * 6.9.4: PDF/A-2+: Catalog must not have /NeedsRendering.
      */
-    private void checkNeedsRendering(COSDictionary catalog, PdfAValidationResult result) {
+    private void checkNeedsRendering(PdfDictionary catalog, PdfAValidationResult result) {
         boolean needsRendering = catalog.getBoolean("NeedsRendering", false);
         if (needsRendering) {
             result.addError("6.9.4",
@@ -148,30 +148,30 @@ public final class InteractiveFormRules implements PdfARule {
     }
 
     /**
-     * Resolves a COSBase to a COSDictionary, dereferencing indirect references.
+     * Resolves a PdfBase to a PdfDictionary, dereferencing indirect references.
      */
-    private static COSDictionary resolveDict(COSBase val) {
-        if (val instanceof COSObjectReference) {
+    private static PdfDictionary resolveDict(PdfBase val) {
+        if (val instanceof PdfObjectReference) {
             try {
-                val = ((COSObjectReference) val).dereference();
+                val = ((PdfObjectReference) val).dereference();
             } catch (IOException e) {
                 return null;
             }
         }
-        return (val instanceof COSDictionary) ? (COSDictionary) val : null;
+        return (val instanceof PdfDictionary) ? (PdfDictionary) val : null;
     }
 
     /**
-     * Resolves a COSBase to a COSArray, dereferencing indirect references.
+     * Resolves a PdfBase to a PdfArray, dereferencing indirect references.
      */
-    private static COSArray resolveArray(COSBase val) {
-        if (val instanceof COSObjectReference) {
+    private static PdfArray resolveArray(PdfBase val) {
+        if (val instanceof PdfObjectReference) {
             try {
-                val = ((COSObjectReference) val).dereference();
+                val = ((PdfObjectReference) val).dereference();
             } catch (IOException e) {
                 return null;
             }
         }
-        return (val instanceof COSArray) ? (COSArray) val : null;
+        return (val instanceof PdfArray) ? (PdfArray) val : null;
     }
 }

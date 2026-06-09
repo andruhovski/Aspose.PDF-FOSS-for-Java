@@ -1,12 +1,12 @@
 package org.aspose.pdf.logicalstructure;
 
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 import org.aspose.pdf.engine.parser.PDFParser;
 
 import java.io.IOException;
@@ -31,7 +31,7 @@ import java.util.List;
  */
 public class StructureElement {
 
-    private final COSDictionary dict;
+    private final PdfDictionary dict;
     private final PDFParser parser;
 
     /**
@@ -40,13 +40,13 @@ public class StructureElement {
      * @param dict   the /StructElem dictionary
      * @param parser the PDF parser for resolving references (may be null)
      */
-    public StructureElement(COSDictionary dict, PDFParser parser) {
+    public StructureElement(PdfDictionary dict, PDFParser parser) {
         this.dict = dict;
         this.parser = parser;
     }
 
-    /** Returns the underlying COS dictionary. */
-    public COSDictionary getCOSDictionary() { return dict; }
+    /** Returns the underlying PDF dictionary. */
+    public PdfDictionary getPdfDictionary() { return dict; }
 
     // ═══════════════════════════════════════════════════════════════
     //  Structure Type
@@ -68,7 +68,7 @@ public class StructureElement {
      * @param type the structure type
      */
     public void setStructureType(StructureTypeStandard type) {
-        dict.set(COSName.of("S"), COSName.of(type.getName()));
+        dict.set(PdfName.of("S"), PdfName.of(type.getName()));
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -83,15 +83,15 @@ public class StructureElement {
 
     /** Returns the language (/Lang). */
     public String getLanguage() {
-        COSBase lang = dict.get("Lang");
-        if (lang instanceof COSString) return ((COSString) lang).getString();
-        if (lang instanceof COSName) return ((COSName) lang).getName();
+        PdfBase lang = dict.get("Lang");
+        if (lang instanceof PdfString) return ((PdfString) lang).getString();
+        if (lang instanceof PdfName) return ((PdfName) lang).getName();
         return null;
     }
 
     /** Sets the language (/Lang). */
     public void setLanguage(String lang) {
-        dict.set(COSName.of("Lang"), new COSString(lang));
+        dict.set(PdfName.of("Lang"), new PdfString(lang));
     }
 
     /** Returns the alternate description (/Alt). */
@@ -129,23 +129,23 @@ public class StructureElement {
      */
     public ElementList getChildElements() {
         List<StructureElement> children = new ArrayList<>();
-        COSBase k = resolve(dict.get("K"));
+        PdfBase k = resolve(dict.get("K"));
 
-        if (k instanceof COSDictionary) {
-            addIfStructElem((COSDictionary) k, children);
-        } else if (k instanceof COSArray) {
-            COSArray arr = (COSArray) k;
+        if (k instanceof PdfDictionary) {
+            addIfStructElem((PdfDictionary) k, children);
+        } else if (k instanceof PdfArray) {
+            PdfArray arr = (PdfArray) k;
             for (int i = 0; i < arr.size(); i++) {
-                COSBase item = resolve(arr.get(i));
-                if (item instanceof COSDictionary) {
-                    addIfStructElem((COSDictionary) item, children);
+                PdfBase item = resolve(arr.get(i));
+                if (item instanceof PdfDictionary) {
+                    addIfStructElem((PdfDictionary) item, children);
                 }
             }
         }
         return new ElementList(children);
     }
 
-    private void addIfStructElem(COSDictionary d, List<StructureElement> list) {
+    private void addIfStructElem(PdfDictionary d, List<StructureElement> list) {
         // A StructElem has /S and is not a MCR (/MCID) or OBJR (/Obj)
         if (d.get("S") != null && d.get("MCID") == null && d.get("Obj") == null) {
             list.add(new StructureElement(d, parser));
@@ -162,28 +162,28 @@ public class StructureElement {
      */
     public List<Object> getAllKids() {
         List<Object> kids = new ArrayList<>();
-        COSBase k = resolve(dict.get("K"));
+        PdfBase k = resolve(dict.get("K"));
         if (k == null) return kids;
 
-        if (k instanceof COSInteger) {
-            kids.add(new MarkedContentReference(((COSInteger) k).intValue(), null));
+        if (k instanceof PdfInteger) {
+            kids.add(new MarkedContentReference(((PdfInteger) k).intValue(), null));
             return kids;
         }
 
-        List<COSBase> items;
-        if (k instanceof COSArray) {
+        List<PdfBase> items;
+        if (k instanceof PdfArray) {
             items = new ArrayList<>();
-            COSArray arr = (COSArray) k;
+            PdfArray arr = (PdfArray) k;
             for (int i = 0; i < arr.size(); i++) items.add(resolve(arr.get(i)));
         } else {
             items = Collections.singletonList(k);
         }
 
-        for (COSBase item : items) {
-            if (item instanceof COSInteger) {
-                kids.add(new MarkedContentReference(((COSInteger) item).intValue(), null));
-            } else if (item instanceof COSDictionary) {
-                COSDictionary d = (COSDictionary) item;
+        for (PdfBase item : items) {
+            if (item instanceof PdfInteger) {
+                kids.add(new MarkedContentReference(((PdfInteger) item).intValue(), null));
+            } else if (item instanceof PdfDictionary) {
+                PdfDictionary d = (PdfDictionary) item;
                 String type = d.getNameAsString("Type");
                 if ("MCR".equals(type) || d.get("MCID") != null) {
                     kids.add(MarkedContentReference.fromDictionary(d));
@@ -203,17 +203,17 @@ public class StructureElement {
      * @param child the child element to append
      */
     public void appendChild(StructureElement child) {
-        child.dict.set(COSName.of("P"), dict);
-        COSBase k = dict.get("K");
+        child.dict.set(PdfName.of("P"), dict);
+        PdfBase k = dict.get("K");
         if (k == null) {
-            dict.set(COSName.of("K"), child.dict);
-        } else if (k instanceof COSArray) {
-            ((COSArray) k).add(child.dict);
+            dict.set(PdfName.of("K"), child.dict);
+        } else if (k instanceof PdfArray) {
+            ((PdfArray) k).add(child.dict);
         } else {
-            COSArray arr = new COSArray();
+            PdfArray arr = new PdfArray();
             arr.add(k);
             arr.add(child.dict);
-            dict.set(COSName.of("K"), arr);
+            dict.set(PdfName.of("K"), arr);
         }
     }
 
@@ -223,22 +223,22 @@ public class StructureElement {
      * @param mcid the marked content identifier
      * @param page the page dictionary (may be null)
      */
-    public void appendMarkedContent(int mcid, COSDictionary page) {
-        COSDictionary mcr = new COSDictionary();
-        mcr.set(COSName.of("Type"), COSName.of("MCR"));
+    public void appendMarkedContent(int mcid, PdfDictionary page) {
+        PdfDictionary mcr = new PdfDictionary();
+        mcr.set(PdfName.of("Type"), PdfName.of("MCR"));
         mcr.setInt("MCID", mcid);
-        if (page != null) mcr.set(COSName.of("Pg"), page);
+        if (page != null) mcr.set(PdfName.of("Pg"), page);
 
-        COSBase k = dict.get("K");
+        PdfBase k = dict.get("K");
         if (k == null) {
-            dict.set(COSName.of("K"), mcr);
-        } else if (k instanceof COSArray) {
-            ((COSArray) k).add(mcr);
+            dict.set(PdfName.of("K"), mcr);
+        } else if (k instanceof PdfArray) {
+            ((PdfArray) k).add(mcr);
         } else {
-            COSArray arr = new COSArray();
+            PdfArray arr = new PdfArray();
             arr.add(k);
             arr.add(mcr);
-            dict.set(COSName.of("K"), arr);
+            dict.set(PdfName.of("K"), arr);
         }
     }
 
@@ -252,17 +252,17 @@ public class StructureElement {
      * @return the parent structure element, or null
      */
     public StructureElement getParent() {
-        COSBase p = resolve(dict.get("P"));
-        if (p instanceof COSDictionary) {
-            COSDictionary pd = (COSDictionary) p;
+        PdfBase p = resolve(dict.get("P"));
+        if (p instanceof PdfDictionary) {
+            PdfDictionary pd = (PdfDictionary) p;
             if (pd.get("S") != null) return new StructureElement(pd, parser);
         }
         return null;
     }
 
-    private static COSBase resolve(COSBase obj) {
-        if (obj instanceof COSObjectReference) {
-            try { return ((COSObjectReference) obj).dereference(); }
+    private static PdfBase resolve(PdfBase obj) {
+        if (obj instanceof PdfObjectReference) {
+            try { return ((PdfObjectReference) obj).dereference(); }
             catch (IOException e) { return null; }
         }
         return obj;

@@ -1,7 +1,7 @@
 package org.aspose.pdf.operators;
 
 import org.aspose.pdf.Operator;
-import org.aspose.pdf.engine.cos.COSBase;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
 
 import java.util.List;
 
@@ -22,7 +22,7 @@ public class Clip extends Operator {
     }
 
     /** Creates a Clip operator from parsed operands. */
-    public Clip(List<COSBase> operands) {
+    public Clip(List<PdfBase> operands) {
         super("W", operands);
     }
 }

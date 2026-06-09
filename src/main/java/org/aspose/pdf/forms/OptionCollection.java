@@ -1,12 +1,12 @@
 package org.aspose.pdf.forms;
 
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 import java.util.*;
 
 /**
  * Collection of options for choice fields (ComboBox/ListBox).
  * <p>
- * Wraps the /Opt {@link COSArray}. Each element is either a simple string
+ * Wraps the /Opt {@link PdfArray}. Each element is either a simple string
  * (value = display name) or a two-element array [export-value, display-name]
  * per ISO 32000-1:2008, §12.7.4.4.
  * </p>
@@ -14,14 +14,14 @@ import java.util.*;
 public class OptionCollection implements Iterable<Option> {
 
     /** The underlying /Opt array. */
-    private final COSArray optArray;
+    private final PdfArray optArray;
 
     /**
-     * Constructs an option collection from a /Opt COSArray.
+     * Constructs an option collection from a /Opt PdfArray.
      *
      * @param optArray the /Opt array (must not be null)
      */
-    public OptionCollection(COSArray optArray) {
+    public OptionCollection(PdfArray optArray) {
         this.optArray = optArray;
     }
 
@@ -50,9 +50,9 @@ public class OptionCollection implements Iterable<Option> {
      * @return the option
      */
     public Option get(int index) {
-        COSBase item = optArray.get(index);
-        if (item instanceof COSArray) {
-            COSArray pair = (COSArray) item;
+        PdfBase item = optArray.get(index);
+        if (item instanceof PdfArray) {
+            PdfArray pair = (PdfArray) item;
             return new Option(
                     getString(pair.get(0)),
                     getString(pair.size() > 1 ? pair.get(1) : pair.get(0)));
@@ -84,11 +84,11 @@ public class OptionCollection implements Iterable<Option> {
     }
 
     /**
-     * Extracts a string from a COS value (COSString or COSName).
+     * Extracts a string from a PDF value (PdfString or PdfName).
      */
-    private String getString(COSBase val) {
-        if (val instanceof COSString) return ((COSString) val).getString();
-        if (val instanceof COSName) return ((COSName) val).getName();
+    private String getString(PdfBase val) {
+        if (val instanceof PdfString) return ((PdfString) val).getString();
+        if (val instanceof PdfName) return ((PdfName) val).getName();
         return "";
     }
 }

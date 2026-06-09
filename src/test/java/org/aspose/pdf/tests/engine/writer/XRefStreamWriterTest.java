@@ -1,14 +1,14 @@
 package org.aspose.pdf.tests.engine.writer;
 
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectKey;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSStream;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectKey;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 import org.aspose.pdf.engine.io.RandomAccessReader;
 import org.aspose.pdf.engine.parser.PDFParser;
 import org.aspose.pdf.engine.writer.PDFWriter;
@@ -35,40 +35,40 @@ public class XRefStreamWriterTest {
      * Creates a minimal set of objects: catalog, pages, info dict,
      * plus a content stream and several small dicts.
      */
-    private Map<COSObjectKey, COSBase> createTestObjects() {
-        Map<COSObjectKey, COSBase> objects = new LinkedHashMap<>();
+    private Map<PdfObjectKey, PdfBase> createTestObjects() {
+        Map<PdfObjectKey, PdfBase> objects = new LinkedHashMap<>();
 
         // Object 1: Catalog
-        COSDictionary catalog = new COSDictionary();
-        catalog.set(COSName.of("Type"), COSName.of("Catalog"));
-        catalog.set(COSName.of("Pages"), COSInteger.valueOf(2));
-        objects.put(new COSObjectKey(1, 0), catalog);
+        PdfDictionary catalog = new PdfDictionary();
+        catalog.set(PdfName.of("Type"), PdfName.of("Catalog"));
+        catalog.set(PdfName.of("Pages"), PdfInteger.valueOf(2));
+        objects.put(new PdfObjectKey(1, 0), catalog);
 
         // Object 2: Pages
-        COSDictionary pages = new COSDictionary();
-        pages.set(COSName.of("Type"), COSName.of("Pages"));
-        pages.set(COSName.of("Count"), COSInteger.valueOf(1));
-        COSArray kids = new COSArray();
-        kids.add(COSInteger.valueOf(3));
-        pages.set(COSName.of("Kids"), kids);
-        objects.put(new COSObjectKey(2, 0), pages);
+        PdfDictionary pages = new PdfDictionary();
+        pages.set(PdfName.of("Type"), PdfName.of("Pages"));
+        pages.set(PdfName.of("Count"), PdfInteger.valueOf(1));
+        PdfArray kids = new PdfArray();
+        kids.add(PdfInteger.valueOf(3));
+        pages.set(PdfName.of("Kids"), kids);
+        objects.put(new PdfObjectKey(2, 0), pages);
 
         // Object 3: Page
-        COSDictionary page = new COSDictionary();
-        page.set(COSName.of("Type"), COSName.of("Page"));
-        page.set(COSName.of("Parent"), COSInteger.valueOf(2));
-        COSArray mediaBox = new COSArray();
-        mediaBox.add(COSInteger.valueOf(0));
-        mediaBox.add(COSInteger.valueOf(0));
-        mediaBox.add(COSInteger.valueOf(612));
-        mediaBox.add(COSInteger.valueOf(792));
-        page.set(COSName.of("MediaBox"), mediaBox);
-        objects.put(new COSObjectKey(3, 0), page);
+        PdfDictionary page = new PdfDictionary();
+        page.set(PdfName.of("Type"), PdfName.of("Page"));
+        page.set(PdfName.of("Parent"), PdfInteger.valueOf(2));
+        PdfArray mediaBox = new PdfArray();
+        mediaBox.add(PdfInteger.valueOf(0));
+        mediaBox.add(PdfInteger.valueOf(0));
+        mediaBox.add(PdfInteger.valueOf(612));
+        mediaBox.add(PdfInteger.valueOf(792));
+        page.set(PdfName.of("MediaBox"), mediaBox);
+        objects.put(new PdfObjectKey(3, 0), page);
 
         // Object 4: Info
-        COSDictionary info = new COSDictionary();
-        info.set(COSName.of("Producer"), new COSString("OpenPDF Test"));
-        objects.put(new COSObjectKey(4, 0), info);
+        PdfDictionary info = new PdfDictionary();
+        info.set(PdfName.of("Producer"), new PdfString("OpenPDF Test"));
+        objects.put(new PdfObjectKey(4, 0), info);
 
         return objects;
     }
@@ -76,18 +76,18 @@ public class XRefStreamWriterTest {
     /**
      * Creates a trailer dict for the test objects with proper indirect references.
      */
-    private COSDictionary createTrailer() {
-        COSDictionary trailer = new COSDictionary();
-        trailer.set(COSName.of("Root"), new COSObjectReference(1, 0));
-        trailer.set(COSName.of("Info"), new COSObjectReference(4, 0));
+    private PdfDictionary createTrailer() {
+        PdfDictionary trailer = new PdfDictionary();
+        trailer.set(PdfName.of("Root"), new PdfObjectReference(1, 0));
+        trailer.set(PdfName.of("Info"), new PdfObjectReference(4, 0));
         return trailer;
     }
 
     /**
      * Writes a compressed PDF to a byte array using the given objects.
      */
-    private byte[] writeCompressedPdf(Map<COSObjectKey, COSBase> objects,
-                                       COSDictionary trailer,
+    private byte[] writeCompressedPdf(Map<PdfObjectKey, PdfBase> objects,
+                                       PdfDictionary trailer,
                                        int maxPerStream) throws IOException {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         PDFWriter writer = new PDFWriter(bos, 1.5f);
@@ -98,8 +98,8 @@ public class XRefStreamWriterTest {
     /**
      * Writes a standard (text xref) PDF for comparison.
      */
-    private byte[] writeStandardPdf(Map<COSObjectKey, COSBase> objects,
-                                     COSDictionary trailer) throws IOException {
+    private byte[] writeStandardPdf(Map<PdfObjectKey, PdfBase> objects,
+                                     PdfDictionary trailer) throws IOException {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         PDFWriter writer = new PDFWriter(bos, 1.7f);
         writer.write(trailer, objects);
@@ -176,7 +176,7 @@ public class XRefStreamWriterTest {
     /** Test 7: XRef stream /Size >= max object number. */
     @Test
     public void testXRefStreamSize() throws IOException {
-        Map<COSObjectKey, COSBase> objects = createTestObjects();
+        Map<PdfObjectKey, PdfBase> objects = createTestObjects();
         byte[] pdf = writeCompressedPdf(objects, createTrailer(), 200);
         String content = new String(pdf, StandardCharsets.US_ASCII);
         // Find /Size in the xref stream section (after /Type /XRef)
@@ -204,15 +204,15 @@ public class XRefStreamWriterTest {
     @Test
     public void testRoundTripPageCount() throws IOException {
         // First create a standard PDF
-        Map<COSObjectKey, COSBase> objects = createTestObjects();
+        Map<PdfObjectKey, PdfBase> objects = createTestObjects();
         byte[] standardPdf = writeStandardPdf(objects, createTrailer());
 
         // Parse it, then write compressed
         PDFParser parser1 = new PDFParser(RandomAccessReader.fromBytes(standardPdf));
         parser1.parse();
-        Map<COSObjectKey, COSBase> parsedObjects = new LinkedHashMap<>();
-        for (COSObjectKey key : parser1.getAllObjectKeys()) {
-            COSBase obj = parser1.getObject(key);
+        Map<PdfObjectKey, PdfBase> parsedObjects = new LinkedHashMap<>();
+        for (PdfObjectKey key : parser1.getAllObjectKeys()) {
+            PdfBase obj = parser1.getObject(key);
             if (obj != null) parsedObjects.put(key, obj);
         }
 
@@ -222,10 +222,10 @@ public class XRefStreamWriterTest {
         // Re-parse the compressed PDF
         PDFParser parser2 = new PDFParser(RandomAccessReader.fromBytes(compressedPdf));
         parser2.parse();
-        COSDictionary catalog2 = parser2.getCatalog();
+        PdfDictionary catalog2 = parser2.getCatalog();
         assertNotNull(catalog2, "Catalog should be parseable from compressed PDF");
 
-        COSBase pagesRef = catalog2.get("Pages");
+        PdfBase pagesRef = catalog2.get("Pages");
         assertNotNull(pagesRef, "Catalog should have /Pages");
         parser2.close();
     }
@@ -233,14 +233,14 @@ public class XRefStreamWriterTest {
     /** Test 10: Round-trip: compressed → reparse → text content intact. */
     @Test
     public void testRoundTripContentIntact() throws IOException {
-        Map<COSObjectKey, COSBase> objects = createTestObjects();
+        Map<PdfObjectKey, PdfBase> objects = createTestObjects();
         byte[] standardPdf = writeStandardPdf(objects, createTrailer());
 
         PDFParser parser1 = new PDFParser(RandomAccessReader.fromBytes(standardPdf));
         parser1.parse();
-        Map<COSObjectKey, COSBase> parsedObjects = new LinkedHashMap<>();
-        for (COSObjectKey key : parser1.getAllObjectKeys()) {
-            COSBase obj = parser1.getObject(key);
+        Map<PdfObjectKey, PdfBase> parsedObjects = new LinkedHashMap<>();
+        for (PdfObjectKey key : parser1.getAllObjectKeys()) {
+            PdfBase obj = parser1.getObject(key);
             if (obj != null) parsedObjects.put(key, obj);
         }
 
@@ -250,7 +250,7 @@ public class XRefStreamWriterTest {
         PDFParser parser2 = new PDFParser(RandomAccessReader.fromBytes(compressedPdf));
         parser2.parse();
         // Verify the info dict is intact
-        COSDictionary trailer2 = parser2.getTrailer();
+        PdfDictionary trailer2 = parser2.getTrailer();
         assertNotNull(trailer2, "Trailer should be parseable");
         parser2.close();
     }
@@ -260,13 +260,13 @@ public class XRefStreamWriterTest {
     /** Test 11: Stream objects are excluded from object streams (remain as regular objects). */
     @Test
     public void testStreamObjectsExcludedFromObjStm() throws IOException {
-        Map<COSObjectKey, COSBase> objects = createTestObjects();
+        Map<PdfObjectKey, PdfBase> objects = createTestObjects();
 
         // Add a stream object
-        COSStream stream = new COSStream();
-        stream.set(COSName.of("Type"), COSName.of("XObject"));
+        PdfStream stream = new PdfStream();
+        stream.set(PdfName.of("Type"), PdfName.of("XObject"));
         stream.setDecodedData("hello stream".getBytes(StandardCharsets.US_ASCII));
-        objects.put(new COSObjectKey(5, 0), stream);
+        objects.put(new PdfObjectKey(5, 0), stream);
 
         byte[] pdf = writeCompressedPdf(objects, createTrailer(), 200);
         String content = new String(pdf, StandardCharsets.US_ASCII);
@@ -278,7 +278,7 @@ public class XRefStreamWriterTest {
     /** Test 12: Dict/array objects are packed into ObjStm. */
     @Test
     public void testDictObjectsPackedIntoObjStm() throws IOException {
-        Map<COSObjectKey, COSBase> objects = createTestObjects();
+        Map<PdfObjectKey, PdfBase> objects = createTestObjects();
         byte[] pdf = writeCompressedPdf(objects, createTrailer(), 200);
         String content = new String(pdf, StandardCharsets.US_ASCII);
 
@@ -289,7 +289,7 @@ public class XRefStreamWriterTest {
     /** Test 13: Object stream has /Type /ObjStm, /N, /First, /Filter. */
     @Test
     public void testObjectStreamHasRequiredKeys() throws IOException {
-        Map<COSObjectKey, COSBase> objects = createTestObjects();
+        Map<PdfObjectKey, PdfBase> objects = createTestObjects();
         byte[] pdf = writeCompressedPdf(objects, createTrailer(), 200);
         String content = new String(pdf, StandardCharsets.US_ASCII);
 
@@ -309,7 +309,7 @@ public class XRefStreamWriterTest {
     /** Test 14: Object stream /N matches number of packed objects. */
     @Test
     public void testObjectStreamNMatchesCount() throws IOException {
-        Map<COSObjectKey, COSBase> objects = createTestObjects();
+        Map<PdfObjectKey, PdfBase> objects = createTestObjects();
         // 4 non-stream objects, all gen 0 → all should be packed
         byte[] pdf = writeCompressedPdf(objects, createTrailer(), 200);
         String content = new String(pdf, StandardCharsets.US_ASCII);
@@ -330,14 +330,14 @@ public class XRefStreamWriterTest {
     /** Test 15: Round-trip: compressed objects → reparse → objects intact. */
     @Test
     public void testRoundTripCompressedObjectsIntact() throws IOException {
-        Map<COSObjectKey, COSBase> objects = createTestObjects();
+        Map<PdfObjectKey, PdfBase> objects = createTestObjects();
         byte[] standardPdf = writeStandardPdf(objects, createTrailer());
 
         PDFParser parser1 = new PDFParser(RandomAccessReader.fromBytes(standardPdf));
         parser1.parse();
-        Map<COSObjectKey, COSBase> parsedObjects = new LinkedHashMap<>();
-        for (COSObjectKey key : parser1.getAllObjectKeys()) {
-            COSBase obj = parser1.getObject(key);
+        Map<PdfObjectKey, PdfBase> parsedObjects = new LinkedHashMap<>();
+        for (PdfObjectKey key : parser1.getAllObjectKeys()) {
+            PdfBase obj = parser1.getObject(key);
             if (obj != null) parsedObjects.put(key, obj);
         }
 
@@ -347,8 +347,8 @@ public class XRefStreamWriterTest {
         // Re-parse compressed PDF and verify all objects are loadable
         PDFParser parser2 = new PDFParser(RandomAccessReader.fromBytes(compressedPdf));
         parser2.parse();
-        for (COSObjectKey key : parser2.getAllObjectKeys()) {
-            COSBase obj = parser2.getObject(key);
+        for (PdfObjectKey key : parser2.getAllObjectKeys()) {
+            PdfBase obj = parser2.getObject(key);
             assertNotNull(obj, "Object " + key + " should be loadable from compressed PDF");
         }
         parser2.close();
@@ -357,7 +357,7 @@ public class XRefStreamWriterTest {
     /** Test 16: objectsPerStream=2 creates multiple ObjStm when there are more objects. */
     @Test
     public void testMultipleObjectStreams() throws IOException {
-        Map<COSObjectKey, COSBase> objects = createTestObjects();
+        Map<PdfObjectKey, PdfBase> objects = createTestObjects();
         // 4 non-stream objects, maxPerStream=2 → should create 2 object streams
         byte[] pdf = writeCompressedPdf(objects, createTrailer(), 2);
         String content = new String(pdf, StandardCharsets.US_ASCII);
@@ -374,27 +374,27 @@ public class XRefStreamWriterTest {
     @Test
     public void testCompressedSmallerThanStandard() throws IOException {
         // Create a document with many small objects to see size benefit
-        Map<COSObjectKey, COSBase> objects = new LinkedHashMap<>();
-        COSDictionary catalog = new COSDictionary();
-        catalog.set(COSName.of("Type"), COSName.of("Catalog"));
-        catalog.set(COSName.of("Pages"), COSInteger.valueOf(2));
-        objects.put(new COSObjectKey(1, 0), catalog);
+        Map<PdfObjectKey, PdfBase> objects = new LinkedHashMap<>();
+        PdfDictionary catalog = new PdfDictionary();
+        catalog.set(PdfName.of("Type"), PdfName.of("Catalog"));
+        catalog.set(PdfName.of("Pages"), PdfInteger.valueOf(2));
+        objects.put(new PdfObjectKey(1, 0), catalog);
 
-        COSDictionary pages = new COSDictionary();
-        pages.set(COSName.of("Type"), COSName.of("Pages"));
-        pages.set(COSName.of("Count"), COSInteger.valueOf(0));
-        objects.put(new COSObjectKey(2, 0), pages);
+        PdfDictionary pages = new PdfDictionary();
+        pages.set(PdfName.of("Type"), PdfName.of("Pages"));
+        pages.set(PdfName.of("Count"), PdfInteger.valueOf(0));
+        objects.put(new PdfObjectKey(2, 0), pages);
 
         // Add 50 small dictionary objects
         for (int i = 3; i <= 52; i++) {
-            COSDictionary dict = new COSDictionary();
-            dict.set(COSName.of("Index"), COSInteger.valueOf(i));
-            dict.set(COSName.of("Label"), new COSString("Object number " + i));
-            objects.put(new COSObjectKey(i, 0), dict);
+            PdfDictionary dict = new PdfDictionary();
+            dict.set(PdfName.of("Index"), PdfInteger.valueOf(i));
+            dict.set(PdfName.of("Label"), new PdfString("Object number " + i));
+            objects.put(new PdfObjectKey(i, 0), dict);
         }
 
-        COSDictionary trailer = new COSDictionary();
-        trailer.set(COSName.of("Root"), new COSObjectReference(1, 0));
+        PdfDictionary trailer = new PdfDictionary();
+        trailer.set(PdfName.of("Root"), new PdfObjectReference(1, 0));
 
         byte[] standard = writeStandardPdf(objects, trailer);
         byte[] compressed = writeCompressedPdf(objects, trailer, 200);

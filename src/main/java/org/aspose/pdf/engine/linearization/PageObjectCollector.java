@@ -1,12 +1,12 @@
 package org.aspose.pdf.engine.linearization;
 
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSNull;
-import org.aspose.pdf.engine.cos.COSObjectKey;
-import org.aspose.pdf.engine.cos.COSObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfNull;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectKey;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
 import org.aspose.pdf.engine.parser.PDFParser;
 
 import java.io.IOException;
@@ -46,22 +46,22 @@ public final class PageObjectCollector {
      * @throws IOException if objects cannot be loaded
      */
     public static LinearizationPlan collect(PDFParser parser) throws IOException {
-        COSDictionary catalog = parser.getCatalog();
-        Set<COSObjectKey> allKeys = parser.getAllObjectKeys();
+        PdfDictionary catalog = parser.getCatalog();
+        Set<PdfObjectKey> allKeys = parser.getAllObjectKeys();
 
         // 1. Find all page object keys via page tree traversal
-        List<COSObjectKey> pageKeys = collectPageKeys(catalog, parser);
+        List<PdfObjectKey> pageKeys = collectPageKeys(catalog, parser);
         int numPages = pageKeys.size();
 
         // Collect page tree node keys (these are document-level, not page-private)
-        Set<COSObjectKey> pageTreeKeys = collectPageTreeKeys(catalog, parser);
+        Set<PdfObjectKey> pageTreeKeys = collectPageTreeKeys(catalog, parser);
 
         // 2. For each page, collect all transitively referenced objects
-        Map<COSObjectKey, Set<Integer>> objectToPages = new LinkedHashMap<>();
+        Map<PdfObjectKey, Set<Integer>> objectToPages = new LinkedHashMap<>();
         for (int pageIdx = 0; pageIdx < numPages; pageIdx++) {
-            Set<COSObjectKey> pageObjects = collectPageObjectGraph(
+            Set<PdfObjectKey> pageObjects = collectPageObjectGraph(
                     parser, pageKeys.get(pageIdx), pageTreeKeys);
-            for (COSObjectKey objKey : pageObjects) {
+            for (PdfObjectKey objKey : pageObjects) {
                 objectToPages.computeIfAbsent(objKey, k -> new HashSet<>()).add(pageIdx);
             }
         }
@@ -69,13 +69,13 @@ public final class PageObjectCollector {
         // 3. Classify objects
         int firstPage = 0;
 
-        List<COSObjectKey> firstPagePrivate = new ArrayList<>();
-        List<COSObjectKey> firstPageShared = new ArrayList<>();
-        Map<Integer, List<COSObjectKey>> otherPagePrivate = new LinkedHashMap<>();
-        List<COSObjectKey> sharedObjects = new ArrayList<>();
-        List<COSObjectKey> documentLevel = new ArrayList<>();
+        List<PdfObjectKey> firstPagePrivate = new ArrayList<>();
+        List<PdfObjectKey> firstPageShared = new ArrayList<>();
+        Map<Integer, List<PdfObjectKey>> otherPagePrivate = new LinkedHashMap<>();
+        List<PdfObjectKey> sharedObjects = new ArrayList<>();
+        List<PdfObjectKey> documentLevel = new ArrayList<>();
 
-        for (COSObjectKey key : allKeys) {
+        for (PdfObjectKey key : allKeys) {
             Set<Integer> pages = objectToPages.get(key);
             if (pages == null || pages.isEmpty()) {
                 // Not referenced by any page → document-level
@@ -109,13 +109,13 @@ public final class PageObjectCollector {
      * Collects the object keys of all page objects by traversing the page tree.
      * Returns them in document order (the order they appear in the tree).
      */
-    static List<COSObjectKey> collectPageKeys(
-            COSDictionary catalog, PDFParser parser) throws IOException {
-        List<COSObjectKey> pageKeys = new ArrayList<>();
-        COSBase pagesRef = catalog.get(COSName.PAGES);
-        COSBase pagesObj = parser.resolveReference(pagesRef);
-        if (pagesObj instanceof COSDictionary) {
-            flattenPageTree((COSDictionary) pagesObj, parser, pageKeys);
+    static List<PdfObjectKey> collectPageKeys(
+            PdfDictionary catalog, PDFParser parser) throws IOException {
+        List<PdfObjectKey> pageKeys = new ArrayList<>();
+        PdfBase pagesRef = catalog.get(PdfName.PAGES);
+        PdfBase pagesObj = parser.resolveReference(pagesRef);
+        if (pagesObj instanceof PdfDictionary) {
+            flattenPageTree((PdfDictionary) pagesObj, parser, pageKeys);
         }
         return pageKeys;
     }
@@ -123,23 +123,23 @@ public final class PageObjectCollector {
     /**
      * Recursively flattens the page tree to collect page object keys.
      */
-    private static void flattenPageTree(COSDictionary node, PDFParser parser,
-                                         List<COSObjectKey> result) throws IOException {
+    private static void flattenPageTree(PdfDictionary node, PDFParser parser,
+                                         List<PdfObjectKey> result) throws IOException {
         String type = node.getType();
         if ("Pages".equals(type)) {
-            COSBase kidsRef = node.get(COSName.KIDS);
-            COSBase kidsObj = parser.resolveReference(kidsRef);
-            if (kidsObj instanceof COSArray) {
-                COSArray kids = (COSArray) kidsObj;
+            PdfBase kidsRef = node.get(PdfName.KIDS);
+            PdfBase kidsObj = parser.resolveReference(kidsRef);
+            if (kidsObj instanceof PdfArray) {
+                PdfArray kids = (PdfArray) kidsObj;
                 for (int i = 0; i < kids.size(); i++) {
-                    COSBase child = kids.get(i);
-                    COSObjectKey childKey = null;
-                    if (child instanceof COSObjectReference) {
-                        childKey = ((COSObjectReference) child).getKey();
+                    PdfBase child = kids.get(i);
+                    PdfObjectKey childKey = null;
+                    if (child instanceof PdfObjectReference) {
+                        childKey = ((PdfObjectReference) child).getKey();
                         child = parser.resolveReference(child);
                     }
-                    if (child instanceof COSDictionary) {
-                        String childType = ((COSDictionary) child).getType();
+                    if (child instanceof PdfDictionary) {
+                        String childType = ((PdfDictionary) child).getType();
                         if ("Page".equals(childType)) {
                             if (childKey != null) {
                                 result.add(childKey);
@@ -147,7 +147,7 @@ public final class PageObjectCollector {
                                 result.add(child.getObjectKey());
                             }
                         } else {
-                            flattenPageTree((COSDictionary) child, parser, result);
+                            flattenPageTree((PdfDictionary) child, parser, result);
                         }
                     }
                 }
@@ -163,36 +163,36 @@ public final class PageObjectCollector {
      * Collects the keys of all page tree intermediate nodes (/Type /Pages).
      * These are document-level objects and should not be assigned to any page.
      */
-    private static Set<COSObjectKey> collectPageTreeKeys(
-            COSDictionary catalog, PDFParser parser) throws IOException {
-        Set<COSObjectKey> treeKeys = new HashSet<>();
-        COSBase pagesRef = catalog.get(COSName.PAGES);
-        if (pagesRef instanceof COSObjectReference) {
-            treeKeys.add(((COSObjectReference) pagesRef).getKey());
+    private static Set<PdfObjectKey> collectPageTreeKeys(
+            PdfDictionary catalog, PDFParser parser) throws IOException {
+        Set<PdfObjectKey> treeKeys = new HashSet<>();
+        PdfBase pagesRef = catalog.get(PdfName.PAGES);
+        if (pagesRef instanceof PdfObjectReference) {
+            treeKeys.add(((PdfObjectReference) pagesRef).getKey());
         }
-        COSBase pagesObj = parser.resolveReference(pagesRef);
-        if (pagesObj instanceof COSDictionary) {
-            collectPageTreeKeysRecursive((COSDictionary) pagesObj, parser, treeKeys);
+        PdfBase pagesObj = parser.resolveReference(pagesRef);
+        if (pagesObj instanceof PdfDictionary) {
+            collectPageTreeKeysRecursive((PdfDictionary) pagesObj, parser, treeKeys);
         }
         return treeKeys;
     }
 
-    private static void collectPageTreeKeysRecursive(COSDictionary node, PDFParser parser,
-                                                      Set<COSObjectKey> keys) throws IOException {
+    private static void collectPageTreeKeysRecursive(PdfDictionary node, PDFParser parser,
+                                                      Set<PdfObjectKey> keys) throws IOException {
         if (!"Pages".equals(node.getType())) return;
-        COSBase kidsRef = node.get(COSName.KIDS);
-        COSBase kidsObj = parser.resolveReference(kidsRef);
-        if (kidsObj instanceof COSArray) {
-            COSArray kids = (COSArray) kidsObj;
+        PdfBase kidsRef = node.get(PdfName.KIDS);
+        PdfBase kidsObj = parser.resolveReference(kidsRef);
+        if (kidsObj instanceof PdfArray) {
+            PdfArray kids = (PdfArray) kidsObj;
             for (int i = 0; i < kids.size(); i++) {
-                COSBase child = kids.get(i);
-                if (child instanceof COSObjectReference) {
-                    COSObjectKey childKey = ((COSObjectReference) child).getKey();
-                    COSBase resolved = parser.resolveReference(child);
-                    if (resolved instanceof COSDictionary
-                            && "Pages".equals(((COSDictionary) resolved).getType())) {
+                PdfBase child = kids.get(i);
+                if (child instanceof PdfObjectReference) {
+                    PdfObjectKey childKey = ((PdfObjectReference) child).getKey();
+                    PdfBase resolved = parser.resolveReference(child);
+                    if (resolved instanceof PdfDictionary
+                            && "Pages".equals(((PdfDictionary) resolved).getType())) {
                         keys.add(childKey);
-                        collectPageTreeKeysRecursive((COSDictionary) resolved, parser, keys);
+                        collectPageTreeKeysRecursive((PdfDictionary) resolved, parser, keys);
                     }
                 }
             }
@@ -204,20 +204,20 @@ public final class PageObjectCollector {
      * Does not cross into page tree nodes (those are document-level).
      * Does not follow /Parent references (would go up the tree).
      */
-    private static Set<COSObjectKey> collectPageObjectGraph(
-            PDFParser parser, COSObjectKey pageKey,
-            Set<COSObjectKey> pageTreeKeys) throws IOException {
-        Set<COSObjectKey> visited = new LinkedHashSet<>();
-        Queue<COSObjectKey> queue = new LinkedList<>();
+    private static Set<PdfObjectKey> collectPageObjectGraph(
+            PDFParser parser, PdfObjectKey pageKey,
+            Set<PdfObjectKey> pageTreeKeys) throws IOException {
+        Set<PdfObjectKey> visited = new LinkedHashSet<>();
+        Queue<PdfObjectKey> queue = new LinkedList<>();
         queue.add(pageKey);
 
         while (!queue.isEmpty()) {
-            COSObjectKey current = queue.poll();
+            PdfObjectKey current = queue.poll();
             if (visited.contains(current) || pageTreeKeys.contains(current)) continue;
             visited.add(current);
 
-            COSBase obj = parser.getObject(current);
-            if (obj == null || obj instanceof COSNull) continue;
+            PdfBase obj = parser.getObject(current);
+            if (obj == null || obj instanceof PdfNull) continue;
 
             collectReferences(obj, queue, visited, pageTreeKeys);
         }
@@ -225,26 +225,26 @@ public final class PageObjectCollector {
     }
 
     /**
-     * Extracts indirect references from a COS object, adding new keys to the queue.
+     * Extracts indirect references from a PDF object, adding new keys to the queue.
      * Does not follow /Parent references.
      */
-    private static void collectReferences(COSBase obj, Queue<COSObjectKey> queue,
-                                           Set<COSObjectKey> visited,
-                                           Set<COSObjectKey> excluded) {
-        if (obj instanceof COSObjectReference) {
-            COSObjectKey key = ((COSObjectReference) obj).getKey();
+    private static void collectReferences(PdfBase obj, Queue<PdfObjectKey> queue,
+                                           Set<PdfObjectKey> visited,
+                                           Set<PdfObjectKey> excluded) {
+        if (obj instanceof PdfObjectReference) {
+            PdfObjectKey key = ((PdfObjectReference) obj).getKey();
             if (!visited.contains(key) && !excluded.contains(key)) {
                 queue.add(key);
             }
-        } else if (obj instanceof COSDictionary) {
-            COSDictionary dict = (COSDictionary) obj;
-            for (java.util.Map.Entry<COSName, COSBase> entry : dict) {
+        } else if (obj instanceof PdfDictionary) {
+            PdfDictionary dict = (PdfDictionary) obj;
+            for (java.util.Map.Entry<PdfName, PdfBase> entry : dict) {
                 // Skip /Parent to avoid walking up the page tree
                 if ("Parent".equals(entry.getKey().getName())) continue;
                 collectReferences(entry.getValue(), queue, visited, excluded);
             }
-        } else if (obj instanceof COSArray) {
-            COSArray arr = (COSArray) obj;
+        } else if (obj instanceof PdfArray) {
+            PdfArray arr = (PdfArray) obj;
             for (int i = 0; i < arr.size(); i++) {
                 collectReferences(arr.get(i), queue, visited, excluded);
             }

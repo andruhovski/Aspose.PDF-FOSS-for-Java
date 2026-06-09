@@ -1,7 +1,7 @@
 package org.aspose.pdf.annotations;
 
 import org.aspose.pdf.*;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 /**
  * Text (sticky note) annotation (ISO 32000-1:2008, Section 12.5.6.4, /Subtype /Text).
@@ -14,12 +14,12 @@ import org.aspose.pdf.engine.cos.*;
 public class TextAnnotation extends MarkupAnnotation {
 
     /**
-     * Constructs a text annotation from an existing COS dictionary.
+     * Constructs a text annotation from an existing PDF dictionary.
      *
-     * @param dict the COS dictionary backing this annotation
+     * @param dict the PDF dictionary backing this annotation
      * @param page the page this annotation belongs to
      */
-    public TextAnnotation(COSDictionary dict, Page page) {
+    public TextAnnotation(PdfDictionary dict, Page page) {
         super(dict, page);
     }
 
@@ -31,7 +31,7 @@ public class TextAnnotation extends MarkupAnnotation {
      */
     public TextAnnotation(Page page, Rectangle rect) {
         super(page, rect);
-        dict.set(COSName.of("Subtype"), COSName.of("Text"));
+        dict.set(PdfName.of("Subtype"), PdfName.of("Text"));
     }
 
     /**
@@ -49,7 +49,7 @@ public class TextAnnotation extends MarkupAnnotation {
      * @param open true to display the annotation open
      */
     public void setOpen(boolean open) {
-        dict.set(COSName.of("Open"), COSBoolean.valueOf(open));
+        dict.set(PdfName.of("Open"), PdfBoolean.valueOf(open));
     }
 
     /**
@@ -69,7 +69,7 @@ public class TextAnnotation extends MarkupAnnotation {
      */
     public void setIcon(String icon) {
         if (icon != null) {
-            dict.set(COSName.of("Name"), COSName.of(icon));
+            dict.set(PdfName.of("Name"), PdfName.of(icon));
         }
     }
 
@@ -80,9 +80,9 @@ public class TextAnnotation extends MarkupAnnotation {
      * @return the state string, or null if not set
      */
     public String getState() {
-        COSBase s = dict.get("State");
-        if (s instanceof COSString) return ((COSString) s).getString();
-        if (s instanceof COSName) return ((COSName) s).getName();
+        PdfBase s = dict.get("State");
+        if (s instanceof PdfString) return ((PdfString) s).getString();
+        if (s instanceof PdfName) return ((PdfName) s).getName();
         return null;
     }
 
@@ -92,8 +92,8 @@ public class TextAnnotation extends MarkupAnnotation {
      * @param state the state string (e.g. "Accepted", "Rejected", "Marked", "Unmarked")
      */
     public void setState(String state) {
-        if (state != null) dict.set(COSName.of("State"), COSName.of(state));
-        else dict.remove(COSName.of("State"));
+        if (state != null) dict.set(PdfName.of("State"), PdfName.of(state));
+        else dict.remove(PdfName.of("State"));
     }
 
     /**
@@ -102,9 +102,9 @@ public class TextAnnotation extends MarkupAnnotation {
      * @return the state model string ("Review" or "Marked"), or null if not set
      */
     public String getStateModel() {
-        COSBase sm = dict.get("StateModel");
-        if (sm instanceof COSString) return ((COSString) sm).getString();
-        if (sm instanceof COSName) return ((COSName) sm).getName();
+        PdfBase sm = dict.get("StateModel");
+        if (sm instanceof PdfString) return ((PdfString) sm).getString();
+        if (sm instanceof PdfName) return ((PdfName) sm).getName();
         return null;
     }
 
@@ -114,7 +114,7 @@ public class TextAnnotation extends MarkupAnnotation {
      * @param stateModel the state model string ("Review" or "Marked")
      */
     public void setStateModel(String stateModel) {
-        if (stateModel != null) dict.set(COSName.of("StateModel"), COSName.of(stateModel));
-        else dict.remove(COSName.of("StateModel"));
+        if (stateModel != null) dict.set(PdfName.of("StateModel"), PdfName.of(stateModel));
+        else dict.remove(PdfName.of("StateModel"));
     }
 }

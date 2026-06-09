@@ -3,12 +3,12 @@ package org.aspose.pdf.tests.generation;
 import org.aspose.pdf.Document;
 import org.aspose.pdf.ImageStamp;
 import org.aspose.pdf.Page;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -49,18 +49,18 @@ class ImageStampRendersTest {
         return s;
     }
 
-    private static List<COSStream> imageXObjects(Page page) {
-        List<COSStream> result = new ArrayList<>();
-        COSDictionary xo = page.ensureResources().getXObjects();
+    private static List<PdfStream> imageXObjects(Page page) {
+        List<PdfStream> result = new ArrayList<>();
+        PdfDictionary xo = page.ensureResources().getXObjects();
         if (xo == null) return result;
-        for (COSName key : xo.keySet()) {
-            COSBase val = xo.get(key);
-            if (val instanceof COSObjectReference) {
-                try { val = ((COSObjectReference) val).dereference(); }
+        for (PdfName key : xo.keySet()) {
+            PdfBase val = xo.get(key);
+            if (val instanceof PdfObjectReference) {
+                try { val = ((PdfObjectReference) val).dereference(); }
                 catch (IOException e) { continue; }
             }
-            if (val instanceof COSStream) {
-                COSStream s = (COSStream) val;
+            if (val instanceof PdfStream) {
+                PdfStream s = (PdfStream) val;
                 if ("Image".equals(s.getNameAsString("Subtype"))) {
                     result.add(s);
                 }
@@ -70,20 +70,20 @@ class ImageStampRendersTest {
     }
 
     private static String contentStreamText(Page page) throws IOException {
-        COSBase contents = page.getCOSDictionary().get(COSName.of("Contents"));
-        if (contents instanceof COSObjectReference) {
-            contents = ((COSObjectReference) contents).dereference();
+        PdfBase contents = page.getPdfDictionary().get(PdfName.of("Contents"));
+        if (contents instanceof PdfObjectReference) {
+            contents = ((PdfObjectReference) contents).dereference();
         }
         StringBuilder all = new StringBuilder();
-        if (contents instanceof COSStream) {
-            all.append(new String(((COSStream) contents).getDecodedData(), StandardCharsets.ISO_8859_1));
-        } else if (contents instanceof COSArray) {
-            COSArray arr = (COSArray) contents;
+        if (contents instanceof PdfStream) {
+            all.append(new String(((PdfStream) contents).getDecodedData(), StandardCharsets.ISO_8859_1));
+        } else if (contents instanceof PdfArray) {
+            PdfArray arr = (PdfArray) contents;
             for (int i = 0; i < arr.size(); i++) {
-                COSBase e = arr.get(i);
-                if (e instanceof COSObjectReference) e = ((COSObjectReference) e).dereference();
-                if (e instanceof COSStream) {
-                    all.append(new String(((COSStream) e).getDecodedData(), StandardCharsets.ISO_8859_1));
+                PdfBase e = arr.get(i);
+                if (e instanceof PdfObjectReference) e = ((PdfObjectReference) e).dereference();
+                if (e instanceof PdfStream) {
+                    all.append(new String(((PdfStream) e).getDecodedData(), StandardCharsets.ISO_8859_1));
                     all.append('\n');
                 }
             }
@@ -105,9 +105,9 @@ class ImageStampRendersTest {
             doc.save(out.toString());
         }
         try (Document r = new Document(out.toString())) {
-            List<COSStream> imgs = imageXObjects(r.getPages().get(1));
+            List<PdfStream> imgs = imageXObjects(r.getPages().get(1));
             assertEquals(1, imgs.size(), "exactly one Image XObject must be registered");
-            COSStream s = imgs.get(0);
+            PdfStream s = imgs.get(0);
             assertEquals(16, s.getInt("Width", -1));
             assertEquals(8, s.getInt("Height", -1));
         }
@@ -120,7 +120,7 @@ class ImageStampRendersTest {
             Page page = doc.getPages().add();
             page.addStamp(newStamp(tinyJpeg(4, 4)));
             String cs = contentStreamText(page);
-            COSDictionary xo = page.ensureResources().getXObjects();
+            PdfDictionary xo = page.ensureResources().getXObjects();
             assertEquals(1, xo.keySet().size());
             String name = xo.keySet().iterator().next().getName();
             assertTrue(cs.contains("/" + name + " Do"),
@@ -135,7 +135,7 @@ class ImageStampRendersTest {
             Page page = doc.getPages().add();
             page.addStamp(newStamp(tinyJpeg(4, 4)));
             page.addStamp(newStamp(tinyJpeg(8, 8)));
-            COSDictionary xo = page.ensureResources().getXObjects();
+            PdfDictionary xo = page.ensureResources().getXObjects();
             assertEquals(2, xo.keySet().size(),
                     "two distinct XObject entries (no name collision) expected");
         }

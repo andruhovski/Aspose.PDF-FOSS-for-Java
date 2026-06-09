@@ -1,7 +1,7 @@
 package org.aspose.pdf.tests;
 
 import org.aspose.pdf.*;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 import org.aspose.pdf.forms.*;
 import org.junit.jupiter.api.Test;
 
@@ -16,49 +16,49 @@ public class FormTest {
 
     // ── Helper: build a minimal AcroForm dict ──
 
-    private COSDictionary buildAcroForm(COSDictionary... fieldDicts) {
-        COSArray fields = new COSArray();
-        for (COSDictionary fd : fieldDicts) fields.add(fd);
-        COSDictionary acro = new COSDictionary();
-        acro.set(COSName.of("Fields"), fields);
+    private PdfDictionary buildAcroForm(PdfDictionary... fieldDicts) {
+        PdfArray fields = new PdfArray();
+        for (PdfDictionary fd : fieldDicts) fields.add(fd);
+        PdfDictionary acro = new PdfDictionary();
+        acro.set(PdfName.of("Fields"), fields);
         return acro;
     }
 
-    private COSDictionary buildTextField(String name, String value) {
-        COSDictionary d = new COSDictionary();
-        d.set(COSName.of("FT"), COSName.of("Tx"));
-        d.set(COSName.of("T"), new COSString(name.getBytes()));
-        if (value != null) d.set(COSName.of("V"), new COSString(value.getBytes()));
-        d.set(COSName.of("Subtype"), COSName.of("Widget"));
+    private PdfDictionary buildTextField(String name, String value) {
+        PdfDictionary d = new PdfDictionary();
+        d.set(PdfName.of("FT"), PdfName.of("Tx"));
+        d.set(PdfName.of("T"), new PdfString(name.getBytes()));
+        if (value != null) d.set(PdfName.of("V"), new PdfString(value.getBytes()));
+        d.set(PdfName.of("Subtype"), PdfName.of("Widget"));
         return d;
     }
 
-    private COSDictionary buildCheckbox(String name, boolean checked) {
-        COSDictionary d = new COSDictionary();
-        d.set(COSName.of("FT"), COSName.of("Btn"));
-        d.set(COSName.of("T"), new COSString(name.getBytes()));
-        d.set(COSName.of("V"), COSName.of(checked ? "Yes" : "Off"));
-        d.set(COSName.of("Subtype"), COSName.of("Widget"));
+    private PdfDictionary buildCheckbox(String name, boolean checked) {
+        PdfDictionary d = new PdfDictionary();
+        d.set(PdfName.of("FT"), PdfName.of("Btn"));
+        d.set(PdfName.of("T"), new PdfString(name.getBytes()));
+        d.set(PdfName.of("V"), PdfName.of(checked ? "Yes" : "Off"));
+        d.set(PdfName.of("Subtype"), PdfName.of("Widget"));
         // AP/N for on value
-        COSDictionary ap = new COSDictionary();
-        COSDictionary n = new COSDictionary();
-        n.set(COSName.of("Yes"), new COSDictionary());
-        n.set(COSName.of("Off"), new COSDictionary());
-        ap.set(COSName.of("N"), n);
-        d.set(COSName.of("AP"), ap);
+        PdfDictionary ap = new PdfDictionary();
+        PdfDictionary n = new PdfDictionary();
+        n.set(PdfName.of("Yes"), new PdfDictionary());
+        n.set(PdfName.of("Off"), new PdfDictionary());
+        ap.set(PdfName.of("N"), n);
+        d.set(PdfName.of("AP"), ap);
         return d;
     }
 
-    private COSDictionary buildComboBox(String name, String value, String... options) {
-        COSDictionary d = new COSDictionary();
-        d.set(COSName.of("FT"), COSName.of("Ch"));
-        d.set(COSName.of("Ff"), COSInteger.valueOf(1 << 17)); // combo flag
-        d.set(COSName.of("T"), new COSString(name.getBytes()));
-        if (value != null) d.set(COSName.of("V"), new COSString(value.getBytes()));
-        COSArray opt = new COSArray();
-        for (String o : options) opt.add(new COSString(o.getBytes()));
-        d.set(COSName.of("Opt"), opt);
-        d.set(COSName.of("Subtype"), COSName.of("Widget"));
+    private PdfDictionary buildComboBox(String name, String value, String... options) {
+        PdfDictionary d = new PdfDictionary();
+        d.set(PdfName.of("FT"), PdfName.of("Ch"));
+        d.set(PdfName.of("Ff"), PdfInteger.valueOf(1 << 17)); // combo flag
+        d.set(PdfName.of("T"), new PdfString(name.getBytes()));
+        if (value != null) d.set(PdfName.of("V"), new PdfString(value.getBytes()));
+        PdfArray opt = new PdfArray();
+        for (String o : options) opt.add(new PdfString(o.getBytes()));
+        d.set(PdfName.of("Opt"), opt);
+        d.set(PdfName.of("Subtype"), PdfName.of("Widget"));
         return d;
     }
 
@@ -66,13 +66,13 @@ public class FormTest {
 
     @Test
     public void testEmptyForm() {
-        Form form = new Form(new COSDictionary(), null, null);
+        Form form = new Form(new PdfDictionary(), null, null);
         assertEquals(0, form.getCount());
     }
 
     @Test
     public void testFormFieldCount() {
-        COSDictionary acro = buildAcroForm(
+        PdfDictionary acro = buildAcroForm(
                 buildTextField("field1", "hello"),
                 buildTextField("field2", "world"),
                 buildTextField("field3", null)
@@ -83,7 +83,7 @@ public class FormTest {
 
     @Test
     public void testFormGetByName() {
-        COSDictionary acro = buildAcroForm(buildTextField("myField", "value"));
+        PdfDictionary acro = buildAcroForm(buildTextField("myField", "value"));
         Form form = new Form(acro, null, null);
         Field f = form.get("myField");
         assertNotNull(f);
@@ -92,7 +92,7 @@ public class FormTest {
 
     @Test
     public void testFormGetByIndex() {
-        COSDictionary acro = buildAcroForm(
+        PdfDictionary acro = buildAcroForm(
                 buildTextField("a", "1"),
                 buildTextField("b", "2")
         );
@@ -103,7 +103,7 @@ public class FormTest {
 
     @Test
     public void testFormOneBasedIndex() {
-        COSDictionary acro = buildAcroForm(buildTextField("f", "v"));
+        PdfDictionary acro = buildAcroForm(buildTextField("f", "v"));
         Form form = new Form(acro, null, null);
         assertThrows(IndexOutOfBoundsException.class, () -> form.get(0));
         assertThrows(IndexOutOfBoundsException.class, () -> form.get(2));
@@ -111,7 +111,7 @@ public class FormTest {
 
     @Test
     public void testFormIteration() {
-        COSDictionary acro = buildAcroForm(
+        PdfDictionary acro = buildAcroForm(
                 buildTextField("a", "1"),
                 buildTextField("b", "2"),
                 buildTextField("c", "3")
@@ -127,7 +127,7 @@ public class FormTest {
 
     @Test
     public void testFormType() {
-        COSDictionary acro = buildAcroForm();
+        PdfDictionary acro = buildAcroForm();
         Form form = new Form(acro, null, null);
         assertEquals(Form.FormType.Standard, form.getType());
     }
@@ -136,7 +136,7 @@ public class FormTest {
 
     @Test
     public void testTextBoxFieldFromFactory() {
-        COSDictionary acro = buildAcroForm(buildTextField("text1", "hello"));
+        PdfDictionary acro = buildAcroForm(buildTextField("text1", "hello"));
         Form form = new Form(acro, null, null);
         Field f = form.get(1);
         assertTrue(f instanceof TextBoxField, "Expected TextBoxField, got " + f.getClass().getSimpleName());
@@ -144,7 +144,7 @@ public class FormTest {
 
     @Test
     public void testCheckboxFieldFromFactory() {
-        COSDictionary acro = buildAcroForm(buildCheckbox("check1", true));
+        PdfDictionary acro = buildAcroForm(buildCheckbox("check1", true));
         Form form = new Form(acro, null, null);
         Field f = form.get(1);
         assertTrue(f instanceof CheckboxField, "Expected CheckboxField, got " + f.getClass().getSimpleName());
@@ -152,7 +152,7 @@ public class FormTest {
 
     @Test
     public void testComboBoxFieldFromFactory() {
-        COSDictionary acro = buildAcroForm(buildComboBox("combo1", "B", "A", "B", "C"));
+        PdfDictionary acro = buildAcroForm(buildComboBox("combo1", "B", "A", "B", "C"));
         Form form = new Form(acro, null, null);
         Field f = form.get(1);
         assertTrue(f instanceof ComboBoxField, "Expected ComboBoxField, got " + f.getClass().getSimpleName());
@@ -160,47 +160,47 @@ public class FormTest {
 
     @Test
     public void testRadioButtonFromFactory() {
-        COSDictionary d = new COSDictionary();
-        d.set(COSName.of("FT"), COSName.of("Btn"));
-        d.set(COSName.of("Ff"), COSInteger.valueOf(1 << 15)); // radio flag
-        d.set(COSName.of("T"), new COSString("radio1".getBytes()));
-        d.set(COSName.of("Subtype"), COSName.of("Widget"));
-        COSDictionary acro = buildAcroForm(d);
+        PdfDictionary d = new PdfDictionary();
+        d.set(PdfName.of("FT"), PdfName.of("Btn"));
+        d.set(PdfName.of("Ff"), PdfInteger.valueOf(1 << 15)); // radio flag
+        d.set(PdfName.of("T"), new PdfString("radio1".getBytes()));
+        d.set(PdfName.of("Subtype"), PdfName.of("Widget"));
+        PdfDictionary acro = buildAcroForm(d);
         Form form = new Form(acro, null, null);
         assertTrue(form.get(1) instanceof RadioButtonField);
     }
 
     @Test
     public void testButtonFieldFromFactory() {
-        COSDictionary d = new COSDictionary();
-        d.set(COSName.of("FT"), COSName.of("Btn"));
-        d.set(COSName.of("Ff"), COSInteger.valueOf(1 << 16)); // push button flag
-        d.set(COSName.of("T"), new COSString("button1".getBytes()));
-        d.set(COSName.of("Subtype"), COSName.of("Widget"));
-        COSDictionary acro = buildAcroForm(d);
+        PdfDictionary d = new PdfDictionary();
+        d.set(PdfName.of("FT"), PdfName.of("Btn"));
+        d.set(PdfName.of("Ff"), PdfInteger.valueOf(1 << 16)); // push button flag
+        d.set(PdfName.of("T"), new PdfString("button1".getBytes()));
+        d.set(PdfName.of("Subtype"), PdfName.of("Widget"));
+        PdfDictionary acro = buildAcroForm(d);
         Form form = new Form(acro, null, null);
         assertTrue(form.get(1) instanceof ButtonField);
     }
 
     @Test
     public void testListBoxFieldFromFactory() {
-        COSDictionary d = new COSDictionary();
-        d.set(COSName.of("FT"), COSName.of("Ch"));
+        PdfDictionary d = new PdfDictionary();
+        d.set(PdfName.of("FT"), PdfName.of("Ch"));
         // No combo flag → ListBox
-        d.set(COSName.of("T"), new COSString("list1".getBytes()));
-        d.set(COSName.of("Subtype"), COSName.of("Widget"));
-        COSDictionary acro = buildAcroForm(d);
+        d.set(PdfName.of("T"), new PdfString("list1".getBytes()));
+        d.set(PdfName.of("Subtype"), PdfName.of("Widget"));
+        PdfDictionary acro = buildAcroForm(d);
         Form form = new Form(acro, null, null);
         assertTrue(form.get(1) instanceof ListBoxField);
     }
 
     @Test
     public void testSignatureFieldFromFactory() {
-        COSDictionary d = new COSDictionary();
-        d.set(COSName.of("FT"), COSName.of("Sig"));
-        d.set(COSName.of("T"), new COSString("sig1".getBytes()));
-        d.set(COSName.of("Subtype"), COSName.of("Widget"));
-        COSDictionary acro = buildAcroForm(d);
+        PdfDictionary d = new PdfDictionary();
+        d.set(PdfName.of("FT"), PdfName.of("Sig"));
+        d.set(PdfName.of("T"), new PdfString("sig1".getBytes()));
+        d.set(PdfName.of("Subtype"), PdfName.of("Widget"));
+        PdfDictionary acro = buildAcroForm(d);
         Form form = new Form(acro, null, null);
         assertTrue(form.get(1) instanceof SignatureField);
     }
@@ -209,7 +209,7 @@ public class FormTest {
 
     @Test
     public void testFieldGetSetValue() {
-        COSDictionary acro = buildAcroForm(buildTextField("f", "old"));
+        PdfDictionary acro = buildAcroForm(buildTextField("f", "old"));
         Form form = new Form(acro, null, null);
         Field f = form.get(1);
         assertEquals("old", f.getValue());
@@ -219,23 +219,23 @@ public class FormTest {
 
     @Test
     public void testFieldFullName() {
-        COSDictionary acro = buildAcroForm(buildTextField("myName", "v"));
+        PdfDictionary acro = buildAcroForm(buildTextField("myName", "v"));
         Form form = new Form(acro, null, null);
         assertEquals("myName", form.get(1).getFullName());
     }
 
     @Test
     public void testFieldPartialName() {
-        COSDictionary acro = buildAcroForm(buildTextField("partial", "v"));
+        PdfDictionary acro = buildAcroForm(buildTextField("partial", "v"));
         Form form = new Form(acro, null, null);
         assertEquals("partial", form.get(1).getPartialName());
     }
 
     @Test
     public void testFieldFlags() {
-        COSDictionary d = buildTextField("f", "v");
-        d.set(COSName.of("Ff"), COSInteger.valueOf(1)); // ReadOnly
-        COSDictionary acro = buildAcroForm(d);
+        PdfDictionary d = buildTextField("f", "v");
+        d.set(PdfName.of("Ff"), PdfInteger.valueOf(1)); // ReadOnly
+        PdfDictionary acro = buildAcroForm(d);
         Form form = new Form(acro, null, null);
         assertTrue(form.get(1).isReadOnly());
         assertFalse(form.get(1).isRequired());
@@ -243,9 +243,9 @@ public class FormTest {
 
     @Test
     public void testFieldRequired() {
-        COSDictionary d = buildTextField("f", "v");
-        d.set(COSName.of("Ff"), COSInteger.valueOf(2)); // Required
-        COSDictionary acro = buildAcroForm(d);
+        PdfDictionary d = buildTextField("f", "v");
+        d.set(PdfName.of("Ff"), PdfInteger.valueOf(2)); // Required
+        PdfDictionary acro = buildAcroForm(d);
         Form form = new Form(acro, null, null);
         assertTrue(form.get(1).isRequired());
     }
@@ -254,9 +254,9 @@ public class FormTest {
 
     @Test
     public void testTextBoxMultiline() {
-        COSDictionary d = buildTextField("f", "v");
-        d.set(COSName.of("Ff"), COSInteger.valueOf(1 << 12)); // multiline
-        COSDictionary acro = buildAcroForm(d);
+        PdfDictionary d = buildTextField("f", "v");
+        d.set(PdfName.of("Ff"), PdfInteger.valueOf(1 << 12)); // multiline
+        PdfDictionary acro = buildAcroForm(d);
         Form form = new Form(acro, null, null);
         TextBoxField tb = (TextBoxField) form.get(1);
         assertTrue(tb.isMultiline());
@@ -264,9 +264,9 @@ public class FormTest {
 
     @Test
     public void testTextBoxMaxLen() {
-        COSDictionary d = buildTextField("f", "v");
-        d.set(COSName.of("MaxLen"), COSInteger.valueOf(100));
-        COSDictionary acro = buildAcroForm(d);
+        PdfDictionary d = buildTextField("f", "v");
+        d.set(PdfName.of("MaxLen"), PdfInteger.valueOf(100));
+        PdfDictionary acro = buildAcroForm(d);
         Form form = new Form(acro, null, null);
         TextBoxField tb = (TextBoxField) form.get(1);
         assertEquals(100, tb.getMaxLen());
@@ -276,7 +276,7 @@ public class FormTest {
 
     @Test
     public void testCheckboxIsChecked() {
-        COSDictionary acro = buildAcroForm(buildCheckbox("cb", true));
+        PdfDictionary acro = buildAcroForm(buildCheckbox("cb", true));
         Form form = new Form(acro, null, null);
         CheckboxField cb = (CheckboxField) form.get(1);
         assertTrue(cb.isChecked());
@@ -284,7 +284,7 @@ public class FormTest {
 
     @Test
     public void testCheckboxSetChecked() {
-        COSDictionary acro = buildAcroForm(buildCheckbox("cb", false));
+        PdfDictionary acro = buildAcroForm(buildCheckbox("cb", false));
         Form form = new Form(acro, null, null);
         CheckboxField cb = (CheckboxField) form.get(1);
         assertFalse(cb.isChecked());
@@ -296,7 +296,7 @@ public class FormTest {
 
     @Test
     public void testCheckboxExportValue() {
-        COSDictionary acro = buildAcroForm(buildCheckbox("cb", true));
+        PdfDictionary acro = buildAcroForm(buildCheckbox("cb", true));
         Form form = new Form(acro, null, null);
         CheckboxField cb = (CheckboxField) form.get(1);
         assertEquals("Yes", cb.getExportValue());
@@ -306,7 +306,7 @@ public class FormTest {
 
     @Test
     public void testComboBoxOptions() {
-        COSDictionary acro = buildAcroForm(buildComboBox("combo", "B", "A", "B", "C"));
+        PdfDictionary acro = buildAcroForm(buildComboBox("combo", "B", "A", "B", "C"));
         Form form = new Form(acro, null, null);
         ComboBoxField combo = (ComboBoxField) form.get(1);
         OptionCollection opts = combo.getOptions();
@@ -318,7 +318,7 @@ public class FormTest {
 
     @Test
     public void testComboBoxSelected() {
-        COSDictionary acro = buildAcroForm(buildComboBox("combo", "B", "A", "B", "C"));
+        PdfDictionary acro = buildAcroForm(buildComboBox("combo", "B", "A", "B", "C"));
         Form form = new Form(acro, null, null);
         ComboBoxField combo = (ComboBoxField) form.get(1);
         assertEquals("B", combo.getSelected());
@@ -326,7 +326,7 @@ public class FormTest {
 
     @Test
     public void testComboBoxSetSelected() {
-        COSDictionary acro = buildAcroForm(buildComboBox("combo", "B", "A", "B", "C"));
+        PdfDictionary acro = buildAcroForm(buildComboBox("combo", "B", "A", "B", "C"));
         Form form = new Form(acro, null, null);
         ComboBoxField combo = (ComboBoxField) form.get(1);
         combo.setSelected("C");
@@ -337,7 +337,7 @@ public class FormTest {
 
     @Test
     public void testOptionIteration() {
-        COSDictionary acro = buildAcroForm(buildComboBox("combo", null, "X", "Y"));
+        PdfDictionary acro = buildAcroForm(buildComboBox("combo", null, "X", "Y"));
         Form form = new Form(acro, null, null);
         ComboBoxField combo = (ComboBoxField) form.get(1);
         int count = 0;
@@ -352,10 +352,10 @@ public class FormTest {
 
     @Test
     public void testSignatureFieldNotSigned() {
-        COSDictionary d = new COSDictionary();
-        d.set(COSName.of("FT"), COSName.of("Sig"));
-        d.set(COSName.of("T"), new COSString("sig".getBytes()));
-        COSDictionary acro = buildAcroForm(d);
+        PdfDictionary d = new PdfDictionary();
+        d.set(PdfName.of("FT"), PdfName.of("Sig"));
+        d.set(PdfName.of("T"), new PdfString("sig".getBytes()));
+        PdfDictionary acro = buildAcroForm(d);
         Form form = new Form(acro, null, null);
         SignatureField sig = (SignatureField) form.get(1);
         assertFalse(sig.isSigned());
@@ -366,25 +366,25 @@ public class FormTest {
     @Test
     public void testNestedFieldNames() {
         // Parent "person" with kids "name" and "age"
-        COSDictionary parent = new COSDictionary();
-        parent.set(COSName.of("T"), new COSString("person".getBytes()));
+        PdfDictionary parent = new PdfDictionary();
+        parent.set(PdfName.of("T"), new PdfString("person".getBytes()));
 
-        COSDictionary child1 = new COSDictionary();
-        child1.set(COSName.of("FT"), COSName.of("Tx"));
-        child1.set(COSName.of("T"), new COSString("name".getBytes()));
-        child1.set(COSName.of("V"), new COSString("Alice".getBytes()));
+        PdfDictionary child1 = new PdfDictionary();
+        child1.set(PdfName.of("FT"), PdfName.of("Tx"));
+        child1.set(PdfName.of("T"), new PdfString("name".getBytes()));
+        child1.set(PdfName.of("V"), new PdfString("Alice".getBytes()));
 
-        COSDictionary child2 = new COSDictionary();
-        child2.set(COSName.of("FT"), COSName.of("Tx"));
-        child2.set(COSName.of("T"), new COSString("age".getBytes()));
-        child2.set(COSName.of("V"), new COSString("30".getBytes()));
+        PdfDictionary child2 = new PdfDictionary();
+        child2.set(PdfName.of("FT"), PdfName.of("Tx"));
+        child2.set(PdfName.of("T"), new PdfString("age".getBytes()));
+        child2.set(PdfName.of("V"), new PdfString("30".getBytes()));
 
-        COSArray kids = new COSArray();
+        PdfArray kids = new PdfArray();
         kids.add(child1);
         kids.add(child2);
-        parent.set(COSName.of("Kids"), kids);
+        parent.set(PdfName.of("Kids"), kids);
 
-        COSDictionary acro = buildAcroForm(parent);
+        PdfDictionary acro = buildAcroForm(parent);
         Form form = new Form(acro, null, null);
         assertEquals(2, form.getCount());
 
@@ -401,10 +401,10 @@ public class FormTest {
 
     @Test
     public void testFormAdd() {
-        Form form = new Form(new COSDictionary(), null, null);
+        Form form = new Form(new PdfDictionary(), null, null);
         assertEquals(0, form.getCount());
 
-        COSDictionary fd = buildTextField("newField", "hello");
+        PdfDictionary fd = buildTextField("newField", "hello");
         TextBoxField field = new TextBoxField(fd, null, "newField");
         form.add(field);
         assertEquals(1, form.getCount());
@@ -413,7 +413,7 @@ public class FormTest {
 
     @Test
     public void testFormDelete() {
-        COSDictionary acro = buildAcroForm(
+        PdfDictionary acro = buildAcroForm(
                 buildTextField("a", "1"),
                 buildTextField("b", "2")
         );
@@ -427,7 +427,7 @@ public class FormTest {
 
     @Test
     public void testFormFlatten() throws IOException {
-        COSDictionary acro = buildAcroForm(buildTextField("f", "v"));
+        PdfDictionary acro = buildAcroForm(buildTextField("f", "v"));
         Form form = new Form(acro, null, null);
         assertEquals(1, form.getCount());
         form.flatten();

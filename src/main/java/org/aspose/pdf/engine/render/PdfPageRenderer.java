@@ -9,17 +9,18 @@ import org.aspose.pdf.Rectangle;
 import org.aspose.pdf.Resources;
 import org.aspose.pdf.XForm;
 import org.aspose.pdf.XImage;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSStream;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 import org.aspose.pdf.engine.parser.PDFParser;
 import org.aspose.pdf.operators.*;
 
 import java.awt.AlphaComposite;
+import java.awt.BasicStroke;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.Shape;
@@ -60,6 +61,11 @@ public class PdfPageRenderer {
     private static final int MAX_FORM_DEPTH = 10;
 
     private final TextRenderer textRenderer = new TextRenderer();
+    {
+        // Type 3 glyphs are content streams (§9.6.5); the text renderer calls
+        // back into this operator machinery to execute them.
+        textRenderer.setType3Executor(this::executeType3GlyphStream);
+    }
 
     /**
      * Renders a PDF page to a BufferedImage at the specified DPI.
@@ -84,8 +90,12 @@ public class PdfPageRenderer {
         double displayW = (rotation == 90 || rotation == 270) ? pageH : pageW;
         double displayH = (rotation == 90 || rotation == 270) ? pageW : pageH;
 
-        int pixelW = Math.max(1, (int) Math.ceil(displayW * dpiX / 72.0));
-        int pixelH = Math.max(1, (int) Math.ceil(displayH * dpiY / 72.0));
+        // Round (not ceil) — matches the reference renderers' raster sizing.
+        // ceil made e.g. a 1232.45pt page 1712px instead of 1711px and the
+        // half-pixel scale skew drifted every thin stroke vs the reference
+        // (corpus 25716-2: constant ~2800px changed region on every page).
+        int pixelW = Math.max(1, (int) Math.floor(displayW * dpiX / 72.0 + 0.5));
+        int pixelH = Math.max(1, (int) Math.floor(displayH * dpiY / 72.0 + 0.5));
 
         BufferedImage image = new BufferedImage(pixelW, pixelH, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2d = image.createGraphics();
@@ -99,6 +109,10 @@ public class PdfPageRenderer {
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_GASP);
         g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+        // Smooth image scaling: the Java2D default (nearest neighbour) turns
+        // downscaled scans into ragged strokes — corpus 25716-2 draws whole
+        // pages as 3424px-wide CCITT fax images scaled ~2:1.
+        g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
 
         // PDF coordinate system: origin at bottom-left; Java 2D: origin at top-left
         // Transform: flip Y axis and scale from user-space (72 DPI) to pixel space
@@ -149,59 +163,59 @@ public class PdfPageRenderer {
 
     /** Iterates page annotations and draws each one's Normal Appearance stream. */
     private void renderAnnotations(Page page, Graphics2D g2d) {
-        org.aspose.pdf.engine.cos.COSDictionary pageDict = page.getCOSDictionary();
+        org.aspose.pdf.engine.pdfobjects.PdfDictionary pageDict = page.getPdfDictionary();
         if (pageDict == null) return;
-        org.aspose.pdf.engine.cos.COSBase annotsVal = pageDict.get(org.aspose.pdf.engine.cos.COSName.ANNOTS);
+        org.aspose.pdf.engine.pdfobjects.PdfBase annotsVal = pageDict.get(org.aspose.pdf.engine.pdfobjects.PdfName.ANNOTS);
         annotsVal = resolveRef(annotsVal);
-        if (!(annotsVal instanceof org.aspose.pdf.engine.cos.COSArray)) return;
-        org.aspose.pdf.engine.cos.COSArray annots = (org.aspose.pdf.engine.cos.COSArray) annotsVal;
+        if (!(annotsVal instanceof org.aspose.pdf.engine.pdfobjects.PdfArray)) return;
+        org.aspose.pdf.engine.pdfobjects.PdfArray annots = (org.aspose.pdf.engine.pdfobjects.PdfArray) annotsVal;
         Resources pageResources = page.getResources();
         for (int i = 0; i < annots.size(); i++) {
-            org.aspose.pdf.engine.cos.COSBase item = resolveRef(annots.get(i));
-            if (!(item instanceof org.aspose.pdf.engine.cos.COSDictionary)) continue;
-            org.aspose.pdf.engine.cos.COSDictionary annot =
-                    (org.aspose.pdf.engine.cos.COSDictionary) item;
+            org.aspose.pdf.engine.pdfobjects.PdfBase item = resolveRef(annots.get(i));
+            if (!(item instanceof org.aspose.pdf.engine.pdfobjects.PdfDictionary)) continue;
+            org.aspose.pdf.engine.pdfobjects.PdfDictionary annot =
+                    (org.aspose.pdf.engine.pdfobjects.PdfDictionary) item;
             renderOneAnnotation(annot, pageResources, g2d);
         }
     }
 
-    private void renderOneAnnotation(org.aspose.pdf.engine.cos.COSDictionary annot,
+    private void renderOneAnnotation(org.aspose.pdf.engine.pdfobjects.PdfDictionary annot,
                                       Resources pageResources, Graphics2D g2d) {
         // Skip hidden / invisible annotations (PDF flags bits 1, 2, 6).
-        org.aspose.pdf.engine.cos.COSBase fVal = annot.get("F");
+        org.aspose.pdf.engine.pdfobjects.PdfBase fVal = annot.get("F");
         int flags = 0;
-        if (fVal instanceof org.aspose.pdf.engine.cos.COSInteger) {
-            flags = ((org.aspose.pdf.engine.cos.COSInteger) fVal).intValue();
+        if (fVal instanceof org.aspose.pdf.engine.pdfobjects.PdfInteger) {
+            flags = ((org.aspose.pdf.engine.pdfobjects.PdfInteger) fVal).intValue();
         }
         if ((flags & 0x02) != 0 || (flags & 0x01) != 0 || (flags & 0x20) != 0) return;
 
-        org.aspose.pdf.engine.cos.COSBase ap = resolveRef(annot.get("AP"));
-        if (!(ap instanceof org.aspose.pdf.engine.cos.COSDictionary)) return;
-        org.aspose.pdf.engine.cos.COSBase n =
-                resolveRef(((org.aspose.pdf.engine.cos.COSDictionary) ap).get("N"));
+        org.aspose.pdf.engine.pdfobjects.PdfBase ap = resolveRef(annot.get("AP"));
+        if (!(ap instanceof org.aspose.pdf.engine.pdfobjects.PdfDictionary)) return;
+        org.aspose.pdf.engine.pdfobjects.PdfBase n =
+                resolveRef(((org.aspose.pdf.engine.pdfobjects.PdfDictionary) ap).get("N"));
         // /N may be a stream (single appearance) or a dict keyed by AS state.
-        if (n instanceof org.aspose.pdf.engine.cos.COSDictionary) {
-            org.aspose.pdf.engine.cos.COSBase asName = annot.get("AS");
-            if (asName instanceof org.aspose.pdf.engine.cos.COSName) {
-                n = resolveRef(((org.aspose.pdf.engine.cos.COSDictionary) n)
-                        .get(((org.aspose.pdf.engine.cos.COSName) asName).getName()));
+        if (n instanceof org.aspose.pdf.engine.pdfobjects.PdfDictionary) {
+            org.aspose.pdf.engine.pdfobjects.PdfBase asName = annot.get("AS");
+            if (asName instanceof org.aspose.pdf.engine.pdfobjects.PdfName) {
+                n = resolveRef(((org.aspose.pdf.engine.pdfobjects.PdfDictionary) n)
+                        .get(((org.aspose.pdf.engine.pdfobjects.PdfName) asName).getName()));
             }
         }
-        if (!(n instanceof org.aspose.pdf.engine.cos.COSStream)) return;
-        org.aspose.pdf.engine.cos.COSStream apStream =
-                (org.aspose.pdf.engine.cos.COSStream) n;
+        if (!(n instanceof org.aspose.pdf.engine.pdfobjects.PdfStream)) return;
+        org.aspose.pdf.engine.pdfobjects.PdfStream apStream =
+                (org.aspose.pdf.engine.pdfobjects.PdfStream) n;
 
-        org.aspose.pdf.engine.cos.COSBase rectVal = resolveRef(annot.get("Rect"));
-        if (!(rectVal instanceof org.aspose.pdf.engine.cos.COSArray)
-                || ((org.aspose.pdf.engine.cos.COSArray) rectVal).size() != 4) return;
-        Rectangle annotRect = Rectangle.fromCOSArray((org.aspose.pdf.engine.cos.COSArray) rectVal);
+        org.aspose.pdf.engine.pdfobjects.PdfBase rectVal = resolveRef(annot.get("Rect"));
+        if (!(rectVal instanceof org.aspose.pdf.engine.pdfobjects.PdfArray)
+                || ((org.aspose.pdf.engine.pdfobjects.PdfArray) rectVal).size() != 4) return;
+        Rectangle annotRect = Rectangle.fromPdfArray((org.aspose.pdf.engine.pdfobjects.PdfArray) rectVal);
         if (annotRect == null) return;
 
-        org.aspose.pdf.engine.cos.COSBase bboxVal = resolveRef(apStream.get("BBox"));
+        org.aspose.pdf.engine.pdfobjects.PdfBase bboxVal = resolveRef(apStream.get("BBox"));
         Rectangle bbox = null;
-        if (bboxVal instanceof org.aspose.pdf.engine.cos.COSArray
-                && ((org.aspose.pdf.engine.cos.COSArray) bboxVal).size() == 4) {
-            bbox = Rectangle.fromCOSArray((org.aspose.pdf.engine.cos.COSArray) bboxVal);
+        if (bboxVal instanceof org.aspose.pdf.engine.pdfobjects.PdfArray
+                && ((org.aspose.pdf.engine.pdfobjects.PdfArray) bboxVal).size() == 4) {
+            bbox = Rectangle.fromPdfArray((org.aspose.pdf.engine.pdfobjects.PdfArray) bboxVal);
         }
         if (bbox == null) bbox = annotRect;
 
@@ -229,6 +243,7 @@ public class PdfPageRenderer {
 
             Deque<GraphicsState> stack = new ArrayDeque<>();
             for (Operator op : formOps) {
+                if (Thread.currentThread().isInterrupted()) break; // cancelled
                 try {
                     state = processOperator(op, state, stack, formRes, g2d, null, 1);
                 } catch (Exception ignore) { /* tolerate per-op errors */ }
@@ -238,10 +253,10 @@ public class PdfPageRenderer {
         }
     }
 
-    private static org.aspose.pdf.engine.cos.COSBase resolveRef(
-            org.aspose.pdf.engine.cos.COSBase b) {
-        if (b instanceof org.aspose.pdf.engine.cos.COSObjectReference) {
-            try { return ((org.aspose.pdf.engine.cos.COSObjectReference) b).dereference(); }
+    private static org.aspose.pdf.engine.pdfobjects.PdfBase resolveRef(
+            org.aspose.pdf.engine.pdfobjects.PdfBase b) {
+        if (b instanceof org.aspose.pdf.engine.pdfobjects.PdfObjectReference) {
+            try { return ((org.aspose.pdf.engine.pdfobjects.PdfObjectReference) b).dereference(); }
             catch (Exception e) { return null; }
         }
         return b;
@@ -256,6 +271,14 @@ public class PdfPageRenderer {
         GraphicsState state = new GraphicsState();
 
         for (Operator op : ops) {
+            // Honour cancellation: render work is CPU-bound and never blocks
+            // on I/O, so a cancelled worker (mass-testing timeout, UI abort)
+            // otherwise spins for the rest of the page — observed as leaked
+            // "zombie" worker threads pinning a core for 15+ minutes.
+            if (Thread.currentThread().isInterrupted()) {
+                LOG.fine("Render interrupted; abandoning remaining operators");
+                break;
+            }
             try {
                 state = processOperator(op, state, stateStack, resources, g2d, parser, formDepth);
             } catch (Exception e) {
@@ -354,7 +377,11 @@ public class PdfPageRenderer {
                 applyAdvancedColor(op, state, false);
                 break;
             case "cs":
-                // Color space selection — we track it but rely on sc/scn for actual color
+                // Color space selection (§8.6.8) — must be tracked: an scn in
+                // a Separation/DeviceN/ICC space is NOT a gray/RGB value.
+                // 29077.pdf paints its body text with "/CS1 cs 1 scn"; treating
+                // the lone tint as gray rendered white-on-white (invisible).
+                state.setFillColorSpace(resolveColorSpaceOperand(op, resources, parser));
                 break;
 
             // ======== Color — Stroke ========
@@ -380,7 +407,7 @@ public class PdfPageRenderer {
                 applyAdvancedColor(op, state, true);
                 break;
             case "CS":
-                // Color space selection for stroke
+                state.setStrokeColorSpace(resolveColorSpaceOperand(op, resources, parser));
                 break;
 
             // ======== Path Construction ========
@@ -434,32 +461,32 @@ public class PdfPageRenderer {
                 break;
             case "f":
             case "F":
-                fillPath(g2d, state, Path2D.WIND_NON_ZERO, resources, new int[]{formDepth});
+                fillPath(g2d, state, Path2D.WIND_NON_ZERO, resources, new int[]{formDepth}, parser);
                 finishPathOp(g2d, state);
                 break;
             case "f*":
-                fillPath(g2d, state, Path2D.WIND_EVEN_ODD, resources, new int[]{formDepth});
+                fillPath(g2d, state, Path2D.WIND_EVEN_ODD, resources, new int[]{formDepth}, parser);
                 finishPathOp(g2d, state);
                 break;
             case "B":
-                fillPath(g2d, state, Path2D.WIND_NON_ZERO, resources, new int[]{formDepth});
+                fillPath(g2d, state, Path2D.WIND_NON_ZERO, resources, new int[]{formDepth}, parser);
                 strokePath(g2d, state);
                 finishPathOp(g2d, state);
                 break;
             case "B*":
-                fillPath(g2d, state, Path2D.WIND_EVEN_ODD, resources, new int[]{formDepth});
+                fillPath(g2d, state, Path2D.WIND_EVEN_ODD, resources, new int[]{formDepth}, parser);
                 strokePath(g2d, state);
                 finishPathOp(g2d, state);
                 break;
             case "b":
                 state.closePath();
-                fillPath(g2d, state, Path2D.WIND_NON_ZERO, resources, new int[]{formDepth});
+                fillPath(g2d, state, Path2D.WIND_NON_ZERO, resources, new int[]{formDepth}, parser);
                 strokePath(g2d, state);
                 finishPathOp(g2d, state);
                 break;
             case "b*":
                 state.closePath();
-                fillPath(g2d, state, Path2D.WIND_EVEN_ODD, resources, new int[]{formDepth});
+                fillPath(g2d, state, Path2D.WIND_EVEN_ODD, resources, new int[]{formDepth}, parser);
                 strokePath(g2d, state);
                 finishPathOp(g2d, state);
                 break;
@@ -496,7 +523,7 @@ public class PdfPageRenderer {
                 break;
             case "TD": {
                 // TD sets leading = -ty, then does Td
-                List<COSBase> operands = op.getOperands();
+                List<PdfBase> operands = op.getOperands();
                 if (operands.size() >= 2) {
                     double tx = getNumber(operands.get(0));
                     double ty = getNumber(operands.get(1));
@@ -545,22 +572,22 @@ public class PdfPageRenderer {
                 break;
             case "Tj":
                 if (op instanceof ShowText) {
-                    COSBase strOp = op.getOperands().isEmpty() ? null : op.getOperands().get(0);
-                    byte[] raw = (strOp instanceof COSString) ? ((COSString) strOp).getBytes() : new byte[0];
+                    PdfBase strOp = op.getOperands().isEmpty() ? null : op.getOperands().get(0);
+                    byte[] raw = (strOp instanceof PdfString) ? ((PdfString) strOp).getBytes() : new byte[0];
                     textRenderer.renderText(g2d, state, raw, resources, parser);
                 }
                 break;
             case "TJ":
                 if (op instanceof SetGlyphsPositionShowText) {
-                    COSArray arr = ((SetGlyphsPositionShowText) op).getArray();
+                    PdfArray arr = ((SetGlyphsPositionShowText) op).getArray();
                     textRenderer.renderTJArray(g2d, state, arr, resources, parser);
                 }
                 break;
             case "'":
                 if (op instanceof MoveToNextLineShowText) {
                     state.nextLine();
-                    COSBase strOp = op.getOperands().isEmpty() ? null : op.getOperands().get(0);
-                    byte[] raw = (strOp instanceof COSString) ? ((COSString) strOp).getBytes() : new byte[0];
+                    PdfBase strOp = op.getOperands().isEmpty() ? null : op.getOperands().get(0);
+                    byte[] raw = (strOp instanceof PdfString) ? ((PdfString) strOp).getBytes() : new byte[0];
                     textRenderer.renderText(g2d, state, raw, resources, parser);
                 }
                 break;
@@ -570,9 +597,9 @@ public class PdfPageRenderer {
                     state.setWordSpacing(dq.getWordSpacing());
                     state.setCharSpacing(dq.getCharSpacing());
                     state.nextLine();
-                    List<COSBase> operands = op.getOperands();
-                    COSBase strOp = operands.size() >= 3 ? operands.get(2) : null;
-                    byte[] raw = (strOp instanceof COSString) ? ((COSString) strOp).getBytes() : new byte[0];
+                    List<PdfBase> operands = op.getOperands();
+                    PdfBase strOp = operands.size() >= 3 ? operands.get(2) : null;
+                    byte[] raw = (strOp instanceof PdfString) ? ((PdfString) strOp).getBytes() : new byte[0];
                     textRenderer.renderText(g2d, state, raw, resources, parser);
                 }
                 break;
@@ -592,24 +619,43 @@ public class PdfPageRenderer {
             case "DP":
                 break;
 
+            // ======== Type 3 glyph metrics (§9.6.5) ========
+            // d0/d1 declare the glyph's width/bbox inside a CharProc stream;
+            // the advance is taken from /Widths, so nothing to do here.
+            case "d0":
+            case "d1":
+                break;
+
             // ======== Shading Fill ========
             case "sh": {
                 if (op instanceof ShFill) {
                     String shadingName = ((ShFill) op).getShadingName();
-                    COSDictionary shadings = resources.getShadings();
+                    PdfDictionary shadings = resources.getShadings();
                     if (shadings != null) {
-                        COSBase shadObj = shadings.get(shadingName);
-                        if (shadObj instanceof COSObjectReference) {
-                            try { shadObj = ((COSObjectReference) shadObj).dereference(); }
+                        PdfBase shadObj = shadings.get(shadingName);
+                        if (shadObj instanceof PdfObjectReference) {
+                            try { shadObj = ((PdfObjectReference) shadObj).dereference(); }
                             catch (IOException ex) { shadObj = null; }
                         }
-                        if (shadObj instanceof COSDictionary) {
+                        if (shadObj instanceof PdfDictionary) {
                             try {
                                 org.aspose.pdf.engine.pattern.Shading shading =
                                     org.aspose.pdf.engine.pattern.Shading.parse(shadObj, parser);
                                 if (shading != null) {
+                                    // Shading coordinates live in CURRENT user
+                                    // space (§8.7.4.3) = base device transform ×
+                                    // the state CTM. g2d only carries the base
+                                    // transform (paths are CTM-transformed per
+                                    // op), so compose the CTM in — otherwise a
+                                    // shading inside a scaled form evaluates t
+                                    // out of range and paints one flat color
+                                    // (corpus 10734: gradient banners all dark).
+                                    AffineTransform shadingToDevice =
+                                        new AffineTransform(g2d.getTransform());
+                                    shadingToDevice.concatenate(
+                                        matrixToTransform(state.getCTM()));
                                     org.aspose.pdf.engine.pattern.ShadingRenderer.render(
-                                        g2d, shading, g2d.getTransform(), g2d.getClipBounds());
+                                        g2d, shading, shadingToDevice, g2d.getClipBounds());
                                 }
                             } catch (IOException ex) {
                                 LOG.fine(() -> "Failed to render shading: " + ex.getMessage());
@@ -622,9 +668,13 @@ public class PdfPageRenderer {
 
             // ======== Inline Images ========
             case "BI":
+                // The parser folds the whole BI..ID..EI object into one BI
+                // operator: operands[0] = image dict, operands[1] = raw data.
+                renderInlineImage(g2d, state, op, parser);
+                break;
             case "ID":
             case "EI":
-                // Inline images are complex — skip for now
+                // Consumed by the parser into BI's operands — nothing here.
                 break;
 
             default:
@@ -637,7 +687,7 @@ public class PdfPageRenderer {
     // ======== Path Painting ========
 
     private void fillPath(Graphics2D g2d, GraphicsState state, int windingRule) {
-        fillPath(g2d, state, windingRule, null, null);
+        fillPath(g2d, state, windingRule, null, null, null);
     }
 
     /**
@@ -650,7 +700,7 @@ public class PdfPageRenderer {
      *                     defaults to depth 0.
      */
     private void fillPath(Graphics2D g2d, GraphicsState state, int windingRule,
-                           Resources resources, int[] formDepthBox) {
+                           Resources resources, int[] formDepthBox, PDFParser parser) {
         GeneralPath path = state.getCurrentPath();
         if (path.getBounds2D().isEmpty()) return;
 
@@ -658,17 +708,18 @@ public class PdfPageRenderer {
         Shape savedClip = g2d.getClip();
         try {
             applyCtmTransform(g2d, state);
-            if (state.getNonStrokingAlpha() < 1.0f) {
-                g2d.setComposite(AlphaComposite.getInstance(
-                        AlphaComposite.SRC_OVER, state.getNonStrokingAlpha()));
-            } else {
-                g2d.setComposite(AlphaComposite.SrcOver);
-            }
+            // Honours /ca and /BM (Multiply — corpus 30894 highlight annotations).
+            g2d.setComposite(BlendComposite.fillComposite(state));
             path.setWindingRule(windingRule);
 
             String patternName = state.getFillPatternName();
             if (patternName != null && resources != null) {
                 int depth = formDepthBox != null ? formDepthBox[0] : 0;
+                // Shading patterns (PatternType 2) paint a gradient inside the
+                // path; tiling patterns (PatternType 1) tile a cell.
+                if (renderShadingPatternFill(g2d, state, path, resources, patternName, parser)) {
+                    return;
+                }
                 if (renderTilingPatternFill(g2d, state, path, resources, patternName, depth)) {
                     return;
                 }
@@ -679,6 +730,60 @@ public class PdfPageRenderer {
         } finally {
             g2d.setTransform(saved);
             g2d.setClip(savedClip);
+        }
+    }
+
+    /**
+     * Fills {@code path} with a shading Pattern (PatternType 2, §8.7.4.3): the
+     * pattern's /Shading is painted, clipped to the path, with the pattern
+     * /Matrix mapping shading space into the current coordinate system. Returns
+     * {@code true} on success, {@code false} so the caller can fall back.
+     * <p>Without this, shading-pattern fills dropped to a solid fill colour —
+     * black for the gradient-built emoji of corpus 59149.</p>
+     */
+    private boolean renderShadingPatternFill(Graphics2D g2d, GraphicsState state,
+                                             GeneralPath path, Resources resources,
+                                             String patternName, PDFParser parser) {
+        if (Boolean.getBoolean("openpdf.shadingpattern.disable")) return false;
+        try {
+            PdfDictionary patterns = resources.getPdfDictionary() != null
+                    ? (PdfDictionary) resolveRef(resources.getPdfDictionary().get("Pattern"))
+                    : null;
+            if (patterns == null) return false;
+            PdfBase patBase = resolveRef(patterns.get(patternName));
+            if (!(patBase instanceof PdfDictionary)) return false;
+            PdfDictionary patDict = (PdfDictionary) patBase;
+            if (intOf(patDict.get("PatternType"), 1) != 2) return false;
+
+            PdfBase shadObj = resolveRef(patDict.get("Shading"));
+            if (!(shadObj instanceof PdfDictionary)) return false;
+            org.aspose.pdf.engine.pattern.Shading shading =
+                    org.aspose.pdf.engine.pattern.Shading.parse(shadObj, parser);
+            if (shading == null) return false;
+
+            Matrix patMatrix = matrixFromPdfArray(resolveRef(patDict.get("Matrix")));
+            if (patMatrix == null) patMatrix = new Matrix(1, 0, 0, 1, 0, 0);
+
+            // g2d already carries base × CTM (applyCtmTransform ran). The pattern
+            // matrix maps shading space into that current user space (no /cm runs
+            // between setting the pattern and the fill in these streams), so the
+            // shading→device map is the current transform × pattern matrix.
+            AffineTransform shadingToDevice = new AffineTransform(g2d.getTransform());
+            shadingToDevice.concatenate(matrixToTransform(patMatrix));
+
+            Shape savedClip = g2d.getClip();
+            try {
+                g2d.clip(path);
+                java.awt.Rectangle cb = g2d.getClipBounds();
+                if (cb == null || cb.isEmpty()) return true; // nothing to paint
+                org.aspose.pdf.engine.pattern.ShadingRenderer.render(g2d, shading, shadingToDevice, cb);
+            } finally {
+                g2d.setClip(savedClip);
+            }
+            return true;
+        } catch (Exception e) {
+            LOG.fine(() -> "Shading pattern fill failed for " + patternName + ": " + e.getMessage());
+            return false;
         }
     }
 
@@ -698,32 +803,32 @@ public class PdfPageRenderer {
                                              String patternName, int formDepth) {
         if (Boolean.getBoolean("openpdf.pattern.disable")) return false;
         try {
-            org.aspose.pdf.engine.cos.COSDictionary patterns =
-                    resources.getCOSDictionary() != null
-                            ? (org.aspose.pdf.engine.cos.COSDictionary) resolveRef(
-                                    resources.getCOSDictionary().get("Pattern"))
+            org.aspose.pdf.engine.pdfobjects.PdfDictionary patterns =
+                    resources.getPdfDictionary() != null
+                            ? (org.aspose.pdf.engine.pdfobjects.PdfDictionary) resolveRef(
+                                    resources.getPdfDictionary().get("Pattern"))
                             : null;
             if (patterns == null) return false;
-            org.aspose.pdf.engine.cos.COSBase patBase = resolveRef(patterns.get(patternName));
-            if (!(patBase instanceof org.aspose.pdf.engine.cos.COSStream)) return false;
-            org.aspose.pdf.engine.cos.COSStream patStream =
-                    (org.aspose.pdf.engine.cos.COSStream) patBase;
+            org.aspose.pdf.engine.pdfobjects.PdfBase patBase = resolveRef(patterns.get(patternName));
+            if (!(patBase instanceof org.aspose.pdf.engine.pdfobjects.PdfStream)) return false;
+            org.aspose.pdf.engine.pdfobjects.PdfStream patStream =
+                    (org.aspose.pdf.engine.pdfobjects.PdfStream) patBase;
 
             int patternType = intOf(patStream.get("PatternType"), 1);
             if (patternType != 1) return false; // Shading patterns (type 2) — TODO
 
             // Pattern matrix (default identity).
-            Matrix patMatrix = matrixFromCOSArray(resolveRef(patStream.get("Matrix")));
+            Matrix patMatrix = matrixFromPdfArray(resolveRef(patStream.get("Matrix")));
             if (patMatrix == null) patMatrix = new Matrix(1, 0, 0, 1, 0, 0);
             // BBox + tiling intervals.
-            Rectangle bbox = rectFromCOSArray(resolveRef(patStream.get("BBox")));
+            Rectangle bbox = rectFromPdfArray(resolveRef(patStream.get("BBox")));
             double xStep = numberOf(resolveRef(patStream.get("XStep")), 0);
             double yStep = numberOf(resolveRef(patStream.get("YStep")), 0);
             if (bbox == null || xStep == 0 || yStep == 0) return false;
 
             // Pattern's own resources.
-            org.aspose.pdf.engine.cos.COSDictionary patResDict =
-                    (org.aspose.pdf.engine.cos.COSDictionary) resolveRef(patStream.get("Resources"));
+            org.aspose.pdf.engine.pdfobjects.PdfDictionary patResDict =
+                    (org.aspose.pdf.engine.pdfobjects.PdfDictionary) resolveRef(patStream.get("Resources"));
             Resources patResources = patResDict != null
                     ? new Resources(patResDict, null)
                     : resources;
@@ -767,7 +872,6 @@ public class PdfPageRenderer {
                 LOG.fine(() -> "Pattern tiling skipped for " + patternName + " (tileCount=" + tileCount + ")");
                 return false;
             }
-
             // Clip to path (user space) and apply pattern matrix.
             g2d.clip(path);
             java.awt.geom.AffineTransform afterCtm = g2d.getTransform();
@@ -777,14 +881,30 @@ public class PdfPageRenderer {
                 for (int i = iMin; i <= iMax; i++) {
                     java.awt.geom.AffineTransform tile = new java.awt.geom.AffineTransform(g2d.getTransform());
                     g2d.translate(i * xStep, j * yStep);
+                    // The cell content runs with a FRESH GraphicsState. Its
+                    // clipPath must be seeded with the path clip — otherwise
+                    // the first Q inside the cell calls applyClip(null) and
+                    // BLOWS AWAY the clip, splattering the cell across the
+                    // page (corpus 16222: a 123pt photo painted 20× over the
+                    // article). Clip shapes pass through getClip()/setClip()
+                    // in CURRENT user-space coordinates, so both the seed and
+                    // the post-cell restore are taken at THIS tile transform —
+                    // capturing once outside the loop would shift the clip by
+                    // i·XStep/j·YStep per tile.
+                    java.awt.Shape tileClip = g2d.getClip();
                     GraphicsState patState = new GraphicsState();
+                    if (tileClip != null) {
+                        patState.setClipPath(new java.awt.geom.GeneralPath(tileClip));
+                    }
                     java.util.Deque<GraphicsState> stack = new java.util.ArrayDeque<>();
                     for (Operator po : patOps) {
+                        if (Thread.currentThread().isInterrupted()) break; // cancelled
                         try {
                             patState = processOperator(po, patState, stack, patResources, g2d, null,
                                     formDepth + 1);
                         } catch (Exception e) { /* tolerate per-op */ }
                     }
+                    g2d.setClip(tileClip); // undo any clip the cell left behind
                     g2d.setTransform(tile);
                 }
             }
@@ -796,39 +916,43 @@ public class PdfPageRenderer {
         }
     }
 
-    private static Matrix matrixFromCOSArray(org.aspose.pdf.engine.cos.COSBase b) {
-        if (!(b instanceof org.aspose.pdf.engine.cos.COSArray)) return null;
-        org.aspose.pdf.engine.cos.COSArray a = (org.aspose.pdf.engine.cos.COSArray) b;
+    private static Matrix matrixFromPdfArray(org.aspose.pdf.engine.pdfobjects.PdfBase b) {
+        if (!(b instanceof org.aspose.pdf.engine.pdfobjects.PdfArray)) return null;
+        org.aspose.pdf.engine.pdfobjects.PdfArray a = (org.aspose.pdf.engine.pdfobjects.PdfArray) b;
         if (a.size() != 6) return null;
         return new Matrix(numberOf(a.get(0), 1), numberOf(a.get(1), 0),
                           numberOf(a.get(2), 0), numberOf(a.get(3), 1),
                           numberOf(a.get(4), 0), numberOf(a.get(5), 0));
     }
 
-    private static Rectangle rectFromCOSArray(org.aspose.pdf.engine.cos.COSBase b) {
-        if (!(b instanceof org.aspose.pdf.engine.cos.COSArray)) return null;
-        org.aspose.pdf.engine.cos.COSArray a = (org.aspose.pdf.engine.cos.COSArray) b;
+    private static Rectangle rectFromPdfArray(org.aspose.pdf.engine.pdfobjects.PdfBase b) {
+        if (!(b instanceof org.aspose.pdf.engine.pdfobjects.PdfArray)) return null;
+        org.aspose.pdf.engine.pdfobjects.PdfArray a = (org.aspose.pdf.engine.pdfobjects.PdfArray) b;
         if (a.size() != 4) return null;
-        return Rectangle.fromCOSArray(a);
+        return Rectangle.fromPdfArray(a);
     }
 
-    private static double numberOf(org.aspose.pdf.engine.cos.COSBase b, double def) {
-        if (b instanceof org.aspose.pdf.engine.cos.COSInteger)
-            return ((org.aspose.pdf.engine.cos.COSInteger) b).intValue();
-        if (b instanceof org.aspose.pdf.engine.cos.COSFloat)
-            return ((org.aspose.pdf.engine.cos.COSFloat) b).doubleValue();
+    private static double numberOf(org.aspose.pdf.engine.pdfobjects.PdfBase b, double def) {
+        if (b instanceof org.aspose.pdf.engine.pdfobjects.PdfInteger)
+            return ((org.aspose.pdf.engine.pdfobjects.PdfInteger) b).intValue();
+        if (b instanceof org.aspose.pdf.engine.pdfobjects.PdfFloat)
+            return ((org.aspose.pdf.engine.pdfobjects.PdfFloat) b).doubleValue();
         return def;
     }
 
-    private static int intOf(org.aspose.pdf.engine.cos.COSBase b, int def) {
-        if (b instanceof org.aspose.pdf.engine.cos.COSInteger)
-            return ((org.aspose.pdf.engine.cos.COSInteger) b).intValue();
+    private static int intOf(org.aspose.pdf.engine.pdfobjects.PdfBase b, int def) {
+        if (b instanceof org.aspose.pdf.engine.pdfobjects.PdfInteger)
+            return ((org.aspose.pdf.engine.pdfobjects.PdfInteger) b).intValue();
         return def;
     }
 
     private void strokePath(Graphics2D g2d, GraphicsState state) {
         GeneralPath path = state.getCurrentPath();
-        if (path.getBounds2D().isEmpty()) return;
+        // Skip only a path with no segments at all. Do NOT use
+        // Rectangle2D.isEmpty() here: an axis-aligned line (the common
+        // "table rule" `x y m  x2 y l  S`) has a zero-height/width bounding
+        // box, isEmpty() reports true, and the stroke would be dropped.
+        if (path.getPathIterator(null).isDone()) return;
 
         AffineTransform saved = g2d.getTransform();
         try {
@@ -840,11 +964,37 @@ public class PdfPageRenderer {
                 g2d.setComposite(AlphaComposite.SrcOver);
             }
             g2d.setColor(state.getStrokeColor());
-            g2d.setStroke(state.createStroke());
+            g2d.setStroke(deviceClampedStroke(state.createStroke(), g2d.getTransform()));
             g2d.draw(path);
         } finally {
             g2d.setTransform(saved);
         }
+    }
+
+    /**
+     * Clamps a stroke so it never rasterises thinner than one device pixel.
+     * <p>
+     * ISO 32000 §8.4.3.2: a line width of 0 denotes the thinnest line the
+     * device can render — NOT an invisible line. Java2D does not honour that
+     * convention (a 0-width stroke under the anti-aliased pipeline draws
+     * nothing), and a small positive width under a down-scaling CTM (e.g.
+     * 0.05 in corpus 29903.pdf) anti-aliases to invisibility. Reference
+     * renderers clamp the effective device width instead; we use the same
+     * 0.25-device-pixel floor as Adobe Reader and PDFBox, so a hairline
+     * anti-aliases to the same ~25% coverage grey as the reference engine.
+     * </p>
+     *
+     * @param stroke    the stroke built from the graphics state (user-space width)
+     * @param transform the full current transform (CTM + device scale)
+     * @return the original stroke, or a copy with the width raised to 0.25 device px
+     */
+    private static BasicStroke deviceClampedStroke(BasicStroke stroke, AffineTransform transform) {
+        double scale = Math.sqrt(Math.abs(transform.getDeterminant()));
+        if (scale <= 0 || !Double.isFinite(scale)) return stroke;
+        float minUserWidth = (float) (0.25 / scale); // 0.25 device px in user units
+        if (stroke.getLineWidth() >= minUserWidth) return stroke;
+        return new BasicStroke(minUserWidth, stroke.getEndCap(), stroke.getLineJoin(),
+                stroke.getMiterLimit(), stroke.getDashArray(), stroke.getDashPhase());
     }
 
     /**
@@ -879,20 +1029,20 @@ public class PdfPageRenderer {
     private void renderXObject(Graphics2D g2d, GraphicsState state, String xobjName,
                                Resources resources, PDFParser parser, int formDepth) {
         if (resources == null || xobjName == null) return;
-        COSDictionary xobjects = resources.getXObjects();
+        PdfDictionary xobjects = resources.getXObjects();
         if (xobjects == null) return;
 
-        COSBase val = xobjects.get(xobjName);
-        if (val instanceof COSObjectReference) {
+        PdfBase val = xobjects.get(xobjName);
+        if (val instanceof PdfObjectReference) {
             try {
-                val = ((COSObjectReference) val).dereference();
+                val = ((PdfObjectReference) val).dereference();
             } catch (IOException e) {
                 LOG.fine(() -> "Failed to dereference XObject " + xobjName);
                 return;
             }
         }
-        if (!(val instanceof COSStream)) return;
-        COSStream stream = (COSStream) val;
+        if (!(val instanceof PdfStream)) return;
+        PdfStream stream = (PdfStream) val;
 
         String subtype = stream.getNameAsString("Subtype");
         if ("Image".equals(subtype)) {
@@ -902,9 +1052,117 @@ public class PdfPageRenderer {
         }
     }
 
-    private void renderImage(Graphics2D g2d, GraphicsState state,
-                             COSStream stream, String name, PDFParser parser) {
+    /**
+     * Renders an inline image (BI..ID..EI, §8.9.7). The content stream parser
+     * delivers it as a single BI operator whose operands are the image
+     * dictionary and the raw (still encoded) data. Abbreviated keys/values
+     * (Table 93/94) are expanded to their canonical names and the result is
+     * wrapped in a synthetic {@link PdfStream} so the regular
+     * {@link #renderImage} path (incl. stencil-mask handling for Type 3
+     * bitmap glyphs) applies unchanged.
+     */
+    private void renderInlineImage(Graphics2D g2d, GraphicsState state,
+                                   Operator op, PDFParser parser) {
         try {
+            List<PdfBase> operands = op.getOperands();
+            if (operands.size() < 2) return;
+            PdfBase dictOp = operands.get(0);
+            PdfBase dataOp = operands.get(1);
+            if (!(dictOp instanceof PdfDictionary)
+                    || !(dataOp instanceof org.aspose.pdf.engine.pdfobjects.PdfString)) {
+                return;
+            }
+            PdfDictionary expanded = expandInlineImageDict((PdfDictionary) dictOp);
+            byte[] raw = ((org.aspose.pdf.engine.pdfobjects.PdfString) dataOp).getBytes();
+            PdfStream stream = new PdfStream(expanded, raw);
+            renderImage(g2d, state, stream, "InlineImage", parser);
+        } catch (Exception e) {
+            LOG.fine(() -> "Failed to render inline image: " + e.getMessage());
+        }
+    }
+
+    /** Abbreviated → full inline-image dictionary keys (§8.9.7, Table 93). */
+    private static final java.util.Map<String, String> INLINE_KEYS = new java.util.HashMap<>();
+    /** Abbreviated → full filter and colour-space names (Table 94 + §8.9.5.2). */
+    private static final java.util.Map<String, String> INLINE_NAMES = new java.util.HashMap<>();
+    static {
+        INLINE_KEYS.put("W", "Width");
+        INLINE_KEYS.put("H", "Height");
+        INLINE_KEYS.put("BPC", "BitsPerComponent");
+        INLINE_KEYS.put("CS", "ColorSpace");
+        INLINE_KEYS.put("D", "Decode");
+        INLINE_KEYS.put("DP", "DecodeParms");
+        INLINE_KEYS.put("F", "Filter");
+        INLINE_KEYS.put("IM", "ImageMask");
+        INLINE_KEYS.put("I", "Interpolate");
+        INLINE_KEYS.put("L", "Length");
+        INLINE_NAMES.put("G", "DeviceGray");
+        INLINE_NAMES.put("RGB", "DeviceRGB");
+        INLINE_NAMES.put("CMYK", "DeviceCMYK");
+        INLINE_NAMES.put("I", "Indexed");
+        INLINE_NAMES.put("AHx", "ASCIIHexDecode");
+        INLINE_NAMES.put("A85", "ASCII85Decode");
+        INLINE_NAMES.put("LZW", "LZWDecode");
+        INLINE_NAMES.put("Fl", "FlateDecode");
+        INLINE_NAMES.put("RL", "RunLengthDecode");
+        INLINE_NAMES.put("CCF", "CCITTFaxDecode");
+        INLINE_NAMES.put("DCT", "DCTDecode");
+    }
+
+    /** Expands abbreviated inline-image keys and name values to canonical form. */
+    private static PdfDictionary expandInlineImageDict(PdfDictionary src) {
+        PdfDictionary out = new PdfDictionary();
+        out.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("Subtype"),
+                org.aspose.pdf.engine.pdfobjects.PdfName.of("Image"));
+        for (org.aspose.pdf.engine.pdfobjects.PdfName keyName : src.keySet()) {
+            String key = keyName.getName();
+            String fullKey = INLINE_KEYS.getOrDefault(key, key);
+            PdfBase val = src.get(key);
+            if (("ColorSpace".equals(fullKey) || "Filter".equals(fullKey))) {
+                val = expandInlineName(val);
+            }
+            out.set(org.aspose.pdf.engine.pdfobjects.PdfName.of(fullKey), val);
+        }
+        return out;
+    }
+
+    /** Expands a name or an array of names via {@link #INLINE_NAMES}. */
+    private static PdfBase expandInlineName(PdfBase val) {
+        if (val instanceof org.aspose.pdf.engine.pdfobjects.PdfName) {
+            String n = ((org.aspose.pdf.engine.pdfobjects.PdfName) val).getName();
+            String full = INLINE_NAMES.get(n);
+            return full != null ? org.aspose.pdf.engine.pdfobjects.PdfName.of(full) : val;
+        }
+        if (val instanceof PdfArray) {
+            PdfArray in = (PdfArray) val;
+            PdfArray out = new PdfArray();
+            for (int i = 0; i < in.size(); i++) {
+                out.add(expandInlineName(in.get(i)));
+            }
+            return out;
+        }
+        return val;
+    }
+
+    private void renderImage(Graphics2D g2d, GraphicsState state,
+                             PdfStream stream, String name, PDFParser parser) {
+        try {
+            // Optional raster cap (system property, 0/absent = unlimited):
+            // a single scanned image XObject can dwarf the page raster —
+            // 13000×9000 RGB is ~470 MB of INT_RGB before scaling down to the
+            // page. Mass-testing harnesses set this so a handful of oversized
+            // scans across worker threads cannot OOM the shared heap; normal
+            // library use is unaffected by default.
+            long maxPx = Long.getLong("aspose.pdf.maxImageRasterPixels", 0L);
+            if (maxPx > 0) {
+                long w = stream.getInt("Width", 0);
+                long h = stream.getInt("Height", 0);
+                if (w * h > maxPx) {
+                    LOG.warning(() -> "Skipping image " + name + ": " + w + "x" + h
+                            + " exceeds aspose.pdf.maxImageRasterPixels=" + maxPx);
+                    return;
+                }
+            }
             XImage ximg = new XImage(stream, name, parser);
             BufferedImage img;
             if (ximg.isImageMask()) {
@@ -934,18 +1192,68 @@ public class PdfPageRenderer {
                     0, 1));
 
             AffineTransform saved = g2d.getTransform();
+            java.awt.Composite savedComposite = g2d.getComposite();
             try {
-                if (state.getNonStrokingAlpha() < 1.0f) {
-                    g2d.setComposite(AlphaComposite.getInstance(
-                            AlphaComposite.SRC_OVER, state.getNonStrokingAlpha()));
+                // Extreme downscales (300-dpi scan drawn onto a thumbnail-
+                // sized area) make the single native drawImage transform run
+                // for minutes — an uninterruptible native call observed as a
+                // leaked worker after timeout. Pre-halve the raster until it
+                // is within 2× of its device footprint: each halving is a
+                // fast pass over ever-smaller data, total work ~4/3 of one
+                // pass, and the averaging improves quality vs. point
+                // sampling. Only kicks in at ≥16× area ratio.
+                BufferedImage toDraw = img;
+                AffineTransform deviceTf = new AffineTransform(g2d.getTransform());
+                deviceTf.concatenate(imgTransform);
+                double devArea = Math.abs(deviceTf.getDeterminant())
+                        * (double) img.getWidth() * img.getHeight();
+                long imgArea = (long) img.getWidth() * img.getHeight();
+                if (devArea >= 1 && imgArea > 16L * devArea) {
+                    toDraw = halveToFit(img, devArea);
+                    // Map the (smaller) raster into the same unit square.
+                    imgTransform.concatenate(new AffineTransform(
+                            (double) img.getWidth() / toDraw.getWidth(), 0,
+                            0, (double) img.getHeight() / toDraw.getHeight(),
+                            0, 0));
                 }
-                g2d.drawImage(img, imgTransform, null);
+                // Honours /ca and /BM (Multiply) for image paints (§11.3.5).
+                g2d.setComposite(BlendComposite.fillComposite(state));
+                g2d.drawImage(toDraw, imgTransform, null);
             } finally {
                 g2d.setTransform(saved);
+                g2d.setComposite(savedComposite);
             }
         } catch (Exception e) {
             LOG.fine(() -> "Failed to render image " + name + ": " + e.getMessage());
         }
+    }
+
+    /**
+     * Repeatedly halves an image until its area is within 4× of the target
+     * device area (so the final drawImage scales by at most ~2× per axis).
+     * Interruptible between passes.
+     */
+    private static BufferedImage halveToFit(BufferedImage img, double devArea) {
+        BufferedImage cur = img;
+        while ((long) cur.getWidth() * cur.getHeight() > 4L * devArea
+                && cur.getWidth() > 2 && cur.getHeight() > 2
+                && !Thread.currentThread().isInterrupted()) {
+            int nw = Math.max(1, cur.getWidth() / 2);
+            int nh = Math.max(1, cur.getHeight() / 2);
+            int type = cur.getColorModel().hasAlpha()
+                    ? BufferedImage.TYPE_INT_ARGB : BufferedImage.TYPE_INT_RGB;
+            BufferedImage half = new BufferedImage(nw, nh, type);
+            Graphics2D hg = half.createGraphics();
+            try {
+                hg.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                        RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+                hg.drawImage(cur, 0, 0, nw, nh, null);
+            } finally {
+                hg.dispose();
+            }
+            cur = half;
+        }
+        return cur;
     }
 
     /**
@@ -966,15 +1274,15 @@ public class PdfPageRenderer {
         // Honour /Decode [1 0] inversion — common for masks where the encoder
         // stored 1=paint instead of the spec default 0=paint.
         boolean invertDecode = false;
-        org.aspose.pdf.engine.cos.COSBase decode = ximg.getCOSStream().get("Decode");
-        if (decode instanceof org.aspose.pdf.engine.cos.COSArray) {
-            org.aspose.pdf.engine.cos.COSArray a = (org.aspose.pdf.engine.cos.COSArray) decode;
+        org.aspose.pdf.engine.pdfobjects.PdfBase decode = ximg.getPdfStream().get("Decode");
+        if (decode instanceof org.aspose.pdf.engine.pdfobjects.PdfArray) {
+            org.aspose.pdf.engine.pdfobjects.PdfArray a = (org.aspose.pdf.engine.pdfobjects.PdfArray) decode;
             if (a.size() >= 1) {
                 Object first = a.get(0);
-                if (first instanceof org.aspose.pdf.engine.cos.COSInteger) {
-                    invertDecode = ((org.aspose.pdf.engine.cos.COSInteger) first).intValue() == 1;
-                } else if (first instanceof org.aspose.pdf.engine.cos.COSFloat) {
-                    invertDecode = Math.round(((org.aspose.pdf.engine.cos.COSFloat) first).floatValue()) == 1;
+                if (first instanceof org.aspose.pdf.engine.pdfobjects.PdfInteger) {
+                    invertDecode = ((org.aspose.pdf.engine.pdfobjects.PdfInteger) first).intValue() == 1;
+                } else if (first instanceof org.aspose.pdf.engine.pdfobjects.PdfFloat) {
+                    invertDecode = Math.round(((org.aspose.pdf.engine.pdfobjects.PdfFloat) first).floatValue()) == 1;
                 }
             }
         }
@@ -993,7 +1301,7 @@ public class PdfPageRenderer {
     }
 
     private void renderForm(Graphics2D g2d, GraphicsState state,
-                            COSStream stream, String name, Resources parentResources,
+                            PdfStream stream, String name, Resources parentResources,
                             PDFParser parser, int formDepth) {
         if (formDepth >= MAX_FORM_DEPTH) {
             LOG.warning(() -> "Max form XObject recursion depth reached for " + name);
@@ -1014,17 +1322,52 @@ public class PdfPageRenderer {
             GraphicsState formState = state.clone();
             formState.concatMatrix(formMatrix);
 
-            // Process form content stream
+            // Process form content stream. processOperator returns the
+            // (potentially replaced) state — it MUST be carried forward,
+            // otherwise Q never restores state inside the form and q/W/Q
+            // clip blocks accumulate by intersection until everything is
+            // clipped away (llPDFLib-style per-cell clipping).
             Deque<GraphicsState> formStack = new ArrayDeque<>();
             for (Operator op : formOps) {
+                if (Thread.currentThread().isInterrupted()) break; // cancelled
                 try {
-                    processOperator(op, formState, formStack, formRes, g2d, parser, formDepth + 1);
+                    formState = processOperator(op, formState, formStack, formRes, g2d, parser, formDepth + 1);
                 } catch (Exception e) {
                     LOG.fine(() -> "Error in form " + name + " operator " + op.getName());
                 }
             }
+            // The form may have left a narrower device clip behind (unbalanced
+            // q/W without a closing Q) — restore the caller's clip.
+            applyClip(g2d, state);
         } catch (Exception e) {
             LOG.fine(() -> "Failed to render form XObject " + name + ": " + e.getMessage());
+        }
+    }
+
+    /**
+     * Executes a Type 3 glyph-description content stream (§9.6.5). The glyph
+     * state's CTM was pre-multiplied with the font matrix by the caller, so
+     * the glyph's path/image operators land at the right spot on the page.
+     * Mirrors {@link #renderForm}: per-operator tolerance, state carried
+     * through Q, and the caller's device clip restored afterwards.
+     */
+    private void executeType3GlyphStream(Graphics2D g2d, GraphicsState glyphState,
+                                         OperatorCollection ops, Resources resources,
+                                         PDFParser parser) {
+        java.awt.Shape savedClip = g2d.getClip();
+        try {
+            Deque<GraphicsState> stack = new ArrayDeque<>();
+            GraphicsState state = glyphState;
+            for (Operator op : ops) {
+                try {
+                    state = processOperator(op, state, stack, resources, g2d, parser, 1);
+                } catch (Exception e) {
+                    LOG.fine(() -> "Type3 glyph operator " + op.getName()
+                            + " failed: " + e.getMessage());
+                }
+            }
+        } finally {
+            g2d.setClip(savedClip);
         }
     }
 
@@ -1032,17 +1375,17 @@ public class PdfPageRenderer {
 
     private void applyExtGState(GraphicsState state, Resources resources, String gsName) {
         if (resources == null || gsName == null) return;
-        COSDictionary gsDict = resources.getExtGState();
+        PdfDictionary gsDict = resources.getExtGState();
         if (gsDict == null) return;
 
-        COSBase val = gsDict.get(gsName);
-        if (val instanceof COSObjectReference) {
-            try { val = ((COSObjectReference) val).dereference(); }
+        PdfBase val = gsDict.get(gsName);
+        if (val instanceof PdfObjectReference) {
+            try { val = ((PdfObjectReference) val).dereference(); }
             catch (IOException e) { return; }
         }
-        if (!(val instanceof COSDictionary)) return;
+        if (!(val instanceof PdfDictionary)) return;
 
-        ExtGState gs = new ExtGState((COSDictionary) val);
+        ExtGState gs = new ExtGState((PdfDictionary) val);
         double lw = gs.getLineWidth();
         if (lw >= 0) state.setLineWidth(lw);
         int lc = gs.getLineCap();
@@ -1054,20 +1397,39 @@ public class PdfPageRenderer {
 
         state.setStrokingAlpha((float) gs.getStrokingAlpha());
         state.setNonStrokingAlpha((float) gs.getNonStrokingAlpha());
+        state.setBlendMode(gs.getBlendMode());
     }
 
     // ======== Advanced color ========
 
+    /**
+     * Resolves the cs/CS operand (a color-space name — either a device space
+     * or a key into the resources /ColorSpace dictionary) to a ColorSpaceBase.
+     * Returns null on failure so sc/scn falls back to by-count mapping.
+     */
+    private org.aspose.pdf.engine.colorspace.ColorSpaceBase resolveColorSpaceOperand(
+            Operator op, Resources resources, PDFParser parser) {
+        List<PdfBase> operands = op.getOperands();
+        if (operands.isEmpty()) return null;
+        try {
+            return org.aspose.pdf.engine.colorspace.ColorSpaceBase.resolve(
+                    operands.get(0), resources, parser);
+        } catch (Exception e) {
+            LOG.fine(() -> "Failed to resolve color space operand: " + e.getMessage());
+            return null;
+        }
+    }
+
     private void applyAdvancedColor(Operator op, GraphicsState state, boolean stroke) {
-        List<COSBase> operands = op.getOperands();
+        List<PdfBase> operands = op.getOperands();
         if (operands.isEmpty()) return;
 
         // Pattern colorspace: scn/SCN ends with the pattern resource name
         // (e.g. `/CS0 cs /P0 scn`). Stash the name so the next f/B/etc. can
         // look up the Tiling/Shading Pattern and paint with it.
-        COSBase last = operands.get(operands.size() - 1);
-        if (last instanceof org.aspose.pdf.engine.cos.COSName) {
-            String name = ((org.aspose.pdf.engine.cos.COSName) last).getName();
+        PdfBase last = operands.get(operands.size() - 1);
+        if (last instanceof org.aspose.pdf.engine.pdfobjects.PdfName) {
+            String name = ((org.aspose.pdf.engine.pdfobjects.PdfName) last).getName();
             if (stroke) state.setStrokePatternName(name);
             else state.setFillPatternName(name);
             return;
@@ -1077,10 +1439,35 @@ public class PdfPageRenderer {
 
         // Try to extract numeric components
         int numComponents = 0;
-        for (COSBase b : operands) {
-            if (b instanceof org.aspose.pdf.engine.cos.COSInteger
-                    || b instanceof org.aspose.pdf.engine.cos.COSFloat) {
+        for (PdfBase b : operands) {
+            if (b instanceof org.aspose.pdf.engine.pdfobjects.PdfInteger
+                    || b instanceof org.aspose.pdf.engine.pdfobjects.PdfFloat) {
                 numComponents++;
+            }
+        }
+
+        // The components belong to the color space selected by cs/CS — a
+        // single Separation tint or N DeviceN tints must run through the
+        // tint transform, not be misread as gray/RGB by component count.
+        org.aspose.pdf.engine.colorspace.ColorSpaceBase activeCs =
+                stroke ? state.getStrokeColorSpace() : state.getFillColorSpace();
+        if (activeCs != null && numComponents > 0
+                && numComponents == activeCs.getNumberOfComponents()) {
+            double[] comps = new double[numComponents];
+            int ci = 0;
+            for (PdfBase b : operands) {
+                if (b instanceof org.aspose.pdf.engine.pdfobjects.PdfInteger
+                        || b instanceof org.aspose.pdf.engine.pdfobjects.PdfFloat) {
+                    comps[ci++] = getNumber(b);
+                }
+            }
+            try {
+                java.awt.Color color = new java.awt.Color(activeCs.toRGBInt(comps), false);
+                if (stroke) state.setStrokeColor(color);
+                else state.setFillColor(color);
+                return;
+            } catch (Exception e) {
+                LOG.fine(() -> "Color space conversion failed, falling back: " + e.getMessage());
             }
         }
 
@@ -1161,12 +1548,12 @@ public class PdfPageRenderer {
         }
     }
 
-    private static double getNumber(COSBase val) {
-        if (val instanceof org.aspose.pdf.engine.cos.COSInteger) {
-            return ((org.aspose.pdf.engine.cos.COSInteger) val).intValue();
+    private static double getNumber(PdfBase val) {
+        if (val instanceof org.aspose.pdf.engine.pdfobjects.PdfInteger) {
+            return ((org.aspose.pdf.engine.pdfobjects.PdfInteger) val).intValue();
         }
-        if (val instanceof org.aspose.pdf.engine.cos.COSFloat) {
-            return ((org.aspose.pdf.engine.cos.COSFloat) val).doubleValue();
+        if (val instanceof org.aspose.pdf.engine.pdfobjects.PdfFloat) {
+            return ((org.aspose.pdf.engine.pdfobjects.PdfFloat) val).doubleValue();
         }
         return 0;
     }

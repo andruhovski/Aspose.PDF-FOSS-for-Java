@@ -1,11 +1,11 @@
 package org.aspose.pdf.engine.font.ttf;
 
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSStream;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -50,9 +50,9 @@ public final class Type0FontBuilder {
      * caller will need to map Unicode → glyph IDs when encoding text.
      */
     public static final class Result {
-        public final COSDictionary type0Font;
+        public final PdfDictionary type0Font;
         public final TrueTypeReader reader;
-        public Result(COSDictionary type0Font, TrueTypeReader reader) {
+        public Result(PdfDictionary type0Font, TrueTypeReader reader) {
             this.type0Font = type0Font;
             this.reader = reader;
         }
@@ -76,57 +76,57 @@ public final class Type0FontBuilder {
         String pdfName = pdfSafeName(baseFontName);
 
         // /FontFile2 — embedded raw TTF as a stream.
-        COSStream fontFile = new COSStream();
-        fontFile.set(COSName.of("Length1"), COSInteger.valueOf(ttfBytes.length));
+        PdfStream fontFile = new PdfStream();
+        fontFile.set(PdfName.of("Length1"), PdfInteger.valueOf(ttfBytes.length));
         fontFile.setDecodedData(ttfBytes);
 
         // /FontDescriptor — minimal viable: required keys + FontFile2.
         // Real ascent/descent would come from hhea/OS/2; the bbox from head;
         // we use sane CJK defaults that PDF viewers tolerate.
-        COSDictionary descriptor = new COSDictionary();
-        descriptor.set(COSName.of("Type"), COSName.of("FontDescriptor"));
-        descriptor.set(COSName.of("FontName"), COSName.of(pdfName));
-        descriptor.set(COSName.of("Flags"), COSInteger.valueOf(4));   // Symbolic
-        COSArray bbox = new COSArray();
-        bbox.add(COSInteger.valueOf(-200));
-        bbox.add(COSInteger.valueOf(-200));
-        bbox.add(COSInteger.valueOf(1100));
-        bbox.add(COSInteger.valueOf(1100));
-        descriptor.set(COSName.of("FontBBox"), bbox);
-        descriptor.set(COSName.of("ItalicAngle"), COSInteger.valueOf(0));
-        descriptor.set(COSName.of("Ascent"), COSInteger.valueOf(880));
-        descriptor.set(COSName.of("Descent"), COSInteger.valueOf(-120));
-        descriptor.set(COSName.of("CapHeight"), COSInteger.valueOf(700));
-        descriptor.set(COSName.of("StemV"), COSInteger.valueOf(80));
-        descriptor.set(COSName.of("FontFile2"), fontFile);
+        PdfDictionary descriptor = new PdfDictionary();
+        descriptor.set(PdfName.of("Type"), PdfName.of("FontDescriptor"));
+        descriptor.set(PdfName.of("FontName"), PdfName.of(pdfName));
+        descriptor.set(PdfName.of("Flags"), PdfInteger.valueOf(4));   // Symbolic
+        PdfArray bbox = new PdfArray();
+        bbox.add(PdfInteger.valueOf(-200));
+        bbox.add(PdfInteger.valueOf(-200));
+        bbox.add(PdfInteger.valueOf(1100));
+        bbox.add(PdfInteger.valueOf(1100));
+        descriptor.set(PdfName.of("FontBBox"), bbox);
+        descriptor.set(PdfName.of("ItalicAngle"), PdfInteger.valueOf(0));
+        descriptor.set(PdfName.of("Ascent"), PdfInteger.valueOf(880));
+        descriptor.set(PdfName.of("Descent"), PdfInteger.valueOf(-120));
+        descriptor.set(PdfName.of("CapHeight"), PdfInteger.valueOf(700));
+        descriptor.set(PdfName.of("StemV"), PdfInteger.valueOf(80));
+        descriptor.set(PdfName.of("FontFile2"), fontFile);
 
         // CIDSystemInfo — Adobe/Identity/0 is the conventional pairing for
         // Identity-H encoded composite fonts.
-        COSDictionary cidSysInfo = new COSDictionary();
-        cidSysInfo.set(COSName.of("Registry"), new COSString("Adobe"));
-        cidSysInfo.set(COSName.of("Ordering"), new COSString("Identity"));
-        cidSysInfo.set(COSName.of("Supplement"), COSInteger.valueOf(0));
+        PdfDictionary cidSysInfo = new PdfDictionary();
+        cidSysInfo.set(PdfName.of("Registry"), new PdfString("Adobe"));
+        cidSysInfo.set(PdfName.of("Ordering"), new PdfString("Identity"));
+        cidSysInfo.set(PdfName.of("Supplement"), PdfInteger.valueOf(0));
 
         // CIDFontType2 descendant
-        COSDictionary cidFont = new COSDictionary();
-        cidFont.set(COSName.of("Type"), COSName.of("Font"));
-        cidFont.set(COSName.of("Subtype"), COSName.of("CIDFontType2"));
-        cidFont.set(COSName.of("BaseFont"), COSName.of(pdfName));
-        cidFont.set(COSName.of("CIDSystemInfo"), cidSysInfo);
-        cidFont.set(COSName.of("FontDescriptor"), descriptor);
-        cidFont.set(COSName.of("DW"), COSInteger.valueOf(1000));
+        PdfDictionary cidFont = new PdfDictionary();
+        cidFont.set(PdfName.of("Type"), PdfName.of("Font"));
+        cidFont.set(PdfName.of("Subtype"), PdfName.of("CIDFontType2"));
+        cidFont.set(PdfName.of("BaseFont"), PdfName.of(pdfName));
+        cidFont.set(PdfName.of("CIDSystemInfo"), cidSysInfo);
+        cidFont.set(PdfName.of("FontDescriptor"), descriptor);
+        cidFont.set(PdfName.of("DW"), PdfInteger.valueOf(1000));
         // CIDToGIDMap defaults to /Identity for CIDFontType2 — that's what we want.
 
         // Type0 root
-        COSDictionary type0 = new COSDictionary();
-        type0.set(COSName.of("Type"), COSName.of("Font"));
-        type0.set(COSName.of("Subtype"), COSName.of("Type0"));
-        type0.set(COSName.of("BaseFont"), COSName.of(pdfName));
-        type0.set(COSName.of("Encoding"), COSName.of("Identity-H"));
-        COSArray descendantArr = new COSArray();
+        PdfDictionary type0 = new PdfDictionary();
+        type0.set(PdfName.of("Type"), PdfName.of("Font"));
+        type0.set(PdfName.of("Subtype"), PdfName.of("Type0"));
+        type0.set(PdfName.of("BaseFont"), PdfName.of(pdfName));
+        type0.set(PdfName.of("Encoding"), PdfName.of("Identity-H"));
+        PdfArray descendantArr = new PdfArray();
         descendantArr.add(cidFont);
-        type0.set(COSName.of("DescendantFonts"), descendantArr);
-        type0.set(COSName.of("ToUnicode"), buildToUnicodeCMap(reader, pdfName));
+        type0.set(PdfName.of("DescendantFonts"), descendantArr);
+        type0.set(PdfName.of("ToUnicode"), buildToUnicodeCMap(reader, pdfName));
 
         return new Result(type0, reader);
     }
@@ -137,7 +137,7 @@ public final class Type0FontBuilder {
      * extract text and copy-paste it correctly even though the content
      * stream carries raw glyph IDs (Identity-H).
      */
-    private static COSStream buildToUnicodeCMap(TrueTypeReader reader, String pdfName) {
+    private static PdfStream buildToUnicodeCMap(TrueTypeReader reader, String pdfName) {
         // Invert the cmap: glyph_id → first Unicode that maps to it.
         Map<Integer, Integer> entries = reader.getCmapEntries();
         TreeMap<Integer, Integer> gidToUnicode = new TreeMap<>();
@@ -176,7 +176,7 @@ public final class Type0FontBuilder {
         sb.append("end\nend\n");
 
         byte[] body = sb.toString().getBytes(StandardCharsets.US_ASCII);
-        COSStream cmap = new COSStream();
+        PdfStream cmap = new PdfStream();
         cmap.setDecodedData(body);
         return cmap;
     }

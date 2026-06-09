@@ -2,15 +2,15 @@ package org.aspose.pdf.engine.pdfa.fixes;
 
 import org.aspose.pdf.ConvertErrorAction;
 import org.aspose.pdf.PdfFormat;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectKey;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSStream;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectKey;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 import org.aspose.pdf.engine.pdfa.PdfAValidationResult;
 import org.aspose.pdf.engine.parser.PDFParser;
 
@@ -104,17 +104,17 @@ public final class FontFixes {
      */
     public void generateToUnicodeCMap(PDFParser parser, PdfFormat format,
                                       ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
-        for (COSObjectKey key : parser.getAllObjectKeys()) {
-            COSBase obj;
+        for (PdfObjectKey key : parser.getAllObjectKeys()) {
+            PdfBase obj;
             try {
                 obj = parser.getObject(key);
             } catch (IOException e) {
                 continue;
             }
-            if (!(obj instanceof COSDictionary)) {
+            if (!(obj instanceof PdfDictionary)) {
                 continue;
             }
-            COSDictionary dict = (COSDictionary) obj;
+            PdfDictionary dict = (PdfDictionary) obj;
             String type = dict.getNameAsString("Type");
             if (!"Font".equals(type)) {
                 continue;
@@ -143,13 +143,13 @@ public final class FontFixes {
                 cmapData = buildWinAnsiCMap(firstChar, lastChar);
             }
 
-            COSStream cmapStream = new COSStream();
+            PdfStream cmapStream = new PdfStream();
             cmapStream.setDecodedData(cmapData);
-            cmapStream.setFilter(COSName.FLATE_DECODE);
+            cmapStream.setFilter(PdfName.FLATE_DECODE);
 
             int maxObj = findMaxObjectNumber(parser);
-            COSObjectKey cmapKey = new COSObjectKey(maxObj + 1, 0);
-            COSObjectReference cmapRef = new COSObjectReference(cmapKey, k -> cmapStream);
+            PdfObjectKey cmapKey = new PdfObjectKey(maxObj + 1, 0);
+            PdfObjectReference cmapRef = new PdfObjectReference(cmapKey, k -> cmapStream);
 
             dict.set("ToUnicode", cmapRef);
             result.addWarning("font.1", "Generated /ToUnicode CMap for " + encoding + " font",
@@ -173,17 +173,17 @@ public final class FontFixes {
      */
     public void generateCharSet(PDFParser parser, PdfFormat format,
                                 ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
-        for (COSObjectKey key : parser.getAllObjectKeys()) {
-            COSBase obj;
+        for (PdfObjectKey key : parser.getAllObjectKeys()) {
+            PdfBase obj;
             try {
                 obj = parser.getObject(key);
             } catch (IOException e) {
                 continue;
             }
-            if (!(obj instanceof COSDictionary)) {
+            if (!(obj instanceof PdfDictionary)) {
                 continue;
             }
-            COSDictionary dict = (COSDictionary) obj;
+            PdfDictionary dict = (PdfDictionary) obj;
             if (!"Font".equals(dict.getNameAsString("Type"))) {
                 continue;
             }
@@ -199,15 +199,15 @@ public final class FontFixes {
             }
 
             // Get font descriptor
-            COSBase fdRef = dict.get("FontDescriptor");
+            PdfBase fdRef = dict.get("FontDescriptor");
             if (fdRef == null) {
                 continue;
             }
-            COSBase fdObj = parser.resolveReference(fdRef);
-            if (!(fdObj instanceof COSDictionary)) {
+            PdfBase fdObj = parser.resolveReference(fdRef);
+            if (!(fdObj instanceof PdfDictionary)) {
                 continue;
             }
-            COSDictionary fontDesc = (COSDictionary) fdObj;
+            PdfDictionary fontDesc = (PdfDictionary) fdObj;
             if (fontDesc.get("CharSet") != null) {
                 continue;
             }
@@ -217,7 +217,7 @@ public final class FontFixes {
             int lastChar = dict.getInt("LastChar", 255);
             String charSet = buildCharSetString(firstChar, lastChar);
 
-            fontDesc.set("CharSet", new COSString(charSet));
+            fontDesc.set("CharSet", new PdfString(charSet));
             result.addWarning("font.2", "Generated /CharSet for subset Type1 font " + baseFontName,
                     "obj " + key.getObjectNumber(), "ISO 19005-1:2005, 6.3.5");
         }
@@ -238,32 +238,32 @@ public final class FontFixes {
      */
     public void generateCIDSet(PDFParser parser, PdfFormat format,
                                ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
-        for (COSObjectKey key : parser.getAllObjectKeys()) {
-            COSBase obj;
+        for (PdfObjectKey key : parser.getAllObjectKeys()) {
+            PdfBase obj;
             try {
                 obj = parser.getObject(key);
             } catch (IOException e) {
                 continue;
             }
-            if (!(obj instanceof COSDictionary)) {
+            if (!(obj instanceof PdfDictionary)) {
                 continue;
             }
-            COSDictionary dict = (COSDictionary) obj;
+            PdfDictionary dict = (PdfDictionary) obj;
             String subtype = dict.getNameAsString("Subtype");
             if (!"CIDFontType0".equals(subtype) && !"CIDFontType2".equals(subtype)) {
                 continue;
             }
 
             // Get font descriptor
-            COSBase fdRef = dict.get("FontDescriptor");
+            PdfBase fdRef = dict.get("FontDescriptor");
             if (fdRef == null) {
                 continue;
             }
-            COSBase fdObj = parser.resolveReference(fdRef);
-            if (!(fdObj instanceof COSDictionary)) {
+            PdfBase fdObj = parser.resolveReference(fdRef);
+            if (!(fdObj instanceof PdfDictionary)) {
                 continue;
             }
-            COSDictionary fontDesc = (COSDictionary) fdObj;
+            PdfDictionary fontDesc = (PdfDictionary) fdObj;
             if (fontDesc.get("CIDSet") != null) {
                 continue;
             }
@@ -279,20 +279,20 @@ public final class FontFixes {
             // Generate a CIDSet that marks all CIDs 0..lastCid as present
             // This is a conservative approach; ideally we'd analyze the actual CIDs used
             int lastCid = 255; // default
-            COSBase wArray = dict.get("W");
-            if (wArray instanceof COSArray) {
-                lastCid = estimateMaxCidFromW((COSArray) wArray);
+            PdfBase wArray = dict.get("W");
+            if (wArray instanceof PdfArray) {
+                lastCid = estimateMaxCidFromW((PdfArray) wArray);
             }
 
             byte[] cidSetData = buildCidSetBitmap(lastCid);
 
-            COSStream cidSetStream = new COSStream();
+            PdfStream cidSetStream = new PdfStream();
             cidSetStream.setDecodedData(cidSetData);
-            cidSetStream.setFilter(COSName.FLATE_DECODE);
+            cidSetStream.setFilter(PdfName.FLATE_DECODE);
 
             int maxObj = findMaxObjectNumber(parser);
-            COSObjectKey cidSetKey = new COSObjectKey(maxObj + 1, 0);
-            COSObjectReference cidSetRef = new COSObjectReference(cidSetKey, k -> cidSetStream);
+            PdfObjectKey cidSetKey = new PdfObjectKey(maxObj + 1, 0);
+            PdfObjectReference cidSetRef = new PdfObjectReference(cidSetKey, k -> cidSetStream);
 
             fontDesc.set("CIDSet", cidSetRef);
             result.addWarning("font.3", "Generated /CIDSet for subset CIDFont " + baseFontName,
@@ -312,17 +312,17 @@ public final class FontFixes {
      */
     public void logUnembeddedFonts(PDFParser parser, PdfFormat format,
                                    ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
-        for (COSObjectKey key : parser.getAllObjectKeys()) {
-            COSBase obj;
+        for (PdfObjectKey key : parser.getAllObjectKeys()) {
+            PdfBase obj;
             try {
                 obj = parser.getObject(key);
             } catch (IOException e) {
                 continue;
             }
-            if (!(obj instanceof COSDictionary)) {
+            if (!(obj instanceof PdfDictionary)) {
                 continue;
             }
-            COSDictionary dict = (COSDictionary) obj;
+            PdfDictionary dict = (PdfDictionary) obj;
             if (!"Font".equals(dict.getNameAsString("Type"))) {
                 continue;
             }
@@ -332,7 +332,7 @@ public final class FontFixes {
                 continue;
             }
 
-            COSBase fdRef = dict.get("FontDescriptor");
+            PdfBase fdRef = dict.get("FontDescriptor");
             if (fdRef == null) {
                 // Standard 14 fonts may lack FontDescriptor
                 String baseFontName = dict.getNameAsString("BaseFont");
@@ -344,11 +344,11 @@ public final class FontFixes {
                 continue;
             }
 
-            COSBase fdObj = parser.resolveReference(fdRef);
-            if (!(fdObj instanceof COSDictionary)) {
+            PdfBase fdObj = parser.resolveReference(fdRef);
+            if (!(fdObj instanceof PdfDictionary)) {
                 continue;
             }
-            COSDictionary fontDesc = (COSDictionary) fdObj;
+            PdfDictionary fontDesc = (PdfDictionary) fdObj;
 
             // Check for embedded font program
             boolean embedded = fontDesc.get("FontFile") != null
@@ -448,12 +448,12 @@ public final class FontFixes {
     /**
      * Estimates the maximum CID from a /W (widths) array.
      */
-    private static int estimateMaxCidFromW(COSArray wArray) {
+    private static int estimateMaxCidFromW(PdfArray wArray) {
         int maxCid = 255;
         for (int i = 0; i < wArray.size(); i++) {
-            COSBase item = wArray.get(i);
-            if (item instanceof COSInteger) {
-                int val = (int) ((COSInteger) item).longValue();
+            PdfBase item = wArray.get(i);
+            if (item instanceof PdfInteger) {
+                int val = (int) ((PdfInteger) item).longValue();
                 if (val > maxCid) {
                     maxCid = val;
                 }
@@ -500,7 +500,7 @@ public final class FontFixes {
      */
     private static int findMaxObjectNumber(PDFParser parser) {
         int maxObj = 0;
-        for (COSObjectKey k : parser.getAllObjectKeys()) {
+        for (PdfObjectKey k : parser.getAllObjectKeys()) {
             maxObj = Math.max(maxObj, k.getObjectNumber());
         }
         return maxObj;

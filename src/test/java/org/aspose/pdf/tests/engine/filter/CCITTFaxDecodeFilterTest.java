@@ -1,9 +1,9 @@
 package org.aspose.pdf.tests.engine.filter;
 
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSBoolean;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfBoolean;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 import org.aspose.pdf.engine.filter.CCITTFaxDecodeFilter;
 import org.junit.jupiter.api.Test;
 
@@ -43,12 +43,12 @@ public class CCITTFaxDecodeFilterTest {
         // Total: 010011011 00110101 = 17 bits → pad to 3 bytes
         byte[] encoded = bitsToBytes(codeStr(0x9B, 9) + codeStr(0x35, 8));
 
-        COSDictionary params = new COSDictionary();
-        params.set(COSName.of("K"), COSInteger.valueOf(0));
-        params.set(COSName.of("Columns"), COSInteger.valueOf(1728));
-        params.set(COSName.of("Rows"), COSInteger.valueOf(1));
-        params.set(COSName.of("EndOfBlock"), COSBoolean.FALSE);
-        params.set(COSName.of("BlackIs1"), COSBoolean.TRUE);
+        PdfDictionary params = new PdfDictionary();
+        params.set(PdfName.of("K"), PdfInteger.valueOf(0));
+        params.set(PdfName.of("Columns"), PdfInteger.valueOf(1728));
+        params.set(PdfName.of("Rows"), PdfInteger.valueOf(1));
+        params.set(PdfName.of("EndOfBlock"), PdfBoolean.FALSE);
+        params.set(PdfName.of("BlackIs1"), PdfBoolean.TRUE);
 
         byte[] result = filter.decode(encoded, params);
         // 1728 pixels / 8 = 216 bytes, all zeros (white with BlackIs1=true: white=0)
@@ -68,12 +68,12 @@ public class CCITTFaxDecodeFilterTest {
         // Total: 10011 000101 = 11 bits
         byte[] encoded = bitsToBytes(codeStr(0x13, 5) + codeStr(0x05, 6));
 
-        COSDictionary params = new COSDictionary();
-        params.set(COSName.of("K"), COSInteger.valueOf(0));
-        params.set(COSName.of("Columns"), COSInteger.valueOf(16));
-        params.set(COSName.of("Rows"), COSInteger.valueOf(1));
-        params.set(COSName.of("EndOfBlock"), COSBoolean.FALSE);
-        params.set(COSName.of("BlackIs1"), COSBoolean.TRUE);
+        PdfDictionary params = new PdfDictionary();
+        params.set(PdfName.of("K"), PdfInteger.valueOf(0));
+        params.set(PdfName.of("Columns"), PdfInteger.valueOf(16));
+        params.set(PdfName.of("Rows"), PdfInteger.valueOf(1));
+        params.set(PdfName.of("EndOfBlock"), PdfBoolean.FALSE);
+        params.set(PdfName.of("BlackIs1"), PdfBoolean.TRUE);
 
         byte[] result = filter.decode(encoded, params);
         // 16 pixels = 2 bytes. First 8 = white (00000000), next 8 = black (11111111)
@@ -92,12 +92,12 @@ public class CCITTFaxDecodeFilterTest {
         // Total: 00110101 000101 = 14 bits
         byte[] encoded = bitsToBytes(codeStr(0x35, 8) + codeStr(0x05, 6));
 
-        COSDictionary params = new COSDictionary();
-        params.set(COSName.of("K"), COSInteger.valueOf(0));
-        params.set(COSName.of("Columns"), COSInteger.valueOf(8));
-        params.set(COSName.of("Rows"), COSInteger.valueOf(1));
-        params.set(COSName.of("EndOfBlock"), COSBoolean.FALSE);
-        params.set(COSName.of("BlackIs1"), COSBoolean.TRUE);
+        PdfDictionary params = new PdfDictionary();
+        params.set(PdfName.of("K"), PdfInteger.valueOf(0));
+        params.set(PdfName.of("Columns"), PdfInteger.valueOf(8));
+        params.set(PdfName.of("Rows"), PdfInteger.valueOf(1));
+        params.set(PdfName.of("EndOfBlock"), PdfBoolean.FALSE);
+        params.set(PdfName.of("BlackIs1"), PdfBoolean.TRUE);
 
         byte[] result = filter.decode(encoded, params);
         assertEquals(1, result.length);
@@ -115,11 +115,11 @@ public class CCITTFaxDecodeFilterTest {
         // Then EOFB: 000000000001 000000000001 (24 bits)
         byte[] encoded = bitsToBytes("1" + "000000000001" + "000000000001");
 
-        COSDictionary params = new COSDictionary();
-        params.set(COSName.of("K"), COSInteger.valueOf(-1));
-        params.set(COSName.of("Columns"), COSInteger.valueOf(8));
-        params.set(COSName.of("Rows"), COSInteger.valueOf(1));
-        params.set(COSName.of("BlackIs1"), COSBoolean.TRUE);
+        PdfDictionary params = new PdfDictionary();
+        params.set(PdfName.of("K"), PdfInteger.valueOf(-1));
+        params.set(PdfName.of("Columns"), PdfInteger.valueOf(8));
+        params.set(PdfName.of("Rows"), PdfInteger.valueOf(1));
+        params.set(PdfName.of("BlackIs1"), PdfBoolean.TRUE);
 
         byte[] result = filter.decode(encoded, params);
         assertEquals(1, result.length);
@@ -134,10 +134,10 @@ public class CCITTFaxDecodeFilterTest {
         // White pixels should become 0xFF after inversion
         byte[] encoded = bitsToBytes("1" + "000000000001" + "000000000001");
 
-        COSDictionary params = new COSDictionary();
-        params.set(COSName.of("K"), COSInteger.valueOf(-1));
-        params.set(COSName.of("Columns"), COSInteger.valueOf(8));
-        params.set(COSName.of("Rows"), COSInteger.valueOf(1));
+        PdfDictionary params = new PdfDictionary();
+        params.set(PdfName.of("K"), PdfInteger.valueOf(-1));
+        params.set(PdfName.of("Columns"), PdfInteger.valueOf(8));
+        params.set(PdfName.of("Rows"), PdfInteger.valueOf(1));
         // BlackIs1 defaults to false → invert
 
         byte[] result = filter.decode(encoded, params);
@@ -147,11 +147,11 @@ public class CCITTFaxDecodeFilterTest {
 
     @Test
     public void encodeDecodeRoundTrip_group3_1d() throws IOException {
-        COSDictionary params = new COSDictionary();
-        params.set(COSName.of("K"), COSInteger.valueOf(0));
-        params.set(COSName.of("Columns"), COSInteger.valueOf(16));
-        params.set(COSName.of("Rows"), COSInteger.valueOf(1));
-        params.set(COSName.of("BlackIs1"), COSBoolean.TRUE);
+        PdfDictionary params = new PdfDictionary();
+        params.set(PdfName.of("K"), PdfInteger.valueOf(0));
+        params.set(PdfName.of("Columns"), PdfInteger.valueOf(16));
+        params.set(PdfName.of("Rows"), PdfInteger.valueOf(1));
+        params.set(PdfName.of("BlackIs1"), PdfBoolean.TRUE);
 
         byte[] decoded = new byte[] {(byte) 0x0F, (byte) 0xF0};
         byte[] encoded = filter.encode(decoded, params);
@@ -161,11 +161,11 @@ public class CCITTFaxDecodeFilterTest {
 
     @Test
     public void encodeDecodeRoundTrip_group4_horizontalMode() throws IOException {
-        COSDictionary params = new COSDictionary();
-        params.set(COSName.of("K"), COSInteger.valueOf(-1));
-        params.set(COSName.of("Columns"), COSInteger.valueOf(8));
-        params.set(COSName.of("Rows"), COSInteger.valueOf(2));
-        params.set(COSName.of("BlackIs1"), COSBoolean.TRUE);
+        PdfDictionary params = new PdfDictionary();
+        params.set(PdfName.of("K"), PdfInteger.valueOf(-1));
+        params.set(PdfName.of("Columns"), PdfInteger.valueOf(8));
+        params.set(PdfName.of("Rows"), PdfInteger.valueOf(2));
+        params.set(PdfName.of("BlackIs1"), PdfBoolean.TRUE);
 
         byte[] decoded = new byte[] {
                 (byte) 0x0F,
@@ -187,6 +187,63 @@ public class CCITTFaxDecodeFilterTest {
         // Should produce at least 216 bytes (1728/8), inverted (BlackIs1=false by default)
         // Rows=0 → decoder reads until EOF, so trailing pad bits may produce extra rows
         assertTrue(result.length >= 216, "Expected at least 216 bytes, got " + result.length);
+    }
+
+    // ─── Group 3 1D: EOL-prefixed lines (corpus 29753) ────────────
+
+    @Test
+    public void group3_1D_eolPrefixedLines() throws IOException {
+        // Two 16px lines (8 white + 8 black), each prefixed by an EOL
+        // (000000000001) even though /EndOfLine is false — real T.4 streams
+        // routinely include them (corpus 29753). The EOL zeros must not be
+        // consumed as run data or the whole stream desyncs.
+        String eol = "000000000001";
+        String line = codeStr(0x13, 5) + codeStr(0x05, 6); // white 8 + black 8
+        byte[] encoded = bitsToBytes(eol + line + eol + line);
+
+        PdfDictionary params = new PdfDictionary();
+        params.set(PdfName.of("K"), PdfInteger.valueOf(0));
+        params.set(PdfName.of("Columns"), PdfInteger.valueOf(16));
+        params.set(PdfName.of("Rows"), PdfInteger.valueOf(2));
+        params.set(PdfName.of("EndOfBlock"), PdfBoolean.FALSE);
+        params.set(PdfName.of("BlackIs1"), PdfBoolean.TRUE);
+
+        byte[] result = filter.decode(encoded, params);
+        assertEquals(4, result.length);
+        assertEquals(0x00, result[0] & 0xFF);
+        assertEquals(0xFF, result[1] & 0xFF);
+        assertEquals(0x00, result[2] & 0xFF);
+        assertEquals(0xFF, result[3] & 0xFF);
+    }
+
+    // ─── Group 3 1D: resync at EOL after a corrupt row ────────────
+
+    @Test
+    public void group3_1D_resyncAfterCorruptRow() throws IOException {
+        // Row 1 starts with a valid white-8 run then hits an invalid code
+        // (zeros that match no Huffman entry). The decoder must emit the
+        // partial row, scan to the next EOL, and decode row 2 cleanly
+        // instead of treating the corrupt tail as row data.
+        String line = codeStr(0x13, 5) + codeStr(0x05, 6); // white 8 + black 8
+        String corrupt = codeStr(0x13, 5) + "000000000";   // white 8 + invalid
+        String eol = "000000000001";
+        byte[] encoded = bitsToBytes(corrupt + eol + line);
+
+        PdfDictionary params = new PdfDictionary();
+        params.set(PdfName.of("K"), PdfInteger.valueOf(0));
+        params.set(PdfName.of("Columns"), PdfInteger.valueOf(16));
+        params.set(PdfName.of("Rows"), PdfInteger.valueOf(2));
+        params.set(PdfName.of("EndOfBlock"), PdfBoolean.FALSE);
+        params.set(PdfName.of("BlackIs1"), PdfBoolean.TRUE);
+
+        byte[] result = filter.decode(encoded, params);
+        assertEquals(4, result.length);
+        // Row 1: only the white run decoded → stays all-white
+        assertEquals(0x00, result[0] & 0xFF);
+        assertEquals(0x00, result[1] & 0xFF);
+        // Row 2: clean 8 white + 8 black
+        assertEquals(0x00, result[2] & 0xFF);
+        assertEquals(0xFF, result[3] & 0xFF);
     }
 
     // ─── Helpers ──────────────────────────────────────────────────

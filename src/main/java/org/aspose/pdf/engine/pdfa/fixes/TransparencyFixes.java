@@ -2,12 +2,12 @@ package org.aspose.pdf.engine.pdfa.fixes;
 
 import org.aspose.pdf.ConvertErrorAction;
 import org.aspose.pdf.PdfFormat;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSFloat;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectKey;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfFloat;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectKey;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 import org.aspose.pdf.engine.pdfa.PdfAValidationResult;
 import org.aspose.pdf.engine.parser.PDFParser;
 
@@ -49,18 +49,18 @@ public final class TransparencyFixes {
      */
     public void fixSmask(PDFParser parser, PdfFormat format,
                          ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
-        for (COSObjectKey key : parser.getAllObjectKeys()) {
-            COSBase obj = safeGetObject(parser, key);
-            if (!(obj instanceof COSDictionary)) {
+        for (PdfObjectKey key : parser.getAllObjectKeys()) {
+            PdfBase obj = safeGetObject(parser, key);
+            if (!(obj instanceof PdfDictionary)) {
                 continue;
             }
-            COSDictionary dict = (COSDictionary) obj;
+            PdfDictionary dict = (PdfDictionary) obj;
             if (!"ExtGState".equals(dict.getNameAsString("Type"))) {
                 continue;
             }
-            COSBase smask = dict.get("SMask");
-            if (smask != null && !(smask instanceof COSName && "None".equals(((COSName) smask).getName()))) {
-                dict.set("SMask", COSName.of("None"));
+            PdfBase smask = dict.get("SMask");
+            if (smask != null && !(smask instanceof PdfName && "None".equals(((PdfName) smask).getName()))) {
+                dict.set("SMask", PdfName.of("None"));
                 result.addWarning("trans.1", "Set /SMask to /None in ExtGState",
                         "obj " + key.getObjectNumber(), "ISO 19005-1:2005, 6.4");
             }
@@ -82,20 +82,20 @@ public final class TransparencyFixes {
      */
     public void fixBlendMode(PDFParser parser, PdfFormat format,
                              ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
-        for (COSObjectKey key : parser.getAllObjectKeys()) {
-            COSBase obj = safeGetObject(parser, key);
-            if (!(obj instanceof COSDictionary)) {
+        for (PdfObjectKey key : parser.getAllObjectKeys()) {
+            PdfBase obj = safeGetObject(parser, key);
+            if (!(obj instanceof PdfDictionary)) {
                 continue;
             }
-            COSDictionary dict = (COSDictionary) obj;
+            PdfDictionary dict = (PdfDictionary) obj;
             if (!"ExtGState".equals(dict.getNameAsString("Type"))) {
                 continue;
             }
-            COSBase bm = dict.get("BM");
-            if (bm instanceof COSName) {
-                String bmName = ((COSName) bm).getName();
+            PdfBase bm = dict.get("BM");
+            if (bm instanceof PdfName) {
+                String bmName = ((PdfName) bm).getName();
                 if (!"Normal".equals(bmName) && !"Compatible".equals(bmName)) {
-                    dict.set("BM", COSName.of("Normal"));
+                    dict.set("BM", PdfName.of("Normal"));
                     result.addWarning("trans.2", "Set /BM to /Normal in ExtGState (was " + bmName + ")",
                             "obj " + key.getObjectNumber(), "ISO 19005-1:2005, 6.4");
                 }
@@ -118,18 +118,18 @@ public final class TransparencyFixes {
      */
     public void fixStrokingAlpha(PDFParser parser, PdfFormat format,
                                  ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
-        for (COSObjectKey key : parser.getAllObjectKeys()) {
-            COSBase obj = safeGetObject(parser, key);
-            if (!(obj instanceof COSDictionary)) {
+        for (PdfObjectKey key : parser.getAllObjectKeys()) {
+            PdfBase obj = safeGetObject(parser, key);
+            if (!(obj instanceof PdfDictionary)) {
                 continue;
             }
-            COSDictionary dict = (COSDictionary) obj;
+            PdfDictionary dict = (PdfDictionary) obj;
             if (!"ExtGState".equals(dict.getNameAsString("Type"))) {
                 continue;
             }
             float ca = dict.getFloat("CA", 1.0f);
             if (ca < 1.0f) {
-                dict.set("CA", new COSFloat(1.0));
+                dict.set("CA", new PdfFloat(1.0));
                 result.addWarning("trans.3", "Set stroking alpha /CA to 1.0 (was " + ca + ")",
                         "obj " + key.getObjectNumber(), "ISO 19005-1:2005, 6.4");
             }
@@ -151,18 +151,18 @@ public final class TransparencyFixes {
      */
     public void fixNonStrokingAlpha(PDFParser parser, PdfFormat format,
                                     ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
-        for (COSObjectKey key : parser.getAllObjectKeys()) {
-            COSBase obj = safeGetObject(parser, key);
-            if (!(obj instanceof COSDictionary)) {
+        for (PdfObjectKey key : parser.getAllObjectKeys()) {
+            PdfBase obj = safeGetObject(parser, key);
+            if (!(obj instanceof PdfDictionary)) {
                 continue;
             }
-            COSDictionary dict = (COSDictionary) obj;
+            PdfDictionary dict = (PdfDictionary) obj;
             if (!"ExtGState".equals(dict.getNameAsString("Type"))) {
                 continue;
             }
             float ca = dict.getFloat("ca", 1.0f);
             if (ca < 1.0f) {
-                dict.set("ca", new COSFloat(1.0));
+                dict.set("ca", new PdfFloat(1.0));
                 result.addWarning("trans.4", "Set non-stroking alpha /ca to 1.0 (was " + ca + ")",
                         "obj " + key.getObjectNumber(), "ISO 19005-1:2005, 6.4");
             }
@@ -185,22 +185,22 @@ public final class TransparencyFixes {
      */
     public void removeTransparencyGroups(PDFParser parser, PdfFormat format,
                                          ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
-        for (COSObjectKey key : parser.getAllObjectKeys()) {
-            COSBase obj = safeGetObject(parser, key);
-            if (!(obj instanceof COSStream)) {
+        for (PdfObjectKey key : parser.getAllObjectKeys()) {
+            PdfBase obj = safeGetObject(parser, key);
+            if (!(obj instanceof PdfStream)) {
                 continue;
             }
-            COSStream stream = (COSStream) obj;
+            PdfStream stream = (PdfStream) obj;
             if (!"Form".equals(stream.getNameAsString("Subtype"))) {
                 continue;
             }
-            COSBase groupRef = stream.get("Group");
+            PdfBase groupRef = stream.get("Group");
             if (groupRef == null) {
                 continue;
             }
-            COSBase groupObj = parser.resolveReference(groupRef);
-            if (groupObj instanceof COSDictionary) {
-                COSDictionary group = (COSDictionary) groupObj;
+            PdfBase groupObj = parser.resolveReference(groupRef);
+            if (groupObj instanceof PdfDictionary) {
+                PdfDictionary group = (PdfDictionary) groupObj;
                 if ("Transparency".equals(group.getNameAsString("S"))) {
                     stream.set("Group", null);
                     result.addWarning("trans.5", "Removed transparency group from form XObject",
@@ -213,7 +213,7 @@ public final class TransparencyFixes {
     /**
      * Safely loads an object, returning null on failure.
      */
-    private static COSBase safeGetObject(PDFParser parser, COSObjectKey key) throws IOException {
+    private static PdfBase safeGetObject(PDFParser parser, PdfObjectKey key) throws IOException {
         try {
             return parser.getObject(key);
         } catch (IOException e) {

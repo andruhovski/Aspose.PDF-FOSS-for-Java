@@ -56,6 +56,29 @@ public class CMapParserTest {
     }
 
     @Test
+    public void testAbsurdBfRangeSpanIsClamped() throws IOException {
+        // Corrupt bfrange covering 2 billion codes (corpus 38236.PDF): must
+        // not materialise billions of entries (was an OutOfMemoryError plus
+        // minutes of CPU inside the expansion loop). The clamp keeps the
+        // first 64k mappings and drops the corrupt tail.
+        String cmap = "1 beginbfrange\n<0000> <7FFFFFFF> <0041>\nendbfrange";
+        ToUnicodeCMap map = CMapParser.parseToUnicode(cmap.getBytes(StandardCharsets.ISO_8859_1));
+        assertEquals("A", map.lookup(0x00));
+        assertEquals("B", map.lookup(0x01));
+    }
+
+    @Test
+    public void testBfRangeHiBelowLoIsSingleEntry() throws IOException {
+        // hi < lo must not desync the scan: the dst token is still consumed
+        // and the following entry parses normally.
+        String cmap = "2 beginbfrange\n<0042> <0041> <0061>\n<0050> <0051> <0070>\nendbfrange";
+        ToUnicodeCMap map = CMapParser.parseToUnicode(cmap.getBytes(StandardCharsets.ISO_8859_1));
+        assertEquals("a", map.lookup(0x42));
+        assertEquals("p", map.lookup(0x50));
+        assertEquals("q", map.lookup(0x51));
+    }
+
+    @Test
     public void testEmptyCMap() throws IOException {
         ToUnicodeCMap map = CMapParser.parseToUnicode(new byte[0]);
         assertNotNull(map);

@@ -2,15 +2,15 @@ package org.aspose.pdf.engine.pdfa.fixes;
 
 import org.aspose.pdf.ConvertErrorAction;
 import org.aspose.pdf.PdfFormat;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectKey;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSStream;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectKey;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 import org.aspose.pdf.engine.pdfa.PdfAValidationResult;
 import org.aspose.pdf.engine.parser.PDFParser;
 
@@ -55,9 +55,9 @@ public final class PdfXFixes {
      */
     public void addPdfXVersion(PDFParser parser, PdfFormat format,
                                ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
-        COSDictionary info = getOrCreateInfo(parser);
+        PdfDictionary info = getOrCreateInfo(parser);
         String version = determinePdfXVersionString(format);
-        info.set("GTS_PDFXVersion", new COSString(version));
+        info.set("GTS_PDFXVersion", new PdfString(version));
         result.addWarning("pdfx.1", "Set /GTS_PDFXVersion to " + version,
                 "Info/GTS_PDFXVersion", null);
     }
@@ -77,9 +77,9 @@ public final class PdfXFixes {
         if (!format.isPdfX1a()) {
             return;
         }
-        COSDictionary info = getOrCreateInfo(parser);
+        PdfDictionary info = getOrCreateInfo(parser);
         String conformance = "PDF/X-1a:2001";
-        info.set("GTS_PDFXConformance", new COSString(conformance));
+        info.set("GTS_PDFXConformance", new PdfString(conformance));
         result.addWarning("pdfx.2", "Set /GTS_PDFXConformance to " + conformance,
                 "Info/GTS_PDFXConformance", null);
     }
@@ -96,10 +96,10 @@ public final class PdfXFixes {
      */
     public void addTrapped(PDFParser parser, PdfFormat format,
                            ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
-        COSDictionary info = getOrCreateInfo(parser);
-        COSBase trapped = info.get("Trapped");
+        PdfDictionary info = getOrCreateInfo(parser);
+        PdfBase trapped = info.get("Trapped");
         if (trapped == null) {
-            info.set("Trapped", COSName.of("False"));
+            info.set("Trapped", PdfName.of("False"));
             result.addWarning("pdfx.3", "Set /Trapped to /False",
                     "Info/Trapped", null);
         }
@@ -119,16 +119,16 @@ public final class PdfXFixes {
      */
     public void addTrimBox(PDFParser parser, PdfFormat format,
                            ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
-        COSDictionary catalog = parser.getCatalog();
-        COSBase pagesRef = catalog.get("Pages");
+        PdfDictionary catalog = parser.getCatalog();
+        PdfBase pagesRef = catalog.get("Pages");
         if (pagesRef == null) {
             return;
         }
-        COSBase pagesObj = parser.resolveReference(pagesRef);
-        if (!(pagesObj instanceof COSDictionary)) {
+        PdfBase pagesObj = parser.resolveReference(pagesRef);
+        if (!(pagesObj instanceof PdfDictionary)) {
             return;
         }
-        addTrimBoxToPageTree(parser, (COSDictionary) pagesObj, result);
+        addTrimBoxToPageTree(parser, (PdfDictionary) pagesObj, result);
     }
 
     /**
@@ -143,18 +143,18 @@ public final class PdfXFixes {
      */
     public void addOutputIntentPdfX(PDFParser parser, PdfFormat format,
                                     ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
-        COSDictionary catalog = parser.getCatalog();
-        COSBase existingRef = catalog.get("OutputIntents");
+        PdfDictionary catalog = parser.getCatalog();
+        PdfBase existingRef = catalog.get("OutputIntents");
         if (existingRef != null) {
-            COSBase existingObj = parser.resolveReference(existingRef);
-            if (existingObj instanceof COSArray) {
-                COSArray existing = (COSArray) existingObj;
+            PdfBase existingObj = parser.resolveReference(existingRef);
+            if (existingObj instanceof PdfArray) {
+                PdfArray existing = (PdfArray) existingObj;
                 // Check if a PDF/X output intent already exists
                 for (int i = 0; i < existing.size(); i++) {
-                    COSBase intentRef = existing.get(i);
-                    COSBase intentObj = parser.resolveReference(intentRef);
-                    if (intentObj instanceof COSDictionary) {
-                        String s = ((COSDictionary) intentObj).getNameAsString("S");
+                    PdfBase intentRef = existing.get(i);
+                    PdfBase intentObj = parser.resolveReference(intentRef);
+                    if (intentObj instanceof PdfDictionary) {
+                        String s = ((PdfDictionary) intentObj).getNameAsString("S");
                         if ("GTS_PDFX".equals(s)) {
                             LOG.fine("PDF/X output intent already exists");
                             return;
@@ -170,38 +170,38 @@ public final class PdfXFixes {
         ICC_Profile srgb = ICC_Profile.getInstance(ColorSpace.CS_sRGB);
         byte[] iccData = srgb.getData();
 
-        COSStream iccStream = new COSStream();
+        PdfStream iccStream = new PdfStream();
         iccStream.setDecodedData(iccData);
-        iccStream.setFilter(COSName.FLATE_DECODE);
-        iccStream.set("N", COSInteger.valueOf(3));
+        iccStream.setFilter(PdfName.FLATE_DECODE);
+        iccStream.set("N", PdfInteger.valueOf(3));
 
         int maxObj = findMaxObjectNumber(parser);
-        COSObjectKey iccKey = new COSObjectKey(maxObj + 1, 0);
-        COSObjectReference iccRef = new COSObjectReference(iccKey, k -> iccStream);
+        PdfObjectKey iccKey = new PdfObjectKey(maxObj + 1, 0);
+        PdfObjectReference iccRef = new PdfObjectReference(iccKey, k -> iccStream);
 
-        COSDictionary intent = new COSDictionary();
-        intent.set("Type", COSName.of("OutputIntent"));
-        intent.set("S", COSName.of("GTS_PDFX"));
-        intent.set("OutputConditionIdentifier", new COSString("sRGB IEC61966-2.1"));
-        intent.set("RegistryName", new COSString("http://www.color.org"));
-        intent.set("Info", new COSString("sRGB IEC61966-2.1"));
+        PdfDictionary intent = new PdfDictionary();
+        intent.set("Type", PdfName.of("OutputIntent"));
+        intent.set("S", PdfName.of("GTS_PDFX"));
+        intent.set("OutputConditionIdentifier", new PdfString("sRGB IEC61966-2.1"));
+        intent.set("RegistryName", new PdfString("http://www.color.org"));
+        intent.set("Info", new PdfString("sRGB IEC61966-2.1"));
         intent.set("DestOutputProfile", iccRef);
 
-        COSObjectKey intentKey = new COSObjectKey(maxObj + 2, 0);
-        COSObjectReference intentRef = new COSObjectReference(intentKey, k -> intent);
+        PdfObjectKey intentKey = new PdfObjectKey(maxObj + 2, 0);
+        PdfObjectReference intentRef = new PdfObjectReference(intentKey, k -> intent);
 
         // Add to existing OutputIntents or create new array
-        COSBase oiRef = catalog.get("OutputIntents");
-        COSArray intents;
+        PdfBase oiRef = catalog.get("OutputIntents");
+        PdfArray intents;
         if (oiRef != null) {
-            COSBase oiObj = parser.resolveReference(oiRef);
-            if (oiObj instanceof COSArray) {
-                intents = (COSArray) oiObj;
+            PdfBase oiObj = parser.resolveReference(oiRef);
+            if (oiObj instanceof PdfArray) {
+                intents = (PdfArray) oiObj;
             } else {
-                intents = new COSArray(1);
+                intents = new PdfArray(1);
             }
         } else {
-            intents = new COSArray(1);
+            intents = new PdfArray(1);
         }
         intents.add(intentRef);
         catalog.set("OutputIntents", intents);
@@ -221,7 +221,7 @@ public final class PdfXFixes {
      */
     public void removeEncryption(PDFParser parser, PdfFormat format,
                                  ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
-        COSDictionary trailer = parser.getTrailer();
+        PdfDictionary trailer = parser.getTrailer();
         if (trailer.get("Encrypt") != null) {
             LOG.info("Removing /Encrypt from trailer for PDF/X-1a compliance");
             trailer.set("Encrypt", null);
@@ -237,21 +237,21 @@ public final class PdfXFixes {
     /**
      * Retrieves the Info dictionary, creating one if absent.
      */
-    private COSDictionary getOrCreateInfo(PDFParser parser) throws IOException {
-        COSDictionary trailer = parser.getTrailer();
-        COSBase infoRef = trailer.get("Info");
+    private PdfDictionary getOrCreateInfo(PDFParser parser) throws IOException {
+        PdfDictionary trailer = parser.getTrailer();
+        PdfBase infoRef = trailer.get("Info");
         if (infoRef != null) {
-            COSBase infoObj = parser.resolveReference(infoRef);
-            if (infoObj instanceof COSDictionary) {
-                return (COSDictionary) infoObj;
+            PdfBase infoObj = parser.resolveReference(infoRef);
+            if (infoObj instanceof PdfDictionary) {
+                return (PdfDictionary) infoObj;
             }
         }
 
         // Create a new Info dictionary
-        COSDictionary info = new COSDictionary();
+        PdfDictionary info = new PdfDictionary();
         int maxObj = findMaxObjectNumber(parser);
-        COSObjectKey infoKey = new COSObjectKey(maxObj + 1, 0);
-        COSObjectReference ref = new COSObjectReference(infoKey, k -> info);
+        PdfObjectKey infoKey = new PdfObjectKey(maxObj + 1, 0);
+        PdfObjectReference ref = new PdfObjectReference(infoKey, k -> info);
         trailer.set("Info", ref);
         return info;
     }
@@ -259,29 +259,29 @@ public final class PdfXFixes {
     /**
      * Recursively walks the page tree, copying MediaBox to TrimBox where needed.
      */
-    private void addTrimBoxToPageTree(PDFParser parser, COSDictionary node,
+    private void addTrimBoxToPageTree(PDFParser parser, PdfDictionary node,
                                       PdfAValidationResult result) throws IOException {
         String type = node.getNameAsString("Type");
         if ("Pages".equals(type)) {
-            COSBase kidsRef = node.get("Kids");
+            PdfBase kidsRef = node.get("Kids");
             if (kidsRef == null) {
                 return;
             }
-            COSBase kidsObj = parser.resolveReference(kidsRef);
-            if (!(kidsObj instanceof COSArray)) {
+            PdfBase kidsObj = parser.resolveReference(kidsRef);
+            if (!(kidsObj instanceof PdfArray)) {
                 return;
             }
-            COSArray kids = (COSArray) kidsObj;
+            PdfArray kids = (PdfArray) kidsObj;
             for (int i = 0; i < kids.size(); i++) {
-                COSBase childRef = kids.get(i);
-                COSBase childObj = parser.resolveReference(childRef);
-                if (childObj instanceof COSDictionary) {
-                    addTrimBoxToPageTree(parser, (COSDictionary) childObj, result);
+                PdfBase childRef = kids.get(i);
+                PdfBase childObj = parser.resolveReference(childRef);
+                if (childObj instanceof PdfDictionary) {
+                    addTrimBoxToPageTree(parser, (PdfDictionary) childObj, result);
                 }
             }
         } else if ("Page".equals(type) || type == null) {
             if (node.get("TrimBox") == null) {
-                COSBase mediaBox = node.get("MediaBox");
+                PdfBase mediaBox = node.get("MediaBox");
                 if (mediaBox != null) {
                     node.set("TrimBox", mediaBox);
                     result.addWarning("pdfx.4", "Copied /MediaBox to /TrimBox on page",
@@ -311,7 +311,7 @@ public final class PdfXFixes {
      */
     private static int findMaxObjectNumber(PDFParser parser) {
         int maxObj = 0;
-        for (COSObjectKey k : parser.getAllObjectKeys()) {
+        for (PdfObjectKey k : parser.getAllObjectKeys()) {
             maxObj = Math.max(maxObj, k.getObjectNumber());
         }
         return maxObj;

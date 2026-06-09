@@ -1,7 +1,7 @@
 package org.aspose.pdf.engine.function;
 
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -38,24 +38,30 @@ public final class PostScriptFunction extends PdfFunction {
     private static final int OP_EQ = 25, OP_NE = 26, OP_GT = 27, OP_GE = 28, OP_LT = 29, OP_LE = 30;
     private static final int OP_DUP = 31, OP_EXCH = 32, OP_POP = 33, OP_COPY = 34, OP_INDEX = 35;
     private static final int OP_TRUE = 36, OP_FALSE = 37;
+    private static final int OP_ROLL = 38, OP_CVR = 39, OP_CVI = 40;
+    /** Procedure literal `{...}`: value = token index of the matching close brace. */
+    private static final int OP_PROC = 41;
+    /** Close brace — jump target only, no-op when executed. */
+    private static final int OP_PROCEND = 42;
+    private static final int OP_IF = 43, OP_IFELSE = 44;
     private static final int OP_UNKNOWN = 99;
 
     private final String program;
     private final Token[] tokens;
 
     /**
-     * Creates a PostScript function from a COS stream dictionary.
+     * Creates a PostScript function from a PDF stream dictionary.
      *
      * @param dict   the function stream dictionary
      * @param domain the input domain
      * @param range  the output range
      * @throws IOException if the stream data cannot be read
      */
-    public PostScriptFunction(COSDictionary dict, double[] domain, double[] range)
+    public PostScriptFunction(PdfDictionary dict, double[] domain, double[] range)
             throws IOException {
         super(domain, range);
-        if (dict instanceof COSStream) {
-            byte[] data = ((COSStream) dict).getDecodedData();
+        if (dict instanceof PdfStream) {
+            byte[] data = ((PdfStream) dict).getDecodedData();
             this.program = new String(data, StandardCharsets.US_ASCII).trim();
         } else {
             this.program = "";
@@ -88,14 +94,21 @@ public final class PostScriptFunction extends PdfFunction {
      */
     private static Token[] compile(String prog) {
         if (prog == null || prog.isEmpty()) return new Token[0];
-        String body = prog;
+        String body = prog.trim();
+        // Strip the OUTER procedure braces only — inner `{...}` are real
+        // procedure literals consumed by if/ifelse and must be kept.
         if (body.startsWith("{")) body = body.substring(1);
         if (body.endsWith("}")) body = body.substring(0, body.length() - 1);
-        String[] raw = body.trim().split("\\s+");
+        // Braces may be packed against tokens ("{dup" / "0}") — split them out.
+        body = body.replace("{", " { ").replace("}", " } ").trim();
+        if (body.isEmpty()) return new Token[0];
+        String[] raw = body.split("\\s+");
         Token[] result = new Token[raw.length];
         int n = 0;
         for (String t : raw) {
-            if (t.isEmpty() || "{".equals(t) || "}".equals(t)) continue;
+            if (t.isEmpty()) continue;
+            if ("{".equals(t)) { result[n++] = new Token(OP_PROC, 0); continue; }
+            if ("}".equals(t)) { result[n++] = new Token(OP_PROCEND, 0); continue; }
             // Cheap numeric check — avoids the cost of throwing NumberFormatException.
             if (looksLikeNumber(t)) {
                 try {
@@ -107,10 +120,24 @@ public final class PostScriptFunction extends PdfFunction {
             }
             result[n++] = new Token(opcodeFor(t), 0);
         }
-        if (n == result.length) return result;
-        Token[] trimmed = new Token[n];
-        System.arraycopy(result, 0, trimmed, 0, n);
-        return trimmed;
+        if (n != result.length) {
+            Token[] trimmed = new Token[n];
+            System.arraycopy(result, 0, trimmed, 0, n);
+            result = trimmed;
+        }
+        // Resolve each OP_PROC's matching OP_PROCEND index (stored in value)
+        // so if/ifelse can execute the body range without re-scanning.
+        int[] open = new int[result.length];
+        int depth = 0;
+        for (int i = 0; i < result.length; i++) {
+            if (result[i].op == OP_PROC) {
+                open[depth++] = i;
+            } else if (result[i].op == OP_PROCEND && depth > 0) {
+                int start = open[--depth];
+                result[start] = new Token(OP_PROC, i);
+            }
+        }
+        return result;
     }
 
     private static boolean looksLikeNumber(String s) {
@@ -176,6 +203,11 @@ public final class PostScriptFunction extends PdfFunction {
             case "pop": return OP_POP;
             case "copy": return OP_COPY;
             case "index": return OP_INDEX;
+            case "roll": return OP_ROLL;
+            case "cvr": return OP_CVR;
+            case "cvi": return OP_CVI;
+            case "if": return OP_IF;
+            case "ifelse": return OP_IFELSE;
             case "true": return OP_TRUE;
             case "false": return OP_FALSE;
             default: return OP_UNKNOWN;
@@ -189,14 +221,17 @@ public final class PostScriptFunction extends PdfFunction {
         double[] stack = new double[cap];
         int sp = 0;
 
-        // Push inputs (first input becomes the bottom of the stack).
-        for (int i = input.length - 1; i >= 0; i--) {
+        // Push inputs in order (§7.10.5.1): the FIRST input is pushed first
+        // and ends up deepest; the LAST input is on top. The previous reversed
+        // order went unnoticed because single-input functions dominate — for a
+        // 2-tint DeviceN it swapped the colorants (corpus 29077: Cyan↔Magenta).
+        for (int i = 0; i < input.length; i++) {
             double v = clamp(input[i], domain[Math.min(i * 2, domain.length - 2)],
                     domain[Math.min(i * 2 + 1, domain.length - 1)]);
             stack[sp++] = v;
         }
 
-        sp = execute(tokens, stack, sp);
+        sp = execute(tokens, 0, tokens.length, stack, sp);
 
         int numOutputs = range != null ? range.length / 2 : 1;
         double[] result = new double[numOutputs];
@@ -209,8 +244,13 @@ public final class PostScriptFunction extends PdfFunction {
         return result;
     }
 
-    private static int execute(Token[] toks, double[] stack, int sp) {
-        for (int i = 0; i < toks.length; i++) {
+    /**
+     * Executes tokens in {@code [from, to)}. Procedure literals push their own
+     * token index and jump past their body; if/ifelse then execute the body
+     * range recursively.
+     */
+    private static int execute(Token[] toks, int from, int to, double[] stack, int sp) {
+        for (int i = from; i < to; i++) {
             Token t = toks[i];
             switch (t.op) {
                 case OP_NUMBER: stack[sp++] = t.value; break;
@@ -267,6 +307,55 @@ public final class PostScriptFunction extends PdfFunction {
                         if (n >= 0 && sp - 1 - n >= 0) {
                             stack[sp] = stack[sp - 1 - n];
                             sp++;
+                        }
+                    }
+                    break;
+                }
+                case OP_ROLL: {
+                    // n j roll — circular shift of the top n elements by j
+                    // (positive j = toward the top of the stack), §7.10.5.2.
+                    if (sp >= 2) {
+                        int j = (int) stack[--sp];
+                        int n = (int) stack[--sp];
+                        if (n > 0 && n <= sp) {
+                            j = ((j % n) + n) % n;
+                            if (j != 0) {
+                                double[] tmp = new double[n];
+                                for (int k = 0; k < n; k++) {
+                                    tmp[(k + j) % n] = stack[sp - n + k];
+                                }
+                                System.arraycopy(tmp, 0, stack, sp - n, n);
+                            }
+                        }
+                    }
+                    break;
+                }
+                case OP_CVR:    /* operand is already a real */ break;
+                case OP_CVI:    if (sp >= 1) { stack[sp - 1] = (double)(long) stack[sp - 1]; } break;
+                case OP_PROC:
+                    // Push this procedure's token index and skip its body.
+                    stack[sp++] = i;
+                    i = (int) t.value;
+                    break;
+                case OP_PROCEND: break;
+                case OP_IF: {
+                    if (sp >= 2) {
+                        int proc = (int) stack[--sp];
+                        boolean cond = stack[--sp] != 0;
+                        if (cond && proc >= 0 && proc < toks.length && toks[proc].op == OP_PROC) {
+                            sp = execute(toks, proc + 1, (int) toks[proc].value, stack, sp);
+                        }
+                    }
+                    break;
+                }
+                case OP_IFELSE: {
+                    if (sp >= 3) {
+                        int proc2 = (int) stack[--sp];
+                        int proc1 = (int) stack[--sp];
+                        boolean cond = stack[--sp] != 0;
+                        int chosen = cond ? proc1 : proc2;
+                        if (chosen >= 0 && chosen < toks.length && toks[chosen].op == OP_PROC) {
+                            sp = execute(toks, chosen + 1, (int) toks[chosen].value, stack, sp);
                         }
                     }
                     break;

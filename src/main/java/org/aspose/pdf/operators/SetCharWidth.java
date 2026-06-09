@@ -1,7 +1,7 @@
 package org.aspose.pdf.operators;
 
 import org.aspose.pdf.Operator;
-import org.aspose.pdf.engine.cos.COSBase;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
 
 import java.util.List;
 
@@ -38,7 +38,7 @@ public class SetCharWidth extends Operator {
      *
      * @param operands the operands from the content stream parser
      */
-    public SetCharWidth(List<COSBase> operands) {
+    public SetCharWidth(List<PdfBase> operands) {
         super("d0", operands);
         this.wx = (operands != null && operands.size() > 0) ? getNumber(operands.get(0)) : 0;
         this.wy = (operands != null && operands.size() > 1) ? getNumber(operands.get(1)) : 0;

@@ -1,9 +1,9 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 
 /**
  * SetOCGState action — changes the state of Optional Content Groups
@@ -17,7 +17,7 @@ public class SetOCGStateAction extends PdfAction {
      *
      * @param dict the action dictionary
      */
-    public SetOCGStateAction(COSDictionary dict) {
+    public SetOCGStateAction(PdfDictionary dict) {
         this.actionDict = dict;
     }
 
@@ -27,9 +27,9 @@ public class SetOCGStateAction extends PdfAction {
      *
      * @return the state array, or {@code null}
      */
-    public COSArray getState() {
-        COSBase s = resolve(actionDict.get("State"));
-        return (s instanceof COSArray) ? (COSArray) s : null;
+    public PdfArray getState() {
+        PdfBase s = resolve(actionDict.get("State"));
+        return (s instanceof PdfArray) ? (PdfArray) s : null;
     }
 
     /**
@@ -37,8 +37,8 @@ public class SetOCGStateAction extends PdfAction {
      *
      * @param state the state array
      */
-    public void setState(COSArray state) {
-        actionDict.set(COSName.of("State"), state);
+    public void setState(PdfArray state) {
+        actionDict.set(PdfName.of("State"), state);
     }
 
     /**

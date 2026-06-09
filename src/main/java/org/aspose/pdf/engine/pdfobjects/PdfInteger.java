@@ -1,4 +1,4 @@
-package org.aspose.pdf.engine.cos;
+package org.aspose.pdf.engine.pdfobjects;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -12,42 +12,42 @@ import java.util.logging.Logger;
  * using the Flyweight pattern for performance.
  * </p>
  */
-public final class COSInteger extends COSBase {
+public final class PdfInteger extends PdfBase {
 
-    private static final Logger LOG = Logger.getLogger(COSInteger.class.getName());
+    private static final Logger LOG = Logger.getLogger(PdfInteger.class.getName());
 
     private final long value;
 
     private static final int CACHE_SIZE = 256;
-    private static final COSInteger[] CACHE = new COSInteger[CACHE_SIZE];
+    private static final PdfInteger[] CACHE = new PdfInteger[CACHE_SIZE];
 
     static {
         for (int i = 0; i < CACHE_SIZE; i++) {
-            CACHE[i] = new COSInteger(i);
+            CACHE[i] = new PdfInteger(i);
         }
     }
 
     /** The constant for value 0. */
-    public static final COSInteger ZERO = CACHE[0];
+    public static final PdfInteger ZERO = CACHE[0];
 
     /** The constant for value 1. */
-    public static final COSInteger ONE = CACHE[1];
+    public static final PdfInteger ONE = CACHE[1];
 
-    private COSInteger(long value) {
+    private PdfInteger(long value) {
         this.value = value;
     }
 
     /**
-     * Returns a COSInteger for the given value. Values 0..255 are cached.
+     * Returns a PdfInteger for the given value. Values 0..255 are cached.
      *
      * @param value the integer value
-     * @return a COSInteger instance
+     * @return a PdfInteger instance
      */
-    public static COSInteger valueOf(long value) {
+    public static PdfInteger valueOf(long value) {
         if (value >= 0 && value < CACHE_SIZE) {
             return CACHE[(int) value];
         }
-        return new COSInteger(value);
+        return new PdfInteger(value);
     }
 
     /**
@@ -86,7 +86,7 @@ public final class COSInteger extends COSBase {
      * Non-cached instances behave normally.
      */
     @Override
-    public void setObjectKey(COSObjectKey key) {
+    public void setObjectKey(PdfObjectKey key) {
         if (value >= 0 && value < CACHE_SIZE) {
             // Flyweight: ignore object key assignment to protect cached instance
             return;
@@ -100,15 +100,15 @@ public final class COSInteger extends COSBase {
     }
 
     @Override
-    public <T> T accept(ICOSVisitor<T> visitor) {
+    public <T> T accept(IPdfVisitor<T> visitor) {
         return visitor.visitInteger(this);
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof COSInteger)) return false;
-        return value == ((COSInteger) o).value;
+        if (!(o instanceof PdfInteger)) return false;
+        return value == ((PdfInteger) o).value;
     }
 
     @Override
@@ -118,6 +118,6 @@ public final class COSInteger extends COSBase {
 
     @Override
     public String toString() {
-        return "COSInteger{" + value + "}";
+        return "PdfInteger{" + value + "}";
     }
 }

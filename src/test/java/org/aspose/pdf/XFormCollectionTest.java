@@ -1,8 +1,8 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -13,7 +13,7 @@ class XFormCollectionTest {
 
     @Test
     void emptyXObjectDictionary_isEmpty() {
-        COSDictionary xobj = new COSDictionary();
+        PdfDictionary xobj = new PdfDictionary();
         XFormCollection forms = new XFormCollection(xobj, null);
         assertTrue(forms.isEmpty());
         assertEquals(0, forms.size());
@@ -23,7 +23,7 @@ class XFormCollectionTest {
 
     @Test
     void filtersOutImageXObjects() {
-        COSDictionary xobj = new COSDictionary();
+        PdfDictionary xobj = new PdfDictionary();
         xobj.set("Im1", imageStream());
         xobj.set("Fm1", formStream());
         xobj.set("Im2", imageStream());
@@ -37,7 +37,7 @@ class XFormCollectionTest {
 
     @Test
     void iteratesInInsertionOrder() {
-        COSDictionary xobj = new COSDictionary();
+        PdfDictionary xobj = new PdfDictionary();
         xobj.set("Fm1", formStream());
         xobj.set("Im1", imageStream());
         xobj.set("Fm2", formStream());
@@ -59,7 +59,7 @@ class XFormCollectionTest {
 
     @Test
     void getByIndex_outOfRange_throws() {
-        COSDictionary xobj = new COSDictionary();
+        PdfDictionary xobj = new PdfDictionary();
         xobj.set("Fm1", formStream());
 
         XFormCollection forms = new XFormCollection(xobj, null);
@@ -69,7 +69,7 @@ class XFormCollectionTest {
 
     @Test
     void getByName_nullName_returnsNull() {
-        COSDictionary xobj = new COSDictionary();
+        PdfDictionary xobj = new PdfDictionary();
         xobj.set("Fm1", formStream());
         XFormCollection forms = new XFormCollection(xobj, null);
         assertNull(forms.get((String) null));
@@ -77,7 +77,7 @@ class XFormCollectionTest {
 
     @Test
     void resources_getForms_returnsLiveView() {
-        COSDictionary resourcesDict = new COSDictionary();
+        PdfDictionary resourcesDict = new PdfDictionary();
         Resources resources = new Resources(resourcesDict);
 
         XFormCollection forms1 = resources.getForms();
@@ -85,7 +85,7 @@ class XFormCollectionTest {
         assertTrue(forms1.isEmpty());
 
         // /XObject dictionary was lazy-created — add a form into it
-        COSDictionary xobjects = (COSDictionary) resourcesDict.get(COSName.XOBJECT);
+        PdfDictionary xobjects = (PdfDictionary) resourcesDict.get(PdfName.XOBJECT);
         assertNotNull(xobjects, "/XObject should be lazy-created");
         xobjects.set("Fm1", formStream());
 
@@ -99,18 +99,18 @@ class XFormCollectionTest {
         assertThrows(IllegalArgumentException.class, () -> new XFormCollection(null, null));
     }
 
-    private static COSStream formStream() {
-        COSStream s = new COSStream();
-        s.set(COSName.TYPE, COSName.XOBJECT);
-        s.set(COSName.SUBTYPE, COSName.FORM);
+    private static PdfStream formStream() {
+        PdfStream s = new PdfStream();
+        s.set(PdfName.TYPE, PdfName.XOBJECT);
+        s.set(PdfName.SUBTYPE, PdfName.FORM);
         s.setDecodedData(new byte[0]);
         return s;
     }
 
-    private static COSStream imageStream() {
-        COSStream s = new COSStream();
-        s.set(COSName.TYPE, COSName.XOBJECT);
-        s.set(COSName.SUBTYPE, COSName.IMAGE);
+    private static PdfStream imageStream() {
+        PdfStream s = new PdfStream();
+        s.set(PdfName.TYPE, PdfName.XOBJECT);
+        s.set(PdfName.SUBTYPE, PdfName.IMAGE);
         s.setDecodedData(new byte[0]);
         return s;
     }

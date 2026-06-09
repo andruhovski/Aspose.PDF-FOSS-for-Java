@@ -1,9 +1,9 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
 import org.aspose.pdf.engine.parser.PDFParser;
 
 import java.io.IOException;
@@ -22,24 +22,24 @@ public class Resources {
 
     private static final Logger LOG = Logger.getLogger(Resources.class.getName());
 
-    private static final COSName FONT = COSName.of("Font");
-    private static final COSName XOBJECT = COSName.of("XObject");
-    private static final COSName EXT_G_STATE = COSName.of("ExtGState");
-    private static final COSName COLOR_SPACE = COSName.of("ColorSpace");
-    private static final COSName PATTERN = COSName.of("Pattern");
-    private static final COSName SHADING = COSName.of("Shading");
-    private static final COSName PROPERTIES = COSName.of("Properties");
+    private static final PdfName FONT = PdfName.of("Font");
+    private static final PdfName XOBJECT = PdfName.of("XObject");
+    private static final PdfName EXT_G_STATE = PdfName.of("ExtGState");
+    private static final PdfName COLOR_SPACE = PdfName.of("ColorSpace");
+    private static final PdfName PATTERN = PdfName.of("Pattern");
+    private static final PdfName SHADING = PdfName.of("Shading");
+    private static final PdfName PROPERTIES = PdfName.of("Properties");
 
-    private final COSDictionary dict;
+    private final PdfDictionary dict;
     private final PDFParser parser;
 
     /**
-     * Creates a Resources wrapper around the given COS dictionary.
+     * Creates a Resources wrapper around the given PDF dictionary.
      *
      * @param dict the /Resources dictionary from a page or form XObject
      * @throws IllegalArgumentException if dict is null
      */
-    public Resources(COSDictionary dict) {
+    public Resources(PdfDictionary dict) {
         this(dict, null);
     }
 
@@ -50,7 +50,7 @@ public class Resources {
      * @param parser the PDF parser (may be null)
      * @throws IllegalArgumentException if dict is null
      */
-    public Resources(COSDictionary dict, PDFParser parser) {
+    public Resources(PdfDictionary dict, PDFParser parser) {
         if (dict == null) {
             throw new IllegalArgumentException("Resources dictionary must not be null");
         }
@@ -64,7 +64,7 @@ public class Resources {
      *
      * @return the font dictionary, or null
      */
-    public COSDictionary getFonts() {
+    public PdfDictionary getFonts() {
         return getSubDictionary(FONT);
     }
 
@@ -73,7 +73,7 @@ public class Resources {
      *
      * @return the XObject dictionary, or null
      */
-    public COSDictionary getXObjects() {
+    public PdfDictionary getXObjects() {
         return getSubDictionary(XOBJECT);
     }
 
@@ -82,7 +82,7 @@ public class Resources {
      *
      * @return the extended graphics state dictionary, or null
      */
-    public COSDictionary getExtGState() {
+    public PdfDictionary getExtGState() {
         return getSubDictionary(EXT_G_STATE);
     }
 
@@ -91,7 +91,7 @@ public class Resources {
      *
      * @return the color space dictionary, or null
      */
-    public COSDictionary getColorSpaces() {
+    public PdfDictionary getColorSpaces() {
         return getSubDictionary(COLOR_SPACE);
     }
 
@@ -100,7 +100,7 @@ public class Resources {
      *
      * @return the pattern dictionary, or null
      */
-    public COSDictionary getPatterns() {
+    public PdfDictionary getPatterns() {
         return getSubDictionary(PATTERN);
     }
 
@@ -109,7 +109,7 @@ public class Resources {
      *
      * @return the shading dictionary, or null
      */
-    public COSDictionary getShadings() {
+    public PdfDictionary getShadings() {
         return getSubDictionary(SHADING);
     }
 
@@ -118,7 +118,7 @@ public class Resources {
      *
      * @return the properties dictionary, or null
      */
-    public COSDictionary getProperties() {
+    public PdfDictionary getProperties() {
         return getSubDictionary(PROPERTIES);
     }
 
@@ -128,11 +128,11 @@ public class Resources {
      * @return the image collection, or null if no /XObject dictionary
      */
     public XImageCollection getImages() {
-        COSDictionary xobjects = getXObjects();
+        PdfDictionary xobjects = getXObjects();
         if (xobjects == null) {
             // Lazy-create /XObject dictionary for new pages
-            xobjects = new COSDictionary();
-            dict.set(COSName.of("XObject"), xobjects);
+            xobjects = new PdfDictionary();
+            dict.set(PdfName.of("XObject"), xobjects);
         }
         return new XImageCollection(dict, xobjects, parser);
     }
@@ -146,20 +146,20 @@ public class Resources {
      * @return the form collection (never null; may be empty)
      */
     public XFormCollection getForms() {
-        COSDictionary xobjects = getXObjects();
+        PdfDictionary xobjects = getXObjects();
         if (xobjects == null) {
-            xobjects = new COSDictionary();
+            xobjects = new PdfDictionary();
             dict.set(XOBJECT, xobjects);
         }
         return new XFormCollection(xobjects, parser);
     }
 
     /**
-     * Returns the underlying COS dictionary.
+     * Returns the underlying PDF dictionary.
      *
-     * @return the raw COS dictionary
+     * @return the raw PDF dictionary
      */
-    public COSDictionary getCOSDictionary() {
+    public PdfDictionary getPdfDictionary() {
         return dict;
     }
 
@@ -169,25 +169,25 @@ public class Resources {
      * @param key the dictionary key
      * @return the sub-dictionary, or null if absent or not a dictionary
      */
-    private COSDictionary getSubDictionary(COSName key) {
-        COSBase value = dict.get(key);
+    private PdfDictionary getSubDictionary(PdfName key) {
+        PdfBase value = dict.get(key);
         if (value == null) {
             return null;
         }
         // Dereference indirect object references
-        COSBase resolved = value;
-        if (resolved instanceof COSObjectReference) {
+        PdfBase resolved = value;
+        if (resolved instanceof PdfObjectReference) {
             try {
-                resolved = ((COSObjectReference) resolved).dereference();
+                resolved = ((PdfObjectReference) resolved).dereference();
             } catch (IOException e) {
                 LOG.warning(() -> "Failed to dereference " + key + ": " + e.getMessage());
                 return null;
             }
         }
-        if (resolved instanceof COSDictionary) {
-            return (COSDictionary) resolved;
+        if (resolved instanceof PdfDictionary) {
+            return (PdfDictionary) resolved;
         }
-        COSBase finalResolved = resolved;
+        PdfBase finalResolved = resolved;
         LOG.fine(() -> "Value for " + key + " is not a dictionary: " + finalResolved.getClass().getSimpleName());
         return null;
     }

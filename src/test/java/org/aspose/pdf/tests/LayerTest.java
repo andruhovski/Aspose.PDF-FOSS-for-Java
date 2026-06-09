@@ -1,7 +1,7 @@
 package org.aspose.pdf.tests;
 
 import org.aspose.pdf.*;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -30,7 +30,7 @@ public class LayerTest {
     @Test
     public void testLayerDictHasType() {
         Layer layer = new Layer("id1", "Test");
-        COSDictionary dict = layer.getCOSDictionary();
+        PdfDictionary dict = layer.getPdfDictionary();
         assertEquals("OCG", dict.getNameAsString("Type"));
     }
 
@@ -45,8 +45,8 @@ public class LayerTest {
 
     @Test
     public void testPageGetLayersEmpty() {
-        COSDictionary pageDict = new COSDictionary();
-        pageDict.set(COSName.TYPE, COSName.PAGE);
+        PdfDictionary pageDict = new PdfDictionary();
+        pageDict.set(PdfName.TYPE, PdfName.PAGE);
         Page page = new Page(pageDict, null);
         List<Layer> layers = page.getLayers();
         assertNotNull(layers);

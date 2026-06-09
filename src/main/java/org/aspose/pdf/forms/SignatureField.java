@@ -1,7 +1,7 @@
 package org.aspose.pdf.forms;
 
 import org.aspose.pdf.*;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.util.logging.Logger;
 
@@ -18,13 +18,13 @@ public class SignatureField extends Field {
     private static final Logger LOG = Logger.getLogger(SignatureField.class.getName());
 
     /**
-     * Constructs a signature field from an existing COS dictionary.
+     * Constructs a signature field from an existing PDF dictionary.
      *
-     * @param dict     the COS dictionary backing this field
+     * @param dict     the PDF dictionary backing this field
      * @param page     the page this field belongs to (may be null)
      * @param fullName the fully-qualified dotted name
      */
-    public SignatureField(COSDictionary dict, Page page, String fullName) {
+    public SignatureField(PdfDictionary dict, Page page, String fullName) {
         super(dict, page, fullName);
     }
 
@@ -38,12 +38,12 @@ public class SignatureField extends Field {
      * @throws IllegalArgumentException if {@code page} or {@code rect} is null
      */
     public SignatureField(Page page, Rectangle rect) {
-        super(new COSDictionary(), page, "");
+        super(new PdfDictionary(), page, "");
         if (page == null) throw new IllegalArgumentException("page must not be null");
         if (rect == null) throw new IllegalArgumentException("rect must not be null");
-        dict.set(COSName.of("Type"), COSName.of("Annot"));
-        dict.set(COSName.of("Subtype"), COSName.of("Widget"));
-        dict.set(COSName.of("FT"), COSName.of("Sig"));
+        dict.set(PdfName.of("Type"), PdfName.of("Annot"));
+        dict.set(PdfName.of("Subtype"), PdfName.of("Widget"));
+        dict.set(PdfName.of("FT"), PdfName.of("Sig"));
         setRectLenient(rect);
     }
 
@@ -64,16 +64,16 @@ public class SignatureField extends Field {
      *
      * @return the signature dictionary, or null if not signed
      */
-    public COSDictionary getSignatureDictionary() {
-        COSBase v = dict.get("V");
-        if (v instanceof COSObjectReference) {
+    public PdfDictionary getSignatureDictionary() {
+        PdfBase v = dict.get("V");
+        if (v instanceof PdfObjectReference) {
             try {
-                v = ((COSObjectReference) v).dereference();
+                v = ((PdfObjectReference) v).dereference();
             } catch (java.io.IOException e) {
                 return null;
             }
         }
-        return (v instanceof COSDictionary) ? (COSDictionary) v : null;
+        return (v instanceof PdfDictionary) ? (PdfDictionary) v : null;
     }
 
     /**
@@ -81,8 +81,8 @@ public class SignatureField extends Field {
      *
      * @param sigDict the signature dictionary
      */
-    public void setSignatureDictionary(COSDictionary sigDict) {
-        dict.set(COSName.of("V"), sigDict);
+    public void setSignatureDictionary(PdfDictionary sigDict) {
+        dict.set(PdfName.of("V"), sigDict);
     }
 
     /**
@@ -91,7 +91,7 @@ public class SignatureField extends Field {
      * @return the reason string, or null
      */
     public String getReason() {
-        COSDictionary sig = getSignatureDictionary();
+        PdfDictionary sig = getSignatureDictionary();
         return sig != null ? getStringFromDict(sig, "Reason") : null;
     }
 
@@ -101,7 +101,7 @@ public class SignatureField extends Field {
      * @return the location string, or null
      */
     public String getLocation() {
-        COSDictionary sig = getSignatureDictionary();
+        PdfDictionary sig = getSignatureDictionary();
         return sig != null ? getStringFromDict(sig, "Location") : null;
     }
 
@@ -111,7 +111,7 @@ public class SignatureField extends Field {
      * @return the signer name, or null
      */
     public String getSignerName() {
-        COSDictionary sig = getSignatureDictionary();
+        PdfDictionary sig = getSignatureDictionary();
         return sig != null ? getStringFromDict(sig, "Name") : null;
     }
 
@@ -121,7 +121,7 @@ public class SignatureField extends Field {
      * @return the date string in PDF format, or null
      */
     public String getDate() {
-        COSDictionary sig = getSignatureDictionary();
+        PdfDictionary sig = getSignatureDictionary();
         return sig != null ? getStringFromDict(sig, "M") : null;
     }
 
@@ -131,11 +131,11 @@ public class SignatureField extends Field {
      * @return int[4] of byte range values, or null
      */
     public int[] getByteRange() {
-        COSDictionary sig = getSignatureDictionary();
+        PdfDictionary sig = getSignatureDictionary();
         if (sig == null) return null;
-        COSBase br = sig.get("ByteRange");
-        if (!(br instanceof COSArray)) return null;
-        COSArray arr = (COSArray) br;
+        PdfBase br = sig.get("ByteRange");
+        if (!(br instanceof PdfArray)) return null;
+        PdfArray arr = (PdfArray) br;
         if (arr.size() != 4) return null;
         return new int[]{arr.getInt(0, 0), arr.getInt(1, 0), arr.getInt(2, 0), arr.getInt(3, 0)};
     }
@@ -146,11 +146,11 @@ public class SignatureField extends Field {
      * @return the raw signature bytes, or null
      */
     public byte[] getSignatureBytes() {
-        COSDictionary sig = getSignatureDictionary();
+        PdfDictionary sig = getSignatureDictionary();
         if (sig == null) return null;
-        COSBase contents = sig.get("Contents");
-        if (contents instanceof COSString) {
-            return ((COSString) contents).getBytes();
+        PdfBase contents = sig.get("Contents");
+        if (contents instanceof PdfString) {
+            return ((PdfString) contents).getBytes();
         }
         return null;
     }
@@ -161,7 +161,7 @@ public class SignatureField extends Field {
      * @return the filter name (e.g. "Adobe.PPKLite"), or null
      */
     public String getFilter() {
-        COSDictionary sig = getSignatureDictionary();
+        PdfDictionary sig = getSignatureDictionary();
         if (sig == null) return null;
         return sig.getNameAsString("Filter");
     }
@@ -172,15 +172,15 @@ public class SignatureField extends Field {
      * @return the sub-filter name (e.g. "adbe.pkcs7.detached"), or null
      */
     public String getSubFilter() {
-        COSDictionary sig = getSignatureDictionary();
+        PdfDictionary sig = getSignatureDictionary();
         if (sig == null) return null;
         return sig.getNameAsString("SubFilter");
     }
 
-    private String getStringFromDict(COSDictionary d, String key) {
-        COSBase val = d.get(key);
-        if (val instanceof COSString) return ((COSString) val).getString();
-        if (val instanceof COSName) return ((COSName) val).getName();
+    private String getStringFromDict(PdfDictionary d, String key) {
+        PdfBase val = d.get(key);
+        if (val instanceof PdfString) return ((PdfString) val).getString();
+        if (val instanceof PdfName) return ((PdfName) val).getName();
         return null;
     }
 }

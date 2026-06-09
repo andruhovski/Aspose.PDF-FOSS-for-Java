@@ -1,6 +1,6 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
 
 /**
  * Represents a PDF action of an unknown or unsupported type.
@@ -13,7 +13,7 @@ public class GenericAction extends PdfAction {
      *
      * @param dict the action dictionary
      */
-    public GenericAction(COSDictionary dict) {
+    public GenericAction(PdfDictionary dict) {
         this.actionDict = dict;
     }
 }

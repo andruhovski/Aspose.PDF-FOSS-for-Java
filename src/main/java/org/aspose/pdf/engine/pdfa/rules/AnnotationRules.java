@@ -1,11 +1,11 @@
 package org.aspose.pdf.engine.pdfa.rules;
 
 import org.aspose.pdf.PdfFormat;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
 import org.aspose.pdf.engine.pdfa.PdfARule;
 import org.aspose.pdf.engine.pdfa.PdfAValidationResult;
 import org.aspose.pdf.engine.parser.PDFParser;
@@ -68,7 +68,7 @@ public final class AnnotationRules implements PdfARule {
      * Iterates all pages and checks their annotations.
      */
     private void checkPages(PDFParser parser, PdfFormat format, PdfAValidationResult result) {
-        COSDictionary catalog;
+        PdfDictionary catalog;
         try {
             catalog = parser.getCatalog();
         } catch (IOException e) {
@@ -76,17 +76,17 @@ public final class AnnotationRules implements PdfARule {
             return;
         }
 
-        COSDictionary pages = resolveDict(catalog.get("Pages"));
+        PdfDictionary pages = resolveDict(catalog.get("Pages"));
         if (pages == null) {
             return;
         }
-        COSArray kids = pages.getArray("Kids");
+        PdfArray kids = pages.getArray("Kids");
         if (kids == null) {
             return;
         }
 
         for (int i = 0; i < kids.size(); i++) {
-            COSDictionary page = resolveDict(kids.get(i));
+            PdfDictionary page = resolveDict(kids.get(i));
             if (page == null) {
                 continue;
             }
@@ -98,10 +98,10 @@ public final class AnnotationRules implements PdfARule {
     /**
      * Checks all annotations on a page.
      */
-    private void checkAnnotations(COSDictionary page, String pagePath,
+    private void checkAnnotations(PdfDictionary page, String pagePath,
                                    PdfFormat format, PdfAValidationResult result) {
-        COSBase annotsRef = page.get("Annots");
-        COSArray annots = resolveArray(annotsRef);
+        PdfBase annotsRef = page.get("Annots");
+        PdfArray annots = resolveArray(annotsRef);
         if (annots == null) {
             return;
         }
@@ -109,7 +109,7 @@ public final class AnnotationRules implements PdfARule {
         Set<String> forbidden = format.isPdfA1() ? FORBIDDEN_PDFA1 : FORBIDDEN_PDFA2;
 
         for (int i = 0; i < annots.size(); i++) {
-            COSDictionary annot = resolveDict(annots.get(i));
+            PdfDictionary annot = resolveDict(annots.get(i));
             if (annot == null) {
                 continue;
             }
@@ -150,30 +150,30 @@ public final class AnnotationRules implements PdfARule {
     }
 
     /**
-     * Resolves a COSBase to a COSDictionary, dereferencing indirect references.
+     * Resolves a PdfBase to a PdfDictionary, dereferencing indirect references.
      */
-    private static COSDictionary resolveDict(COSBase val) {
-        if (val instanceof COSObjectReference) {
+    private static PdfDictionary resolveDict(PdfBase val) {
+        if (val instanceof PdfObjectReference) {
             try {
-                val = ((COSObjectReference) val).dereference();
+                val = ((PdfObjectReference) val).dereference();
             } catch (IOException e) {
                 return null;
             }
         }
-        return (val instanceof COSDictionary) ? (COSDictionary) val : null;
+        return (val instanceof PdfDictionary) ? (PdfDictionary) val : null;
     }
 
     /**
-     * Resolves a COSBase to a COSArray, dereferencing indirect references.
+     * Resolves a PdfBase to a PdfArray, dereferencing indirect references.
      */
-    private static COSArray resolveArray(COSBase val) {
-        if (val instanceof COSObjectReference) {
+    private static PdfArray resolveArray(PdfBase val) {
+        if (val instanceof PdfObjectReference) {
             try {
-                val = ((COSObjectReference) val).dereference();
+                val = ((PdfObjectReference) val).dereference();
             } catch (IOException e) {
                 return null;
             }
         }
-        return (val instanceof COSArray) ? (COSArray) val : null;
+        return (val instanceof PdfArray) ? (PdfArray) val : null;
     }
 }

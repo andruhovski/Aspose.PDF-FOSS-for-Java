@@ -312,7 +312,7 @@ public class TypedOperatorsTest {
 
     @Test
     public void testBDCCreation() {
-        BDC op = new BDC("Span", org.aspose.pdf.engine.cos.COSName.of("Props1"));
+        BDC op = new BDC("Span", org.aspose.pdf.engine.pdfobjects.PdfName.of("Props1"));
         assertEquals("BDC", op.getName());
         assertEquals("Span", op.getTag());
         assertNotNull(op.getProperties());

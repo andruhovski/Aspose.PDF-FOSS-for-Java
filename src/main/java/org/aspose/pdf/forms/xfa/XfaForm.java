@@ -1,6 +1,6 @@
 package org.aspose.pdf.forms.xfa;
 
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,7 +31,7 @@ public class XfaForm {
 
     private final XfaPacketParser parser;
     private final XfaNamespaceContext nsContext;
-    private final COSBase xfaEntry;
+    private final PdfBase xfaEntry;
 
     /**
      * Creates an XfaForm from the AcroForm dictionary.
@@ -39,8 +39,8 @@ public class XfaForm {
      * @param acroFormDict the AcroForm dictionary containing an /XFA entry
      * @throws IOException if the XFA packets cannot be parsed
      */
-    public XfaForm(COSDictionary acroFormDict) throws IOException {
-        COSBase xfa = resolveRef(acroFormDict.get("XFA"));
+    public XfaForm(PdfDictionary acroFormDict) throws IOException {
+        PdfBase xfa = resolveRef(acroFormDict.get("XFA"));
         if (xfa == null) {
             throw new IllegalArgumentException("AcroForm dictionary does not contain an /XFA entry");
         }
@@ -461,10 +461,10 @@ public class XfaForm {
         }
     }
 
-    private static COSBase resolveRef(COSBase val) {
-        while (val instanceof COSObjectReference) {
+    private static PdfBase resolveRef(PdfBase val) {
+        while (val instanceof PdfObjectReference) {
             try {
-                val = ((COSObjectReference) val).dereference();
+                val = ((PdfObjectReference) val).dereference();
             } catch (IOException e) {
                 return null;
             }

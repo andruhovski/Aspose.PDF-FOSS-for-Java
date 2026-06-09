@@ -1,9 +1,9 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 
 import java.nio.charset.StandardCharsets;
 
@@ -12,37 +12,37 @@ import java.nio.charset.StandardCharsets;
  */
 public class FileParams {
 
-    private final COSDictionary dict;
+    private final PdfDictionary dict;
 
     /** Wraps an existing params dictionary. */
-    public FileParams(COSDictionary dict) {
-        this.dict = dict != null ? dict : new COSDictionary();
+    public FileParams(PdfDictionary dict) {
+        this.dict = dict != null ? dict : new PdfDictionary();
     }
 
     /** Creates new empty params. */
-    public FileParams() { this.dict = new COSDictionary(); }
+    public FileParams() { this.dict = new PdfDictionary(); }
 
     /** /Size — uncompressed file size in bytes. */
     public long getSize() { return dict.getLong("Size", 0); }
 
     /** /CreationDate. */
     public String getCreationDate() {
-        COSBase d = dict.get("CreationDate");
-        return (d instanceof COSString) ? ((COSString) d).getString() : null;
+        PdfBase d = dict.get("CreationDate");
+        return (d instanceof PdfString) ? ((PdfString) d).getString() : null;
     }
 
     /** /ModDate. */
     public String getModDate() {
-        COSBase d = dict.get("ModDate");
-        return (d instanceof COSString) ? ((COSString) d).getString() : null;
+        PdfBase d = dict.get("ModDate");
+        return (d instanceof PdfString) ? ((PdfString) d).getString() : null;
     }
 
     /** /CheckSum — MD5 digest. */
     public String getCheckSum() {
-        COSBase cs = dict.get("CheckSum");
-        return (cs instanceof COSString) ? ((COSString) cs).getString() : null;
+        PdfBase cs = dict.get("CheckSum");
+        return (cs instanceof PdfString) ? ((PdfString) cs).getString() : null;
     }
 
     /** Returns the underlying dictionary. */
-    public COSDictionary getCOSDictionary() { return dict; }
+    public PdfDictionary getPdfDictionary() { return dict; }
 }

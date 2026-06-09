@@ -1,6 +1,6 @@
 package org.aspose.pdf.operators;
 
-import org.aspose.pdf.engine.cos.COSBase;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +35,7 @@ public class SetColorStroke extends BasicSetColorOperator {
      *
      * @param operands the operands from the content stream parser
      */
-    public SetColorStroke(List<COSBase> operands) {
+    public SetColorStroke(List<PdfBase> operands) {
         super("SC", operands);
         this.components = parseComponents(operands);
     }
@@ -49,8 +49,8 @@ public class SetColorStroke extends BasicSetColorOperator {
         return components.clone();
     }
 
-    private static List<COSBase> toOperandList(double[] components) {
-        List<COSBase> list = new ArrayList<>();
+    private static List<PdfBase> toOperandList(double[] components) {
+        List<PdfBase> list = new ArrayList<>();
         if (components != null) {
             for (double v : components) {
                 list.add(num(v));
@@ -59,7 +59,7 @@ public class SetColorStroke extends BasicSetColorOperator {
         return list;
     }
 
-    private static double[] parseComponents(List<COSBase> operands) {
+    private static double[] parseComponents(List<PdfBase> operands) {
         if (operands == null || operands.isEmpty()) {
             return new double[0];
         }

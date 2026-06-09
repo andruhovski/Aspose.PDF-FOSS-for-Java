@@ -1,19 +1,22 @@
 package org.aspose.pdf.engine.colorspace;
 
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 import org.aspose.pdf.engine.parser.PDFParser;
 
+import java.awt.color.ICC_ColorSpace;
+import java.awt.color.ICC_Profile;
 import java.io.IOException;
 import java.util.logging.Logger;
 
 /**
  * ICCBased color space (ISO 32000-1:2008, §8.6.5.5).
  * <p>
- * Wraps an ICC profile stream. Since we do not parse ICC profiles
- * (would require java.awt.color.ICC_Profile), we use the /Alternate
- * color space for actual color conversion. The /N entry provides the
- * number of components.
+ * Wraps an ICC profile stream. The embedded profile is parsed with the
+ * JDK's own {@link java.awt.color.ICC_Profile} / {@link ICC_ColorSpace}
+ * (no external dependency) and used for the actual conversion; if the
+ * profile is absent or malformed we fall back to the /Alternate color
+ * space (or a Device* space derived from /N).
  * </p>
  */
 public class ICCBasedColorSpace extends ColorSpaceBase {
@@ -22,6 +25,8 @@ public class ICCBasedColorSpace extends ColorSpaceBase {
 
     private final int numComponents;
     private final ColorSpaceBase alternate;
+    /** JDK color space built from the embedded profile; null = use alternate. */
+    private final ICC_ColorSpace iccColorSpace;
 
     /**
      * Creates an ICCBasedColorSpace from a profile stream.
@@ -30,11 +35,12 @@ public class ICCBasedColorSpace extends ColorSpaceBase {
      * @param parser    the PDF parser (may be null)
      * @throws IOException if reading the stream dict fails
      */
-    public ICCBasedColorSpace(COSStream iccStream, PDFParser parser) throws IOException {
+    public ICCBasedColorSpace(PdfStream iccStream, PDFParser parser) throws IOException {
         this.numComponents = iccStream.getInt("N", 3);
+        this.iccColorSpace = loadIccColorSpace(iccStream, numComponents);
 
         // Try /Alternate
-        COSBase alt = iccStream.get("Alternate");
+        PdfBase alt = iccStream.get("Alternate");
         if (alt != null) {
             alt = resolveRef(alt);
             ColorSpaceBase resolved = ColorSpaceBase.resolve(alt, null, parser);
@@ -63,6 +69,55 @@ public class ICCBasedColorSpace extends ColorSpaceBase {
 
     @Override
     public int getNumberOfComponents() { return numComponents; }
+
+    /**
+     * Converts via the embedded ICC profile (JDK CMM) when available,
+     * otherwise via the /Alternate (or N-derived Device*) color space.
+     */
+    @Override
+    public int toRGBInt(double[] comps) {
+        if (iccColorSpace != null && comps != null && comps.length >= numComponents) {
+            try {
+                float[] in = new float[numComponents];
+                for (int i = 0; i < numComponents; i++) {
+                    float min = iccColorSpace.getMinValue(i);
+                    float max = iccColorSpace.getMaxValue(i);
+                    // PDF components are 0..1; scale into the profile range
+                    // (Lab profiles have L 0..100, a/b -128..127).
+                    in[i] = (float) (min + comps[i] * (max - min));
+                    if (min == 0f && max == 1f) in[i] = (float) comps[i];
+                }
+                float[] rgb = iccColorSpace.toRGB(in);
+                return DeviceRGB.INSTANCE.toRGBInt(rgb[0], rgb[1], rgb[2]);
+            } catch (Exception e) {
+                LOG.fine(() -> "ICC conversion failed, using alternate: " + e.getMessage());
+            }
+        }
+        return alternate.toRGBInt(comps);
+    }
+
+    /**
+     * Parses the embedded ICC profile bytes with the JDK CMM. Returns null
+     * (alternate-space fallback) when the data is missing, malformed, or the
+     * component count does not match /N.
+     */
+    private static ICC_ColorSpace loadIccColorSpace(PdfStream iccStream, int n) {
+        try {
+            byte[] data = iccStream.getDecodedData();
+            if (data == null || data.length < 128) return null;
+            ICC_Profile profile = ICC_Profile.getInstance(data);
+            ICC_ColorSpace cs = new ICC_ColorSpace(profile);
+            if (cs.getNumComponents() != n) {
+                LOG.fine(() -> "ICC profile components " + cs.getNumComponents()
+                        + " != /N " + n + "; using alternate");
+                return null;
+            }
+            return cs;
+        } catch (Exception e) {
+            LOG.fine(() -> "Embedded ICC profile unusable: " + e.getMessage());
+            return null;
+        }
+    }
 
     /**
      * Returns the alternate (fallback) color space used for conversions.

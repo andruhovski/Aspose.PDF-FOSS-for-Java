@@ -1,7 +1,7 @@
 package org.aspose.pdf.tests;
 
 import org.aspose.pdf.*;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -29,7 +29,7 @@ public class ViewerPreferencesTest {
 
     @Test
     public void testSetHideToolbar() {
-        ViewerPreferences vp = new ViewerPreferences(new COSDictionary());
+        ViewerPreferences vp = new ViewerPreferences(new PdfDictionary());
         vp.setHideToolbar(true);
         assertTrue(vp.getHideToolbar());
         vp.setHideToolbar(false);
@@ -38,63 +38,63 @@ public class ViewerPreferencesTest {
 
     @Test
     public void testSetHideMenubar() {
-        ViewerPreferences vp = new ViewerPreferences(new COSDictionary());
+        ViewerPreferences vp = new ViewerPreferences(new PdfDictionary());
         vp.setHideMenubar(true);
         assertTrue(vp.getHideMenubar());
     }
 
     @Test
     public void testSetHideWindowUI() {
-        ViewerPreferences vp = new ViewerPreferences(new COSDictionary());
+        ViewerPreferences vp = new ViewerPreferences(new PdfDictionary());
         vp.setHideWindowUI(true);
         assertTrue(vp.getHideWindowUI());
     }
 
     @Test
     public void testSetFitWindow() {
-        ViewerPreferences vp = new ViewerPreferences(new COSDictionary());
+        ViewerPreferences vp = new ViewerPreferences(new PdfDictionary());
         vp.setFitWindow(true);
         assertTrue(vp.getFitWindow());
     }
 
     @Test
     public void testSetCenterWindow() {
-        ViewerPreferences vp = new ViewerPreferences(new COSDictionary());
+        ViewerPreferences vp = new ViewerPreferences(new PdfDictionary());
         vp.setCenterWindow(true);
         assertTrue(vp.getCenterWindow());
     }
 
     @Test
     public void testSetDisplayDocTitle() {
-        ViewerPreferences vp = new ViewerPreferences(new COSDictionary());
+        ViewerPreferences vp = new ViewerPreferences(new PdfDictionary());
         vp.setDisplayDocTitle(true);
         assertTrue(vp.getDisplayDocTitle());
     }
 
     @Test
     public void testDirection() {
-        ViewerPreferences vp = new ViewerPreferences(new COSDictionary());
+        ViewerPreferences vp = new ViewerPreferences(new PdfDictionary());
         vp.setDirection("R2L");
         assertEquals("R2L", vp.getDirection());
     }
 
     @Test
     public void testDuplex() {
-        ViewerPreferences vp = new ViewerPreferences(new COSDictionary());
+        ViewerPreferences vp = new ViewerPreferences(new PdfDictionary());
         vp.setDuplex("DuplexFlipShortEdge");
         assertEquals("DuplexFlipShortEdge", vp.getDuplex());
     }
 
     @Test
     public void testPrintScaling() {
-        ViewerPreferences vp = new ViewerPreferences(new COSDictionary());
+        ViewerPreferences vp = new ViewerPreferences(new PdfDictionary());
         vp.setPrintScaling("None");
         assertEquals("None", vp.getPrintScaling());
     }
 
     @Test
     public void testNumCopies() {
-        ViewerPreferences vp = new ViewerPreferences(new COSDictionary());
+        ViewerPreferences vp = new ViewerPreferences(new PdfDictionary());
         vp.setNumCopies(3);
         assertEquals(3, vp.getNumCopies());
     }
@@ -129,17 +129,17 @@ public class ViewerPreferencesTest {
 
     @Test
     public void testNonFullScreenPageMode() {
-        ViewerPreferences vp = new ViewerPreferences(new COSDictionary());
+        ViewerPreferences vp = new ViewerPreferences(new PdfDictionary());
         vp.setNonFullScreenPageMode("UseOutlines");
         assertEquals("UseOutlines", vp.getNonFullScreenPageMode());
     }
 
     @Test
     public void testReadFromDict() {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("HideToolbar"), COSBoolean.TRUE);
-        dict.set(COSName.of("CenterWindow"), COSBoolean.TRUE);
-        dict.set(COSName.of("Direction"), COSName.of("R2L"));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("HideToolbar"), PdfBoolean.TRUE);
+        dict.set(PdfName.of("CenterWindow"), PdfBoolean.TRUE);
+        dict.set(PdfName.of("Direction"), PdfName.of("R2L"));
         ViewerPreferences vp = new ViewerPreferences(dict);
         assertTrue(vp.getHideToolbar());
         assertTrue(vp.getCenterWindow());

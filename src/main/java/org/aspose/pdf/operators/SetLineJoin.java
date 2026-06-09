@@ -1,7 +1,7 @@
 package org.aspose.pdf.operators;
 
 import org.aspose.pdf.Operator;
-import org.aspose.pdf.engine.cos.COSBase;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
 
 import java.util.Collections;
 import java.util.List;
@@ -35,7 +35,7 @@ public class SetLineJoin extends Operator {
      *
      * @param operands the operands from the content stream parser
      */
-    public SetLineJoin(List<COSBase> operands) {
+    public SetLineJoin(List<PdfBase> operands) {
         super("j", operands);
         this.lineJoin = (operands != null && operands.size() > 0) ? (int) getNumber(operands.get(0)) : 0;
     }

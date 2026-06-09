@@ -1,13 +1,13 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSNull;
-import org.aspose.pdf.engine.cos.COSObjectKey;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSStream;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfNull;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectKey;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 import org.aspose.pdf.engine.io.RandomAccessReader;
 import org.aspose.pdf.engine.parser.PDFParser;
 import org.aspose.pdf.engine.security.PDFDecryptor;
@@ -24,8 +24,8 @@ import org.aspose.pdf.security.ICustomSecurityHandler;
 import org.aspose.pdf.text.TextFragment;
 import org.aspose.pdf.text.TextState;
 
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
 import org.aspose.pdf.engine.linearization.LinearizedPDFWriter;
 import org.aspose.pdf.engine.layout.TextLayoutHelper;
 import org.aspose.pdf.logicalstructure.StructTreeRoot;
@@ -86,7 +86,7 @@ public class Document implements Closeable {
     private EmbeddedFileCollection embeddedFiles;
     private ViewerPreferences viewerPreferences;
     private XmpMetadata metadata;
-    private COSDictionary inMemoryCatalog; // for empty documents created with Document()
+    private PdfDictionary inMemoryCatalog; // for empty documents created with Document()
     // When set, saveNewDocument skips paginateNewDocumentPagesIfNeeded — the
     // upstream converter (e.g. HtmlToPdfConverter) has already chunked the
     // content into pages and rerunning our generic splitter on already-paginated
@@ -98,7 +98,7 @@ public class Document implements Closeable {
     private int nextNewObjectNumber = -1; // next available object number for new objects
     // Imported-from-other-document objects keyed by fresh target-document keys.
     // Merged into the object set at save time. See DocumentPageImporter.
-    private final Map<COSObjectKey, COSBase> pendingImports = new LinkedHashMap<>();
+    private final Map<PdfObjectKey, PdfBase> pendingImports = new LinkedHashMap<>();
     private NamedDestinations namedDestinations;
     private TaggedContent taggedContent;
     private PageInfo pageInfo;
@@ -247,13 +247,13 @@ public class Document implements Closeable {
     public Document() {
         LOG.fine("Creating new empty PDF document");
         // Create minimal PDF structure in memory
-        COSDictionary catalog = new COSDictionary();
-        catalog.set(COSName.TYPE, COSName.of("Catalog"));
-        COSDictionary pagesDict = new COSDictionary();
-        pagesDict.set(COSName.TYPE, COSName.PAGES);
-        pagesDict.set(COSName.KIDS, new org.aspose.pdf.engine.cos.COSArray());
-        pagesDict.set(COSName.COUNT, org.aspose.pdf.engine.cos.COSInteger.valueOf(0));
-        catalog.set(COSName.PAGES, pagesDict);
+        PdfDictionary catalog = new PdfDictionary();
+        catalog.set(PdfName.TYPE, PdfName.of("Catalog"));
+        PdfDictionary pagesDict = new PdfDictionary();
+        pagesDict.set(PdfName.TYPE, PdfName.PAGES);
+        pagesDict.set(PdfName.KIDS, new org.aspose.pdf.engine.pdfobjects.PdfArray());
+        pagesDict.set(PdfName.COUNT, org.aspose.pdf.engine.pdfobjects.PdfInteger.valueOf(0));
+        catalog.set(PdfName.PAGES, pagesDict);
         this.parser = null;
         this.pages = new PageCollection(pagesDict, null);
         this.pages.setOwningDocument(this);
@@ -405,16 +405,16 @@ public class Document implements Closeable {
                     if (parser == null) {
                         throw new IOException("Document has no parser and no pages");
                     }
-                    COSDictionary catalog = parser.getCatalog();
-                    COSBase pagesRef = catalog.get(COSName.PAGES);
-                    COSBase pagesObj = parser.resolveReference(pagesRef);
-                    if (!(pagesObj instanceof COSDictionary)) {
+                    PdfDictionary catalog = parser.getCatalog();
+                    PdfBase pagesRef = catalog.get(PdfName.PAGES);
+                    PdfBase pagesObj = parser.resolveReference(pagesRef);
+                    if (!(pagesObj instanceof PdfDictionary)) {
                         pagesObj = recoverPagesDictionaryFromObjects();
                     }
-                    if (!(pagesObj instanceof COSDictionary)) {
+                    if (!(pagesObj instanceof PdfDictionary)) {
                         throw new IOException("Cannot find /Pages dictionary in catalog");
                     }
-                    pages = new PageCollection((COSDictionary) pagesObj, parser);
+                    pages = new PageCollection((PdfDictionary) pagesObj, parser);
                     pages.setOwningDocument(this);
                 }
             }
@@ -441,20 +441,20 @@ public class Document implements Closeable {
             return info;
         }
         if (parser != null) {
-            COSDictionary trailer = parser.getTrailer();
-            COSBase infoRef = trailer.get(COSName.INFO);
+            PdfDictionary trailer = parser.getTrailer();
+            PdfBase infoRef = trailer.get(PdfName.INFO);
             if (infoRef != null) {
-                COSBase infoObj = parser.resolveReference(infoRef);
-                if (infoObj instanceof COSDictionary) {
-                    info = new DocumentInfo((COSDictionary) infoObj);
+                PdfBase infoObj = parser.resolveReference(infoRef);
+                if (infoObj instanceof PdfDictionary) {
+                    info = new DocumentInfo((PdfDictionary) infoObj);
                     return info;
                 }
             }
         }
         // Auto-create
-        COSDictionary infoDict = new COSDictionary();
+        PdfDictionary infoDict = new PdfDictionary();
         if (parser != null) {
-            parser.getTrailer().set(COSName.INFO, infoDict);
+            parser.getTrailer().set(PdfName.INFO, infoDict);
         }
         info = new DocumentInfo(infoDict);
         return info;
@@ -485,12 +485,12 @@ public class Document implements Closeable {
     public XmpMetadata getMetadata() throws IOException {
         if (metadata == null) {
             if (parser != null) {
-                COSDictionary catalog = parser.getCatalog();
-                COSBase metaRef = catalog.get(COSName.of("Metadata"));
+                PdfDictionary catalog = parser.getCatalog();
+                PdfBase metaRef = catalog.get(PdfName.of("Metadata"));
                 if (metaRef != null) {
-                    COSBase resolved = parser.resolveReference(metaRef);
-                    if (resolved instanceof COSStream) {
-                        byte[] xmpBytes = ((COSStream) resolved).getDecodedData();
+                    PdfBase resolved = parser.resolveReference(metaRef);
+                    if (resolved instanceof PdfStream) {
+                        byte[] xmpBytes = ((PdfStream) resolved).getDecodedData();
                         metadata = new XmpMetadata(xmpBytes);
                     }
                 }
@@ -540,7 +540,7 @@ public class Document implements Closeable {
      * @return the catalog dictionary
      * @throws IOException if the catalog cannot be read
      */
-    public COSDictionary getCatalog() throws IOException {
+    public PdfDictionary getCatalog() throws IOException {
         if (inMemoryCatalog != null) return inMemoryCatalog;
         return parser.getCatalog();
     }
@@ -563,7 +563,7 @@ public class Document implements Closeable {
      *
      * @return the trailer dictionary
      */
-    public COSDictionary getTrailer() {
+    public PdfDictionary getTrailer() {
         return parser.getTrailer();
     }
 
@@ -586,19 +586,19 @@ public class Document implements Closeable {
     public OutlineCollection getOutlines() throws IOException {
         if (outlines == null) {
             if (parser != null) {
-                COSDictionary catalog = parser.getCatalog();
-                COSBase outlinesRef = catalog.get(COSName.of("Outlines"));
+                PdfDictionary catalog = parser.getCatalog();
+                PdfBase outlinesRef = catalog.get(PdfName.of("Outlines"));
                 if (outlinesRef != null) {
-                    COSBase resolved = parser.resolveReference(outlinesRef);
-                    if (resolved instanceof COSDictionary) {
-                        outlines = new OutlineCollection((COSDictionary) resolved, this, parser);
+                    PdfBase resolved = parser.resolveReference(outlinesRef);
+                    if (resolved instanceof PdfDictionary) {
+                        outlines = new OutlineCollection((PdfDictionary) resolved, this, parser);
                     }
                 }
             }
             if (outlines == null) {
                 outlines = new OutlineCollection(this, parser);
                 if (parser != null) {
-                    parser.getCatalog().set(COSName.of("Outlines"), outlines.getCOSDictionary());
+                    parser.getCatalog().set(PdfName.of("Outlines"), outlines.getPdfDictionary());
                 }
             }
         }
@@ -621,12 +621,12 @@ public class Document implements Closeable {
     public Form getForm() throws IOException {
         if (form == null) {
             if (parser != null) {
-                COSDictionary catalog = parser.getCatalog();
-                COSBase acroFormRef = catalog.get(COSName.of("AcroForm"));
+                PdfDictionary catalog = parser.getCatalog();
+                PdfBase acroFormRef = catalog.get(PdfName.of("AcroForm"));
                 if (acroFormRef != null) {
-                    COSBase resolved = parser.resolveReference(acroFormRef);
-                    if (resolved instanceof COSDictionary) {
-                        form = new Form((COSDictionary) resolved, this, parser);
+                    PdfBase resolved = parser.resolveReference(acroFormRef);
+                    if (resolved instanceof PdfDictionary) {
+                        form = new Form((PdfDictionary) resolved, this, parser);
                     }
                 }
             }
@@ -636,10 +636,10 @@ public class Document implements Closeable {
                 // Without this, FormEditor.addField on a PDF that has no
                 // /AcroForm landed in an orphaned dict that the writer never
                 // serialised — see PDFNEWNET-31679.
-                COSDictionary emptyForm = new COSDictionary();
-                emptyForm.set(COSName.of("Fields"), new org.aspose.pdf.engine.cos.COSArray());
+                PdfDictionary emptyForm = new PdfDictionary();
+                emptyForm.set(PdfName.of("Fields"), new org.aspose.pdf.engine.pdfobjects.PdfArray());
                 if (parser != null) {
-                    parser.getCatalog().set(COSName.of("AcroForm"), emptyForm);
+                    parser.getCatalog().set(PdfName.of("AcroForm"), emptyForm);
                 }
                 form = new Form(emptyForm, this, parser);
             }
@@ -683,18 +683,18 @@ public class Document implements Closeable {
     public void setCollection(Collection value) {
         this.collection = value;
         try {
-            org.aspose.pdf.engine.cos.COSDictionary catalog = getCatalog();
+            org.aspose.pdf.engine.pdfobjects.PdfDictionary catalog = getCatalog();
             if (value == null) {
-                catalog.remove(org.aspose.pdf.engine.cos.COSName.of("Collection"));
+                catalog.remove(org.aspose.pdf.engine.pdfobjects.PdfName.of("Collection"));
                 return;
             }
-            org.aspose.pdf.engine.cos.COSDictionary col = new org.aspose.pdf.engine.cos.COSDictionary();
-            col.set(org.aspose.pdf.engine.cos.COSName.of("Type"),
-                    org.aspose.pdf.engine.cos.COSName.of("Collection"));
+            org.aspose.pdf.engine.pdfobjects.PdfDictionary col = new org.aspose.pdf.engine.pdfobjects.PdfDictionary();
+            col.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("Type"),
+                    org.aspose.pdf.engine.pdfobjects.PdfName.of("Collection"));
             // /View /D — Detail view; the standard portfolio entry point.
-            col.set(org.aspose.pdf.engine.cos.COSName.of("View"),
-                    org.aspose.pdf.engine.cos.COSName.of("D"));
-            catalog.set(org.aspose.pdf.engine.cos.COSName.of("Collection"), col);
+            col.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("View"),
+                    org.aspose.pdf.engine.pdfobjects.PdfName.of("D"));
+            catalog.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("Collection"), col);
             value.bind(this);
         } catch (java.io.IOException e) {
             // Catalog access failed — leave the in-memory binding so add()
@@ -748,15 +748,15 @@ public class Document implements Closeable {
     public java.util.List<Layer> getLayers() throws IOException {
         java.util.List<Layer> layers = new java.util.ArrayList<>();
         if (parser == null) return layers;
-        COSDictionary catalog = parser.getCatalog();
-        COSBase ocProps = parser.resolveReference(catalog.get(COSName.of("OCProperties")));
-        if (!(ocProps instanceof COSDictionary)) return layers;
-        COSBase ocgs = parser.resolveReference(((COSDictionary) ocProps).get(COSName.of("OCGs")));
-        if (!(ocgs instanceof org.aspose.pdf.engine.cos.COSArray)) return layers;
-        org.aspose.pdf.engine.cos.COSArray arr = (org.aspose.pdf.engine.cos.COSArray) ocgs;
+        PdfDictionary catalog = parser.getCatalog();
+        PdfBase ocProps = parser.resolveReference(catalog.get(PdfName.of("OCProperties")));
+        if (!(ocProps instanceof PdfDictionary)) return layers;
+        PdfBase ocgs = parser.resolveReference(((PdfDictionary) ocProps).get(PdfName.of("OCGs")));
+        if (!(ocgs instanceof org.aspose.pdf.engine.pdfobjects.PdfArray)) return layers;
+        org.aspose.pdf.engine.pdfobjects.PdfArray arr = (org.aspose.pdf.engine.pdfobjects.PdfArray) ocgs;
         for (int i = 0; i < arr.size(); i++) {
-            COSBase ocg = parser.resolveReference(arr.get(i));
-            if (ocg instanceof COSDictionary) layers.add(new Layer((COSDictionary) ocg));
+            PdfBase ocg = parser.resolveReference(arr.get(i));
+            if (ocg instanceof PdfDictionary) layers.add(new Layer((PdfDictionary) ocg));
         }
         return layers;
     }
@@ -770,13 +770,13 @@ public class Document implements Closeable {
     public ViewerPreferences getViewerPreferences() throws IOException {
         if (viewerPreferences == null) {
             if (parser != null) {
-                COSDictionary catalog = parser.getCatalog();
-                COSBase vp = parser.resolveReference(catalog.get(COSName.of("ViewerPreferences")));
-                if (vp instanceof COSDictionary) {
-                    viewerPreferences = new ViewerPreferences((COSDictionary) vp);
+                PdfDictionary catalog = parser.getCatalog();
+                PdfBase vp = parser.resolveReference(catalog.get(PdfName.of("ViewerPreferences")));
+                if (vp instanceof PdfDictionary) {
+                    viewerPreferences = new ViewerPreferences((PdfDictionary) vp);
                 } else {
-                    COSDictionary vpDict = new COSDictionary();
-                    catalog.set(COSName.of("ViewerPreferences"), vpDict);
+                    PdfDictionary vpDict = new PdfDictionary();
+                    catalog.set(PdfName.of("ViewerPreferences"), vpDict);
                     viewerPreferences = new ViewerPreferences(vpDict);
                 }
             } else {
@@ -827,7 +827,7 @@ public class Document implements Closeable {
     /** Sets page layout. */
     public void setPageLayout(String layout) throws IOException {
         if (parser != null) {
-            parser.getCatalog().set(COSName.of("PageLayout"), COSName.of(layout));
+            parser.getCatalog().set(PdfName.of("PageLayout"), PdfName.of(layout));
         }
     }
 
@@ -850,7 +850,7 @@ public class Document implements Closeable {
      */
     public void setPageMode(PageMode mode) throws IOException {
         if (parser != null) {
-            parser.getCatalog().set(COSName.of("PageMode"), COSName.of(mode.name()));
+            parser.getCatalog().set(PdfName.of("PageMode"), PdfName.of(mode.name()));
         }
     }
 
@@ -965,11 +965,11 @@ public class Document implements Closeable {
             boolean hasCrossDocOutlines = false;
             if (outlines != null) {
                 for (OutlineItemCollection item : outlines) {
-                    COSObjectKey itemKey = item.getCOSDictionary().getObjectKey();
+                    PdfObjectKey itemKey = item.getPdfDictionary().getObjectKey();
                     if (itemKey != null) {
                         try {
-                            COSBase existing = parser.getObject(itemKey);
-                            if (existing != item.getCOSDictionary()) {
+                            PdfBase existing = parser.getObject(itemKey);
+                            if (existing != item.getPdfDictionary()) {
                                 hasCrossDocOutlines = true;
                                 break;
                             }
@@ -977,7 +977,7 @@ public class Document implements Closeable {
                             hasCrossDocOutlines = true;
                             break;
                         }
-                    } else if (item.getCOSDictionary().get("Title") != null) {
+                    } else if (item.getPdfDictionary().get("Title") != null) {
                         // New item without objectKey — needs fullRewrite to register
                         hasCrossDocOutlines = true;
                         break;
@@ -991,7 +991,7 @@ public class Document implements Closeable {
                 optimizeRequested = false;
                 fullRewriteRequested = false;
             } else {
-                Map<COSObjectKey, COSBase> modifiedObjects = collectModifiedObjects();
+                Map<PdfObjectKey, PdfBase> modifiedObjects = collectModifiedObjects();
                 // Incremental append of a modified page content stream is not
                 // reliably honoured on reload for hybrid-reference / xref-stream
                 // sources (§7.5.8.4) — the appended object's xref entry is lost,
@@ -1032,8 +1032,8 @@ public class Document implements Closeable {
             try {
                 int startxrefCount = countStartxrefMarkers();
                 if (startxrefCount > 1) {
-                    COSDictionary trailer = parser != null ? parser.getTrailer() : null;
-                    if (trailer != null && trailer.get(COSName.of("XRefStm")) instanceof COSInteger
+                    PdfDictionary trailer = parser != null ? parser.getTrailer() : null;
+                    if (trailer != null && trailer.get(PdfName.of("XRefStm")) instanceof PdfInteger
                             && startxrefCount == 2) {
                         return false;
                     }
@@ -1046,12 +1046,12 @@ public class Document implements Closeable {
         if (parser == null) {
             return false;
         }
-        COSDictionary trailer = parser.getTrailer();
+        PdfDictionary trailer = parser.getTrailer();
         if (trailer == null) {
             return false;
         }
-        COSBase prev = trailer.get(COSName.of("Prev"));
-        return prev instanceof COSInteger && ((COSInteger) prev).longValue() > 0;
+        PdfBase prev = trailer.get(PdfName.of("Prev"));
+        return prev instanceof PdfInteger && ((PdfInteger) prev).longValue() > 0;
     }
 
     /**
@@ -1234,11 +1234,11 @@ public class Document implements Closeable {
      * @throws IOException if writing fails
      */
     private void saveCompressed(OutputStream outputStream, PdfSaveOptions options) throws IOException {
-        Map<COSObjectKey, COSBase> objects = new LinkedHashMap<>();
+        Map<PdfObjectKey, PdfBase> objects = new LinkedHashMap<>();
         int maxObjNum = 0;
-        for (COSObjectKey key : parser.getAllObjectKeys()) {
-            COSBase obj = parser.getObject(key);
-            if (obj != null && !(obj instanceof COSNull)) {
+        for (PdfObjectKey key : parser.getAllObjectKeys()) {
+            PdfBase obj = parser.getObject(key);
+            if (obj != null && !(obj instanceof PdfNull)) {
                 objects.put(key, obj);
                 maxObjNum = Math.max(maxObjNum, key.getObjectNumber());
             }
@@ -1249,7 +1249,7 @@ public class Document implements Closeable {
 
         float version = Math.max(parser.getVersion(), 1.5f);
         PDFWriter writer = new PDFWriter(outputStream, version);
-        COSDictionary trailer = new COSDictionary(parser.getTrailer());
+        PdfDictionary trailer = new PdfDictionary(parser.getTrailer());
         configureExistingEncryption(writer, trailer);
         maxObjNum = applyPendingEncryption(writer, trailer, objects, maxObjNum);
 
@@ -1395,7 +1395,7 @@ public class Document implements Closeable {
      */
     public NamedDestinations getNamedDestinations() throws IOException {
         if (namedDestinations == null) {
-            COSDictionary catalog = getCatalog();
+            PdfDictionary catalog = getCatalog();
             if (catalog != null) {
                 namedDestinations = new NamedDestinations(catalog, this, parser);
             }
@@ -1423,7 +1423,7 @@ public class Document implements Closeable {
      */
     public TaggedContent getTaggedContent() throws IOException {
         if (taggedContent == null) {
-            COSDictionary catalog = getCatalog();
+            PdfDictionary catalog = getCatalog();
             if (catalog != null) {
                 taggedContent = new TaggedContent(this, catalog, parser);
             }
@@ -1439,14 +1439,14 @@ public class Document implements Closeable {
      * @throws IOException if catalog access fails
      */
     public StructTreeRoot getLogicalStructure() throws IOException {
-        COSDictionary catalog = getCatalog();
+        PdfDictionary catalog = getCatalog();
         if (catalog == null) return null;
-        COSBase strObj = catalog.get("StructTreeRoot");
-        if (strObj instanceof COSObjectReference) {
-            strObj = ((COSObjectReference) strObj).dereference();
+        PdfBase strObj = catalog.get("StructTreeRoot");
+        if (strObj instanceof PdfObjectReference) {
+            strObj = ((PdfObjectReference) strObj).dereference();
         }
-        if (strObj instanceof COSDictionary) {
-            return new StructTreeRoot((COSDictionary) strObj, parser);
+        if (strObj instanceof PdfDictionary) {
+            return new StructTreeRoot((PdfDictionary) strObj, parser);
         }
         return null;
     }
@@ -1461,7 +1461,7 @@ public class Document implements Closeable {
         if (nextNewObjectNumber < 0) {
             if (parser != null) {
                 int max = 0;
-                for (COSObjectKey key : parser.getAllObjectKeys()) {
+                for (PdfObjectKey key : parser.getAllObjectKeys()) {
                     max = Math.max(max, key.getObjectNumber());
                 }
                 nextNewObjectNumber = max + 1;
@@ -1474,40 +1474,40 @@ public class Document implements Closeable {
 
     /**
      * Registers an object imported from another document under a freshly allocated
-     * key. Returns a {@link COSObjectReference} whose resolver points into this
+     * key. Returns a {@link PdfObjectReference} whose resolver points into this
      * document's pending-imports map; the object is merged into the output
      * during save.
      */
-    public COSObjectReference registerImportedObject(COSBase body) {
+    public PdfObjectReference registerImportedObject(PdfBase body) {
         if (body == null) throw new IllegalArgumentException("body must not be null");
-        COSObjectKey key = new COSObjectKey(allocateObjectNumber(), 0);
+        PdfObjectKey key = new PdfObjectKey(allocateObjectNumber(), 0);
         pendingImports.put(key, body);
-        if (body instanceof COSDictionary) {
-            ((COSDictionary) body).setObjectKey(key);
+        if (body instanceof PdfDictionary) {
+            ((PdfDictionary) body).setObjectKey(key);
         }
-        return new COSObjectReference(key, k -> pendingImports.get(k));
+        return new PdfObjectReference(key, k -> pendingImports.get(k));
     }
 
     /** Returns the pending-imports map (package-private for PageCollection/save paths). */
-    Map<COSObjectKey, COSBase> getPendingImports() {
+    Map<PdfObjectKey, PdfBase> getPendingImports() {
         return pendingImports;
     }
 
     /**
-     * Collects all COS objects that have been modified since loading.
+     * Collects all PDF objects that have been modified since loading.
      *
-     * @return map of modified object keys to their COS objects
+     * @return map of modified object keys to their PDF objects
      * @throws IOException if objects cannot be loaded
      */
-    private Map<COSObjectKey, COSBase> collectModifiedObjects() throws IOException {
-        Map<COSObjectKey, COSBase> modified = new LinkedHashMap<>();
+    private Map<PdfObjectKey, PdfBase> collectModifiedObjects() throws IOException {
+        Map<PdfObjectKey, PdfBase> modified = new LinkedHashMap<>();
         // Snapshot the key set first — parser.getObject can lazily load new
         // objects (compressed-object streams, recovered objects) and mutate the
         // backing map, which would otherwise raise ConcurrentModificationException.
-        List<COSObjectKey> keys = new ArrayList<>(parser.getAllObjectKeys());
-        for (COSObjectKey key : keys) {
+        List<PdfObjectKey> keys = new ArrayList<>(parser.getAllObjectKeys());
+        for (PdfObjectKey key : keys) {
             try {
-                COSBase obj = parser.getObject(key);
+                PdfBase obj = parser.getObject(key);
                 if (obj != null && isDirtyDeep(obj)) {
                     modified.put(key, obj);
                 }
@@ -1526,7 +1526,7 @@ public class Document implements Closeable {
      * @param obj the object to check
      * @return {@code true} if the object or any direct child is dirty
      */
-    private boolean isDirtyDeep(COSBase obj) {
+    private boolean isDirtyDeep(PdfBase obj) {
         return isDirtyDeep(obj, 0);
     }
 
@@ -1538,21 +1538,21 @@ public class Document implements Closeable {
      * @param depth current recursion depth
      * @return {@code true} if any nested direct object is dirty
      */
-    private boolean isDirtyDeep(COSBase obj, int depth) {
+    private boolean isDirtyDeep(PdfBase obj, int depth) {
         if (obj == null || depth > 5) return false;
         if (obj.isDirty()) return true;
-        if (obj instanceof COSDictionary) {
-            for (COSBase value : ((COSDictionary) obj).values()) {
-                if (value != null && !(value instanceof COSObjectReference)) {
+        if (obj instanceof PdfDictionary) {
+            for (PdfBase value : ((PdfDictionary) obj).values()) {
+                if (value != null && !(value instanceof PdfObjectReference)) {
                     if (isDirtyDeep(value, depth + 1)) return true;
                 }
             }
         }
-        if (obj instanceof COSArray) {
-            COSArray arr = (COSArray) obj;
+        if (obj instanceof PdfArray) {
+            PdfArray arr = (PdfArray) obj;
             for (int i = 0; i < arr.size(); i++) {
-                COSBase item = arr.get(i);
-                if (item != null && !(item instanceof COSObjectReference)) {
+                PdfBase item = arr.get(i);
+                if (item != null && !(item instanceof PdfObjectReference)) {
                     if (isDirtyDeep(item, depth + 1)) return true;
                 }
             }
@@ -1569,7 +1569,7 @@ public class Document implements Closeable {
      * @throws IOException if writing fails
      */
     private void saveIncremental(OutputStream outputStream,
-                                  Map<COSObjectKey, COSBase> modifiedObjects) throws IOException {
+                                  Map<PdfObjectKey, PdfBase> modifiedObjects) throws IOException {
         RandomAccessReader original = sourcePath != null
                 ? RandomAccessReader.fromFile(new File(sourcePath))
                 : RandomAccessReader.fromBytes(sourceBytes);
@@ -1589,12 +1589,12 @@ public class Document implements Closeable {
      * @throws IOException if writing fails
      */
     private void saveFullRewrite(OutputStream outputStream) throws IOException {
-        Map<COSObjectKey, COSBase> objects = new LinkedHashMap<>();
+        Map<PdfObjectKey, PdfBase> objects = new LinkedHashMap<>();
         int maxObjNum = 0;
-        for (COSObjectKey key : parser.getAllObjectKeys()) {
+        for (PdfObjectKey key : parser.getAllObjectKeys()) {
             try {
-                COSBase obj = parser.getObject(key);
-                if (obj != null && !(obj instanceof COSNull)) {
+                PdfBase obj = parser.getObject(key);
+                if (obj != null && !(obj instanceof PdfNull)) {
                     objects.put(key, obj);
                     maxObjNum = Math.max(maxObjNum, key.getObjectNumber());
                 }
@@ -1604,20 +1604,20 @@ public class Document implements Closeable {
             }
         }
         // Merge objects imported from other documents (cross-document page copy).
-        for (Map.Entry<COSObjectKey, COSBase> e : pendingImports.entrySet()) {
+        for (Map.Entry<PdfObjectKey, PdfBase> e : pendingImports.entrySet()) {
             objects.put(e.getKey(), e.getValue());
             maxObjNum = Math.max(maxObjNum, e.getKey().getObjectNumber());
         }
         // Register new outline items that were added programmatically (e.g. from another document)
         if (outlines != null && outlines.getCount() > 0) {
-            COSDictionary outlinesDict = outlines.getCOSDictionary();
+            PdfDictionary outlinesDict = outlines.getPdfDictionary();
             // Ensure outlines dict is registered
             if (outlinesDict.getObjectKey() == null) {
-                COSObjectKey outlinesKey = new COSObjectKey(++maxObjNum, 0);
+                PdfObjectKey outlinesKey = new PdfObjectKey(++maxObjNum, 0);
                 outlinesDict.setObjectKey(outlinesKey);
                 objects.put(outlinesKey, outlinesDict);
-                parser.getCatalog().set(COSName.of("Outlines"),
-                        new COSObjectReference(outlinesKey, k -> objects.get(k)));
+                parser.getCatalog().set(PdfName.of("Outlines"),
+                        new PdfObjectReference(outlinesKey, k -> objects.get(k)));
             } else if (!objects.containsKey(outlinesDict.getObjectKey())) {
                 objects.put(outlinesDict.getObjectKey(), outlinesDict);
             }
@@ -1630,9 +1630,9 @@ public class Document implements Closeable {
             maxObjNum = syncXmpToCatalog(parser.getCatalog(), objects, maxObjNum);
         }
         PDFWriter writer = new PDFWriter(outputStream, parser.getVersion());
-        COSDictionary trailer = new COSDictionary(parser.getTrailer());
-        trailer.remove(COSName.of("Prev"));
-        trailer.remove(COSName.of("XRefStm"));
+        PdfDictionary trailer = new PdfDictionary(parser.getTrailer());
+        trailer.remove(PdfName.of("Prev"));
+        trailer.remove(PdfName.of("XRefStm"));
         configureExistingEncryption(writer, trailer);
         maxObjNum = applyPendingEncryption(writer, trailer, objects, maxObjNum);
         writer.write(trailer, objects);
@@ -1765,57 +1765,57 @@ public class Document implements Closeable {
             }
         }
 
-        Map<COSObjectKey, COSBase> objects = new LinkedHashMap<>();
+        Map<PdfObjectKey, PdfBase> objects = new LinkedHashMap<>();
         int objNum = 1;
-        COSObjectReference trailerInfoRef = null;
+        PdfObjectReference trailerInfoRef = null;
         // Pre-seed objects with pendingImports (cross-document imports use keys
         // allocated via Document.allocateObjectNumber, which may overlap with
         // the local counter below — bump objNum past the highest imported key).
         int maxImportNum = 0;
-        for (Map.Entry<COSObjectKey, COSBase> e : pendingImports.entrySet()) {
+        for (Map.Entry<PdfObjectKey, PdfBase> e : pendingImports.entrySet()) {
             objects.put(e.getKey(), e.getValue());
             maxImportNum = Math.max(maxImportNum, e.getKey().getObjectNumber());
         }
         if (maxImportNum > objNum) objNum = maxImportNum;
 
         // Build pages dictionary with /Kids
-        COSDictionary pagesDict = new COSDictionary();
-        pagesDict.set(COSName.TYPE, COSName.PAGES);
-        org.aspose.pdf.engine.cos.COSArray kids = new org.aspose.pdf.engine.cos.COSArray();
+        PdfDictionary pagesDict = new PdfDictionary();
+        pagesDict.set(PdfName.TYPE, PdfName.PAGES);
+        org.aspose.pdf.engine.pdfobjects.PdfArray kids = new org.aspose.pdf.engine.pdfobjects.PdfArray();
 
         if (pages != null) {
             for (Page page : pages) {
-                COSDictionary pd = page.getCOSDictionary();
-                COSObjectKey existing = pd.getObjectKey();
-                COSObjectKey pageKey;
+                PdfDictionary pd = page.getPdfDictionary();
+                PdfObjectKey existing = pd.getObjectKey();
+                PdfObjectKey pageKey;
                 if (existing != null && objects.containsKey(existing) && objects.get(existing) == pd) {
                     // Imported page already registered via pendingImports — reuse its key.
                     pageKey = existing;
                 } else {
-                    pageKey = new COSObjectKey(++objNum, 0);
+                    pageKey = new PdfObjectKey(++objNum, 0);
                     pd.setObjectKey(pageKey);
                     objects.put(pageKey, pd);
                 }
-                pd.set(COSName.PARENT, pagesDict);
-                kids.add(new COSObjectReference(pageKey, k -> objects.get(k)));
+                pd.set(PdfName.PARENT, pagesDict);
+                kids.add(new PdfObjectReference(pageKey, k -> objects.get(k)));
 
                 // Register content stream as indirect object.
                 // BUG O: a previous saveNewDocument call replaces /Contents with
-                // a COSObjectReference bound to the *old* (now-stale) objects
+                // a PdfObjectReference bound to the *old* (now-stale) objects
                 // map. On the second save we must resolve through that
-                // reference, recover the underlying COSStream, and re-register
+                // reference, recover the underlying PdfStream, and re-register
                 // it in the current objects map with a fresh key. Without this,
                 // the page's /Contents reference would point at an object the
                 // writer never emits — every page renders blank.
-                COSBase contentsVal = pd.get("Contents");
-                COSStream contentsStream = null;
-                if (contentsVal instanceof COSStream) {
-                    contentsStream = (COSStream) contentsVal;
-                } else if (contentsVal instanceof COSObjectReference) {
+                PdfBase contentsVal = pd.get("Contents");
+                PdfStream contentsStream = null;
+                if (contentsVal instanceof PdfStream) {
+                    contentsStream = (PdfStream) contentsVal;
+                } else if (contentsVal instanceof PdfObjectReference) {
                     try {
-                        COSBase resolved = ((COSObjectReference) contentsVal).dereference();
-                        if (resolved instanceof COSStream) {
-                            contentsStream = (COSStream) resolved;
+                        PdfBase resolved = ((PdfObjectReference) contentsVal).dereference();
+                        if (resolved instanceof PdfStream) {
+                            contentsStream = (PdfStream) resolved;
                         }
                     } catch (IOException ignored) {
                         // Fall through; contentsStream stays null and we leave
@@ -1824,74 +1824,74 @@ public class Document implements Closeable {
                     }
                 }
                 if (contentsStream != null) {
-                    COSObjectKey existingContentsKey = contentsStream.getObjectKey();
-                    COSObjectKey csKey;
+                    PdfObjectKey existingContentsKey = contentsStream.getObjectKey();
+                    PdfObjectKey csKey;
                     if (existingContentsKey != null
                             && objects.get(existingContentsKey) == contentsStream) {
                         // Already registered in this save's map (e.g. via
                         // pendingImports) — no need to re-key.
                         csKey = existingContentsKey;
                     } else {
-                        csKey = new COSObjectKey(++objNum, 0);
+                        csKey = new PdfObjectKey(++objNum, 0);
                         contentsStream.setObjectKey(csKey);
                         objects.put(csKey, contentsStream);
                     }
-                    pd.set(COSName.of("Contents"),
-                            new COSObjectReference(csKey, k -> objects.get(k)));
+                    pd.set(PdfName.of("Contents"),
+                            new PdfObjectReference(csKey, k -> objects.get(k)));
                 }
 
                 // Register font dictionaries from /Resources/Font as indirect objects.
                 // Type0 fonts carry nested streams (/DescendantFonts → FontDescriptor →
                 // /FontFile2 with raw TTF bytes) that PDF spec §7.3.8 requires to be
                 // indirect objects — direct streams confuse some parsers (including
-                // our own). Walk the font dict tree and lift every COSStream up to
+                // our own). Walk the font dict tree and lift every PdfStream up to
                 // indirect form before registering.
                 //
                 // BUG O: on a second save, /Resources or /Resources/Font (or the
-                // per-font entries) may already be COSObjectReferences pointing
+                // per-font entries) may already be PdfObjectReferences pointing
                 // into the previous save's stale objects map. Dereference each
                 // step before walking; re-register the underlying dicts/streams
                 // in the current map. Without this, font references dangle and
                 // text disappears.
-                COSBase resVal = pd.get("Resources");
-                if (resVal instanceof COSObjectReference) {
-                    try { resVal = ((COSObjectReference) resVal).dereference(); }
+                PdfBase resVal = pd.get("Resources");
+                if (resVal instanceof PdfObjectReference) {
+                    try { resVal = ((PdfObjectReference) resVal).dereference(); }
                     catch (IOException ignored) { resVal = null; }
                 }
-                if (resVal instanceof COSDictionary) {
-                    COSBase fontDict = ((COSDictionary) resVal).get("Font");
-                    if (fontDict instanceof COSObjectReference) {
-                        try { fontDict = ((COSObjectReference) fontDict).dereference(); }
+                if (resVal instanceof PdfDictionary) {
+                    PdfBase fontDict = ((PdfDictionary) resVal).get("Font");
+                    if (fontDict instanceof PdfObjectReference) {
+                        try { fontDict = ((PdfObjectReference) fontDict).dereference(); }
                         catch (IOException ignored) { fontDict = null; }
                     }
-                    if (fontDict instanceof COSDictionary) {
+                    if (fontDict instanceof PdfDictionary) {
                         // Snapshot keys because we mutate the dict while iterating.
-                        java.util.List<COSName> fontKeys =
-                                new java.util.ArrayList<>(((COSDictionary) fontDict).keySet());
-                        for (COSName fontName : fontKeys) {
-                            COSBase fontObj = ((COSDictionary) fontDict).get(fontName.getName());
-                            if (fontObj instanceof COSObjectReference) {
+                        java.util.List<PdfName> fontKeys =
+                                new java.util.ArrayList<>(((PdfDictionary) fontDict).keySet());
+                        for (PdfName fontName : fontKeys) {
+                            PdfBase fontObj = ((PdfDictionary) fontDict).get(fontName.getName());
+                            if (fontObj instanceof PdfObjectReference) {
                                 try {
-                                    fontObj = ((COSObjectReference) fontObj).dereference();
+                                    fontObj = ((PdfObjectReference) fontObj).dereference();
                                 } catch (IOException ignored) {
                                     fontObj = null;
                                 }
                             }
-                            if (fontObj instanceof COSDictionary) {
-                                COSDictionary fontD = (COSDictionary) fontObj;
+                            if (fontObj instanceof PdfDictionary) {
+                                PdfDictionary fontD = (PdfDictionary) fontObj;
                                 objNum = liftStreamsToIndirect(fontD, objects, objNum);
-                                COSObjectKey existingFontKey = fontD.getObjectKey();
-                                COSObjectKey fKey;
+                                PdfObjectKey existingFontKey = fontD.getObjectKey();
+                                PdfObjectKey fKey;
                                 if (existingFontKey != null
                                         && objects.get(existingFontKey) == fontD) {
                                     fKey = existingFontKey;
                                 } else {
-                                    fKey = new COSObjectKey(++objNum, 0);
+                                    fKey = new PdfObjectKey(++objNum, 0);
                                     fontD.setObjectKey(fKey);
                                     objects.put(fKey, fontD);
                                 }
-                                ((COSDictionary) fontDict).set(fontName.getName(),
-                                        new COSObjectReference(fKey, k -> objects.get(k)));
+                                ((PdfDictionary) fontDict).set(fontName.getName(),
+                                        new PdfObjectReference(fKey, k -> objects.get(k)));
                             }
                         }
                     }
@@ -1899,59 +1899,59 @@ public class Document implements Closeable {
             }
         }
 
-        pagesDict.set(COSName.KIDS, kids);
-        pagesDict.set(COSName.COUNT,
-                org.aspose.pdf.engine.cos.COSInteger.valueOf(kids.size()));
+        pagesDict.set(PdfName.KIDS, kids);
+        pagesDict.set(PdfName.COUNT,
+                org.aspose.pdf.engine.pdfobjects.PdfInteger.valueOf(kids.size()));
         // Allocate a fresh key: 1 may already be owned by a pendingImports entry
         // because the target document's object-number allocator also starts at 1.
-        COSObjectKey pagesKey = new COSObjectKey(++objNum, 0);
+        PdfObjectKey pagesKey = new PdfObjectKey(++objNum, 0);
         pagesDict.setObjectKey(pagesKey);
         objects.put(pagesKey, pagesDict);
 
         // Catalog
-        COSDictionary catalog = new COSDictionary();
-        catalog.set(COSName.TYPE, COSName.of("Catalog"));
-        catalog.set(COSName.PAGES, new COSObjectReference(pagesKey, k -> objects.get(k)));
+        PdfDictionary catalog = new PdfDictionary();
+        catalog.set(PdfName.TYPE, PdfName.of("Catalog"));
+        catalog.set(PdfName.PAGES, new PdfObjectReference(pagesKey, k -> objects.get(k)));
         // Preserve user-stamped catalog entries (e.g. /Names → /EmbeddedFiles
         // for portfolios, /Collection, /OpenAction, /PageLayout, /PageMode).
         // saveNewDocument builds a fresh catalog from scratch, so without this
         // sync any setter that wrote into inMemoryCatalog before save would
         // be silently dropped.
         if (inMemoryCatalog != null) {
-            for (COSName extraKey : inMemoryCatalog.keySet()) {
+            for (PdfName extraKey : inMemoryCatalog.keySet()) {
                 String n = extraKey.getName();
                 if ("Type".equals(n) || "Pages".equals(n)) continue;
                 catalog.set(extraKey, inMemoryCatalog.get(n));
             }
         }
-        COSObjectKey catalogKey = new COSObjectKey(++objNum, 0);
+        PdfObjectKey catalogKey = new PdfObjectKey(++objNum, 0);
         catalog.setObjectKey(catalogKey);
         objects.put(catalogKey, catalog);
 
         // AcroForm
         if (form != null && form.getCount() > 0) {
-            COSDictionary acroForm = form.getCOSDictionary();
-            COSArray fieldRefs = new COSArray();
+            PdfDictionary acroForm = form.getPdfDictionary();
+            PdfArray fieldRefs = new PdfArray();
             for (org.aspose.pdf.forms.Field field : form.getFields()) {
-                COSDictionary fieldDict = field.getCOSDictionary();
-                COSObjectKey fieldKey = fieldDict.getObjectKey();
+                PdfDictionary fieldDict = field.getPdfDictionary();
+                PdfObjectKey fieldKey = fieldDict.getObjectKey();
                 if (fieldKey == null) {
-                    fieldKey = new COSObjectKey(++objNum, 0);
+                    fieldKey = new PdfObjectKey(++objNum, 0);
                     fieldDict.setObjectKey(fieldKey);
                 }
                 objects.put(fieldKey, fieldDict);
-                COSObjectReference fieldRef = new COSObjectReference(fieldKey, k -> objects.get(k));
+                PdfObjectReference fieldRef = new PdfObjectReference(fieldKey, k -> objects.get(k));
                 fieldRefs.add(fieldRef);
 
                 Page fieldPage = field.getPage();
                 if (fieldPage != null) {
-                    fieldDict.set(COSName.of("P"), fieldPage.getCOSDictionary());
-                    COSBase annotsVal = fieldPage.getCOSDictionary().get(COSName.ANNOTS);
-                    if (annotsVal instanceof COSArray) {
-                        COSArray annots = (COSArray) annotsVal;
+                    fieldDict.set(PdfName.of("P"), fieldPage.getPdfDictionary());
+                    PdfBase annotsVal = fieldPage.getPdfDictionary().get(PdfName.ANNOTS);
+                    if (annotsVal instanceof PdfArray) {
+                        PdfArray annots = (PdfArray) annotsVal;
                         boolean replaced = false;
                         for (int i = 0; i < annots.size(); i++) {
-                            COSBase item = annots.get(i);
+                            PdfBase item = annots.get(i);
                             if (item == fieldDict) {
                                 annots.set(i, fieldRef);
                                 replaced = true;
@@ -1972,11 +1972,11 @@ public class Document implements Closeable {
                 // "Invalid form field reference" + "Bad bounding box".
                 objNum = promoteFieldKidsToIndirect(fieldDict, fieldRef, fieldPage, objects, objNum);
             }
-            acroForm.set(COSName.of("Fields"), fieldRefs);
-            COSObjectKey acroFormKey = new COSObjectKey(++objNum, 0);
+            acroForm.set(PdfName.of("Fields"), fieldRefs);
+            PdfObjectKey acroFormKey = new PdfObjectKey(++objNum, 0);
             acroForm.setObjectKey(acroFormKey);
             objects.put(acroFormKey, acroForm);
-            catalog.set(COSName.of("AcroForm"), new COSObjectReference(acroFormKey, k -> objects.get(k)));
+            catalog.set(PdfName.of("AcroForm"), new PdfObjectReference(acroFormKey, k -> objects.get(k)));
         }
 
         // Sync XMP metadata if present
@@ -1985,34 +1985,34 @@ public class Document implements Closeable {
         }
 
         // Document Info
-        if (info != null && info.getCOSDictionary() != null && info.getCOSDictionary().size() > 0) {
-            COSDictionary infoDict = info.getCOSDictionary();
-            COSObjectKey infoKey = new COSObjectKey(++objNum, 0);
+        if (info != null && info.getPdfDictionary() != null && info.getPdfDictionary().size() > 0) {
+            PdfDictionary infoDict = info.getPdfDictionary();
+            PdfObjectKey infoKey = new PdfObjectKey(++objNum, 0);
             infoDict.setObjectKey(infoKey);
             objects.put(infoKey, infoDict);
-            trailerInfoRef = new COSObjectReference(infoKey, k -> objects.get(k));
+            trailerInfoRef = new PdfObjectReference(infoKey, k -> objects.get(k));
         }
 
         // Write outlines (bookmarks) if any were added
         if (outlines != null && outlines.getCount() > 0) {
-            COSDictionary outlinesDict = outlines.getCOSDictionary();
-            COSObjectKey outlinesKey = new COSObjectKey(++objNum, 0);
+            PdfDictionary outlinesDict = outlines.getPdfDictionary();
+            PdfObjectKey outlinesKey = new PdfObjectKey(++objNum, 0);
             outlinesDict.setObjectKey(outlinesKey);
             objects.put(outlinesKey, outlinesDict);
-            catalog.set(COSName.of("Outlines"),
-                    new COSObjectReference(outlinesKey, k -> objects.get(k)));
+            catalog.set(PdfName.of("Outlines"),
+                    new PdfObjectReference(outlinesKey, k -> objects.get(k)));
             // Register each outline item (and children) as indirect objects
             objNum = registerOutlineItems(outlines, objects, objNum);
         }
 
         // Trailer
-        COSDictionary trailer = new COSDictionary();
-        trailer.set(COSName.ROOT, new COSObjectReference(catalogKey, k -> objects.get(k)));
+        PdfDictionary trailer = new PdfDictionary();
+        trailer.set(PdfName.ROOT, new PdfObjectReference(catalogKey, k -> objects.get(k)));
         if (trailerInfoRef != null) {
-            trailer.set(COSName.INFO, trailerInfoRef);
+            trailer.set(PdfName.INFO, trailerInfoRef);
         }
-        trailer.set(COSName.of("Size"),
-                org.aspose.pdf.engine.cos.COSInteger.valueOf(objects.size() + 1));
+        trailer.set(PdfName.of("Size"),
+                org.aspose.pdf.engine.pdfobjects.PdfInteger.valueOf(objects.size() + 1));
 
         // Adobe Reader strictly validates that the file's PDF version supports
         // the declared encryption algorithm; otherwise it refuses with
@@ -2047,39 +2047,39 @@ public class Document implements Closeable {
      * Returns the updated max object number. No-op for fields without a
      * {@code /Kids} array or whose kids are already indirect.
      */
-    private int promoteFieldKidsToIndirect(COSDictionary fieldDict,
-                                           COSObjectReference parentRef,
+    private int promoteFieldKidsToIndirect(PdfDictionary fieldDict,
+                                           PdfObjectReference parentRef,
                                            Page fieldPage,
-                                           Map<COSObjectKey, COSBase> objects,
+                                           Map<PdfObjectKey, PdfBase> objects,
                                            int objNum) {
-        COSBase kidsVal = fieldDict.get("Kids");
-        if (kidsVal instanceof COSObjectReference) {
-            try { kidsVal = ((COSObjectReference) kidsVal).dereference(); }
+        PdfBase kidsVal = fieldDict.get("Kids");
+        if (kidsVal instanceof PdfObjectReference) {
+            try { kidsVal = ((PdfObjectReference) kidsVal).dereference(); }
             catch (IOException e) { return objNum; }
         }
-        if (!(kidsVal instanceof COSArray)) return objNum;
-        COSArray kids = (COSArray) kidsVal;
+        if (!(kidsVal instanceof PdfArray)) return objNum;
+        PdfArray kids = (PdfArray) kidsVal;
 
-        COSArray pageAnnots = null;
+        PdfArray pageAnnots = null;
         if (fieldPage != null) {
-            COSBase annotsVal = fieldPage.getCOSDictionary().get(COSName.ANNOTS);
-            if (annotsVal instanceof COSArray) {
-                pageAnnots = (COSArray) annotsVal;
+            PdfBase annotsVal = fieldPage.getPdfDictionary().get(PdfName.ANNOTS);
+            if (annotsVal instanceof PdfArray) {
+                pageAnnots = (PdfArray) annotsVal;
             }
         }
 
         for (int i = 0; i < kids.size(); i++) {
-            COSBase kid = kids.get(i);
-            // On a second save the entry is already a COSObjectReference bound
+            PdfBase kid = kids.get(i);
+            // On a second save the entry is already a PdfObjectReference bound
             // to the *previous* save's (now-stale) objects map. Capture the old
             // key so we can rewrite the matching /Annots entry, then dereference
             // to the underlying widget dict.
-            COSObjectKey oldKey = null;
-            if (kid instanceof COSObjectReference) {
-                oldKey = ((COSObjectReference) kid).getKey();
+            PdfObjectKey oldKey = null;
+            if (kid instanceof PdfObjectReference) {
+                oldKey = ((PdfObjectReference) kid).getKey();
                 try {
-                    COSBase resolved = ((COSObjectReference) kid).dereference();
-                    if (resolved instanceof COSDictionary) {
+                    PdfBase resolved = ((PdfObjectReference) kid).dereference();
+                    if (resolved instanceof PdfDictionary) {
                         kid = resolved;
                     } else {
                         continue;
@@ -2088,22 +2088,22 @@ public class Document implements Closeable {
                     continue;
                 }
             }
-            if (!(kid instanceof COSDictionary)) {
+            if (!(kid instanceof PdfDictionary)) {
                 continue;
             }
-            COSDictionary kidDict = (COSDictionary) kid;
+            PdfDictionary kidDict = (PdfDictionary) kid;
             // Always allocate a fresh key in THIS save's numbering. Reusing the
             // prior save's key collides with whatever object now occupies it in
             // the freshly-numbered map (manifests as empty kid widgets →
             // "Bad bounding box"). The fresh ref is propagated to /Kids and
             // /Annots below so nothing dangles.
-            COSObjectKey kidKey = new COSObjectKey(++objNum, 0);
+            PdfObjectKey kidKey = new PdfObjectKey(++objNum, 0);
             kidDict.setObjectKey(kidKey);
             objects.put(kidKey, kidDict);
-            kidDict.set(COSName.of("Parent"), parentRef);
-            final COSObjectKey fKidKey = kidKey;
-            final COSObjectKey fOldKey = oldKey;
-            COSObjectReference kidRef = new COSObjectReference(fKidKey, k -> objects.get(k));
+            kidDict.set(PdfName.of("Parent"), parentRef);
+            final PdfObjectKey fKidKey = kidKey;
+            final PdfObjectKey fOldKey = oldKey;
+            PdfObjectReference kidRef = new PdfObjectReference(fKidKey, k -> objects.get(k));
             kids.set(i, kidRef);
 
             // The kid widget must be reachable as a page annotation so viewers
@@ -2112,12 +2112,12 @@ public class Document implements Closeable {
             if (pageAnnots != null) {
                 boolean present = false;
                 for (int j = 0; j < pageAnnots.size(); j++) {
-                    COSBase a = pageAnnots.get(j);
+                    PdfBase a = pageAnnots.get(j);
                     boolean match = (a == kidDict)
-                            || (a instanceof COSObjectReference
-                                && (fKidKey.equals(((COSObjectReference) a).getKey())
+                            || (a instanceof PdfObjectReference
+                                && (fKidKey.equals(((PdfObjectReference) a).getKey())
                                     || (fOldKey != null
-                                        && fOldKey.equals(((COSObjectReference) a).getKey()))));
+                                        && fOldKey.equals(((PdfObjectReference) a).getKey()))));
                     if (match) {
                         pageAnnots.set(j, kidRef);
                         present = true;
@@ -2133,7 +2133,7 @@ public class Document implements Closeable {
     }
 
     /**
-     * Syncs XMP metadata to the catalog as a /Metadata COSStream.
+     * Syncs XMP metadata to the catalog as a /Metadata PdfStream.
      * Returns the updated max object number.
      */
     /**
@@ -2141,10 +2141,10 @@ public class Document implements Closeable {
      * Returns the updated max object number.
      */
     private static int registerOutlineItems(Iterable<OutlineItemCollection> items,
-                                             Map<COSObjectKey, COSBase> objects, int maxObjNum) {
+                                             Map<PdfObjectKey, PdfBase> objects, int maxObjNum) {
         for (OutlineItemCollection item : items) {
-            COSDictionary itemDict = item.getCOSDictionary();
-            COSObjectKey itemKey = new COSObjectKey(++maxObjNum, 0);
+            PdfDictionary itemDict = item.getPdfDictionary();
+            PdfObjectKey itemKey = new PdfObjectKey(++maxObjNum, 0);
             itemDict.setObjectKey(itemKey);
             objects.put(itemKey, itemDict);
             // Recursively register child items
@@ -2155,7 +2155,7 @@ public class Document implements Closeable {
         return maxObjNum;
     }
 
-    private int syncXmpToCatalog(COSDictionary catalog, Map<COSObjectKey, COSBase> objects,
+    private int syncXmpToCatalog(PdfDictionary catalog, Map<PdfObjectKey, PdfBase> objects,
                                    int maxObjNum) {
         // Use XmpMetadata.getBytes() so that an unmodified setXmpMetadata
         // payload is preserved byte-for-byte instead of being re-serialised
@@ -2164,18 +2164,18 @@ public class Document implements Closeable {
         if (xmpBytes.length == 0) return maxObjNum;
 
         // Create or update metadata stream
-        COSStream metaStream = new COSStream();
-        metaStream.set(COSName.TYPE, COSName.of("Metadata"));
-        metaStream.set(COSName.SUBTYPE, COSName.of("XML"));
+        PdfStream metaStream = new PdfStream();
+        metaStream.set(PdfName.TYPE, PdfName.of("Metadata"));
+        metaStream.set(PdfName.SUBTYPE, PdfName.of("XML"));
         metaStream.setDecodedData(xmpBytes);
         // XMP metadata stream MUST NOT be compressed (for readability)
         // No filter set → written as raw bytes
 
-        COSObjectKey metaKey = new COSObjectKey(++maxObjNum, 0);
+        PdfObjectKey metaKey = new PdfObjectKey(++maxObjNum, 0);
         metaStream.setObjectKey(metaKey);
         objects.put(metaKey, metaStream);
-        catalog.set(COSName.of("Metadata"),
-                new COSObjectReference(metaKey, k -> objects.get(k)));
+        catalog.set(PdfName.of("Metadata"),
+                new PdfObjectReference(metaKey, k -> objects.get(k)));
         return maxObjNum;
     }
 
@@ -2374,20 +2374,20 @@ public class Document implements Closeable {
         customHandler.initialize(parameters);
         byte[] encryptionKey = customHandler.calculateEncryptionKey(userPassword != null ? userPassword : "");
 
-        COSDictionary d = new COSDictionary();
-        d.set(COSName.of("Filter"), COSName.of(customHandler.getFilter()));
+        PdfDictionary d = new PdfDictionary();
+        d.set(PdfName.of("Filter"), PdfName.of(customHandler.getFilter()));
         if (customHandler.getSubFilter() != null && !customHandler.getSubFilter().isEmpty()) {
-            d.set(COSName.of("SubFilter"), COSName.of(customHandler.getSubFilter()));
+            d.set(PdfName.of("SubFilter"), PdfName.of(customHandler.getSubFilter()));
         }
-        d.set(COSName.of("V"), COSInteger.valueOf(customHandler.getVersion()));
-        d.set(COSName.of("R"), COSInteger.valueOf(customHandler.getRevision()));
-        d.set(COSName.of("Length"), COSInteger.valueOf(customHandler.getKeyLength()));
-        d.set(COSName.of("P"), COSInteger.valueOf(permissions));
-        d.set(COSName.of("O"), new COSString(ownerKey != null ? ownerKey : new byte[0]));
-        d.set(COSName.of("U"), new COSString(userKey != null ? userKey : new byte[0]));
+        d.set(PdfName.of("V"), PdfInteger.valueOf(customHandler.getVersion()));
+        d.set(PdfName.of("R"), PdfInteger.valueOf(customHandler.getRevision()));
+        d.set(PdfName.of("Length"), PdfInteger.valueOf(customHandler.getKeyLength()));
+        d.set(PdfName.of("P"), PdfInteger.valueOf(permissions));
+        d.set(PdfName.of("O"), new PdfString(ownerKey != null ? ownerKey : new byte[0]));
+        d.set(PdfName.of("U"), new PdfString(userKey != null ? userKey : new byte[0]));
         byte[] perms = customHandler.encryptPermissions(permissions);
         if (perms != null && perms.length > 0) {
-            d.set(COSName.of("Perms"), new COSString(perms));
+            d.set(PdfName.of("Perms"), new PdfString(perms));
         }
         PDFEncryptionDict encDict = new PDFEncryptionDict(d);
         this.pendingEncryptor = new PDFEncryptor(encryptionKey, encDict, customHandler);
@@ -2424,13 +2424,13 @@ public class Document implements Closeable {
         }
         // Try to get existing ID from trailer
         if (parser != null) {
-            COSDictionary trailer = parser.getTrailer();
+            PdfDictionary trailer = parser.getTrailer();
             if (trailer != null) {
-                COSBase idObj = trailer.get(COSName.of("ID"));
-                if (idObj instanceof COSArray && ((COSArray) idObj).size() > 0) {
-                    COSBase first = ((COSArray) idObj).get(0);
-                    if (first instanceof COSString) {
-                        byte[] id = ((COSString) first).getBytes();
+                PdfBase idObj = trailer.get(PdfName.of("ID"));
+                if (idObj instanceof PdfArray && ((PdfArray) idObj).size() > 0) {
+                    PdfBase first = ((PdfArray) idObj).get(0);
+                    if (first instanceof PdfString) {
+                        byte[] id = ((PdfString) first).getBytes();
                         if (id.length > 0) return id;
                     }
                 }
@@ -2452,45 +2452,45 @@ public class Document implements Closeable {
      * @param maxObjNum the current maximum object number
      * @return the updated maximum object number
      */
-    private int applyPendingEncryption(PDFWriter writer, COSDictionary trailer,
-                                        Map<COSObjectKey, COSBase> objects, int maxObjNum) {
+    private int applyPendingEncryption(PDFWriter writer, PdfDictionary trailer,
+                                        Map<PdfObjectKey, PdfBase> objects, int maxObjNum) {
         if (pendingEncryptor == null || pendingEncDict == null) {
             return maxObjNum;
         }
 
         // Register /Encrypt dict as indirect object
-        COSObjectKey encDictKey = new COSObjectKey(++maxObjNum, 0);
-        objects.put(encDictKey, pendingEncDict.getCOSDictionary());
+        PdfObjectKey encDictKey = new PdfObjectKey(++maxObjNum, 0);
+        objects.put(encDictKey, pendingEncDict.getPdfDictionary());
 
         // Configure writer
         writer.setEncryptor(pendingEncryptor, encDictKey);
 
         // Add /Encrypt reference to trailer
-        trailer.set(COSName.of("Encrypt"), new COSObjectReference(encDictKey, k -> objects.get(k)));
+        trailer.set(PdfName.of("Encrypt"), new PdfObjectReference(encDictKey, k -> objects.get(k)));
 
         // Add /ID to trailer (required for encrypted documents per §7.6.1)
-        COSArray idArray = new COSArray();
-        idArray.add(new COSString(pendingDocumentId));
-        idArray.add(new COSString(pendingDocumentId));
-        trailer.set(COSName.of("ID"), idArray);
+        PdfArray idArray = new PdfArray();
+        idArray.add(new PdfString(pendingDocumentId));
+        idArray.add(new PdfString(pendingDocumentId));
+        trailer.set(PdfName.of("ID"), idArray);
 
         // For AES-256 (V=5/R=6), Adobe Reader requires the catalog to declare
         // Adobe Extension Level 3 against base version 1.7 — otherwise it
         // rejects the file with "the document cannot be decrypted" even when
         // the cryptography is fully valid. Other readers ignore this entry.
         if (pendingEncDict.getV() >= 5) {
-            COSBase rootRef = trailer.get(COSName.ROOT);
-            if (rootRef instanceof COSObjectReference) {
-                COSObjectKey rootKey = ((COSObjectReference) rootRef).getKey();
-                COSBase catalogObj = objects.get(rootKey);
-                if (catalogObj instanceof COSDictionary) {
-                    COSDictionary catalog = (COSDictionary) catalogObj;
-                    COSDictionary adbe = new COSDictionary();
-                    adbe.set(COSName.of("BaseVersion"), COSName.of("1.7"));
-                    adbe.set(COSName.of("ExtensionLevel"), COSInteger.valueOf(3));
-                    COSDictionary extensions = new COSDictionary();
-                    extensions.set(COSName.of("ADBE"), adbe);
-                    catalog.set(COSName.of("Extensions"), extensions);
+            PdfBase rootRef = trailer.get(PdfName.ROOT);
+            if (rootRef instanceof PdfObjectReference) {
+                PdfObjectKey rootKey = ((PdfObjectReference) rootRef).getKey();
+                PdfBase catalogObj = objects.get(rootKey);
+                if (catalogObj instanceof PdfDictionary) {
+                    PdfDictionary catalog = (PdfDictionary) catalogObj;
+                    PdfDictionary adbe = new PdfDictionary();
+                    adbe.set(PdfName.of("BaseVersion"), PdfName.of("1.7"));
+                    adbe.set(PdfName.of("ExtensionLevel"), PdfInteger.valueOf(3));
+                    PdfDictionary extensions = new PdfDictionary();
+                    extensions.set(PdfName.of("ADBE"), adbe);
+                    catalog.set(PdfName.of("Extensions"), extensions);
                 }
             }
         }
@@ -2502,7 +2502,7 @@ public class Document implements Closeable {
      * Reuses the original file encryption when saving an already encrypted document
      * unless the caller explicitly requested new encryption or decryption.
      */
-    private void configureExistingEncryption(PDFWriter writer, COSDictionary trailer) throws IOException {
+    private void configureExistingEncryption(PDFWriter writer, PdfDictionary trailer) throws IOException {
         if (pendingEncryptor != null || pendingEncDict != null || parser == null || !parser.isEncrypted()) {
             return;
         }
@@ -2510,16 +2510,16 @@ public class Document implements Closeable {
         if (decryptor == null || !decryptor.isActive()) {
             return;
         }
-        COSBase encryptRef = trailer.get(COSName.of("Encrypt"));
-        if (!(encryptRef instanceof COSObjectReference)) {
+        PdfBase encryptRef = trailer.get(PdfName.of("Encrypt"));
+        if (!(encryptRef instanceof PdfObjectReference)) {
             return;
         }
-        COSBase encryptObj = parser.resolveReference(encryptRef);
-        if (!(encryptObj instanceof COSDictionary)) {
+        PdfBase encryptObj = parser.resolveReference(encryptRef);
+        if (!(encryptObj instanceof PdfDictionary)) {
             return;
         }
-        COSObjectKey encryptDictKey = ((COSObjectReference) encryptRef).getKey();
-        PDFEncryptionDict encDict = new PDFEncryptionDict((COSDictionary) encryptObj);
+        PdfObjectKey encryptDictKey = ((PdfObjectReference) encryptRef).getKey();
+        PDFEncryptionDict encDict = new PDFEncryptionDict((PdfDictionary) encryptObj);
         if (decryptor.getCustomHandler() != null) {
             writer.setEncryptor(new PDFEncryptor(decryptor.getEncryptionKey(), encDict, decryptor.getCustomHandler()),
                     encryptDictKey);
@@ -2540,28 +2540,28 @@ public class Document implements Closeable {
 public void decrypt() throws IOException {
         LOG.fine("Decrypting document — removing encryption dictionary");
         if (parser != null) {
-            for (COSObjectKey key : parser.getAllObjectKeys()) {
+            for (PdfObjectKey key : parser.getAllObjectKeys()) {
                 try {
-                    COSBase obj = parser.getObject(key);
+                    PdfBase obj = parser.getObject(key);
                     materializeDecryptedStreams(obj);
                 } catch (IOException e) {
                     LOG.fine(() -> "Skipping object during decrypt materialization " + key + ": " + e.getMessage());
                 }
             }
-            COSDictionary trailer = parser.getTrailer();
+            PdfDictionary trailer = parser.getTrailer();
             if (trailer != null) {
-                trailer.set(COSName.of("Encrypt"), null);
+                trailer.set(PdfName.of("Encrypt"), null);
             }
         }
         requestFullRewrite();
     }
 
-    private void materializeDecryptedStreams(COSBase obj) throws IOException {
+    private void materializeDecryptedStreams(PdfBase obj) throws IOException {
         if (obj == null) {
             return;
         }
-        if (obj instanceof COSStream) {
-            COSStream stream = (COSStream) obj;
+        if (obj instanceof PdfStream) {
+            PdfStream stream = (PdfStream) obj;
             if (stream.hasActiveDecryptor()) {
                 // Decrypt in place — do NOT decode-then-re-encode through the
                 // filter chain. Filter encoders are not implemented for every
@@ -2570,20 +2570,20 @@ public void decrypt() throws IOException {
                 // streams (e.g. PDFNEWNET-34092 — linearized + JBIG2 imagery).
                 stream.materializeDecryption();
             }
-            for (COSName key : stream.keySet()) {
+            for (PdfName key : stream.keySet()) {
                 materializeDecryptedStreams(stream.get(key));
             }
             return;
         }
-        if (obj instanceof COSDictionary) {
-            COSDictionary dict = (COSDictionary) obj;
-            for (COSName key : dict.keySet()) {
+        if (obj instanceof PdfDictionary) {
+            PdfDictionary dict = (PdfDictionary) obj;
+            for (PdfName key : dict.keySet()) {
                 materializeDecryptedStreams(dict.get(key));
             }
             return;
         }
-        if (obj instanceof COSArray) {
-            COSArray array = (COSArray) obj;
+        if (obj instanceof PdfArray) {
+            PdfArray array = (PdfArray) obj;
             for (int i = 0; i < array.size(); i++) {
                 materializeDecryptedStreams(array.get(i));
             }
@@ -2601,7 +2601,7 @@ public void decrypt() throws IOException {
      * @throws IOException if the catalog cannot be read
      */
     public JavaScriptCollection getJavaScript() throws IOException {
-        COSDictionary catalog = getCatalog();
+        PdfDictionary catalog = getCatalog();
         if (catalog == null) return null;
         return new JavaScriptCollection(catalog, parser);
     }
@@ -2759,10 +2759,10 @@ public void decrypt() throws IOException {
         if (pdfaCompliant && options.getFormat() != null) {
             pdfFormat = options.getFormat();
         }
-        COSBase metadataRef = parser.getCatalog().get(COSName.of("Metadata"));
-        COSBase metadataObject = parser.resolveReference(metadataRef);
-        if (metadataObject instanceof COSStream) {
-            metadata = new XmpMetadata(((COSStream) metadataObject).getDecodedData());
+        PdfBase metadataRef = parser.getCatalog().get(PdfName.of("Metadata"));
+        PdfBase metadataObject = parser.resolveReference(metadataRef);
+        if (metadataObject instanceof PdfStream) {
+            metadata = new XmpMetadata(((PdfStream) metadataObject).getDecodedData());
         }
         return pdfaCompliant;
     }
@@ -2789,78 +2789,78 @@ public void decrypt() throws IOException {
 
     /**
      * Walks a dictionary tree (used for embedded fonts), promoting every
-     * {@link COSStream} value it encounters to an indirect object —
+     * {@link PdfStream} value it encounters to an indirect object —
      * required by §7.3.8 ("Stream objects ... are always indirect").
      * Returns the new {@code objNum} after consuming as many object keys
      * as nested streams were found.
      */
-    private int liftStreamsToIndirect(COSDictionary dict,
-                                      Map<COSObjectKey, COSBase> objects,
+    private int liftStreamsToIndirect(PdfDictionary dict,
+                                      Map<PdfObjectKey, PdfBase> objects,
                                       int objNum) {
         // Snapshot keys — we will mutate the dictionary while iterating.
-        java.util.List<COSName> keys = new java.util.ArrayList<>(dict.keySet());
-        for (COSName key : keys) {
-            COSBase value = dict.get(key);
+        java.util.List<PdfName> keys = new java.util.ArrayList<>(dict.keySet());
+        for (PdfName key : keys) {
+            PdfBase value = dict.get(key);
             // BUG O: on second save, sub-dicts/streams may already be
-            // COSObjectReferences pointing into the previous save's stale
+            // PdfObjectReferences pointing into the previous save's stale
             // objects map. Resolve through the reference so we can re-register
             // the underlying object in the current map.
-            COSBase resolvedValue = value;
+            PdfBase resolvedValue = value;
             boolean wasReference = false;
-            if (value instanceof COSObjectReference) {
+            if (value instanceof PdfObjectReference) {
                 try {
-                    resolvedValue = ((COSObjectReference) value).dereference();
+                    resolvedValue = ((PdfObjectReference) value).dereference();
                     wasReference = true;
                 } catch (IOException ignored) {
                     resolvedValue = null;
                 }
             }
-            if (resolvedValue instanceof COSStream) {
-                COSStream stream = (COSStream) resolvedValue;
-                COSObjectKey existing = stream.getObjectKey();
-                COSObjectKey sKey;
+            if (resolvedValue instanceof PdfStream) {
+                PdfStream stream = (PdfStream) resolvedValue;
+                PdfObjectKey existing = stream.getObjectKey();
+                PdfObjectKey sKey;
                 if (existing != null && objects.get(existing) == stream) {
                     sKey = existing;
                 } else {
-                    sKey = new COSObjectKey(++objNum, 0);
+                    sKey = new PdfObjectKey(++objNum, 0);
                     stream.setObjectKey(sKey);
                     objects.put(sKey, stream);
                 }
                 if (wasReference || existing == null || objects.get(existing) != stream) {
-                    dict.set(key, new COSObjectReference(sKey, k -> objects.get(k)));
+                    dict.set(key, new PdfObjectReference(sKey, k -> objects.get(k)));
                 }
-            } else if (resolvedValue instanceof COSDictionary) {
-                objNum = liftStreamsToIndirect((COSDictionary) resolvedValue, objects, objNum);
-            } else if (resolvedValue instanceof org.aspose.pdf.engine.cos.COSArray) {
-                org.aspose.pdf.engine.cos.COSArray arr =
-                        (org.aspose.pdf.engine.cos.COSArray) resolvedValue;
+            } else if (resolvedValue instanceof PdfDictionary) {
+                objNum = liftStreamsToIndirect((PdfDictionary) resolvedValue, objects, objNum);
+            } else if (resolvedValue instanceof org.aspose.pdf.engine.pdfobjects.PdfArray) {
+                org.aspose.pdf.engine.pdfobjects.PdfArray arr =
+                        (org.aspose.pdf.engine.pdfobjects.PdfArray) resolvedValue;
                 for (int i = 0; i < arr.size(); i++) {
-                    COSBase item = arr.get(i);
-                    COSBase resolvedItem = item;
+                    PdfBase item = arr.get(i);
+                    PdfBase resolvedItem = item;
                     boolean itemWasRef = false;
-                    if (item instanceof COSObjectReference) {
+                    if (item instanceof PdfObjectReference) {
                         try {
-                            resolvedItem = ((COSObjectReference) item).dereference();
+                            resolvedItem = ((PdfObjectReference) item).dereference();
                             itemWasRef = true;
                         } catch (IOException ignored) {
                             resolvedItem = null;
                         }
                     }
-                    if (resolvedItem instanceof COSDictionary) {
-                        objNum = liftStreamsToIndirect((COSDictionary) resolvedItem, objects, objNum);
-                    } else if (resolvedItem instanceof COSStream) {
-                        COSStream stream = (COSStream) resolvedItem;
-                        COSObjectKey existing = stream.getObjectKey();
-                        COSObjectKey sKey;
+                    if (resolvedItem instanceof PdfDictionary) {
+                        objNum = liftStreamsToIndirect((PdfDictionary) resolvedItem, objects, objNum);
+                    } else if (resolvedItem instanceof PdfStream) {
+                        PdfStream stream = (PdfStream) resolvedItem;
+                        PdfObjectKey existing = stream.getObjectKey();
+                        PdfObjectKey sKey;
                         if (existing != null && objects.get(existing) == stream) {
                             sKey = existing;
                         } else {
-                            sKey = new COSObjectKey(++objNum, 0);
+                            sKey = new PdfObjectKey(++objNum, 0);
                             stream.setObjectKey(sKey);
                             objects.put(sKey, stream);
                         }
                         if (itemWasRef || existing == null || objects.get(existing) != stream) {
-                            arr.set(i, new COSObjectReference(sKey, k -> objects.get(k)));
+                            arr.set(i, new PdfObjectReference(sKey, k -> objects.get(k)));
                         }
                     }
                 }
@@ -3334,12 +3334,12 @@ public void decrypt() throws IOException {
     public boolean isPdfaCompliant() {
         if (!pdfaCompliant && parser != null) {
             try {
-                COSDictionary catalog = getCatalog();
+                PdfDictionary catalog = getCatalog();
                 org.aspose.pdf.engine.pdfa.XmpMetadataHandler handler =
                         org.aspose.pdf.engine.pdfa.XmpMetadataHandler.readFromCatalog(catalog);
                 if (handler.hasPdfAId()
-                        || (catalog.get(COSName.of("Metadata")) != null
-                        && catalog.get(COSName.of("OutputIntents")) != null)) {
+                        || (catalog.get(PdfName.of("Metadata")) != null
+                        && catalog.get(PdfName.of("OutputIntents")) != null)) {
                     pdfaCompliant = true;
                     if (pdfFormat == null) {
                         pdfFormat = inferPdfAFormat(handler.getPdfAPart(), handler.getPdfAConformance());
@@ -3373,19 +3373,19 @@ public void decrypt() throws IOException {
         return null;
     }
 
-    private COSDictionary recoverPagesDictionaryFromObjects() throws IOException {
+    private PdfDictionary recoverPagesDictionaryFromObjects() throws IOException {
         if (parser == null) {
             return null;
         }
-        java.util.TreeMap<Integer, COSDictionary> pageObjects = new java.util.TreeMap<>();
-        for (COSObjectKey key : parser.getAllObjectKeys()) {
+        java.util.TreeMap<Integer, PdfDictionary> pageObjects = new java.util.TreeMap<>();
+        for (PdfObjectKey key : parser.getAllObjectKeys()) {
             try {
-                COSBase candidate = parser.getObject(key);
-                if (candidate instanceof COSDictionary) {
-                    COSDictionary dict = (COSDictionary) candidate;
+                PdfBase candidate = parser.getObject(key);
+                if (candidate instanceof PdfDictionary) {
+                    PdfDictionary dict = (PdfDictionary) candidate;
                     String type = dict.getType();
                     if ("Page".equals(type)
-                            || (dict.get(COSName.MEDIABOX) != null && dict.get(COSName.PARENT) != null)) {
+                            || (dict.get(PdfName.MEDIABOX) != null && dict.get(PdfName.PARENT) != null)) {
                         pageObjects.put(key.getObjectNumber(), dict);
                     }
                 }
@@ -3396,13 +3396,13 @@ public void decrypt() throws IOException {
         if (pageObjects.isEmpty()) {
             return null;
         }
-        COSArray kids = new COSArray();
-        COSDictionary recoveredPages = new COSDictionary();
-        recoveredPages.set(COSName.TYPE, COSName.PAGES);
-        recoveredPages.set(COSName.KIDS, kids);
-        recoveredPages.set(COSName.COUNT, COSInteger.valueOf(pageObjects.size()));
-        for (COSDictionary pageDict : pageObjects.values()) {
-            pageDict.set(COSName.PARENT, recoveredPages);
+        PdfArray kids = new PdfArray();
+        PdfDictionary recoveredPages = new PdfDictionary();
+        recoveredPages.set(PdfName.TYPE, PdfName.PAGES);
+        recoveredPages.set(PdfName.KIDS, kids);
+        recoveredPages.set(PdfName.COUNT, PdfInteger.valueOf(pageObjects.size()));
+        for (PdfDictionary pageDict : pageObjects.values()) {
+            pageDict.set(PdfName.PARENT, recoveredPages);
             kids.add(pageDict);
         }
         return recoveredPages;
@@ -3462,52 +3462,52 @@ public void decrypt() throws IOException {
      */
     private boolean sourceUsesXRefStream() {
         if (parser == null) return false;
-        COSDictionary trailer = parser.getTrailer();
+        PdfDictionary trailer = parser.getTrailer();
         if (trailer == null) return false;
-        if (trailer.get(COSName.of("XRefStm")) != null) return true;
-        COSBase type = trailer.get(COSName.TYPE);
-        return type instanceof COSName && "XRef".equals(((COSName) type).getName());
+        if (trailer.get(PdfName.of("XRefStm")) != null) return true;
+        PdfBase type = trailer.get(PdfName.TYPE);
+        return type instanceof PdfName && "XRef".equals(((PdfName) type).getName());
     }
 
-    private void retainReachableObjects(Map<COSObjectKey, COSBase> objects, COSDictionary trailer) {
-        Set<COSObjectKey> reachable = new LinkedHashSet<>();
-        java.util.IdentityHashMap<COSBase, Boolean> visited = new java.util.IdentityHashMap<>();
+    private void retainReachableObjects(Map<PdfObjectKey, PdfBase> objects, PdfDictionary trailer) {
+        Set<PdfObjectKey> reachable = new LinkedHashSet<>();
+        java.util.IdentityHashMap<PdfBase, Boolean> visited = new java.util.IdentityHashMap<>();
         collectReachableFromCos(trailer, objects, reachable, visited);
         objects.keySet().retainAll(reachable);
     }
 
-    private void collectReachableFromCos(COSBase value, Map<COSObjectKey, COSBase> objects,
-                                         Set<COSObjectKey> reachable,
-                                         java.util.IdentityHashMap<COSBase, Boolean> visited) {
-        COSBase resolved = resolveCosBase(value, objects);
+    private void collectReachableFromCos(PdfBase value, Map<PdfObjectKey, PdfBase> objects,
+                                         Set<PdfObjectKey> reachable,
+                                         java.util.IdentityHashMap<PdfBase, Boolean> visited) {
+        PdfBase resolved = resolveCosBase(value, objects);
         if (resolved == null || visited.put(resolved, Boolean.TRUE) != null) {
             return;
         }
 
-        COSObjectKey key = resolved.getObjectKey();
+        PdfObjectKey key = resolved.getObjectKey();
         if (key != null && objects.containsKey(key)) {
             reachable.add(key);
         }
 
-        if (value instanceof COSObjectReference) {
-            COSObjectKey refKey = ((COSObjectReference) value).getObjectKey();
+        if (value instanceof PdfObjectReference) {
+            PdfObjectKey refKey = ((PdfObjectReference) value).getObjectKey();
             if (refKey != null && objects.containsKey(refKey)) {
                 reachable.add(refKey);
             }
         }
 
-        if (resolved instanceof COSDictionary) {
-            for (Map.Entry<COSName, COSBase> entry : (COSDictionary) resolved) {
+        if (resolved instanceof PdfDictionary) {
+            for (Map.Entry<PdfName, PdfBase> entry : (PdfDictionary) resolved) {
                 collectReachableFromCos(entry.getValue(), objects, reachable, visited);
             }
-        } else if (resolved instanceof COSArray) {
-            for (COSBase item : (COSArray) resolved) {
+        } else if (resolved instanceof PdfArray) {
+            for (PdfBase item : (PdfArray) resolved) {
                 collectReachableFromCos(item, objects, reachable, visited);
             }
         }
     }
 
-    private void pruneUnusedResources(Page page, java.util.IdentityHashMap<COSDictionary, Boolean> visited)
+    private void pruneUnusedResources(Page page, java.util.IdentityHashMap<PdfDictionary, Boolean> visited)
             throws IOException {
         if (page == null) {
             return;
@@ -3516,68 +3516,68 @@ public void decrypt() throws IOException {
         if (resources == null) {
             return;
         }
-        COSDictionary resourcesDict = resources.getCOSDictionary();
+        PdfDictionary resourcesDict = resources.getPdfDictionary();
         if (resourcesDict == null || visited.put(resourcesDict, Boolean.TRUE) != null) {
             return;
         }
 
         ResourceUsage usage = collectResourceUsage(page.getContents());
-        pruneSubDictionary(resourcesDict, COSName.of("Font"), usage.fonts);
-        pruneSubDictionary(resourcesDict, COSName.of("ExtGState"), usage.extGState);
-        pruneSubDictionary(resourcesDict, COSName.of("ColorSpace"), usage.colorSpaces);
-        pruneSubDictionary(resourcesDict, COSName.of("Pattern"), usage.patterns);
-        pruneSubDictionary(resourcesDict, COSName.of("Shading"), usage.shadings);
-        pruneSubDictionary(resourcesDict, COSName.of("Properties"), usage.properties);
+        pruneSubDictionary(resourcesDict, PdfName.of("Font"), usage.fonts);
+        pruneSubDictionary(resourcesDict, PdfName.of("ExtGState"), usage.extGState);
+        pruneSubDictionary(resourcesDict, PdfName.of("ColorSpace"), usage.colorSpaces);
+        pruneSubDictionary(resourcesDict, PdfName.of("Pattern"), usage.patterns);
+        pruneSubDictionary(resourcesDict, PdfName.of("Shading"), usage.shadings);
+        pruneSubDictionary(resourcesDict, PdfName.of("Properties"), usage.properties);
 
-        COSDictionary xObjects = resolveDictionary(resourcesDict.get(COSName.of("XObject")));
+        PdfDictionary xObjects = resolveDictionary(resourcesDict.get(PdfName.of("XObject")));
         if (xObjects != null) {
-            for (COSName name : new java.util.ArrayList<>(xObjects.keySet())) {
+            for (PdfName name : new java.util.ArrayList<>(xObjects.keySet())) {
                 if (!usage.xObjects.contains(name.getName())) {
                     xObjects.remove(name);
                     continue;
                 }
-                COSBase value = xObjects.get(name);
-                COSStream xObject = resolveStream(value);
+                PdfBase value = xObjects.get(name);
+                PdfStream xObject = resolveStream(value);
                 if (xObject != null && "Form".equals(xObject.getSubtype())) {
                     pruneUnusedFormResources(xObject, visited);
                 }
             }
             if (xObjects.isEmpty()) {
-                resourcesDict.remove(COSName.of("XObject"));
+                resourcesDict.remove(PdfName.of("XObject"));
             }
         }
     }
 
-    private void pruneUnusedFormResources(COSStream formXObject, java.util.IdentityHashMap<COSDictionary, Boolean> visited)
+    private void pruneUnusedFormResources(PdfStream formXObject, java.util.IdentityHashMap<PdfDictionary, Boolean> visited)
             throws IOException {
-        COSDictionary resourcesDict = resolveDictionary(formXObject.get(COSName.RESOURCES));
+        PdfDictionary resourcesDict = resolveDictionary(formXObject.get(PdfName.RESOURCES));
         if (resourcesDict == null || visited.put(resourcesDict, Boolean.TRUE) != null) {
             return;
         }
         OperatorCollection operators = org.aspose.pdf.engine.parser.ContentStreamParser
                 .parseToCollection(formXObject);
         ResourceUsage usage = collectResourceUsage(operators);
-        pruneSubDictionary(resourcesDict, COSName.of("Font"), usage.fonts);
-        pruneSubDictionary(resourcesDict, COSName.of("ExtGState"), usage.extGState);
-        pruneSubDictionary(resourcesDict, COSName.of("ColorSpace"), usage.colorSpaces);
-        pruneSubDictionary(resourcesDict, COSName.of("Pattern"), usage.patterns);
-        pruneSubDictionary(resourcesDict, COSName.of("Shading"), usage.shadings);
-        pruneSubDictionary(resourcesDict, COSName.of("Properties"), usage.properties);
+        pruneSubDictionary(resourcesDict, PdfName.of("Font"), usage.fonts);
+        pruneSubDictionary(resourcesDict, PdfName.of("ExtGState"), usage.extGState);
+        pruneSubDictionary(resourcesDict, PdfName.of("ColorSpace"), usage.colorSpaces);
+        pruneSubDictionary(resourcesDict, PdfName.of("Pattern"), usage.patterns);
+        pruneSubDictionary(resourcesDict, PdfName.of("Shading"), usage.shadings);
+        pruneSubDictionary(resourcesDict, PdfName.of("Properties"), usage.properties);
 
-        COSDictionary xObjects = resolveDictionary(resourcesDict.get(COSName.of("XObject")));
+        PdfDictionary xObjects = resolveDictionary(resourcesDict.get(PdfName.of("XObject")));
         if (xObjects != null) {
-            for (COSName name : new java.util.ArrayList<>(xObjects.keySet())) {
+            for (PdfName name : new java.util.ArrayList<>(xObjects.keySet())) {
                 if (!usage.xObjects.contains(name.getName())) {
                     xObjects.remove(name);
                     continue;
                 }
-                COSStream nested = resolveStream(xObjects.get(name));
+                PdfStream nested = resolveStream(xObjects.get(name));
                 if (nested != null && "Form".equals(nested.getSubtype())) {
                     pruneUnusedFormResources(nested, visited);
                 }
             }
             if (xObjects.isEmpty()) {
-                resourcesDict.remove(COSName.of("XObject"));
+                resourcesDict.remove(PdfName.of("XObject"));
             }
         }
     }
@@ -3613,20 +3613,20 @@ public void decrypt() throws IOException {
     }
 
     private void addTrailingNameOperands(ResourceUsage usage, Operator operator) {
-        java.util.List<COSBase> operands = operator.getOperands();
+        java.util.List<PdfBase> operands = operator.getOperands();
         if (operands == null || operands.isEmpty()) {
             return;
         }
         String opName = operator.getName();
         if ("MP".equals(opName) || "DP".equals(opName) || "BDC".equals(opName)) {
-            COSBase last = operands.get(operands.size() - 1);
+            PdfBase last = operands.get(operands.size() - 1);
             addPropertyName(usage.properties, last);
         }
     }
 
-    private void addPropertyName(Set<String> propertyNames, COSBase value) {
-        if (value instanceof COSName) {
-            propertyNames.add(((COSName) value).getName());
+    private void addPropertyName(Set<String> propertyNames, PdfBase value) {
+        if (value instanceof PdfName) {
+            propertyNames.add(((PdfName) value).getName());
         }
     }
 
@@ -3636,12 +3636,12 @@ public void decrypt() throws IOException {
         }
     }
 
-    private void pruneSubDictionary(COSDictionary resourcesDict, COSName key, Set<String> usedNames) {
-        COSDictionary subDict = resolveDictionary(resourcesDict.get(key));
+    private void pruneSubDictionary(PdfDictionary resourcesDict, PdfName key, Set<String> usedNames) {
+        PdfDictionary subDict = resolveDictionary(resourcesDict.get(key));
         if (subDict == null) {
             return;
         }
-        for (COSName name : new java.util.ArrayList<>(subDict.keySet())) {
+        for (PdfName name : new java.util.ArrayList<>(subDict.keySet())) {
             if (!usedNames.contains(name.getName())) {
                 subDict.remove(name);
             }
@@ -3651,24 +3651,24 @@ public void decrypt() throws IOException {
         }
     }
 
-    private COSDictionary resolveDictionary(COSBase base) {
-        COSBase resolved = resolveCosBase(base, java.util.Collections.emptyMap());
-        return resolved instanceof COSDictionary ? (COSDictionary) resolved : null;
+    private PdfDictionary resolveDictionary(PdfBase base) {
+        PdfBase resolved = resolveCosBase(base, java.util.Collections.emptyMap());
+        return resolved instanceof PdfDictionary ? (PdfDictionary) resolved : null;
     }
 
-    private COSStream resolveStream(COSBase base) {
-        COSBase resolved = resolveCosBase(base, java.util.Collections.emptyMap());
-        return resolved instanceof COSStream ? (COSStream) resolved : null;
+    private PdfStream resolveStream(PdfBase base) {
+        PdfBase resolved = resolveCosBase(base, java.util.Collections.emptyMap());
+        return resolved instanceof PdfStream ? (PdfStream) resolved : null;
     }
 
-    private COSBase resolveCosBase(COSBase base, Map<COSObjectKey, COSBase> objects) {
-        if (base instanceof COSObjectReference) {
-            COSObjectKey key = ((COSObjectReference) base).getObjectKey();
+    private PdfBase resolveCosBase(PdfBase base, Map<PdfObjectKey, PdfBase> objects) {
+        if (base instanceof PdfObjectReference) {
+            PdfObjectKey key = ((PdfObjectReference) base).getObjectKey();
             if (key != null && objects.containsKey(key)) {
                 return objects.get(key);
             }
             try {
-                return ((COSObjectReference) base).dereference();
+                return ((PdfObjectReference) base).dereference();
             } catch (IOException | IllegalStateException e) {
                 LOG.fine(() -> "Failed to dereference resource object: " + e.getMessage());
                 return null;

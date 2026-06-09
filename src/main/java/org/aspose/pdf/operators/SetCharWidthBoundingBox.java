@@ -1,7 +1,7 @@
 package org.aspose.pdf.operators;
 
 import org.aspose.pdf.Operator;
-import org.aspose.pdf.engine.cos.COSBase;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
 
 import java.util.Arrays;
 import java.util.List;
@@ -51,7 +51,7 @@ public class SetCharWidthBoundingBox extends Operator {
      *
      * @param operands the operands from the content stream parser
      */
-    public SetCharWidthBoundingBox(List<COSBase> operands) {
+    public SetCharWidthBoundingBox(List<PdfBase> operands) {
         super("d1", operands);
         this.wx  = (operands != null && operands.size() > 0) ? getNumber(operands.get(0)) : 0;
         this.wy  = (operands != null && operands.size() > 1) ? getNumber(operands.get(1)) : 0;

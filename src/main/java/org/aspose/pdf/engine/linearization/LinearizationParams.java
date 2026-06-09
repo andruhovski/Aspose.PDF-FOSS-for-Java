@@ -1,13 +1,13 @@
 package org.aspose.pdf.engine.linearization;
 
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSFloat;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectKey;
-import org.aspose.pdf.engine.cos.COSObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfFloat;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectKey;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
 import org.aspose.pdf.engine.io.RandomAccessReader;
 import org.aspose.pdf.engine.parser.PDFLexer;
 
@@ -45,14 +45,14 @@ public final class LinearizationParams {
     private int firstPageNumber; // /P, default 0
 
     /**
-     * Parses linearization parameters from a COSDictionary.
+     * Parses linearization parameters from a PdfDictionary.
      *
      * @param dict the linearization parameter dictionary
      * @return the parsed parameters, or {@code null} if the dict is not a linearization dict
      */
-    public static LinearizationParams parse(COSDictionary dict) {
+    public static LinearizationParams parse(PdfDictionary dict) {
         if (dict == null) return null;
-        COSBase linValue = dict.get("Linearized");
+        PdfBase linValue = dict.get("Linearized");
         if (linValue == null) return null;
 
         LinearizationParams params = new LinearizationParams();
@@ -65,9 +65,9 @@ public final class LinearizationParams {
         params.firstPageNumber = dict.getInt("P", 0);
 
         // /H is an array [offset, length]
-        COSBase hArray = dict.get("H");
-        if (hArray instanceof COSArray) {
-            COSArray h = (COSArray) hArray;
+        PdfBase hArray = dict.get("H");
+        if (hArray instanceof PdfArray) {
+            PdfArray h = (PdfArray) hArray;
             if (h.size() >= 2) {
                 params.hintStreamOffset = h.getLong(0, 0);
                 params.hintStreamLength = h.getInt(1, 0);
@@ -77,27 +77,27 @@ public final class LinearizationParams {
     }
 
     /**
-     * Writes this linearization parameter dictionary as a COS dictionary.
+     * Writes this linearization parameter dictionary as a PDF dictionary.
      * The dictionary is written as an indirect object with the given object number.
      *
-     * @return the COS dictionary
+     * @return the PDF dictionary
      */
-    public COSDictionary toDictionary() {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("Linearized"), new COSFloat(1.0f));
-        dict.set(COSName.of("L"), COSInteger.valueOf(fileLength));
-        dict.set(COSName.of("O"), COSInteger.valueOf(firstPageObjNum));
-        dict.set(COSName.of("E"), COSInteger.valueOf(endOfFirstPage));
-        dict.set(COSName.of("N"), COSInteger.valueOf(numPages));
-        dict.set(COSName.of("T"), COSInteger.valueOf(mainXRefOffset));
+    public PdfDictionary toDictionary() {
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("Linearized"), new PdfFloat(1.0f));
+        dict.set(PdfName.of("L"), PdfInteger.valueOf(fileLength));
+        dict.set(PdfName.of("O"), PdfInteger.valueOf(firstPageObjNum));
+        dict.set(PdfName.of("E"), PdfInteger.valueOf(endOfFirstPage));
+        dict.set(PdfName.of("N"), PdfInteger.valueOf(numPages));
+        dict.set(PdfName.of("T"), PdfInteger.valueOf(mainXRefOffset));
         if (firstPageNumber != 0) {
-            dict.set(COSName.of("P"), COSInteger.valueOf(firstPageNumber));
+            dict.set(PdfName.of("P"), PdfInteger.valueOf(firstPageNumber));
         }
 
-        COSArray hArray = new COSArray();
-        hArray.add(COSInteger.valueOf(hintStreamOffset));
-        hArray.add(COSInteger.valueOf(hintStreamLength));
-        dict.set(COSName.of("H"), hArray);
+        PdfArray hArray = new PdfArray();
+        hArray.add(PdfInteger.valueOf(hintStreamOffset));
+        hArray.add(PdfInteger.valueOf(hintStreamLength));
+        dict.set(PdfName.of("H"), hArray);
 
         return dict;
     }

@@ -1,7 +1,7 @@
 package org.aspose.pdf.operators;
 
 import org.aspose.pdf.Operator;
-import org.aspose.pdf.engine.cos.COSBase;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
 
 import java.util.List;
 
@@ -28,7 +28,7 @@ public class ID extends Operator {
      *
      * @param operands the operands from the content stream parser
      */
-    public ID(List<COSBase> operands) {
+    public ID(List<PdfBase> operands) {
         super("ID", operands);
     }
 }

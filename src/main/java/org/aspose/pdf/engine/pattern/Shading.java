@@ -3,10 +3,10 @@ package org.aspose.pdf.engine.pattern;
 import org.aspose.pdf.Rectangle;
 import org.aspose.pdf.engine.colorspace.ColorSpaceBase;
 import org.aspose.pdf.engine.colorspace.DeviceRGB;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
 import org.aspose.pdf.engine.parser.PDFParser;
 
 import java.io.IOException;
@@ -31,7 +31,7 @@ public abstract class Shading {
     private static final Logger LOG = Logger.getLogger(Shading.class.getName());
 
     /** The underlying shading dictionary. */
-    protected final COSDictionary dict;
+    protected final PdfDictionary dict;
     /** The color space used by this shading. */
     protected final ColorSpaceBase colorSpace;
     /** Optional background color (components in the shading's color space). */
@@ -41,16 +41,16 @@ public abstract class Shading {
     /** Anti-aliasing flag. */
     protected final boolean antiAlias;
 
-    protected Shading(COSDictionary dict, PDFParser parser) throws IOException {
+    protected Shading(PdfDictionary dict, PDFParser parser) throws IOException {
         this.dict = dict;
-        COSBase csObj = resolveRef(dict.get("ColorSpace"));
+        PdfBase csObj = resolveRef(dict.get("ColorSpace"));
         this.colorSpace = (csObj != null)
                 ? ColorSpaceBase.resolve(csObj, null, parser)
                 : DeviceRGB.INSTANCE;
         this.background = getNumberArray(dict, "Background");
-        COSBase bb = resolveRef(dict.get("BBox"));
-        this.bbox = (bb instanceof COSArray && ((COSArray) bb).size() == 4)
-                ? Rectangle.fromCOSArray((COSArray) bb) : null;
+        PdfBase bb = resolveRef(dict.get("BBox"));
+        this.bbox = (bb instanceof PdfArray && ((PdfArray) bb).size() == 4)
+                ? Rectangle.fromPdfArray((PdfArray) bb) : null;
         this.antiAlias = dict.getBoolean("AntiAlias", false);
     }
 
@@ -84,20 +84,20 @@ public abstract class Shading {
     public boolean isAntiAlias() { return antiAlias; }
 
     /** Returns the underlying dictionary. */
-    public COSDictionary getCOSDictionary() { return dict; }
+    public PdfDictionary getPdfDictionary() { return dict; }
 
     /**
-     * Factory: parses a shading from a COS object.
+     * Factory: parses a shading from a PDF object.
      *
      * @param obj    the shading object
      * @param parser the PDF parser
      * @return the parsed shading, or {@code null}
      * @throws IOException if parsing fails
      */
-    public static Shading parse(COSBase obj, PDFParser parser) throws IOException {
+    public static Shading parse(PdfBase obj, PDFParser parser) throws IOException {
         obj = resolveRef(obj);
-        if (!(obj instanceof COSDictionary)) return null;
-        COSDictionary dict = (COSDictionary) obj;
+        if (!(obj instanceof PdfDictionary)) return null;
+        PdfDictionary dict = (PdfDictionary) obj;
         int type = dict.getInt("ShadingType", 0);
         switch (type) {
             case 1: return new FunctionBasedShading(dict, parser);
@@ -114,19 +114,19 @@ public abstract class Shading {
     }
 
     /** Resolves indirect references. */
-    protected static COSBase resolveRef(COSBase obj) {
-        if (obj instanceof COSObjectReference) {
-            try { return ((COSObjectReference) obj).dereference(); }
+    protected static PdfBase resolveRef(PdfBase obj) {
+        if (obj instanceof PdfObjectReference) {
+            try { return ((PdfObjectReference) obj).dereference(); }
             catch (IOException e) { return null; }
         }
         return obj;
     }
 
     /** Extracts a numeric array from a dictionary. */
-    protected static double[] getNumberArray(COSDictionary dict, String key) {
-        COSBase val = dict.get(key);
-        if (val instanceof COSArray) {
-            COSArray arr = (COSArray) val;
+    protected static double[] getNumberArray(PdfDictionary dict, String key) {
+        PdfBase val = dict.get(key);
+        if (val instanceof PdfArray) {
+            PdfArray arr = (PdfArray) val;
             double[] result = new double[arr.size()];
             for (int i = 0; i < arr.size(); i++) result[i] = arr.getFloat(i, 0f);
             return result;
@@ -135,15 +135,15 @@ public abstract class Shading {
     }
 
     /** Extracts a boolean array from a dictionary. */
-    protected static boolean[] getBooleanArray(COSDictionary dict, String key) {
-        COSBase val = dict.get(key);
-        if (val instanceof COSArray) {
-            COSArray arr = (COSArray) val;
+    protected static boolean[] getBooleanArray(PdfDictionary dict, String key) {
+        PdfBase val = dict.get(key);
+        if (val instanceof PdfArray) {
+            PdfArray arr = (PdfArray) val;
             boolean[] result = new boolean[arr.size()];
             for (int i = 0; i < arr.size(); i++) {
-                COSBase item = arr.get(i);
-                if (item instanceof org.aspose.pdf.engine.cos.COSBoolean) {
-                    result[i] = ((org.aspose.pdf.engine.cos.COSBoolean) item).getValue();
+                PdfBase item = arr.get(i);
+                if (item instanceof org.aspose.pdf.engine.pdfobjects.PdfBoolean) {
+                    result[i] = ((org.aspose.pdf.engine.pdfobjects.PdfBoolean) item).getValue();
                 }
             }
             return result;

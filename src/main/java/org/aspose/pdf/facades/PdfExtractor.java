@@ -4,9 +4,9 @@ import org.aspose.pdf.*;
 import org.aspose.pdf.annotations.Annotation;
 import org.aspose.pdf.annotations.FileAttachmentAnnotation;
 import org.aspose.pdf.devices.Resolution;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
 import org.aspose.pdf.Operator;
 import org.aspose.pdf.OperatorCollection;
 import org.aspose.pdf.operators.Do;
@@ -658,9 +658,9 @@ public class PdfExtractor implements Closeable {
             for (int i = 1; i <= pages.getCount(); i++) {
                 for (Annotation annotation : pages.get(i).getAnnotations()) {
                     if (annotation instanceof FileAttachmentAnnotation) {
-                        COSBase fs = resolveRef(annotation.getCOSDictionary().get("FS"));
-                        if (fs instanceof COSDictionary) {
-                            FileSpecification spec = new FileSpecification((COSDictionary) fs);
+                        PdfBase fs = resolveRef(annotation.getPdfDictionary().get("FS"));
+                        if (fs instanceof PdfDictionary) {
+                            FileSpecification spec = new FileSpecification((PdfDictionary) fs);
                             attachments.putIfAbsent(spec.getName(), spec);
                         }
                     }
@@ -672,10 +672,10 @@ public class PdfExtractor implements Closeable {
         extractedAttachments.addAll(attachments.values());
     }
 
-    private COSBase resolveRef(COSBase value) {
-        if (value instanceof COSObjectReference) {
+    private PdfBase resolveRef(PdfBase value) {
+        if (value instanceof PdfObjectReference) {
             try {
-                return ((COSObjectReference) value).dereference();
+                return ((PdfObjectReference) value).dereference();
             } catch (Exception e) {
                 return null;
             }
@@ -701,7 +701,7 @@ public class PdfExtractor implements Closeable {
         try {
             OperatorCollection contents = page.getContents();
             Resources resources = page.getResources();
-            COSDictionary xObjects = resources != null ? resources.getXObjects() : null;
+            PdfDictionary xObjects = resources != null ? resources.getXObjects() : null;
             for (Operator operator : contents) {
                 if (operator instanceof Do) {
                     String name = ((Do) operator).getXObjectName();
@@ -716,16 +716,16 @@ public class PdfExtractor implements Closeable {
         return names;
     }
 
-    private boolean isImageXObject(COSDictionary xObjects, String name) {
+    private boolean isImageXObject(PdfDictionary xObjects, String name) {
         if (xObjects == null) {
             return false;
         }
-        COSBase candidate = xObjects.get(name);
+        PdfBase candidate = xObjects.get(name);
         candidate = resolveRef(candidate);
-        if (!(candidate instanceof COSDictionary)) {
+        if (!(candidate instanceof PdfDictionary)) {
             return false;
         }
-        COSDictionary dict = (COSDictionary) candidate;
+        PdfDictionary dict = (PdfDictionary) candidate;
         return "XObject".equals(dict.getNameAsString("Type"))
                 && "Image".equals(dict.getNameAsString("Subtype"));
     }

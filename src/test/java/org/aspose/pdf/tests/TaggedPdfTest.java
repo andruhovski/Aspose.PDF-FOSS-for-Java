@@ -1,7 +1,7 @@
 package org.aspose.pdf.tests;
 
 import org.aspose.pdf.Document;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 import org.aspose.pdf.logicalstructure.*;
 import org.aspose.pdf.logicalstructure.elements.*;
 import org.aspose.pdf.tagged.TaggedContent;
@@ -69,18 +69,18 @@ public class TaggedPdfTest {
 
     @Test
     public void structureElementType() {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("S"), COSName.of("H2"));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("S"), PdfName.of("H2"));
         StructureElement elem = new StructureElement(dict, null);
         assertEquals(StructureTypeStandard.H2, elem.getStructureType());
     }
 
     @Test
     public void structureElementMetadata() {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("S"), COSName.of("P"));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("S"), PdfName.of("P"));
         dict.setString("T", "My Title");
-        dict.set(COSName.of("Lang"), new COSString("en-US"));
+        dict.set(PdfName.of("Lang"), new PdfString("en-US"));
         dict.setString("Alt", "Alternative text");
         dict.setString("ActualText", "Actual replacement");
         dict.setString("E", "Expanded form");
@@ -97,18 +97,18 @@ public class TaggedPdfTest {
 
     @Test
     public void structureElementChildElements() {
-        COSDictionary parent = new COSDictionary();
-        parent.set(COSName.of("S"), COSName.of("Div"));
+        PdfDictionary parent = new PdfDictionary();
+        parent.set(PdfName.of("S"), PdfName.of("Div"));
 
-        COSDictionary child1 = new COSDictionary();
-        child1.set(COSName.of("S"), COSName.of("P"));
-        COSDictionary child2 = new COSDictionary();
-        child2.set(COSName.of("S"), COSName.of("H1"));
+        PdfDictionary child1 = new PdfDictionary();
+        child1.set(PdfName.of("S"), PdfName.of("P"));
+        PdfDictionary child2 = new PdfDictionary();
+        child2.set(PdfName.of("S"), PdfName.of("H1"));
 
-        COSArray kids = new COSArray();
+        PdfArray kids = new PdfArray();
         kids.add(child1);
         kids.add(child2);
-        parent.set(COSName.of("K"), kids);
+        parent.set(PdfName.of("K"), kids);
 
         StructureElement elem = new StructureElement(parent, null);
         ElementList children = elem.getChildElements();
@@ -119,11 +119,11 @@ public class TaggedPdfTest {
 
     @Test
     public void structureElementSingleChild() {
-        COSDictionary parent = new COSDictionary();
-        parent.set(COSName.of("S"), COSName.of("Div"));
-        COSDictionary child = new COSDictionary();
-        child.set(COSName.of("S"), COSName.of("Span"));
-        parent.set(COSName.of("K"), child);
+        PdfDictionary parent = new PdfDictionary();
+        parent.set(PdfName.of("S"), PdfName.of("Div"));
+        PdfDictionary child = new PdfDictionary();
+        child.set(PdfName.of("S"), PdfName.of("Span"));
+        parent.set(PdfName.of("K"), child);
 
         StructureElement elem = new StructureElement(parent, null);
         assertEquals(1, elem.getChildElements().getCount());
@@ -132,22 +132,22 @@ public class TaggedPdfTest {
 
     @Test
     public void getChildElementsFiltersMCR() {
-        COSDictionary parent = new COSDictionary();
-        parent.set(COSName.of("S"), COSName.of("P"));
+        PdfDictionary parent = new PdfDictionary();
+        parent.set(PdfName.of("S"), PdfName.of("P"));
 
-        COSArray kids = new COSArray();
+        PdfArray kids = new PdfArray();
         // MCR dict
-        COSDictionary mcr = new COSDictionary();
-        mcr.set(COSName.of("Type"), COSName.of("MCR"));
+        PdfDictionary mcr = new PdfDictionary();
+        mcr.set(PdfName.of("Type"), PdfName.of("MCR"));
         mcr.setInt("MCID", 5);
         kids.add(mcr);
         // StructElem
-        COSDictionary child = new COSDictionary();
-        child.set(COSName.of("S"), COSName.of("Span"));
+        PdfDictionary child = new PdfDictionary();
+        child.set(PdfName.of("S"), PdfName.of("Span"));
         kids.add(child);
         // Bare integer MCID
-        kids.add(COSInteger.valueOf(3));
-        parent.set(COSName.of("K"), kids);
+        kids.add(PdfInteger.valueOf(3));
+        parent.set(PdfName.of("K"), kids);
 
         StructureElement elem = new StructureElement(parent, null);
         // getChildElements() should only return the Span, not MCR or integer
@@ -157,22 +157,22 @@ public class TaggedPdfTest {
 
     @Test
     public void getAllKidsReturnsMixed() {
-        COSDictionary parent = new COSDictionary();
-        parent.set(COSName.of("S"), COSName.of("P"));
+        PdfDictionary parent = new PdfDictionary();
+        parent.set(PdfName.of("S"), PdfName.of("P"));
 
-        COSArray kids = new COSArray();
-        kids.add(COSInteger.valueOf(7)); // bare MCID
-        COSDictionary mcr = new COSDictionary();
-        mcr.set(COSName.of("Type"), COSName.of("MCR"));
+        PdfArray kids = new PdfArray();
+        kids.add(PdfInteger.valueOf(7)); // bare MCID
+        PdfDictionary mcr = new PdfDictionary();
+        mcr.set(PdfName.of("Type"), PdfName.of("MCR"));
         mcr.setInt("MCID", 5);
         kids.add(mcr);
-        COSDictionary objr = new COSDictionary();
-        objr.set(COSName.of("Type"), COSName.of("OBJR"));
+        PdfDictionary objr = new PdfDictionary();
+        objr.set(PdfName.of("Type"), PdfName.of("OBJR"));
         kids.add(objr);
-        COSDictionary child = new COSDictionary();
-        child.set(COSName.of("S"), COSName.of("Span"));
+        PdfDictionary child = new PdfDictionary();
+        child.set(PdfName.of("S"), PdfName.of("Span"));
         kids.add(child);
-        parent.set(COSName.of("K"), kids);
+        parent.set(PdfName.of("K"), kids);
 
         StructureElement elem = new StructureElement(parent, null);
         List<Object> allKids = elem.getAllKids();
@@ -191,30 +191,30 @@ public class TaggedPdfTest {
 
     @Test
     public void appendChild() {
-        COSDictionary parentDict = new COSDictionary();
-        parentDict.set(COSName.of("S"), COSName.of("Div"));
+        PdfDictionary parentDict = new PdfDictionary();
+        parentDict.set(PdfName.of("S"), PdfName.of("Div"));
         StructureElement parent = new StructureElement(parentDict, null);
 
-        COSDictionary childDict = new COSDictionary();
-        childDict.set(COSName.of("S"), COSName.of("P"));
+        PdfDictionary childDict = new PdfDictionary();
+        childDict.set(PdfName.of("S"), PdfName.of("P"));
         StructureElement child = new StructureElement(childDict, null);
 
         parent.appendChild(child);
         assertEquals(1, parent.getChildElements().getCount());
         assertEquals("P", parent.getChildElements().get(0).getStructureType().getName());
         // Child should have parent set
-        assertNotNull(child.getCOSDictionary().get("P"));
+        assertNotNull(child.getPdfDictionary().get("P"));
     }
 
     @Test
     public void appendMultipleChildren() {
-        COSDictionary parentDict = new COSDictionary();
-        parentDict.set(COSName.of("S"), COSName.of("Div"));
+        PdfDictionary parentDict = new PdfDictionary();
+        parentDict.set(PdfName.of("S"), PdfName.of("Div"));
         StructureElement parent = new StructureElement(parentDict, null);
 
         for (int i = 1; i <= 3; i++) {
-            COSDictionary cd = new COSDictionary();
-            cd.set(COSName.of("S"), COSName.of("P"));
+            PdfDictionary cd = new PdfDictionary();
+            cd.set(PdfName.of("S"), PdfName.of("P"));
             parent.appendChild(new StructureElement(cd, null));
         }
         assertEquals(3, parent.getChildElements().getCount());
@@ -222,8 +222,8 @@ public class TaggedPdfTest {
 
     @Test
     public void appendMarkedContent() {
-        COSDictionary elemDict = new COSDictionary();
-        elemDict.set(COSName.of("S"), COSName.of("P"));
+        PdfDictionary elemDict = new PdfDictionary();
+        elemDict.set(PdfName.of("S"), PdfName.of("P"));
         StructureElement elem = new StructureElement(elemDict, null);
 
         elem.appendMarkedContent(42, null);
@@ -239,9 +239,9 @@ public class TaggedPdfTest {
 
     @Test
     public void roleMapParsesAndResolves() {
-        COSDictionary roleMapDict = new COSDictionary();
-        roleMapDict.set(COSName.of("MyParagraph"), COSName.of("P"));
-        roleMapDict.set(COSName.of("MyHeading"), COSName.of("H1"));
+        PdfDictionary roleMapDict = new PdfDictionary();
+        roleMapDict.set(PdfName.of("MyParagraph"), PdfName.of("P"));
+        roleMapDict.set(PdfName.of("MyHeading"), PdfName.of("H1"));
 
         RoleMap rm = RoleMap.parse(roleMapDict);
         assertEquals(2, rm.size());
@@ -264,8 +264,8 @@ public class TaggedPdfTest {
 
     @Test
     public void markedContentReferenceFromDict() {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("Type"), COSName.of("MCR"));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("Type"), PdfName.of("MCR"));
         dict.setInt("MCID", 12);
         MarkedContentReference mcr = MarkedContentReference.fromDictionary(dict);
         assertEquals(12, mcr.getMCID());
@@ -274,11 +274,11 @@ public class TaggedPdfTest {
 
     @Test
     public void objectReferenceFromDict() {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("Type"), COSName.of("OBJR"));
-        COSDictionary obj = new COSDictionary();
-        obj.set(COSName.of("Subtype"), COSName.of("Link"));
-        dict.set(COSName.of("Obj"), obj);
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("Type"), PdfName.of("OBJR"));
+        PdfDictionary obj = new PdfDictionary();
+        obj.set(PdfName.of("Subtype"), PdfName.of("Link"));
+        dict.set(PdfName.of("Obj"), obj);
         ObjectReference or = ObjectReference.fromDictionary(dict);
         assertNotNull(or.getReferencedObject());
     }
@@ -289,11 +289,11 @@ public class TaggedPdfTest {
 
     @Test
     public void structTreeRootGetRootElement() {
-        COSDictionary rootDict = new COSDictionary();
-        rootDict.set(COSName.of("Type"), COSName.of("StructTreeRoot"));
-        COSDictionary docElem = new COSDictionary();
-        docElem.set(COSName.of("S"), COSName.of("Document"));
-        rootDict.set(COSName.of("K"), docElem);
+        PdfDictionary rootDict = new PdfDictionary();
+        rootDict.set(PdfName.of("Type"), PdfName.of("StructTreeRoot"));
+        PdfDictionary docElem = new PdfDictionary();
+        docElem.set(PdfName.of("S"), PdfName.of("Document"));
+        rootDict.set(PdfName.of("K"), docElem);
 
         StructTreeRoot root = new StructTreeRoot(rootDict, null);
         StructureElement rootElem = root.getRootElement();
@@ -303,12 +303,12 @@ public class TaggedPdfTest {
 
     @Test
     public void structTreeRootGetChildren() {
-        COSDictionary rootDict = new COSDictionary();
-        COSArray kids = new COSArray();
-        COSDictionary elem1 = new COSDictionary();
-        elem1.set(COSName.of("S"), COSName.of("Document"));
+        PdfDictionary rootDict = new PdfDictionary();
+        PdfArray kids = new PdfArray();
+        PdfDictionary elem1 = new PdfDictionary();
+        elem1.set(PdfName.of("S"), PdfName.of("Document"));
         kids.add(elem1);
-        rootDict.set(COSName.of("K"), kids);
+        rootDict.set(PdfName.of("K"), kids);
 
         StructTreeRoot root = new StructTreeRoot(rootDict, null);
         assertEquals(1, root.getChildren().getCount());
@@ -317,8 +317,8 @@ public class TaggedPdfTest {
     @Test
     public void structTreeRootCreateNew() {
         StructTreeRoot root = StructTreeRoot.createNew();
-        assertNotNull(root.getCOSDictionary());
-        assertEquals("StructTreeRoot", root.getCOSDictionary().getNameAsString("Type"));
+        assertNotNull(root.getPdfDictionary());
+        assertEquals("StructTreeRoot", root.getPdfDictionary().getNameAsString("Type"));
         StructureElement docElem = root.getRootElement();
         assertNotNull(docElem);
         assertEquals(StructureTypeStandard.Document, docElem.getStructureType());
@@ -326,10 +326,10 @@ public class TaggedPdfTest {
 
     @Test
     public void structTreeRootRoleMap() {
-        COSDictionary rootDict = new COSDictionary();
-        COSDictionary rm = new COSDictionary();
-        rm.set(COSName.of("Custom"), COSName.of("Div"));
-        rootDict.set(COSName.of("RoleMap"), rm);
+        PdfDictionary rootDict = new PdfDictionary();
+        PdfDictionary rm = new PdfDictionary();
+        rm.set(PdfName.of("Custom"), PdfName.of("Div"));
+        rootDict.set(PdfName.of("RoleMap"), rm);
 
         StructTreeRoot root = new StructTreeRoot(rootDict, null);
         RoleMap roleMap = root.getRoleMap();
@@ -342,7 +342,7 @@ public class TaggedPdfTest {
 
     @Test
     public void taggedContentAutoCreatesStructTree() {
-        COSDictionary catalog = new COSDictionary();
+        PdfDictionary catalog = new PdfDictionary();
         TaggedContent tc = new TaggedContent(null, catalog, null);
 
         StructureElement root = tc.getRootElement();
@@ -352,14 +352,14 @@ public class TaggedPdfTest {
         // Should have /StructTreeRoot in catalog now
         assertNotNull(catalog.get("StructTreeRoot"));
         // Should have /MarkInfo/Marked=true
-        COSBase mi = catalog.get("MarkInfo");
-        assertTrue(mi instanceof COSDictionary);
-        assertTrue(((COSDictionary) mi).getBoolean("Marked", false));
+        PdfBase mi = catalog.get("MarkInfo");
+        assertTrue(mi instanceof PdfDictionary);
+        assertTrue(((PdfDictionary) mi).getBoolean("Marked", false));
     }
 
     @Test
     public void taggedContentSetLanguage() {
-        COSDictionary catalog = new COSDictionary();
+        PdfDictionary catalog = new PdfDictionary();
         TaggedContent tc = new TaggedContent(null, catalog, null);
         tc.setLanguage("en-US");
         assertEquals("en-US", tc.getLanguage());
@@ -367,25 +367,25 @@ public class TaggedPdfTest {
 
     @Test
     public void taggedContentCreateElement() {
-        COSDictionary catalog = new COSDictionary();
+        PdfDictionary catalog = new PdfDictionary();
         TaggedContent tc = new TaggedContent(null, catalog, null);
         StructureElement h1 = tc.createElement(StructureTypeStandard.H1);
         assertNotNull(h1);
         assertEquals(StructureTypeStandard.H1, h1.getStructureType());
-        assertEquals("StructElem", h1.getCOSDictionary().getNameAsString("Type"));
+        assertEquals("StructElem", h1.getPdfDictionary().getNameAsString("Type"));
     }
 
     @Test
     public void taggedContentReadsExistingTree() {
         // Build a catalog with an existing StructTreeRoot
-        COSDictionary catalog = new COSDictionary();
-        COSDictionary strRoot = new COSDictionary();
-        strRoot.set(COSName.of("Type"), COSName.of("StructTreeRoot"));
-        COSDictionary docElem = new COSDictionary();
-        docElem.set(COSName.of("S"), COSName.of("Document"));
+        PdfDictionary catalog = new PdfDictionary();
+        PdfDictionary strRoot = new PdfDictionary();
+        strRoot.set(PdfName.of("Type"), PdfName.of("StructTreeRoot"));
+        PdfDictionary docElem = new PdfDictionary();
+        docElem.set(PdfName.of("S"), PdfName.of("Document"));
         docElem.setString("T", "Test Doc");
-        strRoot.set(COSName.of("K"), docElem);
-        catalog.set(COSName.of("StructTreeRoot"), strRoot);
+        strRoot.set(PdfName.of("K"), docElem);
+        catalog.set(PdfName.of("StructTreeRoot"), strRoot);
 
         TaggedContent tc = new TaggedContent(null, catalog, null);
         StructureElement root = tc.getRootElement();
@@ -400,7 +400,7 @@ public class TaggedPdfTest {
     @Test
     public void documentWithoutStructTreeReturnsNull() {
         // Simulate via TaggedContent with empty catalog
-        COSDictionary catalog = new COSDictionary();
+        PdfDictionary catalog = new PdfDictionary();
         // getLogicalStructure equivalent: check if StructTreeRoot exists
         assertNull(catalog.get("StructTreeRoot"));
     }
@@ -440,7 +440,7 @@ public class TaggedPdfTest {
 
     @Test
     public void elementExposesStructureTextState() {
-        COSDictionary catalog = new COSDictionary();
+        PdfDictionary catalog = new PdfDictionary();
         TaggedContent tc = new TaggedContent(null, catalog, null);
         ParagraphElement p = tc.createParagraphElement();
 
@@ -457,7 +457,7 @@ public class TaggedPdfTest {
 
     @Test
     public void createListLblAndLBodyElements() {
-        COSDictionary catalog = new COSDictionary();
+        PdfDictionary catalog = new PdfDictionary();
         TaggedContent tc = new TaggedContent(null, catalog, null);
 
         ListLblElement lbl = tc.createListLblElement();
@@ -471,7 +471,7 @@ public class TaggedPdfTest {
 
     @Test
     public void createTableGroupingElements() {
-        COSDictionary catalog = new COSDictionary();
+        PdfDictionary catalog = new PdfDictionary();
         TaggedContent tc = new TaggedContent(null, catalog, null);
 
         TableTHeadElement thead = tc.createTableTHeadElement();
@@ -489,7 +489,7 @@ public class TaggedPdfTest {
 
     @Test
     public void listWithLblAndLBodyStructure() {
-        COSDictionary catalog = new COSDictionary();
+        PdfDictionary catalog = new PdfDictionary();
         TaggedContent tc = new TaggedContent(null, catalog, null);
 
         ListElement list = tc.createListElement();
@@ -520,7 +520,7 @@ public class TaggedPdfTest {
 
     @Test
     public void positionSettingsOnElement() {
-        COSDictionary catalog = new COSDictionary();
+        PdfDictionary catalog = new PdfDictionary();
         TaggedContent tc = new TaggedContent(null, catalog, null);
         SpanElement span = tc.createSpanElement();
 
@@ -544,7 +544,7 @@ public class TaggedPdfTest {
 
     @Test
     public void structTreeRootGetAllElements() {
-        COSDictionary catalog = new COSDictionary();
+        PdfDictionary catalog = new PdfDictionary();
         TaggedContent tc = new TaggedContent(null, catalog, null);
         StructureElement root = tc.getRootElement();
 
@@ -564,7 +564,7 @@ public class TaggedPdfTest {
 
     @Test
     public void structTreeRootFindElements() {
-        COSDictionary catalog = new COSDictionary();
+        PdfDictionary catalog = new PdfDictionary();
         TaggedContent tc = new TaggedContent(null, catalog, null);
         StructureElement root = tc.getRootElement();
 
@@ -584,7 +584,7 @@ public class TaggedPdfTest {
 
     @Test
     public void structTreeRootClearChilds() {
-        COSDictionary catalog = new COSDictionary();
+        PdfDictionary catalog = new PdfDictionary();
         TaggedContent tc = new TaggedContent(null, catalog, null);
         StructureElement root = tc.getRootElement();
         assertNotNull(root);
@@ -599,7 +599,7 @@ public class TaggedPdfTest {
 
     @Test
     public void taggedContentExposesStructTreeRootElement() {
-        COSDictionary catalog = new COSDictionary();
+        PdfDictionary catalog = new PdfDictionary();
         TaggedContent tc = new TaggedContent(null, catalog, null);
 
         StructTreeRoot str = tc.getStructTreeRootElement();
@@ -609,7 +609,7 @@ public class TaggedPdfTest {
 
     @Test
     public void taggedContentExposesDocumentTextState() {
-        COSDictionary catalog = new COSDictionary();
+        PdfDictionary catalog = new PdfDictionary();
         TaggedContent tc = new TaggedContent(null, catalog, null);
 
         StructureTextState sts = tc.getStructureTextState();
@@ -623,7 +623,7 @@ public class TaggedPdfTest {
 
     @Test
     public void figureElementImage() {
-        COSDictionary catalog = new COSDictionary();
+        PdfDictionary catalog = new PdfDictionary();
         TaggedContent tc = new TaggedContent(null, catalog, null);
         FigureElement fig = tc.createFigureElement();
         assertNull(fig.getImagePath());
@@ -635,7 +635,7 @@ public class TaggedPdfTest {
 
     @Test
     public void linkElementHyperlink() {
-        COSDictionary catalog = new COSDictionary();
+        PdfDictionary catalog = new PdfDictionary();
         TaggedContent tc = new TaggedContent(null, catalog, null);
         LinkElement link = tc.createLinkElement();
         assertNull(link.getHyperlink());
@@ -651,7 +651,7 @@ public class TaggedPdfTest {
 
     @Test
     public void elementAlternativeText() {
-        COSDictionary catalog = new COSDictionary();
+        PdfDictionary catalog = new PdfDictionary();
         TaggedContent tc = new TaggedContent(null, catalog, null);
         FigureElement fig = tc.createFigureElement();
         fig.setAlternativeText("Graph");
@@ -665,7 +665,7 @@ public class TaggedPdfTest {
 
     @Test
     public void tableRepeatingRowsCount() {
-        COSDictionary catalog = new COSDictionary();
+        PdfDictionary catalog = new PdfDictionary();
         TaggedContent tc = new TaggedContent(null, catalog, null);
         TableElement table = tc.createTableElement();
         assertEquals(0, table.getRepeatingRowsCount());

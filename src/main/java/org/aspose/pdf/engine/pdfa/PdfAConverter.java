@@ -21,7 +21,7 @@ import java.util.logging.Logger;
 /**
  * Orchestrator for PDF/A and PDF/X conversion.
  * <p>
- * Applies a series of fix passes to the COS-level objects of a parsed PDF document
+ * Applies a series of fix passes to the object-level objects of a parsed PDF document
  * so that it becomes compliant with the requested profile (PDF/A-1a, PDF/A-2b, PDF/X-1a, etc.).
  * After all fixes have been applied the document is re-validated and a
  * {@link PdfAValidationResult} is returned.
@@ -65,7 +65,7 @@ public final class PdfAConverter {
      * @param parser  the parsed PDF document (must already have been parsed)
      * @param options conversion options (target format, error action, etc.)
      * @return the validation result after conversion
-     * @throws IOException              if an I/O error occurs while accessing COS objects
+     * @throws IOException              if an I/O error occurs while accessing PDF objects
      * @throws IllegalArgumentException if parser or options is {@code null}
      */
     public PdfAValidationResult convert(PDFParser parser, PdfFormatConversionOptions options) throws IOException {

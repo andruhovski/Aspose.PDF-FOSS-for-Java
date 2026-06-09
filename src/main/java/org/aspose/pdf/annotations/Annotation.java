@@ -1,7 +1,7 @@
 package org.aspose.pdf.annotations;
 
 import org.aspose.pdf.*;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.logging.Logger;
@@ -11,18 +11,18 @@ import java.util.logging.Logger;
  */
 public abstract class Annotation extends org.aspose.pdf.BaseParagraph {
     private static final Logger LOG = Logger.getLogger(Annotation.class.getName());
-    protected COSDictionary dict;
+    protected PdfDictionary dict;
     protected Page page;
     private Border annotBorder;
 
     /**
-     * Constructs an annotation from an existing COS dictionary.
+     * Constructs an annotation from an existing PDF dictionary.
      *
-     * @param dict the COS dictionary backing this annotation; if null, a new empty dictionary is created
+     * @param dict the PDF dictionary backing this annotation; if null, a new empty dictionary is created
      * @param page the page this annotation belongs to
      */
-    protected Annotation(COSDictionary dict, Page page) {
-        this.dict = dict != null ? dict : new COSDictionary();
+    protected Annotation(PdfDictionary dict, Page page) {
+        this.dict = dict != null ? dict : new PdfDictionary();
         this.page = page;
     }
 
@@ -33,9 +33,9 @@ public abstract class Annotation extends org.aspose.pdf.BaseParagraph {
      * @param rect the annotation rectangle
      */
     protected Annotation(Page page, Rectangle rect) {
-        this.dict = new COSDictionary();
+        this.dict = new PdfDictionary();
         this.page = page;
-        dict.set(COSName.of("Type"), COSName.of("Annot"));
+        dict.set(PdfName.of("Type"), PdfName.of("Annot"));
         // F-10 sibling fix (Sprint 21): the base constructor stores the rect
         // leniently. Many annotation types are naturally degenerate — a
         // horizontal LineAnnotation has zero height, a TextAnnotation note icon
@@ -58,8 +58,8 @@ public abstract class Annotation extends org.aspose.pdf.BaseParagraph {
      * @return the rectangle, or null if not set or malformed
      */
     public Rectangle getRect() {
-        COSBase r = dict.get("Rect");
-        if (r instanceof COSArray && ((COSArray) r).size() == 4) return Rectangle.fromCOSArray((COSArray) r);
+        PdfBase r = dict.get("Rect");
+        if (r instanceof PdfArray && ((PdfArray) r).size() == 4) return Rectangle.fromPdfArray((PdfArray) r);
         return null;
     }
 
@@ -83,7 +83,7 @@ public abstract class Annotation extends org.aspose.pdf.BaseParagraph {
     public void setRect(Rectangle rect) {
         if (rect == null) return;
         requirePositiveArea(rect);
-        dict.set(COSName.of("Rect"), rect.toCOSArray());
+        dict.set(PdfName.of("Rect"), rect.toPdfArray());
     }
 
     /**
@@ -101,7 +101,7 @@ public abstract class Annotation extends org.aspose.pdf.BaseParagraph {
             LOG.fine(() -> "/Rect has non-positive area (width=" + rect.getWidth()
                     + ", height=" + rect.getHeight() + "); storing anyway (Aspose-compat)");
         }
-        dict.set(COSName.of("Rect"), rect.toCOSArray());
+        dict.set(PdfName.of("Rect"), rect.toPdfArray());
     }
 
     /**
@@ -128,8 +128,8 @@ public abstract class Annotation extends org.aspose.pdf.BaseParagraph {
      * @return the contents string, or null if not set
      */
     public String getContents() {
-        COSBase c = dict.get("Contents");
-        return (c instanceof COSString) ? ((COSString) c).getString() : null;
+        PdfBase c = dict.get("Contents");
+        return (c instanceof PdfString) ? ((PdfString) c).getString() : null;
     }
 
     /**
@@ -138,8 +138,8 @@ public abstract class Annotation extends org.aspose.pdf.BaseParagraph {
      * @param contents the contents string, or null to remove
      */
     public void setContents(String contents) {
-        if (contents != null) dict.set(COSName.of("Contents"), new COSString(contents.getBytes(StandardCharsets.UTF_8)));
-        else dict.remove(COSName.of("Contents"));
+        if (contents != null) dict.set(PdfName.of("Contents"), new PdfString(contents.getBytes(StandardCharsets.UTF_8)));
+        else dict.remove(PdfName.of("Contents"));
     }
 
     /**
@@ -148,8 +148,8 @@ public abstract class Annotation extends org.aspose.pdf.BaseParagraph {
      * @return the name string, or null if not set
      */
     public String getName() {
-        COSBase nm = dict.get("NM");
-        return (nm instanceof COSString) ? ((COSString) nm).getString() : null;
+        PdfBase nm = dict.get("NM");
+        return (nm instanceof PdfString) ? ((PdfString) nm).getString() : null;
     }
 
     /**
@@ -158,7 +158,7 @@ public abstract class Annotation extends org.aspose.pdf.BaseParagraph {
      * @param name the name string
      */
     public void setName(String name) {
-        if (name != null) dict.set(COSName.of("NM"), new COSString(name.getBytes(StandardCharsets.UTF_8)));
+        if (name != null) dict.set(PdfName.of("NM"), new PdfString(name.getBytes(StandardCharsets.UTF_8)));
     }
 
     /**
@@ -167,8 +167,8 @@ public abstract class Annotation extends org.aspose.pdf.BaseParagraph {
      * @return the modification date string, or null if not set
      */
     public String getModified() {
-        COSBase m = dict.get("M");
-        return (m instanceof COSString) ? ((COSString) m).getString() : null;
+        PdfBase m = dict.get("M");
+        return (m instanceof PdfString) ? ((PdfString) m).getString() : null;
     }
 
     /**
@@ -177,8 +177,8 @@ public abstract class Annotation extends org.aspose.pdf.BaseParagraph {
      * @param date the modification date string in PDF date format, or null to remove
      */
     public void setModified(String date) {
-        if (date != null) dict.set(COSName.of("M"), new COSString(date.getBytes(StandardCharsets.UTF_8)));
-        else dict.remove(COSName.of("M"));
+        if (date != null) dict.set(PdfName.of("M"), new PdfString(date.getBytes(StandardCharsets.UTF_8)));
+        else dict.remove(PdfName.of("M"));
     }
 
     /**
@@ -193,7 +193,7 @@ public abstract class Annotation extends org.aspose.pdf.BaseParagraph {
      *
      * @param flags the flags bitmask
      */
-    public void setFlags(int flags) { dict.set(COSName.of("F"), COSInteger.valueOf(flags)); }
+    public void setFlags(int flags) { dict.set(PdfName.of("F"), PdfInteger.valueOf(flags)); }
 
     /**
      * Returns the annotation flags as a typed {@link java.util.EnumSet}.
@@ -293,9 +293,9 @@ public abstract class Annotation extends org.aspose.pdf.BaseParagraph {
      * @return the color, or null if not set
      */
     public Color getColor() {
-        COSBase c = dict.get("C");
-        if (c instanceof COSArray) {
-            COSArray arr = (COSArray) c;
+        PdfBase c = dict.get("C");
+        if (c instanceof PdfArray) {
+            PdfArray arr = (PdfArray) c;
             if (arr.size() == 3) return Color.fromRgb(arr.getFloat(0,0), arr.getFloat(1,0), arr.getFloat(2,0));
             if (arr.size() == 1) return Color.fromGray(arr.getFloat(0,0));
             if (arr.size() == 4) return Color.fromCmyk(arr.getFloat(0,0), arr.getFloat(1,0), arr.getFloat(2,0), arr.getFloat(3,0));
@@ -309,12 +309,12 @@ public abstract class Annotation extends org.aspose.pdf.BaseParagraph {
      * @param color the color to set, or null to remove
      */
     public void setColor(Color color) {
-        if (color == null) { dict.remove(COSName.of("C")); return; }
-        COSArray c = new COSArray();
-        c.add(new COSFloat(color.getR()));
-        c.add(new COSFloat(color.getG()));
-        c.add(new COSFloat(color.getB()));
-        dict.set(COSName.of("C"), c);
+        if (color == null) { dict.remove(PdfName.of("C")); return; }
+        PdfArray c = new PdfArray();
+        c.add(new PdfFloat(color.getR()));
+        c.add(new PdfFloat(color.getG()));
+        c.add(new PdfFloat(color.getB()));
+        dict.set(PdfName.of("C"), c);
     }
 
     /**
@@ -325,9 +325,9 @@ public abstract class Annotation extends org.aspose.pdf.BaseParagraph {
     public Border getBorder() {
         if (annotBorder == null) {
             annotBorder = new Border(this);
-            COSBase borderBase = dict.get("Border");
-            if (borderBase instanceof COSArray) {
-                COSArray borderArray = (COSArray) borderBase;
+            PdfBase borderBase = dict.get("Border");
+            if (borderBase instanceof PdfArray) {
+                PdfArray borderArray = (PdfArray) borderBase;
                 if (borderArray.size() >= 3) {
                     annotBorder.setWidth(borderArray.getFloat(2, 1f));
                 }
@@ -344,11 +344,11 @@ public abstract class Annotation extends org.aspose.pdf.BaseParagraph {
     public void setBorder(Border border) {
         this.annotBorder = border;
         if (border != null) {
-            COSArray bs = new COSArray();
-            bs.add(new COSFloat(0)); // horizontal corner radius
-            bs.add(new COSFloat(0)); // vertical corner radius
-            bs.add(new COSFloat(border.getWidth()));
-            dict.set(COSName.of("Border"), bs);
+            PdfArray bs = new PdfArray();
+            bs.add(new PdfFloat(0)); // horizontal corner radius
+            bs.add(new PdfFloat(0)); // vertical corner radius
+            bs.add(new PdfFloat(border.getWidth()));
+            dict.set(PdfName.of("Border"), bs);
         }
     }
 
@@ -361,42 +361,42 @@ public abstract class Annotation extends org.aspose.pdf.BaseParagraph {
      * multiple states), this returns null — only direct stream values are returned.
      * </p>
      *
-     * @return the normal appearance COSStream, or null if absent or not a stream
+     * @return the normal appearance PdfStream, or null if absent or not a stream
      */
-    public COSStream getNormalAppearanceStream() {
-        COSBase ap = resolveRef(dict.get("AP"));
-        if (!(ap instanceof COSDictionary)) return null;
-        COSBase n = resolveRef(((COSDictionary) ap).get("N"));
-        if (n instanceof COSStream) return (COSStream) n;
+    public PdfStream getNormalAppearanceStream() {
+        PdfBase ap = resolveRef(dict.get("AP"));
+        if (!(ap instanceof PdfDictionary)) return null;
+        PdfBase n = resolveRef(((PdfDictionary) ap).get("N"));
+        if (n instanceof PdfStream) return (PdfStream) n;
         return null;
     }
 
     /**
      * Returns the normal appearance as an {@link XForm}, mirroring the C#
      * {@code Annotation.NormalAppearance} property. The XForm wraps the
-     * underlying /AP /N COSStream so callers can iterate its content
+     * underlying /AP /N PdfStream so callers can iterate its content
      * operators via {@link XForm#getContents()}.
      *
      * @return the XForm wrapping /AP /N, or {@code null} if absent or not a stream
      */
     public XForm getNormalAppearance() {
-        COSStream stream = getNormalAppearanceStream();
+        PdfStream stream = getNormalAppearanceStream();
         if (stream == null) return null;
         return new XForm(stream, "N", null);
     }
 
     /**
-     * Resolves an indirect object reference. If the value is a COSObjectReference,
+     * Resolves an indirect object reference. If the value is a PdfObjectReference,
      * dereferences it. Otherwise returns the value as-is.
      *
-     * @param value the COS value to resolve
+     * @param value the PDF value to resolve
      * @return the resolved value, or null
      */
-    private COSBase resolveRef(COSBase value) {
+    private PdfBase resolveRef(PdfBase value) {
         if (value == null) return null;
-        if (value instanceof COSObjectReference) {
+        if (value instanceof PdfObjectReference) {
             try {
-                return ((COSObjectReference) value).dereference();
+                return ((PdfObjectReference) value).dereference();
             } catch (IOException e) {
                 LOG.warning(() -> "Failed to dereference: " + e.getMessage());
                 return null;
@@ -419,15 +419,15 @@ public abstract class Annotation extends org.aspose.pdf.BaseParagraph {
     public void flatten() throws IOException {
         if (page == null) return;
 
-        COSStream apStream = getNormalAppearanceStream();
+        PdfStream apStream = getNormalAppearanceStream();
         if (apStream != null) {
             Rectangle annotRect = getRect();
             if (annotRect != null) {
                 // Get appearance BBox (defaults to Rect if absent)
-                COSBase bboxVal = resolveRef(apStream.get("BBox"));
+                PdfBase bboxVal = resolveRef(apStream.get("BBox"));
                 Rectangle bbox;
-                if (bboxVal instanceof COSArray && ((COSArray) bboxVal).size() == 4) {
-                    bbox = Rectangle.fromCOSArray((COSArray) bboxVal);
+                if (bboxVal instanceof PdfArray && ((PdfArray) bboxVal).size() == 4) {
+                    bbox = Rectangle.fromPdfArray((PdfArray) bboxVal);
                 } else {
                     bbox = annotRect;
                 }
@@ -468,9 +468,9 @@ public abstract class Annotation extends org.aspose.pdf.BaseParagraph {
      * @return the opacity value (0.0 to 1.0)
      */
     public double getOpacity() {
-        COSBase ca = dict.get("CA");
-        if (ca instanceof COSFloat) return ((COSFloat) ca).doubleValue();
-        if (ca instanceof COSInteger) return (double) ((COSInteger) ca).intValue();
+        PdfBase ca = dict.get("CA");
+        if (ca instanceof PdfFloat) return ((PdfFloat) ca).doubleValue();
+        if (ca instanceof PdfInteger) return (double) ((PdfInteger) ca).intValue();
         return 1.0;
     }
 
@@ -480,7 +480,7 @@ public abstract class Annotation extends org.aspose.pdf.BaseParagraph {
      * @param opacity the opacity value (0.0 to 1.0)
      */
     public void setOpacity(double opacity) {
-        dict.set(COSName.of("CA"), new COSFloat(opacity));
+        dict.set(PdfName.of("CA"), new PdfFloat(opacity));
     }
 
     /**
@@ -501,7 +501,7 @@ public abstract class Annotation extends org.aspose.pdf.BaseParagraph {
      * @param zIndex the Z-index value
      */
     public void setZIndex(int zIndex) {
-        dict.set(COSName.of("ZIndex"), COSInteger.valueOf(zIndex));
+        dict.set(PdfName.of("ZIndex"), PdfInteger.valueOf(zIndex));
     }
 
     /**
@@ -521,9 +521,9 @@ public abstract class Annotation extends org.aspose.pdf.BaseParagraph {
             // /Next entry; Aspose flattens that chain into the Actions list, so
             // an annotation with /A → URI(google) → /Next URI(yahoo) yields two
             // entries.
-            COSBase a = resolveRef(dict.get("A"));
-            if (a instanceof COSDictionary) {
-                PdfAction action = PdfAction.fromDictionary((COSDictionary) a, null);
+            PdfBase a = resolveRef(dict.get("A"));
+            if (a instanceof PdfDictionary) {
+                PdfAction action = PdfAction.fromDictionary((PdfDictionary) a, null);
                 while (action != null) {
                     collection.add(action);
                     action = action.getNext();
@@ -531,13 +531,13 @@ public abstract class Annotation extends org.aspose.pdf.BaseParagraph {
             }
             // Additional actions (/AA): one action per trigger event
             // (ISO 32000-1:2008, Table 197/198 — /E, /X, /D, /U, /Fo, /Bl, ...).
-            COSBase aa = resolveRef(dict.get("AA"));
-            if (aa instanceof COSDictionary) {
-                COSDictionary aaDict = (COSDictionary) aa;
-                for (COSName key : aaDict.keySet()) {
-                    COSBase entry = resolveRef(aaDict.get(key));
-                    if (entry instanceof COSDictionary) {
-                        PdfAction action = PdfAction.fromDictionary((COSDictionary) entry, null);
+            PdfBase aa = resolveRef(dict.get("AA"));
+            if (aa instanceof PdfDictionary) {
+                PdfDictionary aaDict = (PdfDictionary) aa;
+                for (PdfName key : aaDict.keySet()) {
+                    PdfBase entry = resolveRef(aaDict.get(key));
+                    if (entry instanceof PdfDictionary) {
+                        PdfAction action = PdfAction.fromDictionary((PdfDictionary) entry, null);
                         if (action != null) {
                             collection.add(action);
                             // /E (enter), /X (exit), /D (mouse-down) get exposed
@@ -571,20 +571,20 @@ public abstract class Annotation extends org.aspose.pdf.BaseParagraph {
     public void setPage(Page page) { this.page = page; }
 
     /**
-     * Returns the underlying COS dictionary for this annotation.
+     * Returns the underlying PDF dictionary for this annotation.
      *
-     * @return the COS dictionary
+     * @return the PDF dictionary
      */
-    public COSDictionary getCOSDictionary() { return dict; }
+    public PdfDictionary getPdfDictionary() { return dict; }
 
     /**
-     * Factory method: creates a typed annotation from a COS dictionary based on its /Subtype.
+     * Factory method: creates a typed annotation from a PDF dictionary based on its /Subtype.
      *
-     * @param dict the COS dictionary representing the annotation
+     * @param dict the PDF dictionary representing the annotation
      * @param page the page the annotation belongs to
      * @return a typed Annotation subclass instance
      */
-    public static Annotation fromDictionary(COSDictionary dict, Page page) {
+    public static Annotation fromDictionary(PdfDictionary dict, Page page) {
         String subtype = dict.getNameAsString("Subtype");
         if (subtype == null) return new GenericAnnotation(dict, page);
         switch (subtype) {

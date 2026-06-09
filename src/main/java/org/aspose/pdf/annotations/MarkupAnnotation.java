@@ -1,7 +1,7 @@
 package org.aspose.pdf.annotations;
 
 import org.aspose.pdf.*;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
@@ -12,12 +12,12 @@ import java.nio.charset.StandardCharsets;
 public abstract class MarkupAnnotation extends Annotation {
 
     /**
-     * Constructs a markup annotation from an existing COS dictionary.
+     * Constructs a markup annotation from an existing PDF dictionary.
      *
-     * @param dict the COS dictionary backing this annotation
+     * @param dict the PDF dictionary backing this annotation
      * @param page the page this annotation belongs to
      */
-    protected MarkupAnnotation(COSDictionary dict, Page page) { super(dict, page); }
+    protected MarkupAnnotation(PdfDictionary dict, Page page) { super(dict, page); }
 
     /**
      * Constructs a new markup annotation with the given rectangle on the specified page.
@@ -33,8 +33,8 @@ public abstract class MarkupAnnotation extends Annotation {
      * @return the title string, or null if not set
      */
     public String getTitle() {
-        COSBase t = dict.get("T");
-        return (t instanceof COSString) ? ((COSString) t).getString() : null;
+        PdfBase t = dict.get("T");
+        return (t instanceof PdfString) ? ((PdfString) t).getString() : null;
     }
 
     /**
@@ -43,8 +43,8 @@ public abstract class MarkupAnnotation extends Annotation {
      * @param title the title string, or null to remove
      */
     public void setTitle(String title) {
-        if (title != null) dict.set(COSName.of("T"), new COSString(title.getBytes(StandardCharsets.UTF_8)));
-        else dict.remove(COSName.of("T"));
+        if (title != null) dict.set(PdfName.of("T"), new PdfString(title.getBytes(StandardCharsets.UTF_8)));
+        else dict.remove(PdfName.of("T"));
     }
 
     /**
@@ -53,9 +53,9 @@ public abstract class MarkupAnnotation extends Annotation {
      * @return the opacity value
      */
     public double getOpacity() {
-        COSBase ca = dict.get("CA");
-        if (ca instanceof COSFloat) return ((COSFloat) ca).doubleValue();
-        if (ca instanceof COSInteger) return (double) ((COSInteger) ca).intValue();
+        PdfBase ca = dict.get("CA");
+        if (ca instanceof PdfFloat) return ((PdfFloat) ca).doubleValue();
+        if (ca instanceof PdfInteger) return (double) ((PdfInteger) ca).intValue();
         return 1.0;
     }
 
@@ -64,7 +64,7 @@ public abstract class MarkupAnnotation extends Annotation {
      *
      * @param opacity the opacity value
      */
-    public void setOpacity(double opacity) { dict.set(COSName.of("CA"), new COSFloat(opacity)); }
+    public void setOpacity(double opacity) { dict.set(PdfName.of("CA"), new PdfFloat(opacity)); }
 
     /**
      * Returns the subject of the annotation (/Subj entry).
@@ -72,8 +72,8 @@ public abstract class MarkupAnnotation extends Annotation {
      * @return the subject string, or null if not set
      */
     public String getSubject() {
-        COSBase s = dict.get("Subj");
-        return (s instanceof COSString) ? ((COSString) s).getString() : null;
+        PdfBase s = dict.get("Subj");
+        return (s instanceof PdfString) ? ((PdfString) s).getString() : null;
     }
 
     /**
@@ -82,8 +82,8 @@ public abstract class MarkupAnnotation extends Annotation {
      * @param subject the subject string, or null to remove
      */
     public void setSubject(String subject) {
-        if (subject != null) dict.set(COSName.of("Subj"), new COSString(subject.getBytes(StandardCharsets.UTF_8)));
-        else dict.remove(COSName.of("Subj"));
+        if (subject != null) dict.set(PdfName.of("Subj"), new PdfString(subject.getBytes(StandardCharsets.UTF_8)));
+        else dict.remove(PdfName.of("Subj"));
     }
 
     /**
@@ -92,8 +92,8 @@ public abstract class MarkupAnnotation extends Annotation {
      * @return the rich text string, or null if not set
      */
     public String getRichText() {
-        COSBase rc = dict.get("RC");
-        return (rc instanceof COSString) ? ((COSString) rc).getString() : null;
+        PdfBase rc = dict.get("RC");
+        return (rc instanceof PdfString) ? ((PdfString) rc).getString() : null;
     }
 
     /**
@@ -102,7 +102,7 @@ public abstract class MarkupAnnotation extends Annotation {
      * @param richText the rich text string
      */
     public void setRichText(String richText) {
-        if (richText != null) dict.set(COSName.of("RC"), new COSString(richText.getBytes(StandardCharsets.UTF_8)));
+        if (richText != null) dict.set(PdfName.of("RC"), new PdfString(richText.getBytes(StandardCharsets.UTF_8)));
     }
 
     /**
@@ -111,8 +111,8 @@ public abstract class MarkupAnnotation extends Annotation {
      * @return the creation date string, or null if not set
      */
     public String getCreationDate() {
-        COSBase d = dict.get("CreationDate");
-        return (d instanceof COSString) ? ((COSString) d).getString() : null;
+        PdfBase d = dict.get("CreationDate");
+        return (d instanceof PdfString) ? ((PdfString) d).getString() : null;
     }
 
     /**
@@ -121,8 +121,8 @@ public abstract class MarkupAnnotation extends Annotation {
      * @param date the creation date string in PDF date format, or null to remove
      */
     public void setCreationDate(String date) {
-        if (date != null) dict.set(COSName.of("CreationDate"), new COSString(date.getBytes(StandardCharsets.UTF_8)));
-        else dict.remove(COSName.of("CreationDate"));
+        if (date != null) dict.set(PdfName.of("CreationDate"), new PdfString(date.getBytes(StandardCharsets.UTF_8)));
+        else dict.remove(PdfName.of("CreationDate"));
     }
 
     /**
@@ -132,8 +132,8 @@ public abstract class MarkupAnnotation extends Annotation {
      * @return the reply type name, or null if not set
      */
     public String getReplyType() {
-        COSBase rt = dict.get("RT");
-        if (rt instanceof COSName) return ((COSName) rt).getName();
+        PdfBase rt = dict.get("RT");
+        if (rt instanceof PdfName) return ((PdfName) rt).getName();
         return null;
     }
 
@@ -143,8 +143,8 @@ public abstract class MarkupAnnotation extends Annotation {
      * @param replyType "R" for reply, "Group" for grouped, or null to remove
      */
     public void setReplyType(String replyType) {
-        if (replyType != null) dict.set(COSName.of("RT"), COSName.of(replyType));
-        else dict.remove(COSName.of("RT"));
+        if (replyType != null) dict.set(PdfName.of("RT"), PdfName.of(replyType));
+        else dict.remove(PdfName.of("RT"));
     }
 
     /**
@@ -153,8 +153,8 @@ public abstract class MarkupAnnotation extends Annotation {
      * @return the popup annotation, or null if not set
      */
     public PopupAnnotation getPopup() {
-        COSBase p = resolveRef(dict.get("Popup"));
-        if (p instanceof COSDictionary) return new PopupAnnotation((COSDictionary) p, page);
+        PdfBase p = resolveRef(dict.get("Popup"));
+        if (p instanceof PdfDictionary) return new PopupAnnotation((PdfDictionary) p, page);
         return null;
     }
 
@@ -164,7 +164,7 @@ public abstract class MarkupAnnotation extends Annotation {
      * @param popup the popup annotation to associate
      */
     public void setPopup(PopupAnnotation popup) {
-        if (popup != null) dict.set(COSName.of("Popup"), popup.getCOSDictionary());
+        if (popup != null) dict.set(PdfName.of("Popup"), popup.getPdfDictionary());
     }
 
     /**
@@ -173,8 +173,8 @@ public abstract class MarkupAnnotation extends Annotation {
      * @return the referenced annotation, or null if not set
      */
     public Annotation getInReplyTo() {
-        COSBase irt = resolveRef(dict.get("IRT"));
-        if (irt instanceof COSDictionary) return Annotation.fromDictionary((COSDictionary) irt, page);
+        PdfBase irt = resolveRef(dict.get("IRT"));
+        if (irt instanceof PdfDictionary) return Annotation.fromDictionary((PdfDictionary) irt, page);
         return null;
     }
 
@@ -184,12 +184,12 @@ public abstract class MarkupAnnotation extends Annotation {
      * @param annotation the annotation being replied to
      */
     public void setInReplyTo(Annotation annotation) {
-        if (annotation != null) dict.set(COSName.of("IRT"), annotation.getCOSDictionary());
+        if (annotation != null) dict.set(PdfName.of("IRT"), annotation.getPdfDictionary());
     }
 
-    private COSBase resolveRef(COSBase val) {
-        if (val instanceof COSObjectReference) {
-            try { return ((COSObjectReference) val).dereference(); }
+    private PdfBase resolveRef(PdfBase val) {
+        if (val instanceof PdfObjectReference) {
+            try { return ((PdfObjectReference) val).dereference(); }
             catch (Exception e) { return null; }
         }
         return val;

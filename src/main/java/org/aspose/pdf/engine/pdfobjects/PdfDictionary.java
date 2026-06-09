@@ -1,4 +1,4 @@
-package org.aspose.pdf.engine.cos;
+package org.aspose.pdf.engine.pdfobjects;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -12,17 +12,17 @@ import java.util.logging.Logger;
 /**
  * PDF dictionary object (§7.3.7, ISO 32000-1:2008).
  * <p>
- * An associative map from {@link COSName} to {@link COSBase}. The fundamental structure
+ * An associative map from {@link PdfName} to {@link PdfBase}. The fundamental structure
  * of PDF: pages, fonts, images, etc. are all represented as dictionaries.
  * Insertion order is preserved via {@link LinkedHashMap}.
  * </p>
  */
-public class COSDictionary extends COSBase implements Iterable<Map.Entry<COSName, COSBase>> {
+public class PdfDictionary extends PdfBase implements Iterable<Map.Entry<PdfName, PdfBase>> {
 
-    private static final Logger LOG = Logger.getLogger(COSDictionary.class.getName());
+    private static final Logger LOG = Logger.getLogger(PdfDictionary.class.getName());
 
-    /** The underlying map. Protected so COSStream can access it. */
-    protected final LinkedHashMap<COSName, COSBase> map;
+    /** The underlying map. Protected so PdfStream can access it. */
+    protected final LinkedHashMap<PdfName, PdfBase> map;
 
     private static final byte[] DICT_OPEN = {'<', '<'};
     private static final byte[] DICT_CLOSE = {'>', '>'};
@@ -33,7 +33,7 @@ public class COSDictionary extends COSBase implements Iterable<Map.Entry<COSName
     /**
      * Creates an empty dictionary.
      */
-    public COSDictionary() {
+    public PdfDictionary() {
         this.map = new LinkedHashMap<>();
     }
 
@@ -42,7 +42,7 @@ public class COSDictionary extends COSBase implements Iterable<Map.Entry<COSName
      *
      * @param other the dictionary to copy
      */
-    public COSDictionary(COSDictionary other) {
+    public PdfDictionary(PdfDictionary other) {
         this.map = new LinkedHashMap<>(other.map);
     }
 
@@ -70,7 +70,7 @@ public class COSDictionary extends COSBase implements Iterable<Map.Entry<COSName
      * @param key the key
      * @return true if the key exists
      */
-    public boolean containsKey(COSName key) {
+    public boolean containsKey(PdfName key) {
         return map.containsKey(key);
     }
 
@@ -81,7 +81,7 @@ public class COSDictionary extends COSBase implements Iterable<Map.Entry<COSName
      * @return true if the key exists
      */
     public boolean containsKey(String key) {
-        return map.containsKey(COSName.of(key));
+        return map.containsKey(PdfName.of(key));
     }
 
     /**
@@ -90,7 +90,7 @@ public class COSDictionary extends COSBase implements Iterable<Map.Entry<COSName
      * @param key the key
      * @return the value or null
      */
-    public COSBase get(COSName key) {
+    public PdfBase get(PdfName key) {
         return map.get(key);
     }
 
@@ -100,8 +100,8 @@ public class COSDictionary extends COSBase implements Iterable<Map.Entry<COSName
      * @param key the key name string
      * @return the value or null
      */
-    public COSBase get(String key) {
-        return map.get(COSName.of(key));
+    public PdfBase get(String key) {
+        return map.get(PdfName.of(key));
     }
 
     /**
@@ -110,16 +110,16 @@ public class COSDictionary extends COSBase implements Iterable<Map.Entry<COSName
      * @param key   the key
      * @param value the value, or null to remove
      */
-    public void set(COSName key, COSBase value) {
+    public void set(PdfName key, PdfBase value) {
         if (key == null) return;
-        if (value == null || value instanceof COSNull) {
+        if (value == null || value instanceof PdfNull) {
             if (map.containsKey(key)) {
                 map.remove(key);
                 markDirty();
             }
             return;
         }
-        COSBase old = map.put(key, value);
+        PdfBase old = map.put(key, value);
         if (old != value) {
             markDirty();
         }
@@ -131,8 +131,8 @@ public class COSDictionary extends COSBase implements Iterable<Map.Entry<COSName
      * @param key   the key name string
      * @param value the value, or null to remove
      */
-    public void set(String key, COSBase value) {
-        set(COSName.of(key), value);
+    public void set(String key, PdfBase value) {
+        set(PdfName.of(key), value);
     }
 
     /**
@@ -141,7 +141,7 @@ public class COSDictionary extends COSBase implements Iterable<Map.Entry<COSName
      * @param key the key
      * @return the removed value, or null
      */
-    public COSBase remove(COSName key) {
+    public PdfBase remove(PdfName key) {
         markDirty();
         return map.remove(key);
     }
@@ -151,7 +151,7 @@ public class COSDictionary extends COSBase implements Iterable<Map.Entry<COSName
      *
      * @return the key set
      */
-    public Set<COSName> keySet() {
+    public Set<PdfName> keySet() {
         return map.keySet();
     }
 
@@ -160,7 +160,7 @@ public class COSDictionary extends COSBase implements Iterable<Map.Entry<COSName
      *
      * @return the values
      */
-    public Collection<COSBase> values() {
+    public Collection<PdfBase> values() {
         return map.values();
     }
 
@@ -174,23 +174,23 @@ public class COSDictionary extends COSBase implements Iterable<Map.Entry<COSName
      * @return the int value or default
      */
     public int getInt(String key, int defaultValue) {
-        COSBase obj = get(key);
-        if (obj instanceof COSInteger) return ((COSInteger) obj).intValue();
-        if (obj instanceof COSFloat) return (int) ((COSFloat) obj).doubleValue();
+        PdfBase obj = get(key);
+        if (obj instanceof PdfInteger) return ((PdfInteger) obj).intValue();
+        if (obj instanceof PdfFloat) return (int) ((PdfFloat) obj).doubleValue();
         return defaultValue;
     }
 
     /**
-     * Returns the value as an int, or the default (COSName key variant).
+     * Returns the value as an int, or the default (PdfName key variant).
      *
      * @param key          the key
      * @param defaultValue the default
      * @return the int value or default
      */
-    public int getInt(COSName key, int defaultValue) {
-        COSBase obj = get(key);
-        if (obj instanceof COSInteger) return ((COSInteger) obj).intValue();
-        if (obj instanceof COSFloat) return (int) ((COSFloat) obj).doubleValue();
+    public int getInt(PdfName key, int defaultValue) {
+        PdfBase obj = get(key);
+        if (obj instanceof PdfInteger) return ((PdfInteger) obj).intValue();
+        if (obj instanceof PdfFloat) return (int) ((PdfFloat) obj).doubleValue();
         return defaultValue;
     }
 
@@ -202,9 +202,9 @@ public class COSDictionary extends COSBase implements Iterable<Map.Entry<COSName
      * @return the long value or default
      */
     public long getLong(String key, long defaultValue) {
-        COSBase obj = get(key);
-        if (obj instanceof COSInteger) return ((COSInteger) obj).longValue();
-        if (obj instanceof COSFloat) return (long) ((COSFloat) obj).doubleValue();
+        PdfBase obj = get(key);
+        if (obj instanceof PdfInteger) return ((PdfInteger) obj).longValue();
+        if (obj instanceof PdfFloat) return (long) ((PdfFloat) obj).doubleValue();
         return defaultValue;
     }
 
@@ -216,9 +216,9 @@ public class COSDictionary extends COSBase implements Iterable<Map.Entry<COSName
      * @return the float value or default
      */
     public float getFloat(String key, float defaultValue) {
-        COSBase obj = get(key);
-        if (obj instanceof COSFloat) return ((COSFloat) obj).floatValue();
-        if (obj instanceof COSInteger) return ((COSInteger) obj).floatValue();
+        PdfBase obj = get(key);
+        if (obj instanceof PdfFloat) return ((PdfFloat) obj).floatValue();
+        if (obj instanceof PdfInteger) return ((PdfInteger) obj).floatValue();
         return defaultValue;
     }
 
@@ -230,8 +230,8 @@ public class COSDictionary extends COSBase implements Iterable<Map.Entry<COSName
      * @return the boolean value or default
      */
     public boolean getBoolean(String key, boolean defaultValue) {
-        COSBase obj = get(key);
-        if (obj instanceof COSBoolean) return ((COSBoolean) obj).getValue();
+        PdfBase obj = get(key);
+        if (obj instanceof PdfBoolean) return ((PdfBoolean) obj).getValue();
         return defaultValue;
     }
 
@@ -242,8 +242,8 @@ public class COSDictionary extends COSBase implements Iterable<Map.Entry<COSName
      * @return the name value or null
      */
     public String getNameAsString(String key) {
-        COSBase obj = get(key);
-        return (obj instanceof COSName) ? ((COSName) obj).getName() : null;
+        PdfBase obj = get(key);
+        return (obj instanceof PdfName) ? ((PdfName) obj).getName() : null;
     }
 
     /**
@@ -253,30 +253,30 @@ public class COSDictionary extends COSBase implements Iterable<Map.Entry<COSName
      * @return the string value or null
      */
     public String getString(String key) {
-        COSBase obj = get(key);
-        return (obj instanceof COSString) ? ((COSString) obj).getString() : null;
+        PdfBase obj = get(key);
+        return (obj instanceof PdfString) ? ((PdfString) obj).getString() : null;
     }
 
     /**
-     * Returns the value as a COSDictionary, or null.
+     * Returns the value as a PdfDictionary, or null.
      *
      * @param key the key name
      * @return the dictionary or null
      */
-    public COSDictionary getDictionary(String key) {
-        COSBase obj = get(key);
-        return (obj instanceof COSDictionary) ? (COSDictionary) obj : null;
+    public PdfDictionary getDictionary(String key) {
+        PdfBase obj = get(key);
+        return (obj instanceof PdfDictionary) ? (PdfDictionary) obj : null;
     }
 
     /**
-     * Returns the value as a COSArray, or null.
+     * Returns the value as a PdfArray, or null.
      *
      * @param key the key name
      * @return the array or null
      */
-    public COSArray getArray(String key) {
-        COSBase obj = get(key);
-        return (obj instanceof COSArray) ? (COSArray) obj : null;
+    public PdfArray getArray(String key) {
+        PdfBase obj = get(key);
+        return (obj instanceof PdfArray) ? (PdfArray) obj : null;
     }
 
     // === Typed setters ===
@@ -288,7 +288,7 @@ public class COSDictionary extends COSBase implements Iterable<Map.Entry<COSName
      * @param value the int value
      */
     public void setInt(String key, int value) {
-        set(key, COSInteger.valueOf(value));
+        set(key, PdfInteger.valueOf(value));
     }
 
     /**
@@ -298,7 +298,7 @@ public class COSDictionary extends COSBase implements Iterable<Map.Entry<COSName
      * @param value the float value
      */
     public void setFloat(String key, float value) {
-        set(key, new COSFloat(value));
+        set(key, new PdfFloat(value));
     }
 
     /**
@@ -308,7 +308,7 @@ public class COSDictionary extends COSBase implements Iterable<Map.Entry<COSName
      * @param value the boolean value
      */
     public void setBoolean(String key, boolean value) {
-        set(key, COSBoolean.valueOf(value));
+        set(key, PdfBoolean.valueOf(value));
     }
 
     /**
@@ -318,7 +318,7 @@ public class COSDictionary extends COSBase implements Iterable<Map.Entry<COSName
      * @param nameValue the name value string
      */
     public void setName(String key, String nameValue) {
-        set(key, COSName.of(nameValue));
+        set(key, PdfName.of(nameValue));
     }
 
     /**
@@ -328,7 +328,7 @@ public class COSDictionary extends COSBase implements Iterable<Map.Entry<COSName
      * @param stringValue the string value
      */
     public void setString(String key, String stringValue) {
-        set(key, new COSString(stringValue));
+        set(key, new PdfString(stringValue));
     }
 
     // === PDF-specific convenience ===
@@ -362,21 +362,21 @@ public class COSDictionary extends COSBase implements Iterable<Map.Entry<COSName
      * @param keys the key path
      * @return the value at the end of the path, or null
      */
-    public COSBase getPath(String... keys) {
-        COSBase current = this;
+    public PdfBase getPath(String... keys) {
+        PdfBase current = this;
         for (String key : keys) {
             // Resolve indirect references before accessing as dictionary
-            if (current instanceof COSObjectReference) {
+            if (current instanceof PdfObjectReference) {
                 try {
-                    current = ((COSObjectReference) current).dereference();
+                    current = ((PdfObjectReference) current).dereference();
                 } catch (java.io.IOException e) {
                     return null;
                 }
             }
-            if (!(current instanceof COSDictionary)) {
+            if (!(current instanceof PdfDictionary)) {
                 return null;
             }
-            current = ((COSDictionary) current).get(key);
+            current = ((PdfDictionary) current).get(key);
             if (current == null) {
                 return null;
             }
@@ -395,14 +395,14 @@ public class COSDictionary extends COSBase implements Iterable<Map.Entry<COSName
         }
         try {
             os.write(DICT_OPEN);
-            for (Map.Entry<COSName, COSBase> entry : map.entrySet()) {
+            for (Map.Entry<PdfName, PdfBase> entry : map.entrySet()) {
                 os.write(NEWLINE);
                 entry.getKey().writeTo(os);
                 os.write(SPACE);
-                COSBase value = entry.getValue();
+                PdfBase value = entry.getValue();
                 // If the value is an indirect object (has an objectKey), write as reference
                 // to prevent infinite recursion from circular references (e.g. Page → /Parent → Pages → /Kids → Page)
-                if (value != null && !(value instanceof COSObjectReference)
+                if (value != null && !(value instanceof PdfObjectReference)
                         && value.getObjectKey() != null && value.getObjectKey().getObjectNumber() > 0) {
                     // Write as indirect reference "N G R"
                     String ref = value.getObjectKey().getObjectNumber() + " "
@@ -420,20 +420,20 @@ public class COSDictionary extends COSBase implements Iterable<Map.Entry<COSName
     }
 
     @Override
-    public Iterator<Map.Entry<COSName, COSBase>> iterator() {
+    public Iterator<Map.Entry<PdfName, PdfBase>> iterator() {
         return map.entrySet().iterator();
     }
 
     @Override
-    public <T> T accept(ICOSVisitor<T> visitor) {
+    public <T> T accept(IPdfVisitor<T> visitor) {
         return visitor.visitDictionary(this);
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof COSDictionary)) return false;
-        return map.equals(((COSDictionary) o).map);
+        if (!(o instanceof PdfDictionary)) return false;
+        return map.equals(((PdfDictionary) o).map);
     }
 
     @Override
@@ -443,6 +443,6 @@ public class COSDictionary extends COSBase implements Iterable<Map.Entry<COSName
 
     @Override
     public String toString() {
-        return "COSDictionary{size=" + map.size() + "}";
+        return "PdfDictionary{size=" + map.size() + "}";
     }
 }

@@ -1,7 +1,7 @@
 package org.aspose.pdf.engine.filter;
 
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -15,7 +15,7 @@ import java.util.logging.Logger;
  * is odd, it is treated as if followed by {@code 0}.
  * </p>
  */
-public final class ASCIIHexFilter implements COSFilter {
+public final class ASCIIHexFilter implements PdfFilter {
 
     private static final Logger LOG = Logger.getLogger(ASCIIHexFilter.class.getName());
 
@@ -32,7 +32,7 @@ public final class ASCIIHexFilter implements COSFilter {
      * {@inheritDoc}
      */
     @Override
-    public byte[] decode(byte[] encoded, COSDictionary params) throws IOException {
+    public byte[] decode(byte[] encoded, PdfDictionary params) throws IOException {
         if (encoded == null || encoded.length == 0) {
             return new byte[0];
         }
@@ -80,7 +80,7 @@ public final class ASCIIHexFilter implements COSFilter {
      * {@inheritDoc}
      */
     @Override
-    public byte[] encode(byte[] decoded, COSDictionary params) throws IOException {
+    public byte[] encode(byte[] decoded, PdfDictionary params) throws IOException {
         if (decoded == null || decoded.length == 0) {
             return new byte[]{'>'}; // EOD marker only
         }
@@ -103,8 +103,8 @@ public final class ASCIIHexFilter implements COSFilter {
      * {@inheritDoc}
      */
     @Override
-    public COSName getName() {
-        return COSName.ASCII_HEX_DECODE;
+    public PdfName getName() {
+        return PdfName.ASCII_HEX_DECODE;
     }
 
     private static int hexDigit(char ch) {

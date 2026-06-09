@@ -1,7 +1,7 @@
 package org.aspose.pdf.engine.filter;
 
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 
 import java.io.IOException;
 import java.util.logging.Logger;
@@ -19,7 +19,7 @@ import java.util.logging.Logger;
  *   <li>§7.4.6 CCITTFaxDecode — CCITT Group 3/4 fax</li>
  * </ul>
  */
-public class PassthroughFilter implements COSFilter {
+public class PassthroughFilter implements PdfFilter {
 
     private static final Logger LOG = Logger.getLogger(PassthroughFilter.class.getName());
     private final String filterName;
@@ -34,19 +34,19 @@ public class PassthroughFilter implements COSFilter {
     }
 
     @Override
-    public byte[] decode(byte[] encoded, COSDictionary params) throws IOException {
+    public byte[] decode(byte[] encoded, PdfDictionary params) throws IOException {
         LOG.fine(() -> filterName + " passthrough decode: " + encoded.length + " bytes (real decoding in Stage 3)");
         return encoded;
     }
 
     @Override
-    public byte[] encode(byte[] decoded, COSDictionary params) throws IOException {
+    public byte[] encode(byte[] decoded, PdfDictionary params) throws IOException {
         LOG.fine(() -> filterName + " passthrough encode: " + decoded.length + " bytes");
         return decoded;
     }
 
     @Override
-    public COSName getName() {
-        return COSName.of(filterName);
+    public PdfName getName() {
+        return PdfName.of(filterName);
     }
 }

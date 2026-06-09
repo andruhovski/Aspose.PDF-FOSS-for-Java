@@ -1,7 +1,7 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSFloat;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfFloat;
 
 import java.util.Objects;
 import java.util.logging.Logger;
@@ -11,7 +11,7 @@ import java.util.logging.Logger;
  * <p>
  * PDF rectangles are specified as arrays of four numbers {@code [llx lly urx ury]}
  * giving the coordinates of two diagonally opposite corners. This class provides
- * convenience accessors and conversion to/from COS arrays.
+ * convenience accessors and conversion to/from PDF arrays.
  * </p>
  */
 public class Rectangle {
@@ -94,18 +94,18 @@ public class Rectangle {
     }
 
     /**
-     * Creates a Rectangle from a COS array of four numbers.
+     * Creates a Rectangle from a PDF array of four numbers.
      *
-     * @param array the COS array containing [llx, lly, urx, ury]
+     * @param array the PDF array containing [llx, lly, urx, ury]
      * @return a new Rectangle
      * @throws IllegalArgumentException if the array is null or does not have exactly 4 elements
      */
-    public static Rectangle fromCOSArray(COSArray array) {
+    public static Rectangle fromPdfArray(PdfArray array) {
         if (array == null) {
-            throw new IllegalArgumentException("COSArray must not be null");
+            throw new IllegalArgumentException("PdfArray must not be null");
         }
         if (array.size() != 4) {
-            throw new IllegalArgumentException("Rectangle COSArray must have exactly 4 elements, got " + array.size());
+            throw new IllegalArgumentException("Rectangle PdfArray must have exactly 4 elements, got " + array.size());
         }
         return new Rectangle(
                 array.getFloat(0, 0f),
@@ -116,16 +116,16 @@ public class Rectangle {
     }
 
     /**
-     * Converts this rectangle to a COS array of four numbers.
+     * Converts this rectangle to a PDF array of four numbers.
      *
-     * @return a COSArray containing [llx, lly, urx, ury]
+     * @return a PdfArray containing [llx, lly, urx, ury]
      */
-    public COSArray toCOSArray() {
-        COSArray array = new COSArray(4);
-        array.add(new COSFloat(llx));
-        array.add(new COSFloat(lly));
-        array.add(new COSFloat(urx));
-        array.add(new COSFloat(ury));
+    public PdfArray toPdfArray() {
+        PdfArray array = new PdfArray(4);
+        array.add(new PdfFloat(llx));
+        array.add(new PdfFloat(lly));
+        array.add(new PdfFloat(urx));
+        array.add(new PdfFloat(ury));
         return array;
     }
 

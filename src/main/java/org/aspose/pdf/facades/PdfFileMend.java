@@ -187,40 +187,40 @@ public class PdfFileMend implements Closeable {
             int components = dims[2];
 
             // Build the image XObject stream.
-            org.aspose.pdf.engine.cos.COSStream imgStream =
-                    new org.aspose.pdf.engine.cos.COSStream();
-            imgStream.set(org.aspose.pdf.engine.cos.COSName.of("Type"),
-                    org.aspose.pdf.engine.cos.COSName.of("XObject"));
-            imgStream.set(org.aspose.pdf.engine.cos.COSName.of("Subtype"),
-                    org.aspose.pdf.engine.cos.COSName.of("Image"));
-            imgStream.set(org.aspose.pdf.engine.cos.COSName.of("Width"),
-                    org.aspose.pdf.engine.cos.COSInteger.valueOf(width));
-            imgStream.set(org.aspose.pdf.engine.cos.COSName.of("Height"),
-                    org.aspose.pdf.engine.cos.COSInteger.valueOf(height));
-            imgStream.set(org.aspose.pdf.engine.cos.COSName.of("BitsPerComponent"),
-                    org.aspose.pdf.engine.cos.COSInteger.valueOf(8));
-            imgStream.set(org.aspose.pdf.engine.cos.COSName.of("ColorSpace"),
-                    org.aspose.pdf.engine.cos.COSName.of(
+            org.aspose.pdf.engine.pdfobjects.PdfStream imgStream =
+                    new org.aspose.pdf.engine.pdfobjects.PdfStream();
+            imgStream.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("Type"),
+                    org.aspose.pdf.engine.pdfobjects.PdfName.of("XObject"));
+            imgStream.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("Subtype"),
+                    org.aspose.pdf.engine.pdfobjects.PdfName.of("Image"));
+            imgStream.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("Width"),
+                    org.aspose.pdf.engine.pdfobjects.PdfInteger.valueOf(width));
+            imgStream.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("Height"),
+                    org.aspose.pdf.engine.pdfobjects.PdfInteger.valueOf(height));
+            imgStream.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("BitsPerComponent"),
+                    org.aspose.pdf.engine.pdfobjects.PdfInteger.valueOf(8));
+            imgStream.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("ColorSpace"),
+                    org.aspose.pdf.engine.pdfobjects.PdfName.of(
                             components == 4 ? "DeviceCMYK"
                                     : components == 1 ? "DeviceGray" : "DeviceRGB"));
-            imgStream.set(org.aspose.pdf.engine.cos.COSName.of("Filter"),
-                    org.aspose.pdf.engine.cos.COSName.of("DCTDecode"));
+            imgStream.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("Filter"),
+                    org.aspose.pdf.engine.pdfobjects.PdfName.of("DCTDecode"));
             imgStream.setEncodedData(jpegBytes);
 
             // Register in page Resources/XObject under a fresh name.
             org.aspose.pdf.Resources resources = page.ensureResources();
-            org.aspose.pdf.engine.cos.COSDictionary xobjects = resources.getXObjects();
+            org.aspose.pdf.engine.pdfobjects.PdfDictionary xobjects = resources.getXObjects();
             if (xobjects == null) {
-                xobjects = new org.aspose.pdf.engine.cos.COSDictionary();
-                resources.getCOSDictionary().set(
-                        org.aspose.pdf.engine.cos.COSName.of("XObject"), xobjects);
+                xobjects = new org.aspose.pdf.engine.pdfobjects.PdfDictionary();
+                resources.getPdfDictionary().set(
+                        org.aspose.pdf.engine.pdfobjects.PdfName.of("XObject"), xobjects);
             }
             String resName;
             int idx = 1;
             do { resName = "Im" + idx++; } while (xobjects.containsKey(resName));
-            org.aspose.pdf.engine.cos.COSObjectReference imgRef =
+            org.aspose.pdf.engine.pdfobjects.PdfObjectReference imgRef =
                     document.registerImportedObject(imgStream);
-            xobjects.set(org.aspose.pdf.engine.cos.COSName.of(resName), imgRef);
+            xobjects.set(org.aspose.pdf.engine.pdfobjects.PdfName.of(resName), imgRef);
 
             // Preserve aspect ratio of the source image inside the bounding
             // rectangle (matches Aspose.PDF.AddImage semantics — gold templates
@@ -417,22 +417,22 @@ public class PdfFileMend implements Closeable {
      */
     private static String ensureType1Font(Page page, String pdfFontName) {
         org.aspose.pdf.Resources resources = page.ensureResources();
-        org.aspose.pdf.engine.cos.COSDictionary fonts = resources.getFonts();
+        org.aspose.pdf.engine.pdfobjects.PdfDictionary fonts = resources.getFonts();
         if (fonts == null) {
-            fonts = new org.aspose.pdf.engine.cos.COSDictionary();
-            resources.getCOSDictionary().set(
-                    org.aspose.pdf.engine.cos.COSName.of("Font"), fonts);
+            fonts = new org.aspose.pdf.engine.pdfobjects.PdfDictionary();
+            resources.getPdfDictionary().set(
+                    org.aspose.pdf.engine.pdfobjects.PdfName.of("Font"), fonts);
         }
         // Look for an already-registered entry with matching /BaseFont.
-        for (org.aspose.pdf.engine.cos.COSName key : fonts.keySet()) {
-            org.aspose.pdf.engine.cos.COSBase val = fonts.get(key.getName());
-            org.aspose.pdf.engine.cos.COSBase resolved = val;
-            if (resolved instanceof org.aspose.pdf.engine.cos.COSObjectReference) {
-                try { resolved = ((org.aspose.pdf.engine.cos.COSObjectReference) resolved).dereference(); }
+        for (org.aspose.pdf.engine.pdfobjects.PdfName key : fonts.keySet()) {
+            org.aspose.pdf.engine.pdfobjects.PdfBase val = fonts.get(key.getName());
+            org.aspose.pdf.engine.pdfobjects.PdfBase resolved = val;
+            if (resolved instanceof org.aspose.pdf.engine.pdfobjects.PdfObjectReference) {
+                try { resolved = ((org.aspose.pdf.engine.pdfobjects.PdfObjectReference) resolved).dereference(); }
                 catch (IOException e) { continue; }
             }
-            if (resolved instanceof org.aspose.pdf.engine.cos.COSDictionary) {
-                String base = ((org.aspose.pdf.engine.cos.COSDictionary) resolved).getNameAsString("BaseFont");
+            if (resolved instanceof org.aspose.pdf.engine.pdfobjects.PdfDictionary) {
+                String base = ((org.aspose.pdf.engine.pdfobjects.PdfDictionary) resolved).getNameAsString("BaseFont");
                 if (pdfFontName.equals(base)) return key.getName();
             }
         }
@@ -440,17 +440,17 @@ public class PdfFileMend implements Closeable {
         String resName;
         int idx = 1;
         do { resName = "F" + idx++; } while (fonts.containsKey(resName));
-        org.aspose.pdf.engine.cos.COSDictionary fontDict =
-                new org.aspose.pdf.engine.cos.COSDictionary();
-        fontDict.set(org.aspose.pdf.engine.cos.COSName.of("Type"),
-                org.aspose.pdf.engine.cos.COSName.of("Font"));
-        fontDict.set(org.aspose.pdf.engine.cos.COSName.of("Subtype"),
-                org.aspose.pdf.engine.cos.COSName.of("Type1"));
-        fontDict.set(org.aspose.pdf.engine.cos.COSName.of("BaseFont"),
-                org.aspose.pdf.engine.cos.COSName.of(pdfFontName));
-        fontDict.set(org.aspose.pdf.engine.cos.COSName.of("Encoding"),
-                org.aspose.pdf.engine.cos.COSName.of("WinAnsiEncoding"));
-        fonts.set(org.aspose.pdf.engine.cos.COSName.of(resName), fontDict);
+        org.aspose.pdf.engine.pdfobjects.PdfDictionary fontDict =
+                new org.aspose.pdf.engine.pdfobjects.PdfDictionary();
+        fontDict.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("Type"),
+                org.aspose.pdf.engine.pdfobjects.PdfName.of("Font"));
+        fontDict.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("Subtype"),
+                org.aspose.pdf.engine.pdfobjects.PdfName.of("Type1"));
+        fontDict.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("BaseFont"),
+                org.aspose.pdf.engine.pdfobjects.PdfName.of(pdfFontName));
+        fontDict.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("Encoding"),
+                org.aspose.pdf.engine.pdfobjects.PdfName.of("WinAnsiEncoding"));
+        fonts.set(org.aspose.pdf.engine.pdfobjects.PdfName.of(resName), fontDict);
         return resName;
     }
 

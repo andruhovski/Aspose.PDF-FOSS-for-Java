@@ -1,7 +1,7 @@
 package org.aspose.pdf.annotations;
 
 import org.aspose.pdf.*;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 /**
  * Squiggly-underline annotation (ISO 32000-1:2008, Section 12.5.6.10, /Subtype /Squiggly).
@@ -13,12 +13,12 @@ import org.aspose.pdf.engine.cos.*;
 public class SquigglyAnnotation extends MarkupAnnotation {
 
     /**
-     * Constructs a squiggly annotation from an existing COS dictionary.
+     * Constructs a squiggly annotation from an existing PDF dictionary.
      *
-     * @param dict the COS dictionary backing this annotation
+     * @param dict the PDF dictionary backing this annotation
      * @param page the page this annotation belongs to
      */
-    public SquigglyAnnotation(COSDictionary dict, Page page) {
+    public SquigglyAnnotation(PdfDictionary dict, Page page) {
         super(dict, page);
     }
 
@@ -30,7 +30,7 @@ public class SquigglyAnnotation extends MarkupAnnotation {
      */
     public SquigglyAnnotation(Page page, Rectangle rect) {
         super(page, rect);
-        dict.set(COSName.of("Subtype"), COSName.of("Squiggly"));
+        dict.set(PdfName.of("Subtype"), PdfName.of("Squiggly"));
         setQuadPoints(new double[] {
                 rect.getLLX(), rect.getURY(),
                 rect.getURX(), rect.getURY(),
@@ -45,9 +45,9 @@ public class SquigglyAnnotation extends MarkupAnnotation {
      * @return the quad points array, or null if not set
      */
     public double[] getQuadPoints() {
-        COSBase qp = dict.get("QuadPoints");
-        if (qp instanceof COSArray) {
-            COSArray arr = (COSArray) qp;
+        PdfBase qp = dict.get("QuadPoints");
+        if (qp instanceof PdfArray) {
+            PdfArray arr = (PdfArray) qp;
             double[] result = new double[arr.size()];
             for (int i = 0; i < arr.size(); i++) {
                 result[i] = arr.getFloat(i, 0);
@@ -64,11 +64,11 @@ public class SquigglyAnnotation extends MarkupAnnotation {
      */
     public void setQuadPoints(double[] points) {
         if (points == null) return;
-        COSArray arr = new COSArray();
+        PdfArray arr = new PdfArray();
         for (double p : points) {
-            arr.add(new COSFloat(p));
+            arr.add(new PdfFloat(p));
         }
-        dict.set(COSName.of("QuadPoints"), arr);
+        dict.set(PdfName.of("QuadPoints"), arr);
     }
 
     /**
@@ -82,7 +82,7 @@ public class SquigglyAnnotation extends MarkupAnnotation {
      */
     public void setQuadPoints(double[][] quads) {
         if (quads == null) {
-            dict.set(COSName.of("QuadPoints"), (COSBase) null);
+            dict.set(PdfName.of("QuadPoints"), (PdfBase) null);
             return;
         }
         int total = 0;

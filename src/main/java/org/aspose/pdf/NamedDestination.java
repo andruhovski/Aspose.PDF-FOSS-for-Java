@@ -1,7 +1,7 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 
 import java.io.IOException;
 import java.util.Objects;
@@ -80,10 +80,10 @@ public class NamedDestination implements IAppointment {
      * name verbatim — resolution happens at use time via the document's
      * {@code /Names→/Dests} name tree.
      *
-     * @return the COS string representation
+     * @return the PDF string representation
      */
-    public COSBase toCos() {
-        return new COSString(name);
+    public PdfBase toCos() {
+        return new PdfString(name);
     }
 
     @Override

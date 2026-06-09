@@ -2,12 +2,12 @@ package org.aspose.pdf.tests.generation;
 
 import org.aspose.pdf.Document;
 import org.aspose.pdf.Page;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 import org.aspose.pdf.CryptoAlgorithm;
 import org.aspose.pdf.text.Position;
 import org.aspose.pdf.text.TextBuilder;
@@ -30,8 +30,8 @@ import static org.junit.jupiter.api.Assertions.*;
  * twice on the same {@code Document} must produce two files of equivalent
  * structure. The previous implementation mutated the page dict on the first
  * save (replacing {@code /Contents} and {@code /Resources/Font/*} entries
- * with {@code COSObjectReference} values), so the second save's {@code
- * instanceof COSStream} / {@code instanceof COSDictionary} guards silently
+ * with {@code PdfObjectReference} values), so the second save's {@code
+ * instanceof PdfStream} / {@code instanceof PdfDictionary} guards silently
  * skipped the re-promotion and emitted dangling references.
  *
  * <p>Especially severe in the {@code save → encrypt → save} demo flow:
@@ -105,7 +105,7 @@ class DocumentSaveIdempotenceTest {
     }
 
     @Test
-    @DisplayName("After two saves, the second file's page /Contents resolves to a non-null COSStream")
+    @DisplayName("After two saves, the second file's page /Contents resolves to a non-null PdfStream")
     void saveTwice_pageContentsResolveToStream() throws IOException {
         Path a = tempDir.resolve("twosave-content.pdf");
         try (Document doc = new Document()) {
@@ -115,35 +115,35 @@ class DocumentSaveIdempotenceTest {
         }
         try (Document r = new Document(a.toString())) {
             Page page = r.getPages().get(1);
-            COSBase contents = page.getCOSDictionary().get(COSName.CONTENTS);
+            PdfBase contents = page.getPdfDictionary().get(PdfName.CONTENTS);
             assertNotNull(contents, "/Contents must be present");
-            COSBase resolved = contents instanceof COSObjectReference
-                    ? ((COSObjectReference) contents).dereference()
+            PdfBase resolved = contents instanceof PdfObjectReference
+                    ? ((PdfObjectReference) contents).dereference()
                     : contents;
             // /Contents may be a stream or an array of streams; either way
-            // none of the references may resolve to null/COSNull.
-            if (resolved instanceof COSArray) {
-                COSArray arr = (COSArray) resolved;
+            // none of the references may resolve to null/PdfNull.
+            if (resolved instanceof PdfArray) {
+                PdfArray arr = (PdfArray) resolved;
                 assertTrue(arr.size() >= 1, "/Contents array must be non-empty");
                 for (int i = 0; i < arr.size(); i++) {
-                    COSBase elem = arr.get(i);
-                    if (elem instanceof COSObjectReference) {
-                        elem = ((COSObjectReference) elem).dereference();
+                    PdfBase elem = arr.get(i);
+                    if (elem instanceof PdfObjectReference) {
+                        elem = ((PdfObjectReference) elem).dereference();
                     }
-                    assertTrue(elem instanceof COSStream,
-                            "/Contents[" + i + "] must resolve to a COSStream, got "
+                    assertTrue(elem instanceof PdfStream,
+                            "/Contents[" + i + "] must resolve to a PdfStream, got "
                                     + (elem == null ? "null" : elem.getClass().getSimpleName()));
                 }
             } else {
-                assertTrue(resolved instanceof COSStream,
-                        "/Contents must resolve to a COSStream, got "
+                assertTrue(resolved instanceof PdfStream,
+                        "/Contents must resolve to a PdfStream, got "
                                 + resolved.getClass().getSimpleName());
             }
         }
     }
 
     @Test
-    @DisplayName("After two saves, every /Resources/Font/* entry resolves to a COSDictionary")
+    @DisplayName("After two saves, every /Resources/Font/* entry resolves to a PdfDictionary")
     void saveTwice_fontResourcesResolveToDicts() throws IOException {
         Path a = tempDir.resolve("twosave-fonts.pdf");
         try (Document doc = new Document()) {
@@ -153,24 +153,24 @@ class DocumentSaveIdempotenceTest {
         }
         try (Document r = new Document(a.toString())) {
             Page page = r.getPages().get(1);
-            COSBase res = page.getCOSDictionary().get(COSName.RESOURCES);
-            if (res instanceof COSObjectReference) {
-                res = ((COSObjectReference) res).dereference();
+            PdfBase res = page.getPdfDictionary().get(PdfName.RESOURCES);
+            if (res instanceof PdfObjectReference) {
+                res = ((PdfObjectReference) res).dereference();
             }
-            assertTrue(res instanceof COSDictionary, "/Resources must resolve to a dict");
-            COSBase fonts = ((COSDictionary) res).get(COSName.FONT);
-            if (fonts instanceof COSObjectReference) {
-                fonts = ((COSObjectReference) fonts).dereference();
+            assertTrue(res instanceof PdfDictionary, "/Resources must resolve to a dict");
+            PdfBase fonts = ((PdfDictionary) res).get(PdfName.FONT);
+            if (fonts instanceof PdfObjectReference) {
+                fonts = ((PdfObjectReference) fonts).dereference();
             }
-            assertTrue(fonts instanceof COSDictionary, "/Resources/Font must resolve to a dict");
-            COSDictionary fontDict = (COSDictionary) fonts;
+            assertTrue(fonts instanceof PdfDictionary, "/Resources/Font must resolve to a dict");
+            PdfDictionary fontDict = (PdfDictionary) fonts;
             assertFalse(fontDict.keySet().isEmpty(), "test premise: page must have at least one font");
-            for (COSName k : fontDict.keySet()) {
-                COSBase v = fontDict.get(k.getName());
-                if (v instanceof COSObjectReference) {
-                    v = ((COSObjectReference) v).dereference();
+            for (PdfName k : fontDict.keySet()) {
+                PdfBase v = fontDict.get(k.getName());
+                if (v instanceof PdfObjectReference) {
+                    v = ((PdfObjectReference) v).dereference();
                 }
-                assertTrue(v instanceof COSDictionary,
+                assertTrue(v instanceof PdfDictionary,
                         "/Resources/Font/" + k.getName() + " must resolve to a dict, got "
                                 + (v == null ? "null" : v.getClass().getSimpleName()));
             }
@@ -249,12 +249,12 @@ class DocumentSaveIdempotenceTest {
         // And the third file's first-page /Contents must still resolve (not
         // dangle to a no-longer-existing key).
         try (Document rc = new Document(c.toString())) {
-            COSBase contents = rc.getPages().get(1).getCOSDictionary().get(COSName.CONTENTS);
-            if (contents instanceof COSObjectReference) {
-                contents = ((COSObjectReference) contents).dereference();
+            PdfBase contents = rc.getPages().get(1).getPdfDictionary().get(PdfName.CONTENTS);
+            if (contents instanceof PdfObjectReference) {
+                contents = ((PdfObjectReference) contents).dereference();
             }
             assertNotNull(contents, "/Contents must resolve");
-            assertTrue(contents instanceof COSStream || contents instanceof COSArray,
+            assertTrue(contents instanceof PdfStream || contents instanceof PdfArray,
                     "/Contents must resolve to stream or array, got " + contents.getClass().getSimpleName());
         }
     }

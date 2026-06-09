@@ -1,7 +1,7 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 
 /**
  * FitV explicit destination — fit page height, position at left coordinate.
@@ -23,10 +23,10 @@ public class FitVExplicitDestination extends ExplicitDestination {
     public double getLeft() { return left; }
 
     @Override
-    public COSArray toCOSArray() {
-        COSArray arr = new COSArray();
-        arr.add(page != null ? page.getCOSDictionary() : org.aspose.pdf.engine.cos.COSNull.INSTANCE);
-        arr.add(COSName.of("FitV"));
+    public PdfArray toPdfArray() {
+        PdfArray arr = new PdfArray();
+        arr.add(page != null ? page.getPdfDictionary() : org.aspose.pdf.engine.pdfobjects.PdfNull.INSTANCE);
+        arr.add(PdfName.of("FitV"));
         arr.add(numOrNull(left));
         return arr;
     }

@@ -1,7 +1,7 @@
 package org.aspose.pdf.tests;
 
 import org.aspose.pdf.*;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -21,33 +21,33 @@ public class ImagePlacementAbsorberTest {
                                       double cmA, double cmB, double cmC, double cmD,
                                       double cmE, double cmF) {
         // Image stream
-        COSStream imgStream = new COSStream();
-        imgStream.set(COSName.of("Subtype"), COSName.of("Image"));
-        imgStream.set(COSName.of("Width"), COSInteger.valueOf(w));
-        imgStream.set(COSName.of("Height"), COSInteger.valueOf(h));
-        imgStream.set(COSName.of("BitsPerComponent"), COSInteger.valueOf(8));
-        imgStream.set(COSName.of("ColorSpace"), COSName.of("DeviceRGB"));
+        PdfStream imgStream = new PdfStream();
+        imgStream.set(PdfName.of("Subtype"), PdfName.of("Image"));
+        imgStream.set(PdfName.of("Width"), PdfInteger.valueOf(w));
+        imgStream.set(PdfName.of("Height"), PdfInteger.valueOf(h));
+        imgStream.set(PdfName.of("BitsPerComponent"), PdfInteger.valueOf(8));
+        imgStream.set(PdfName.of("ColorSpace"), PdfName.of("DeviceRGB"));
 
         // XObject dictionary
-        COSDictionary xobjects = new COSDictionary();
-        xobjects.set(COSName.of(imgName), imgStream);
+        PdfDictionary xobjects = new PdfDictionary();
+        xobjects.set(PdfName.of(imgName), imgStream);
 
         // Resources
-        COSDictionary resourcesDict = new COSDictionary();
-        resourcesDict.set(COSName.of("XObject"), xobjects);
+        PdfDictionary resourcesDict = new PdfDictionary();
+        resourcesDict.set(PdfName.of("XObject"), xobjects);
 
         // Content stream: q cm Do Q
         String content = String.format(java.util.Locale.US,
                 "q %.1f %.1f %.1f %.1f %.1f %.1f cm /%s Do Q",
                 cmA, cmB, cmC, cmD, cmE, cmF, imgName);
-        COSStream contentStream = new COSStream(content.getBytes());
+        PdfStream contentStream = new PdfStream(content.getBytes());
 
         // Page
-        COSDictionary pageDict = new COSDictionary();
-        pageDict.set(COSName.TYPE, COSName.PAGE);
-        pageDict.set(COSName.MEDIABOX, new Rectangle(0, 0, 595, 842).toCOSArray());
-        pageDict.set(COSName.RESOURCES, resourcesDict);
-        pageDict.set(COSName.CONTENTS, contentStream);
+        PdfDictionary pageDict = new PdfDictionary();
+        pageDict.set(PdfName.TYPE, PdfName.PAGE);
+        pageDict.set(PdfName.MEDIABOX, new Rectangle(0, 0, 595, 842).toPdfArray());
+        pageDict.set(PdfName.RESOURCES, resourcesDict);
+        pageDict.set(PdfName.CONTENTS, contentStream);
 
         return new Page(pageDict, null);
     }
@@ -104,31 +104,31 @@ public class ImagePlacementAbsorberTest {
     @Test
     public void testMultipleImages() throws IOException {
         // Page with two images
-        COSStream img1 = new COSStream();
-        img1.set(COSName.of("Subtype"), COSName.of("Image"));
-        img1.set(COSName.of("Width"), COSInteger.valueOf(50));
-        img1.set(COSName.of("Height"), COSInteger.valueOf(50));
+        PdfStream img1 = new PdfStream();
+        img1.set(PdfName.of("Subtype"), PdfName.of("Image"));
+        img1.set(PdfName.of("Width"), PdfInteger.valueOf(50));
+        img1.set(PdfName.of("Height"), PdfInteger.valueOf(50));
 
-        COSStream img2 = new COSStream();
-        img2.set(COSName.of("Subtype"), COSName.of("Image"));
-        img2.set(COSName.of("Width"), COSInteger.valueOf(100));
-        img2.set(COSName.of("Height"), COSInteger.valueOf(100));
+        PdfStream img2 = new PdfStream();
+        img2.set(PdfName.of("Subtype"), PdfName.of("Image"));
+        img2.set(PdfName.of("Width"), PdfInteger.valueOf(100));
+        img2.set(PdfName.of("Height"), PdfInteger.valueOf(100));
 
-        COSDictionary xobjects = new COSDictionary();
-        xobjects.set(COSName.of("Im1"), img1);
-        xobjects.set(COSName.of("Im2"), img2);
+        PdfDictionary xobjects = new PdfDictionary();
+        xobjects.set(PdfName.of("Im1"), img1);
+        xobjects.set(PdfName.of("Im2"), img2);
 
-        COSDictionary resources = new COSDictionary();
-        resources.set(COSName.of("XObject"), xobjects);
+        PdfDictionary resources = new PdfDictionary();
+        resources.set(PdfName.of("XObject"), xobjects);
 
         String content = "q 100 0 0 100 72 700 cm /Im1 Do Q q 200 0 0 200 300 500 cm /Im2 Do Q";
-        COSStream contentStream = new COSStream(content.getBytes());
+        PdfStream contentStream = new PdfStream(content.getBytes());
 
-        COSDictionary pageDict = new COSDictionary();
-        pageDict.set(COSName.TYPE, COSName.PAGE);
-        pageDict.set(COSName.MEDIABOX, new Rectangle(0, 0, 595, 842).toCOSArray());
-        pageDict.set(COSName.RESOURCES, resources);
-        pageDict.set(COSName.CONTENTS, contentStream);
+        PdfDictionary pageDict = new PdfDictionary();
+        pageDict.set(PdfName.TYPE, PdfName.PAGE);
+        pageDict.set(PdfName.MEDIABOX, new Rectangle(0, 0, 595, 842).toPdfArray());
+        pageDict.set(PdfName.RESOURCES, resources);
+        pageDict.set(PdfName.CONTENTS, contentStream);
 
         Page page = new Page(pageDict, null);
         ImagePlacementAbsorber absorber = new ImagePlacementAbsorber();
@@ -139,9 +139,9 @@ public class ImagePlacementAbsorberTest {
 
     @Test
     public void testNoImages() throws IOException {
-        COSDictionary pageDict = new COSDictionary();
-        pageDict.set(COSName.TYPE, COSName.PAGE);
-        pageDict.set(COSName.MEDIABOX, new Rectangle(0, 0, 595, 842).toCOSArray());
+        PdfDictionary pageDict = new PdfDictionary();
+        pageDict.set(PdfName.TYPE, PdfName.PAGE);
+        pageDict.set(PdfName.MEDIABOX, new Rectangle(0, 0, 595, 842).toPdfArray());
         Page page = new Page(pageDict, null);
 
         ImagePlacementAbsorber absorber = new ImagePlacementAbsorber();
@@ -153,23 +153,23 @@ public class ImagePlacementAbsorberTest {
     @Test
     public void testFormXObjectIgnored() throws IOException {
         // Form XObjects should NOT produce image placements
-        COSStream form = new COSStream("q Q".getBytes());
-        form.set(COSName.of("Subtype"), COSName.of("Form"));
+        PdfStream form = new PdfStream("q Q".getBytes());
+        form.set(PdfName.of("Subtype"), PdfName.of("Form"));
 
-        COSDictionary xobjects = new COSDictionary();
-        xobjects.set(COSName.of("Fm1"), form);
+        PdfDictionary xobjects = new PdfDictionary();
+        xobjects.set(PdfName.of("Fm1"), form);
 
-        COSDictionary resources = new COSDictionary();
-        resources.set(COSName.of("XObject"), xobjects);
+        PdfDictionary resources = new PdfDictionary();
+        resources.set(PdfName.of("XObject"), xobjects);
 
         String content = "q 100 0 0 100 72 700 cm /Fm1 Do Q";
-        COSStream contentStream = new COSStream(content.getBytes());
+        PdfStream contentStream = new PdfStream(content.getBytes());
 
-        COSDictionary pageDict = new COSDictionary();
-        pageDict.set(COSName.TYPE, COSName.PAGE);
-        pageDict.set(COSName.MEDIABOX, new Rectangle(0, 0, 595, 842).toCOSArray());
-        pageDict.set(COSName.RESOURCES, resources);
-        pageDict.set(COSName.CONTENTS, contentStream);
+        PdfDictionary pageDict = new PdfDictionary();
+        pageDict.set(PdfName.TYPE, PdfName.PAGE);
+        pageDict.set(PdfName.MEDIABOX, new Rectangle(0, 0, 595, 842).toPdfArray());
+        pageDict.set(PdfName.RESOURCES, resources);
+        pageDict.set(PdfName.CONTENTS, contentStream);
 
         Page page = new Page(pageDict, null);
         ImagePlacementAbsorber absorber = new ImagePlacementAbsorber();

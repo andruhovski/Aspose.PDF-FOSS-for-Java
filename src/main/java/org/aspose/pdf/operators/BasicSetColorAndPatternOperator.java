@@ -1,6 +1,6 @@
 package org.aspose.pdf.operators;
 
-import org.aspose.pdf.engine.cos.COSBase;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
 
 import java.util.List;
 
@@ -31,7 +31,7 @@ public abstract class BasicSetColorAndPatternOperator extends BasicSetColorOpera
      * @param name     the operator keyword
      * @param operands the operands preceding this operator in the content stream
      */
-    protected BasicSetColorAndPatternOperator(String name, List<COSBase> operands) {
+    protected BasicSetColorAndPatternOperator(String name, List<PdfBase> operands) {
         super(name, operands);
     }
 }

@@ -414,12 +414,25 @@ public final class PDFLexer {
             }
             reader.read();
             if (c == '#') {
-                // Hex-encoded byte: #XX
-                int h1 = reader.read();
-                int h2 = reader.read();
-                if (h1 == -1 || h2 == -1 || !isHexDigit(h1) || !isHexDigit(h2)) {
-                    throw new IOException("Invalid hex escape in name at position " + pos);
+                // Hex-encoded byte: #XX (§7.3.5). Real-world PDFs contain names
+                // where '#' is NOT followed by two hex digits (e.g. /grd0#2 in
+                // corpus 28762.pdf resources). Acrobat and PDFBox accept the '#'
+                // as a literal character there; throwing instead would lose the
+                // whole enclosing object (that file's /Resources → no fonts,
+                // images or shadings). Be tolerant: only consume what is a
+                // valid escape, otherwise keep the characters literally.
+                int h1 = reader.peek();
+                if (h1 == -1 || !isHexDigit(h1)) {
+                    sb.append('#');
+                    continue;
                 }
+                reader.read();
+                int h2 = reader.peek();
+                if (h2 == -1 || !isHexDigit(h2)) {
+                    sb.append('#').append((char) h1);
+                    continue;
+                }
+                reader.read();
                 int decoded = (Character.digit(h1, 16) << 4) | Character.digit(h2, 16);
                 sb.append((char) decoded);
             } else {
@@ -474,12 +487,28 @@ public final class PDFLexer {
                 break;
             }
             // PDF operator names contain only letters and a handful of suffix
-            // chars (* ' "); they never contain digits, '+' or '-'. Some content
-            // streams pack operators back-to-back with their following number
-            // operand ("nq0.000000" → n q 0.000000), so stopping the keyword at
-            // the first digit lets the lexer recover the boundary instead of
-            // swallowing the number into the operator name (PDFNEWNET-33721).
+            // chars (* ' "); apart from d0/d1 they never contain digits, '+'
+            // or '-'. Some content streams pack operators back-to-back with
+            // their following number operand ("nq0.000000" → n q 0.000000),
+            // so stopping the keyword at the first digit lets the lexer
+            // recover the boundary instead of swallowing the number into the
+            // operator name (PDFNEWNET-33721).
             if (c == '+' || c == '-' || c == '.' || (c >= '0' && c <= '9')) {
+                // EXCEPTION: the Type 3 glyph-metrics operators d0/d1
+                // (ISO 32000 §9.6.5) are the only PDF operators containing a
+                // digit. Consume the digit only when it terminates the token
+                // (next byte is whitespace/delimiter/EOF) — "d0.000000" is
+                // still split as d + 0.000000 packed-stream recovery.
+                if (sb.length() == 1 && sb.charAt(0) == 'd' && (c == '0' || c == '1')) {
+                    long save = reader.getPosition();
+                    reader.read();
+                    int after = reader.peek();
+                    if (after == -1 || isWhitespace(after) || isDelimiter(after)) {
+                        sb.append((char) c);
+                        break;
+                    }
+                    reader.seek(save); // not d0/d1 — restore and split as before
+                }
                 break;
             }
             reader.read();

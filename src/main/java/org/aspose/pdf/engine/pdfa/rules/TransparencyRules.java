@@ -1,13 +1,13 @@
 package org.aspose.pdf.engine.pdfa.rules;
 
 import org.aspose.pdf.PdfFormat;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSFloat;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfFloat;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
 import org.aspose.pdf.engine.pdfa.PdfARule;
 import org.aspose.pdf.engine.pdfa.PdfAValidationResult;
 import org.aspose.pdf.engine.parser.PDFParser;
@@ -54,7 +54,7 @@ public final class TransparencyRules implements PdfARule {
      * Iterates all pages and checks ExtGState and XObject resources.
      */
     private void checkPages(PDFParser parser, PdfFormat format, PdfAValidationResult result) {
-        COSDictionary catalog;
+        PdfDictionary catalog;
         try {
             catalog = parser.getCatalog();
         } catch (IOException e) {
@@ -62,22 +62,22 @@ public final class TransparencyRules implements PdfARule {
             return;
         }
 
-        COSDictionary pages = resolveDict(catalog.get("Pages"));
+        PdfDictionary pages = resolveDict(catalog.get("Pages"));
         if (pages == null) {
             return;
         }
-        COSArray kids = pages.getArray("Kids");
+        PdfArray kids = pages.getArray("Kids");
         if (kids == null) {
             return;
         }
 
         for (int i = 0; i < kids.size(); i++) {
-            COSDictionary page = resolveDict(kids.get(i));
+            PdfDictionary page = resolveDict(kids.get(i));
             if (page == null) {
                 continue;
             }
             String pagePath = "page[" + i + "]";
-            COSDictionary resources = resolveDict(page.get("Resources"));
+            PdfDictionary resources = resolveDict(page.get("Resources"));
             if (resources == null) {
                 continue;
             }
@@ -89,25 +89,25 @@ public final class TransparencyRules implements PdfARule {
     /**
      * Checks ExtGState entries for forbidden transparency parameters.
      */
-    private void checkExtGState(COSDictionary resources, String pagePath,
+    private void checkExtGState(PdfDictionary resources, String pagePath,
                                  PdfAValidationResult result) {
-        COSDictionary extGStates = resolveDict(resources.get("ExtGState"));
+        PdfDictionary extGStates = resolveDict(resources.get("ExtGState"));
         if (extGStates == null) {
             return;
         }
 
-        for (COSName key : extGStates.keySet()) {
-            COSDictionary gs = resolveDict(extGStates.get(key.getName()));
+        for (PdfName key : extGStates.keySet()) {
+            PdfDictionary gs = resolveDict(extGStates.get(key.getName()));
             if (gs == null) {
                 continue;
             }
             String gsPath = pagePath + "/Resources/ExtGState/" + key.getName();
 
             // /SMask must be None (or absent)
-            COSBase smask = resolve(gs.get("SMask"));
+            PdfBase smask = resolve(gs.get("SMask"));
             if (smask != null) {
-                boolean isNone = (smask instanceof COSName)
-                        && "None".equals(((COSName) smask).getName());
+                boolean isNone = (smask instanceof PdfName)
+                        && "None".equals(((PdfName) smask).getName());
                 if (!isNone) {
                     result.addError("6.4",
                             "PDF/A-1: ExtGState /SMask must be 'None'",
@@ -116,9 +116,9 @@ public final class TransparencyRules implements PdfARule {
             }
 
             // /BM must be Normal or Compatible (or absent)
-            COSBase bm = resolve(gs.get("BM"));
-            if (bm instanceof COSName) {
-                String bmName = ((COSName) bm).getName();
+            PdfBase bm = resolve(gs.get("BM"));
+            if (bm instanceof PdfName) {
+                String bmName = ((PdfName) bm).getName();
                 if (!"Normal".equals(bmName) && !"Compatible".equals(bmName)) {
                     result.addError("6.4",
                             "PDF/A-1: ExtGState /BM must be 'Normal' or 'Compatible', found: "
@@ -138,18 +138,18 @@ public final class TransparencyRules implements PdfARule {
     /**
      * Checks that an alpha value (/CA or /ca) is 1.0 if present.
      */
-    private void checkAlpha(COSDictionary gs, String alphaKey, String gsPath,
+    private void checkAlpha(PdfDictionary gs, String alphaKey, String gsPath,
                              PdfAValidationResult result) {
-        COSBase val = resolve(gs.get(alphaKey));
+        PdfBase val = resolve(gs.get(alphaKey));
         if (val == null) {
             return;
         }
 
         float alpha = -1f;
-        if (val instanceof COSFloat) {
-            alpha = ((COSFloat) val).floatValue();
-        } else if (val instanceof COSInteger) {
-            alpha = ((COSInteger) val).intValue();
+        if (val instanceof PdfFloat) {
+            alpha = ((PdfFloat) val).floatValue();
+        } else if (val instanceof PdfInteger) {
+            alpha = ((PdfInteger) val).intValue();
         }
 
         if (Math.abs(alpha - 1.0f) > 0.001f) {
@@ -163,15 +163,15 @@ public final class TransparencyRules implements PdfARule {
      * Checks Form XObjects for transparency group dictionaries
      * and Image XObjects for /SMask.
      */
-    private void checkFormXObjects(COSDictionary resources, String pagePath,
+    private void checkFormXObjects(PdfDictionary resources, String pagePath,
                                     PdfAValidationResult result) {
-        COSDictionary xObjects = resolveDict(resources.get("XObject"));
+        PdfDictionary xObjects = resolveDict(resources.get("XObject"));
         if (xObjects == null) {
             return;
         }
 
-        for (COSName key : xObjects.keySet()) {
-            COSDictionary xObj = resolveDict(xObjects.get(key.getName()));
+        for (PdfName key : xObjects.keySet()) {
+            PdfDictionary xObj = resolveDict(xObjects.get(key.getName()));
             if (xObj == null) {
                 continue;
             }
@@ -180,7 +180,7 @@ public final class TransparencyRules implements PdfARule {
 
             if ("Form".equals(subtype)) {
                 // Check for /Group with /S = /Transparency
-                COSDictionary group = resolveDict(xObj.get("Group"));
+                PdfDictionary group = resolveDict(xObj.get("Group"));
                 if (group != null) {
                     String groupS = group.getNameAsString("S");
                     if ("Transparency".equals(groupS)) {
@@ -191,10 +191,10 @@ public final class TransparencyRules implements PdfARule {
                 }
             } else if ("Image".equals(subtype)) {
                 // Check Image XObjects for /SMask (soft mask)
-                COSBase smask = resolve(xObj.get("SMask"));
+                PdfBase smask = resolve(xObj.get("SMask"));
                 if (smask != null) {
-                    boolean isNone = (smask instanceof COSName)
-                            && "None".equals(((COSName) smask).getName());
+                    boolean isNone = (smask instanceof PdfName)
+                            && "None".equals(((PdfName) smask).getName());
                     if (!isNone) {
                         result.addError("6.4",
                                 "PDF/A-1: Image XObject must not have /SMask",
@@ -206,12 +206,12 @@ public final class TransparencyRules implements PdfARule {
     }
 
     /**
-     * Resolves a COSBase value, dereferencing indirect references.
+     * Resolves a PdfBase value, dereferencing indirect references.
      */
-    private static COSBase resolve(COSBase val) {
-        if (val instanceof COSObjectReference) {
+    private static PdfBase resolve(PdfBase val) {
+        if (val instanceof PdfObjectReference) {
             try {
-                val = ((COSObjectReference) val).dereference();
+                val = ((PdfObjectReference) val).dereference();
             } catch (IOException e) {
                 return null;
             }
@@ -220,10 +220,10 @@ public final class TransparencyRules implements PdfARule {
     }
 
     /**
-     * Resolves a COSBase to a COSDictionary, dereferencing indirect references.
+     * Resolves a PdfBase to a PdfDictionary, dereferencing indirect references.
      */
-    private static COSDictionary resolveDict(COSBase val) {
-        COSBase resolved = resolve(val);
-        return (resolved instanceof COSDictionary) ? (COSDictionary) resolved : null;
+    private static PdfDictionary resolveDict(PdfBase val) {
+        PdfBase resolved = resolve(val);
+        return (resolved instanceof PdfDictionary) ? (PdfDictionary) resolved : null;
     }
 }

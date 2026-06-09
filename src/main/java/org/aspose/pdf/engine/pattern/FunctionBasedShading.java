@@ -1,9 +1,9 @@
 package org.aspose.pdf.engine.pattern;
 
 import org.aspose.pdf.Matrix;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
 import org.aspose.pdf.engine.function.PdfFunction;
 import org.aspose.pdf.engine.parser.PDFParser;
 
@@ -25,7 +25,7 @@ public final class FunctionBasedShading extends Shading {
      * @param parser the PDF parser
      * @throws IOException if the function cannot be parsed
      */
-    public FunctionBasedShading(COSDictionary dict, PDFParser parser) throws IOException {
+    public FunctionBasedShading(PdfDictionary dict, PDFParser parser) throws IOException {
         super(dict, parser);
         double[] d = getNumberArray(dict, "Domain");
         this.domain = (d != null && d.length == 4) ? d : new double[]{0, 1, 0, 1};

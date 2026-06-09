@@ -5,15 +5,15 @@ import org.aspose.pdf.DocumentInfo;
 import org.aspose.pdf.Page;
 import org.aspose.pdf.PageCollection;
 import org.aspose.pdf.Rectangle;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSFloat;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectKey;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfFloat;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectKey;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 import org.aspose.pdf.engine.writer.PDFWriter;
 import org.junit.jupiter.api.Test;
 
@@ -42,46 +42,46 @@ public class DocumentTest {
     /**
      * Creates a minimal valid PDF with optional /Info dictionary.
      */
-    private static byte[] createMinimalPdf(COSDictionary infoDict) throws IOException {
-        // Build COS objects
+    private static byte[] createMinimalPdf(PdfDictionary infoDict) throws IOException {
+        // Build PDF objects
         // Object 1: Catalog
-        COSDictionary catalog = new COSDictionary();
-        catalog.set("Type", COSName.of("Catalog"));
-        catalog.set("Pages", new COSObjectReference(new COSObjectKey(2, 0)));
+        PdfDictionary catalog = new PdfDictionary();
+        catalog.set("Type", PdfName.of("Catalog"));
+        catalog.set("Pages", new PdfObjectReference(new PdfObjectKey(2, 0)));
 
         // Object 2: Pages
-        COSDictionary pages = new COSDictionary();
-        pages.set("Type", COSName.PAGES);
-        COSArray kids = new COSArray(1);
-        kids.add(new COSObjectReference(new COSObjectKey(3, 0)));
+        PdfDictionary pages = new PdfDictionary();
+        pages.set("Type", PdfName.PAGES);
+        PdfArray kids = new PdfArray(1);
+        kids.add(new PdfObjectReference(new PdfObjectKey(3, 0)));
         pages.set("Kids", kids);
-        pages.set("Count", COSInteger.valueOf(1));
+        pages.set("Count", PdfInteger.valueOf(1));
 
         // Object 3: Page
-        COSDictionary page = new COSDictionary();
-        page.set("Type", COSName.PAGE);
-        page.set("Parent", new COSObjectReference(new COSObjectKey(2, 0)));
-        COSArray mediaBox = new COSArray(4);
-        mediaBox.add(new COSFloat(0));
-        mediaBox.add(new COSFloat(0));
-        mediaBox.add(new COSFloat(612));
-        mediaBox.add(new COSFloat(792));
+        PdfDictionary page = new PdfDictionary();
+        page.set("Type", PdfName.PAGE);
+        page.set("Parent", new PdfObjectReference(new PdfObjectKey(2, 0)));
+        PdfArray mediaBox = new PdfArray(4);
+        mediaBox.add(new PdfFloat(0));
+        mediaBox.add(new PdfFloat(0));
+        mediaBox.add(new PdfFloat(612));
+        mediaBox.add(new PdfFloat(792));
         page.set("MediaBox", mediaBox);
 
-        Map<COSObjectKey, COSBase> objects = new LinkedHashMap<>();
-        objects.put(new COSObjectKey(1, 0), catalog);
-        objects.put(new COSObjectKey(2, 0), pages);
-        objects.put(new COSObjectKey(3, 0), page);
+        Map<PdfObjectKey, PdfBase> objects = new LinkedHashMap<>();
+        objects.put(new PdfObjectKey(1, 0), catalog);
+        objects.put(new PdfObjectKey(2, 0), pages);
+        objects.put(new PdfObjectKey(3, 0), page);
 
         // Trailer
-        COSDictionary trailer = new COSDictionary();
-        trailer.set("Root", new COSObjectReference(new COSObjectKey(1, 0)));
-        trailer.set("Size", COSInteger.valueOf(4));
+        PdfDictionary trailer = new PdfDictionary();
+        trailer.set("Root", new PdfObjectReference(new PdfObjectKey(1, 0)));
+        trailer.set("Size", PdfInteger.valueOf(4));
 
         if (infoDict != null) {
-            objects.put(new COSObjectKey(4, 0), infoDict);
-            trailer.set("Info", new COSObjectReference(new COSObjectKey(4, 0)));
-            trailer.set("Size", COSInteger.valueOf(5));
+            objects.put(new PdfObjectKey(4, 0), infoDict);
+            trailer.set("Info", new PdfObjectReference(new PdfObjectKey(4, 0)));
+            trailer.set("Size", PdfInteger.valueOf(5));
         }
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -130,9 +130,9 @@ public class DocumentTest {
 
     @Test
     public void getInfoReturnsDocumentInfo() throws IOException {
-        COSDictionary infoDict = new COSDictionary();
-        infoDict.set("Title", new COSString("Test Document"));
-        infoDict.set("Author", new COSString("Test Author"));
+        PdfDictionary infoDict = new PdfDictionary();
+        infoDict.set("Title", new PdfString("Test Document"));
+        infoDict.set("Author", new PdfString("Test Author"));
 
         byte[] pdfBytes = createMinimalPdf(infoDict);
         try (Document doc = new Document(new ByteArrayInputStream(pdfBytes))) {
@@ -161,7 +161,7 @@ public class DocumentTest {
     public void getCatalogReturnsValidCatalog() throws IOException {
         byte[] pdfBytes = createMinimalPdf();
         try (Document doc = new Document(new ByteArrayInputStream(pdfBytes))) {
-            COSDictionary catalog = doc.getCatalog();
+            PdfDictionary catalog = doc.getCatalog();
             assertNotNull(catalog);
             assertEquals("Catalog", catalog.getType());
         }
@@ -171,7 +171,7 @@ public class DocumentTest {
     public void getTrailerContainsRoot() throws IOException {
         byte[] pdfBytes = createMinimalPdf();
         try (Document doc = new Document(new ByteArrayInputStream(pdfBytes))) {
-            COSDictionary trailer = doc.getTrailer();
+            PdfDictionary trailer = doc.getTrailer();
             assertNotNull(trailer);
             assertNotNull(trailer.get("Root"));
         }

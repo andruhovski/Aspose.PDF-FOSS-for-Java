@@ -1,13 +1,13 @@
 package org.aspose.pdf.engine.pdfa.rules;
 
 import org.aspose.pdf.PdfFormat;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectKey;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectKey;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 import org.aspose.pdf.engine.pdfa.PdfARule;
 import org.aspose.pdf.engine.pdfa.PdfAValidationResult;
 import org.aspose.pdf.engine.parser.PDFParser;
@@ -56,20 +56,20 @@ public final class FileStructureRules implements PdfARule {
      * 6.1.3: Trailer must have /ID and must NOT have /Encrypt.
      */
     private void checkTrailer(PDFParser parser, PdfFormat format, PdfAValidationResult result) {
-        COSDictionary trailer = parser.getTrailer();
+        PdfDictionary trailer = parser.getTrailer();
         if (trailer == null) {
             result.addError("6.1.3", "No trailer dictionary found", "trailer", "6.1.3");
             return;
         }
 
         // /ID is required
-        COSBase id = trailer.get("ID");
+        PdfBase id = trailer.get("ID");
         if (id == null) {
             result.addError("6.1.3", "Trailer must contain /ID array", "trailer", "6.1.3");
         }
 
         // /Encrypt is forbidden
-        COSBase encrypt = trailer.get("Encrypt");
+        PdfBase encrypt = trailer.get("Encrypt");
         if (encrypt != null) {
             result.addError("6.1.3", "Trailer must not contain /Encrypt for PDF/A compliance",
                     "trailer", "6.1.3");
@@ -81,13 +81,13 @@ public final class FileStructureRules implements PdfARule {
      * 6.1.10: No /LZWDecode filter in any stream.
      */
     private void checkStreams(PDFParser parser, PdfFormat format, PdfAValidationResult result) {
-        Set<COSObjectKey> keys = parser.getAllObjectKeys();
+        Set<PdfObjectKey> keys = parser.getAllObjectKeys();
         if (keys == null) {
             return;
         }
 
-        for (COSObjectKey key : keys) {
-            COSBase obj;
+        for (PdfObjectKey key : keys) {
+            PdfBase obj;
             try {
                 obj = parser.getObject(key);
             } catch (IOException e) {
@@ -96,11 +96,11 @@ public final class FileStructureRules implements PdfARule {
                 continue;
             }
 
-            if (!(obj instanceof COSStream)) {
+            if (!(obj instanceof PdfStream)) {
                 continue;
             }
 
-            COSStream stream = (COSStream) obj;
+            PdfStream stream = (PdfStream) obj;
             String objPath = "obj(" + key.getObjectNumber() + " " + key.getGenerationNumber() + ")";
 
             // 6.1.7: External file reference keys forbidden
@@ -128,38 +128,38 @@ public final class FileStructureRules implements PdfARule {
     /**
      * Checks whether a stream uses LZWDecode filter (forbidden by 6.1.10).
      */
-    private void checkLzwFilter(COSStream stream, String objPath, PdfAValidationResult result) {
-        COSBase filterVal = stream.get("Filter");
+    private void checkLzwFilter(PdfStream stream, String objPath, PdfAValidationResult result) {
+        PdfBase filterVal = stream.get("Filter");
         if (filterVal == null) {
             return;
         }
-        if (filterVal instanceof COSObjectReference) {
+        if (filterVal instanceof PdfObjectReference) {
             try {
-                filterVal = ((COSObjectReference) filterVal).dereference();
+                filterVal = ((PdfObjectReference) filterVal).dereference();
             } catch (IOException e) {
                 LOG.log(Level.FINE, "Could not dereference filter: {0}", e.getMessage());
                 return;
             }
         }
 
-        if (filterVal instanceof COSName) {
-            if ("LZWDecode".equals(((COSName) filterVal).getName())) {
+        if (filterVal instanceof PdfName) {
+            if ("LZWDecode".equals(((PdfName) filterVal).getName())) {
                 result.addError("6.1.10",
                         "LZWDecode filter is not permitted in PDF/A",
                         objPath, "6.1.10");
             }
-        } else if (filterVal instanceof COSArray) {
-            COSArray arr = (COSArray) filterVal;
+        } else if (filterVal instanceof PdfArray) {
+            PdfArray arr = (PdfArray) filterVal;
             for (int i = 0; i < arr.size(); i++) {
-                COSBase elem = arr.get(i);
-                if (elem instanceof COSObjectReference) {
+                PdfBase elem = arr.get(i);
+                if (elem instanceof PdfObjectReference) {
                     try {
-                        elem = ((COSObjectReference) elem).dereference();
+                        elem = ((PdfObjectReference) elem).dereference();
                     } catch (IOException e) {
                         continue;
                     }
                 }
-                if (elem instanceof COSName && "LZWDecode".equals(((COSName) elem).getName())) {
+                if (elem instanceof PdfName && "LZWDecode".equals(((PdfName) elem).getName())) {
                     result.addError("6.1.10",
                             "LZWDecode filter is not permitted in PDF/A",
                             objPath + "/Filter[" + i + "]", "6.1.10");
@@ -181,7 +181,7 @@ public final class FileStructureRules implements PdfARule {
             return;
         }
 
-        COSDictionary catalog;
+        PdfDictionary catalog;
         try {
             catalog = parser.getCatalog();
         } catch (IOException e) {
@@ -190,9 +190,9 @@ public final class FileStructureRules implements PdfARule {
         }
 
         // Check /Names -> /EmbeddedFiles
-        COSBase namesRef = catalog.get("Names");
+        PdfBase namesRef = catalog.get("Names");
         if (namesRef != null) {
-            COSDictionary names = resolveDict(namesRef);
+            PdfDictionary names = resolveDict(namesRef);
             if (names != null && names.get("EmbeddedFiles") != null) {
                 result.addError("6.1.11",
                         "PDF/A-1 must not have /EmbeddedFiles in the names dictionary",
@@ -201,21 +201,21 @@ public final class FileStructureRules implements PdfARule {
         }
 
         // Check all file specification dicts for /EF
-        Set<COSObjectKey> keys = parser.getAllObjectKeys();
+        Set<PdfObjectKey> keys = parser.getAllObjectKeys();
         if (keys == null) {
             return;
         }
-        for (COSObjectKey key : keys) {
-            COSBase obj;
+        for (PdfObjectKey key : keys) {
+            PdfBase obj;
             try {
                 obj = parser.getObject(key);
             } catch (IOException e) {
                 continue;
             }
-            if (!(obj instanceof COSDictionary)) {
+            if (!(obj instanceof PdfDictionary)) {
                 continue;
             }
-            COSDictionary dict = (COSDictionary) obj;
+            PdfDictionary dict = (PdfDictionary) obj;
             String type = dict.getNameAsString("Type");
             if ("Filespec".equals(type) && dict.get("EF") != null) {
                 result.addError("6.1.11",
@@ -235,7 +235,7 @@ public final class FileStructureRules implements PdfARule {
             return;
         }
 
-        COSDictionary catalog;
+        PdfDictionary catalog;
         try {
             catalog = parser.getCatalog();
         } catch (IOException e) {
@@ -251,19 +251,19 @@ public final class FileStructureRules implements PdfARule {
     }
 
     /**
-     * Resolves a COSBase value to a COSDictionary, dereferencing if needed.
+     * Resolves a PdfBase value to a PdfDictionary, dereferencing if needed.
      *
      * @param val the value (may be an indirect reference)
      * @return the dictionary, or null
      */
-    private static COSDictionary resolveDict(COSBase val) {
-        if (val instanceof COSObjectReference) {
+    private static PdfDictionary resolveDict(PdfBase val) {
+        if (val instanceof PdfObjectReference) {
             try {
-                val = ((COSObjectReference) val).dereference();
+                val = ((PdfObjectReference) val).dereference();
             } catch (IOException e) {
                 return null;
             }
         }
-        return (val instanceof COSDictionary) ? (COSDictionary) val : null;
+        return (val instanceof PdfDictionary) ? (PdfDictionary) val : null;
     }
 }

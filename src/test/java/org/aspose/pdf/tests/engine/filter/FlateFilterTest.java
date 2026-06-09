@@ -73,6 +73,40 @@ public class FlateFilterTest {
     }
 
     @Test
+    public void decode_corruptionWithinFirstBlock_recoversPrefix() throws IOException {
+        // Build a raw-deflate stream: one stored (uncompressed) block of `len`
+        // literal bytes, followed by a byte whose block-type field is the
+        // reserved value 0b11. The JDK Inflater throws DataFormatException only
+        // AFTER it has already produced all `len` stored bytes. With the old
+        // 8 KB fast path that output (all produced in a single inflate() call)
+        // was discarded and decode() hard-threw. B.1's small-buffer retry must
+        // recover (almost) the full prefix that precedes the corruption,
+        // surrendering at most one small-buffer chunk (64 bytes) at the boundary.
+        int len = 1000;
+        byte[] payload = new byte[len];
+        for (int i = 0; i < len; i++) {
+            payload[i] = (byte) (i & 0xFF);
+        }
+
+        java.io.ByteArrayOutputStream raw = new java.io.ByteArrayOutputStream();
+        raw.write(0x00);                    // BFINAL=0, BTYPE=00 (stored)
+        raw.write(len & 0xFF);              // LEN  (little-endian)
+        raw.write((len >> 8) & 0xFF);
+        raw.write(~len & 0xFF);             // NLEN = one's complement of LEN
+        raw.write((~len >> 8) & 0xFF);
+        raw.write(payload, 0, len);         // literal stored data
+        raw.write(0x07);                    // next block header: BTYPE=11 -> invalid
+
+        byte[] decoded = filter.decode(raw.toByteArray(), null);
+        // Old behaviour: 0 bytes (hard throw). New: nearly the whole prefix.
+        assertTrue(decoded.length >= len - 64 && decoded.length <= len,
+                "B.1 should recover most of the prefix, got " + decoded.length);
+        byte[] expectedPrefix = java.util.Arrays.copyOf(payload, decoded.length);
+        assertArrayEquals(expectedPrefix, decoded,
+                "recovered bytes must match the original stored prefix");
+    }
+
+    @Test
     public void roundTrip_allByteValues() throws IOException {
         byte[] original = new byte[256];
         for (int i = 0; i < 256; i++) {

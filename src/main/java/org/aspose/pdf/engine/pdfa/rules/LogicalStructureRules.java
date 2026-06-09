@@ -1,9 +1,9 @@
 package org.aspose.pdf.engine.pdfa.rules;
 
 import org.aspose.pdf.PdfFormat;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
 import org.aspose.pdf.engine.pdfa.PdfARule;
 import org.aspose.pdf.engine.pdfa.PdfAValidationResult;
 import org.aspose.pdf.engine.parser.PDFParser;
@@ -40,7 +40,7 @@ public final class LogicalStructureRules implements PdfARule {
             return;
         }
 
-        COSDictionary catalog;
+        PdfDictionary catalog;
         try {
             catalog = parser.getCatalog();
         } catch (IOException e) {
@@ -59,9 +59,9 @@ public final class LogicalStructureRules implements PdfARule {
     /**
      * 6.8.2: Catalog must have /MarkInfo dict with /Marked = true.
      */
-    private void checkMarkInfo(COSDictionary catalog, PdfAValidationResult result) {
-        COSBase markInfoRef = catalog.get("MarkInfo");
-        COSDictionary markInfo = resolveDict(markInfoRef);
+    private void checkMarkInfo(PdfDictionary catalog, PdfAValidationResult result) {
+        PdfBase markInfoRef = catalog.get("MarkInfo");
+        PdfDictionary markInfo = resolveDict(markInfoRef);
 
         if (markInfo == null) {
             result.addError("6.8.2",
@@ -81,7 +81,7 @@ public final class LogicalStructureRules implements PdfARule {
     /**
      * 6.8.3: Catalog must have /StructTreeRoot.
      */
-    private void checkStructTreeRoot(COSDictionary catalog, PdfAValidationResult result) {
+    private void checkStructTreeRoot(PdfDictionary catalog, PdfAValidationResult result) {
         if (catalog.get("StructTreeRoot") == null) {
             result.addError("6.8.3",
                     "Catalog must have /StructTreeRoot for Level A compliance",
@@ -92,7 +92,7 @@ public final class LogicalStructureRules implements PdfARule {
     /**
      * 6.8.4: Catalog must have /Lang.
      */
-    private void checkLang(COSDictionary catalog, PdfAValidationResult result) {
+    private void checkLang(PdfDictionary catalog, PdfAValidationResult result) {
         if (catalog.get("Lang") == null) {
             result.addError("6.8.4",
                     "Catalog must have /Lang for Level A compliance",
@@ -101,16 +101,16 @@ public final class LogicalStructureRules implements PdfARule {
     }
 
     /**
-     * Resolves a COSBase to a COSDictionary, dereferencing indirect references.
+     * Resolves a PdfBase to a PdfDictionary, dereferencing indirect references.
      */
-    private static COSDictionary resolveDict(COSBase val) {
-        if (val instanceof COSObjectReference) {
+    private static PdfDictionary resolveDict(PdfBase val) {
+        if (val instanceof PdfObjectReference) {
             try {
-                val = ((COSObjectReference) val).dereference();
+                val = ((PdfObjectReference) val).dereference();
             } catch (IOException e) {
                 return null;
             }
         }
-        return (val instanceof COSDictionary) ? (COSDictionary) val : null;
+        return (val instanceof PdfDictionary) ? (PdfDictionary) val : null;
     }
 }

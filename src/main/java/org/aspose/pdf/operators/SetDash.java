@@ -1,8 +1,8 @@
 package org.aspose.pdf.operators;
 
 import org.aspose.pdf.Operator;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
 
 import java.util.Arrays;
 import java.util.List;
@@ -34,16 +34,16 @@ public class SetDash extends Operator {
     /**
      * Creates a SetDash (d) operator from parsed operands.
      * <p>
-     * Expects two operands: a {@link COSArray} for the dash array and a number
+     * Expects two operands: a {@link PdfArray} for the dash array and a number
      * for the dash phase.
      * </p>
      *
      * @param operands the operands from the content stream parser
      */
-    public SetDash(List<COSBase> operands) {
+    public SetDash(List<PdfBase> operands) {
         super("d", operands);
-        if (operands != null && operands.size() > 0 && operands.get(0) instanceof COSArray) {
-            COSArray arr = (COSArray) operands.get(0);
+        if (operands != null && operands.size() > 0 && operands.get(0) instanceof PdfArray) {
+            PdfArray arr = (PdfArray) operands.get(0);
             this.dashArray = new double[arr.size()];
             for (int i = 0; i < arr.size(); i++) {
                 this.dashArray[i] = getNumber(arr.get(i));
@@ -72,8 +72,8 @@ public class SetDash extends Operator {
         return dashPhase;
     }
 
-    private static List<COSBase> buildOperands(double[] dashArray, double dashPhase) {
-        COSArray arr = new COSArray();
+    private static List<PdfBase> buildOperands(double[] dashArray, double dashPhase) {
+        PdfArray arr = new PdfArray();
         if (dashArray != null) {
             for (double v : dashArray) {
                 arr.add(num(v));

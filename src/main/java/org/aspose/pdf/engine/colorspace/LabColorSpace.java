@@ -1,6 +1,6 @@
 package org.aspose.pdf.engine.colorspace;
 
-import org.aspose.pdf.engine.cos.COSDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
 
 /**
  * Lab color space (ISO 32000-1:2008, §8.6.5.4).
@@ -19,7 +19,7 @@ public final class LabColorSpace extends ColorSpaceBase {
      *
      * @param params the Lab parameter dictionary
      */
-    public LabColorSpace(COSDictionary params) {
+    public LabColorSpace(PdfDictionary params) {
         this.whitePoint = getTriple(params, "WhitePoint", new double[]{0.9505, 1.0, 1.089});
         this.blackPoint = getTriple(params, "BlackPoint", new double[]{0, 0, 0});
         double[] r = getNumberArray(params, "Range");
@@ -68,6 +68,14 @@ public final class LabColorSpace extends ColorSpaceBase {
 
     @Override
     public int getNumberOfComponents() { return 3; }
+
+    /** L*a*b* → sRGB. Components are NOT 0..1: L* is 0..100, a* and b* ranged. */
+    @Override
+    public int toRGBInt(double[] comps) {
+        if (comps == null || comps.length < 3) return 0xFF000000;
+        double[] rgb = toRGB(comps[0], comps[1], comps[2]);
+        return DeviceRGB.INSTANCE.toRGBInt(rgb[0], rgb[1], rgb[2]);
+    }
 
     /** Returns the a*b* range [amin, amax, bmin, bmax]. */
     public double[] getRange() { return range.clone(); }

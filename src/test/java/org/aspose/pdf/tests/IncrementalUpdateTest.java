@@ -1,16 +1,16 @@
 package org.aspose.pdf.tests;
 
 import org.aspose.pdf.Document;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectKey;
-import org.aspose.pdf.engine.cos.COSStream;
-import org.aspose.pdf.engine.cos.COSString;
-import org.aspose.pdf.engine.cos.COSNull;
-import org.aspose.pdf.engine.cos.COSObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectKey;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
+import org.aspose.pdf.engine.pdfobjects.PdfNull;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
 import org.aspose.pdf.engine.io.RandomAccessReader;
 import org.aspose.pdf.engine.parser.PDFParser;
 import org.aspose.pdf.engine.writer.PDFWriter;
@@ -30,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests for incremental update functionality:
- * dirty tracking on COS objects, incremental save, same-file save,
+ * dirty tracking on PDF objects, incremental save, same-file save,
  * and full write for new documents.
  */
 public class IncrementalUpdateTest {
@@ -44,43 +44,43 @@ public class IncrementalUpdateTest {
 
     @Test
     public void cosDictionarySetMarksDirty() {
-        COSDictionary dict = new COSDictionary();
+        PdfDictionary dict = new PdfDictionary();
         dict.setDirty(false);
         assertFalse(dict.isDirty());
-        dict.set(COSName.of("Key"), COSInteger.valueOf(42));
+        dict.set(PdfName.of("Key"), PdfInteger.valueOf(42));
         assertTrue(dict.isDirty());
     }
 
     @Test
     public void cosDictionaryRemoveMarksDirty() {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("Key"), COSInteger.valueOf(1));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("Key"), PdfInteger.valueOf(1));
         dict.setDirty(false);
-        dict.remove(COSName.of("Key"));
+        dict.remove(PdfName.of("Key"));
         assertTrue(dict.isDirty());
     }
 
     @Test
     public void cosArrayAddMarksDirty() {
-        COSArray arr = new COSArray();
+        PdfArray arr = new PdfArray();
         arr.setDirty(false);
-        arr.add(COSInteger.valueOf(1));
+        arr.add(PdfInteger.valueOf(1));
         assertTrue(arr.isDirty());
     }
 
     @Test
     public void cosArraySetMarksDirty() {
-        COSArray arr = new COSArray();
-        arr.add(COSInteger.valueOf(1));
+        PdfArray arr = new PdfArray();
+        arr.add(PdfInteger.valueOf(1));
         arr.setDirty(false);
-        arr.set(0, COSInteger.valueOf(2));
+        arr.set(0, PdfInteger.valueOf(2));
         assertTrue(arr.isDirty());
     }
 
     @Test
     public void cosArrayRemoveMarksDirty() {
-        COSArray arr = new COSArray();
-        arr.add(COSInteger.valueOf(1));
+        PdfArray arr = new PdfArray();
+        arr.add(PdfInteger.valueOf(1));
         arr.setDirty(false);
         arr.remove(0);
         assertTrue(arr.isDirty());
@@ -88,8 +88,8 @@ public class IncrementalUpdateTest {
 
     @Test
     public void cosArrayClearMarksDirty() {
-        COSArray arr = new COSArray();
-        arr.add(COSInteger.valueOf(1));
+        PdfArray arr = new PdfArray();
+        arr.add(PdfInteger.valueOf(1));
         arr.setDirty(false);
         arr.clear();
         assertTrue(arr.isDirty());
@@ -97,7 +97,7 @@ public class IncrementalUpdateTest {
 
     @Test
     public void cosStreamSetDecodedDataMarksDirty() {
-        COSStream stream = new COSStream();
+        PdfStream stream = new PdfStream();
         stream.setDirty(false);
         stream.setDecodedData(new byte[]{1, 2, 3});
         assertTrue(stream.isDirty());
@@ -105,7 +105,7 @@ public class IncrementalUpdateTest {
 
     @Test
     public void cosStreamSetEncodedDataMarksDirty() {
-        COSStream stream = new COSStream();
+        PdfStream stream = new PdfStream();
         stream.setDirty(false);
         stream.setEncodedData(new byte[]{1, 2, 3});
         assertTrue(stream.isDirty());
@@ -113,15 +113,15 @@ public class IncrementalUpdateTest {
 
     @Test
     public void cosBaseDefaultNotDirty() {
-        COSDictionary dict = new COSDictionary();
+        PdfDictionary dict = new PdfDictionary();
         // Default dirty state is false (field default for boolean)
         assertFalse(dict.isDirty());
     }
 
     @Test
     public void setDirtyFalseResets() {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("A"), COSInteger.valueOf(1));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("A"), PdfInteger.valueOf(1));
         assertTrue(dict.isDirty());
         dict.setDirty(false);
         assertFalse(dict.isDirty());
@@ -142,9 +142,9 @@ public class IncrementalUpdateTest {
         assertFalse(parser.getTrailer().isDirty());
 
         // Load an object — it should not be dirty
-        for (COSObjectKey key : parser.getAllObjectKeys()) {
-            COSBase obj = parser.getObject(key);
-            if (obj != null && !(obj instanceof COSNull)) {
+        for (PdfObjectKey key : parser.getAllObjectKeys()) {
+            PdfBase obj = parser.getObject(key);
+            if (obj != null && !(obj instanceof PdfNull)) {
                 assertFalse(obj.isDirty(), "Object " + key + " should not be dirty after loading");
             }
         }
@@ -160,13 +160,13 @@ public class IncrementalUpdateTest {
         parser.parse();
 
         // Find the catalog (object 1)
-        COSBase catalog = parser.getObject(1);
+        PdfBase catalog = parser.getObject(1);
         assertNotNull(catalog);
         assertFalse(catalog.isDirty());
 
         // Modify it
-        if (catalog instanceof COSDictionary) {
-            ((COSDictionary) catalog).set(COSName.of("NewKey"), COSInteger.valueOf(99));
+        if (catalog instanceof PdfDictionary) {
+            ((PdfDictionary) catalog).set(PdfName.of("NewKey"), PdfInteger.valueOf(99));
             assertTrue(catalog.isDirty());
         }
 
@@ -218,8 +218,8 @@ public class IncrementalUpdateTest {
 
         Document doc = new Document(pdfFile.getAbsolutePath());
         // Modify the catalog
-        COSDictionary catalog = doc.getCatalog();
-        catalog.set(COSName.of("TestKey"), new COSString("TestValue"));
+        PdfDictionary catalog = doc.getCatalog();
+        catalog.set(PdfName.of("TestKey"), new PdfString("TestValue"));
 
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         doc.save(bos);
@@ -243,8 +243,8 @@ public class IncrementalUpdateTest {
 
         Document doc = new Document(pdfFile.getAbsolutePath());
         // Modify something
-        COSDictionary catalog = doc.getCatalog();
-        catalog.set(COSName.of("Modified"), COSInteger.valueOf(1));
+        PdfDictionary catalog = doc.getCatalog();
+        catalog.set(PdfName.of("Modified"), PdfInteger.valueOf(1));
 
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         doc.save(bos);
@@ -262,8 +262,8 @@ public class IncrementalUpdateTest {
         File pdfFile = writeBytesToTempFile(originalPdf, "preserve-test.pdf");
 
         Document doc = new Document(pdfFile.getAbsolutePath());
-        COSDictionary catalog = doc.getCatalog();
-        catalog.set(COSName.of("Extra"), new COSString("Data"));
+        PdfDictionary catalog = doc.getCatalog();
+        catalog.set(PdfName.of("Extra"), new PdfString("Data"));
 
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         doc.save(bos);
@@ -305,8 +305,8 @@ public class IncrementalUpdateTest {
         File pdfFile = writeBytesToTempFile(originalPdf, "size-test.pdf");
 
         Document doc = new Document(pdfFile.getAbsolutePath());
-        COSDictionary catalog = doc.getCatalog();
-        catalog.set(COSName.of("Test"), COSInteger.valueOf(1));
+        PdfDictionary catalog = doc.getCatalog();
+        catalog.set(PdfName.of("Test"), PdfInteger.valueOf(1));
 
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         doc.save(bos);
@@ -316,7 +316,7 @@ public class IncrementalUpdateTest {
         RandomAccessReader reader = RandomAccessReader.fromBytes(result);
         PDFParser parser = new PDFParser(reader);
         parser.parse();
-        COSDictionary trailer = parser.getTrailer();
+        PdfDictionary trailer = parser.getTrailer();
 
         int size = trailer.getInt("Size", -1);
         assertTrue(size >= 3, "Trailer /Size should be >= 3 (catalog + pages + info)");
@@ -335,8 +335,8 @@ public class IncrementalUpdateTest {
         File pdfFile = writeBytesToTempFile(originalPdf, "subsection-test.pdf");
 
         Document doc = new Document(pdfFile.getAbsolutePath());
-        COSDictionary catalog = doc.getCatalog();
-        catalog.set(COSName.of("Modified"), COSInteger.valueOf(1));
+        PdfDictionary catalog = doc.getCatalog();
+        catalog.set(PdfName.of("Modified"), PdfInteger.valueOf(1));
 
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         doc.save(bos);
@@ -359,8 +359,8 @@ public class IncrementalUpdateTest {
         File pdfFile = writeBytesToTempFile(originalPdf, "samefile-test.pdf");
 
         Document doc = new Document(pdfFile.getAbsolutePath());
-        COSDictionary catalog = doc.getCatalog();
-        catalog.set(COSName.of("SameFileSave"), COSInteger.valueOf(1));
+        PdfDictionary catalog = doc.getCatalog();
+        catalog.set(PdfName.of("SameFileSave"), PdfInteger.valueOf(1));
 
         // Save to the same file
         doc.save(pdfFile.getAbsolutePath());
@@ -429,14 +429,14 @@ public class IncrementalUpdateTest {
         RandomAccessReader parseReader = RandomAccessReader.fromBytes(originalBytes);
         PDFParser parseParser = new PDFParser(parseReader);
         parseParser.parse();
-        COSDictionary trailer = parseParser.getTrailer();
+        PdfDictionary trailer = parseParser.getTrailer();
 
         // Now do an incremental write
         ByteArrayOutputStream incrBos = new ByteArrayOutputStream();
         PDFWriter incrWriter = new PDFWriter(incrBos, 1.7f);
         RandomAccessReader origReader = RandomAccessReader.fromBytes(originalBytes);
 
-        Map<COSObjectKey, COSBase> modObjects = createModifiedCatalog();
+        Map<PdfObjectKey, PdfBase> modObjects = createModifiedCatalog();
         incrWriter.writeIncremental(origReader, trailer, modObjects);
         origReader.close();
         parseParser.close();
@@ -467,33 +467,33 @@ public class IncrementalUpdateTest {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         PDFWriter writer = new PDFWriter(bos, 1.7f);
 
-        Map<COSObjectKey, COSBase> objects = new LinkedHashMap<>();
-        COSObjectKey catalogKey = new COSObjectKey(1, 0);
-        COSObjectKey pagesKey = new COSObjectKey(2, 0);
-        COSObjectKey infoKey = new COSObjectKey(3, 0);
+        Map<PdfObjectKey, PdfBase> objects = new LinkedHashMap<>();
+        PdfObjectKey catalogKey = new PdfObjectKey(1, 0);
+        PdfObjectKey pagesKey = new PdfObjectKey(2, 0);
+        PdfObjectKey infoKey = new PdfObjectKey(3, 0);
 
         // Object 1: Catalog
-        COSDictionary catalog = new COSDictionary();
-        catalog.set(COSName.of("Type"), COSName.of("Catalog"));
-        catalog.set(COSName.PAGES, new COSObjectReference(pagesKey, k -> objects.get(k)));
+        PdfDictionary catalog = new PdfDictionary();
+        catalog.set(PdfName.of("Type"), PdfName.of("Catalog"));
+        catalog.set(PdfName.PAGES, new PdfObjectReference(pagesKey, k -> objects.get(k)));
         objects.put(catalogKey, catalog);
 
         // Object 2: Pages
-        COSDictionary pages = new COSDictionary();
-        pages.set(COSName.of("Type"), COSName.PAGES);
-        pages.set(COSName.of("Count"), COSInteger.valueOf(0));
-        pages.set(COSName.of("Kids"), new COSArray());
+        PdfDictionary pages = new PdfDictionary();
+        pages.set(PdfName.of("Type"), PdfName.PAGES);
+        pages.set(PdfName.of("Count"), PdfInteger.valueOf(0));
+        pages.set(PdfName.of("Kids"), new PdfArray());
         objects.put(pagesKey, pages);
 
         // Object 3: Info
-        COSDictionary info = new COSDictionary();
-        info.set(COSName.of("Producer"), new COSString("OpenPDF Test"));
+        PdfDictionary info = new PdfDictionary();
+        info.set(PdfName.of("Producer"), new PdfString("OpenPDF Test"));
         objects.put(infoKey, info);
 
         // Trailer
-        COSDictionary trailer = new COSDictionary();
-        trailer.set(COSName.ROOT, new COSObjectReference(catalogKey, k -> objects.get(k)));
-        trailer.set(COSName.of("Size"), COSInteger.valueOf(4));
+        PdfDictionary trailer = new PdfDictionary();
+        trailer.set(PdfName.ROOT, new PdfObjectReference(catalogKey, k -> objects.get(k)));
+        trailer.set(PdfName.of("Size"), PdfInteger.valueOf(4));
 
         writer.write(trailer, objects);
         return bos.toByteArray();
@@ -502,12 +502,12 @@ public class IncrementalUpdateTest {
     /**
      * Creates a minimal set of modified objects for incremental write tests.
      */
-    private Map<COSObjectKey, COSBase> createModifiedCatalog() {
-        Map<COSObjectKey, COSBase> modObjects = new LinkedHashMap<>();
-        COSDictionary modCatalog = new COSDictionary();
-        modCatalog.set(COSName.of("Type"), COSName.of("Catalog"));
-        modCatalog.set(COSName.of("NewEntry"), COSInteger.valueOf(42));
-        modObjects.put(new COSObjectKey(1, 0), modCatalog);
+    private Map<PdfObjectKey, PdfBase> createModifiedCatalog() {
+        Map<PdfObjectKey, PdfBase> modObjects = new LinkedHashMap<>();
+        PdfDictionary modCatalog = new PdfDictionary();
+        modCatalog.set(PdfName.of("Type"), PdfName.of("Catalog"));
+        modCatalog.set(PdfName.of("NewEntry"), PdfInteger.valueOf(42));
+        modObjects.put(new PdfObjectKey(1, 0), modCatalog);
         return modObjects;
     }
 

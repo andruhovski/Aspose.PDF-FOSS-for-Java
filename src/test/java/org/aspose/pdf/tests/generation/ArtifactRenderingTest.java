@@ -7,12 +7,12 @@ import org.aspose.pdf.Document;
 import org.aspose.pdf.Operator;
 import org.aspose.pdf.Page;
 import org.aspose.pdf.WatermarkArtifact;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -38,20 +38,20 @@ class ArtifactRenderingTest {
     @TempDir Path tempDir;
 
     private static String pageContentText(Page page) throws IOException {
-        COSBase contents = page.getCOSDictionary().get(COSName.of("Contents"));
-        if (contents instanceof COSObjectReference) {
-            contents = ((COSObjectReference) contents).dereference();
+        PdfBase contents = page.getPdfDictionary().get(PdfName.of("Contents"));
+        if (contents instanceof PdfObjectReference) {
+            contents = ((PdfObjectReference) contents).dereference();
         }
         StringBuilder all = new StringBuilder();
-        if (contents instanceof COSStream) {
-            all.append(new String(((COSStream) contents).getDecodedData(), StandardCharsets.ISO_8859_1));
-        } else if (contents instanceof COSArray) {
-            COSArray arr = (COSArray) contents;
+        if (contents instanceof PdfStream) {
+            all.append(new String(((PdfStream) contents).getDecodedData(), StandardCharsets.ISO_8859_1));
+        } else if (contents instanceof PdfArray) {
+            PdfArray arr = (PdfArray) contents;
             for (int i = 0; i < arr.size(); i++) {
-                COSBase e = arr.get(i);
-                if (e instanceof COSObjectReference) e = ((COSObjectReference) e).dereference();
-                if (e instanceof COSStream) {
-                    all.append(new String(((COSStream) e).getDecodedData(), StandardCharsets.ISO_8859_1));
+                PdfBase e = arr.get(i);
+                if (e instanceof PdfObjectReference) e = ((PdfObjectReference) e).dereference();
+                if (e instanceof PdfStream) {
+                    all.append(new String(((PdfStream) e).getDecodedData(), StandardCharsets.ISO_8859_1));
                     all.append('\n');
                 }
             }
@@ -59,9 +59,9 @@ class ArtifactRenderingTest {
         return all.toString();
     }
 
-    private static COSDictionary resolveDict(COSBase v) throws IOException {
-        if (v instanceof COSObjectReference) v = ((COSObjectReference) v).dereference();
-        return v instanceof COSDictionary ? (COSDictionary) v : null;
+    private static PdfDictionary resolveDict(PdfBase v) throws IOException {
+        if (v instanceof PdfObjectReference) v = ((PdfObjectReference) v).dereference();
+        return v instanceof PdfDictionary ? (PdfDictionary) v : null;
     }
 
     @Test
@@ -130,11 +130,11 @@ class ArtifactRenderingTest {
             doc.save(out.toString());
         }
         try (Document r = new Document(out.toString())) {
-            COSDictionary fonts = r.getPages().get(1).ensureResources().getFonts();
+            PdfDictionary fonts = r.getPages().get(1).ensureResources().getFonts();
             assertNotNull(fonts);
             boolean foundBold = false;
-            for (COSName k : fonts.keySet()) {
-                COSDictionary f = resolveDict(fonts.get(k));
+            for (PdfName k : fonts.keySet()) {
+                PdfDictionary f = resolveDict(fonts.get(k));
                 if (f != null && "Helvetica-Bold".equals(f.getNameAsString("BaseFont"))) {
                     foundBold = true;
                     assertEquals("WinAnsiEncoding", f.getNameAsString("Encoding"));
@@ -157,11 +157,11 @@ class ArtifactRenderingTest {
             doc.save(out.toString());
         }
         try (Document r = new Document(out.toString())) {
-            COSDictionary ext = r.getPages().get(1).ensureResources().getExtGState();
+            PdfDictionary ext = r.getPages().get(1).ensureResources().getExtGState();
             assertNotNull(ext, "/ExtGState must be present on page");
             boolean found = false;
-            for (COSName k : ext.keySet()) {
-                COSDictionary gs = resolveDict(ext.get(k));
+            for (PdfName k : ext.keySet()) {
+                PdfDictionary gs = resolveDict(ext.get(k));
                 if (gs != null && Math.abs(gs.getFloat("ca", -1f) - 0.25) < 0.001) {
                     assertEquals(0.25, gs.getFloat("CA", -1f), 0.001);
                     found = true;

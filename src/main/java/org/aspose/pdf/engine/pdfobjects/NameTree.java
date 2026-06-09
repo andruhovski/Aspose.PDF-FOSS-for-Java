@@ -1,4 +1,4 @@
-package org.aspose.pdf.engine.cos;
+package org.aspose.pdf.engine.pdfobjects;
 
 import java.io.IOException;
 import java.util.AbstractMap;
@@ -34,11 +34,11 @@ public final class NameTree {
 
     private static final Logger LOG = Logger.getLogger(NameTree.class.getName());
 
-    private static final COSName KIDS = COSName.of("Kids");
-    private static final COSName NAMES = COSName.of("Names");
-    private static final COSName LIMITS = COSName.of("Limits");
+    private static final PdfName KIDS = PdfName.of("Kids");
+    private static final PdfName NAMES = PdfName.of("Names");
+    private static final PdfName LIMITS = PdfName.of("Limits");
 
-    private final COSDictionary root;
+    private final PdfDictionary root;
 
     /**
      * Wraps the given root dictionary. The dictionary is the name-tree root
@@ -47,7 +47,7 @@ public final class NameTree {
      *
      * @param root the name-tree root, or {@code null} for an empty view
      */
-    public NameTree(COSDictionary root) {
+    public NameTree(PdfDictionary root) {
         this.root = root;
     }
 
@@ -57,7 +57,7 @@ public final class NameTree {
      *
      * @return the root dictionary
      */
-    public COSDictionary getRoot() {
+    public PdfDictionary getRoot() {
         return root;
     }
 
@@ -85,7 +85,7 @@ public final class NameTree {
      * @param key the key to look up
      * @return the associated value, or {@code null} if not found
      */
-    public COSBase get(String key) {
+    public PdfBase get(String key) {
         if (root == null || key == null) return null;
         return findInNode(root, key);
     }
@@ -107,8 +107,8 @@ public final class NameTree {
      *
      * @return the list of {@code (key, value)} entries
      */
-    public List<Map.Entry<String, COSBase>> entries() {
-        List<Map.Entry<String, COSBase>> out = new ArrayList<>();
+    public List<Map.Entry<String, PdfBase>> entries() {
+        List<Map.Entry<String, PdfBase>> out = new ArrayList<>();
         if (root != null) collectEntries(root, out);
         return out;
     }
@@ -120,9 +120,9 @@ public final class NameTree {
      * @return the list of keys
      */
     public List<String> keys() {
-        List<Map.Entry<String, COSBase>> es = entries();
+        List<Map.Entry<String, PdfBase>> es = entries();
         List<String> out = new ArrayList<>(es.size());
-        for (Map.Entry<String, COSBase> e : es) out.add(e.getKey());
+        for (Map.Entry<String, PdfBase> e : es) out.add(e.getKey());
         return out;
     }
 
@@ -136,13 +136,13 @@ public final class NameTree {
      * @return the previous value bound to {@code key}, or {@code null}
      * @throws IllegalStateException if this view wraps a {@code null} root
      */
-    public COSBase put(String key, COSBase value) {
+    public PdfBase put(String key, PdfBase value) {
         requireRoot();
         if (key == null) throw new IllegalArgumentException("key must not be null");
         if (value == null) return remove(key);
-        List<COSDictionary> path = new ArrayList<>();
-        COSDictionary leaf = locateLeafForInsert(root, key, path);
-        COSBase previous = insertSorted(leaf, key, value);
+        List<PdfDictionary> path = new ArrayList<>();
+        PdfDictionary leaf = locateLeafForInsert(root, key, path);
+        PdfBase previous = insertSorted(leaf, key, value);
         // The leaf itself is the last entry on the path — recompute limits
         // starting there and walking up to (but not including) the root.
         refreshLimitsAlongPath(path);
@@ -157,12 +157,12 @@ public final class NameTree {
      * @param key the key to remove
      * @return the removed value, or {@code null} if the key was absent
      */
-    public COSBase remove(String key) {
+    public PdfBase remove(String key) {
         if (root == null || key == null) return null;
-        List<COSDictionary> path = new ArrayList<>();
-        COSDictionary leaf = locateLeafForLookup(root, key, path);
+        List<PdfDictionary> path = new ArrayList<>();
+        PdfDictionary leaf = locateLeafForLookup(root, key, path);
         if (leaf == null) return null;
-        COSBase removed = removeFromLeaf(leaf, key);
+        PdfBase removed = removeFromLeaf(leaf, key);
         if (removed != null) refreshLimitsAlongPath(path);
         return removed;
     }
@@ -176,27 +176,27 @@ public final class NameTree {
         requireRoot();
         root.remove(KIDS);
         root.remove(LIMITS);
-        root.set(NAMES, new COSArray());
+        root.set(NAMES, new PdfArray());
     }
 
     // ────────────────────────────────────────────────────────────────────
     //  Reading
     // ────────────────────────────────────────────────────────────────────
 
-    private COSBase findInNode(COSDictionary node, String key) {
+    private PdfBase findInNode(PdfDictionary node, String key) {
         if (!keyInLimits(node, key)) return null;
-        COSBase names = resolve(node.get(NAMES));
-        if (names instanceof COSArray) {
-            COSBase found = findInLeaf((COSArray) names, key);
+        PdfBase names = resolve(node.get(NAMES));
+        if (names instanceof PdfArray) {
+            PdfBase found = findInLeaf((PdfArray) names, key);
             if (found != null) return found;
         }
-        COSBase kids = resolve(node.get(KIDS));
-        if (kids instanceof COSArray) {
-            COSArray arr = (COSArray) kids;
+        PdfBase kids = resolve(node.get(KIDS));
+        if (kids instanceof PdfArray) {
+            PdfArray arr = (PdfArray) kids;
             for (int i = 0; i < arr.size(); i++) {
-                COSBase kid = resolve(arr.get(i));
-                if (kid instanceof COSDictionary) {
-                    COSBase r = findInNode((COSDictionary) kid, key);
+                PdfBase kid = resolve(arr.get(i));
+                if (kid instanceof PdfDictionary) {
+                    PdfBase r = findInNode((PdfDictionary) kid, key);
                     if (r != null) return r;
                 }
             }
@@ -204,7 +204,7 @@ public final class NameTree {
         return null;
     }
 
-    private static COSBase findInLeaf(COSArray pairs, String key) {
+    private static PdfBase findInLeaf(PdfArray pairs, String key) {
         for (int i = 0; i + 1 < pairs.size(); i += 2) {
             String k = asString(resolve(pairs.get(i)));
             if (key.equals(k)) return resolve(pairs.get(i + 1));
@@ -212,45 +212,45 @@ public final class NameTree {
         return null;
     }
 
-    private static boolean keyInLimits(COSDictionary node, String key) {
-        COSBase limits = resolve(node.get(LIMITS));
-        if (!(limits instanceof COSArray) || ((COSArray) limits).size() < 2) return true;
-        String min = asString(resolve(((COSArray) limits).get(0)));
-        String max = asString(resolve(((COSArray) limits).get(1)));
+    private static boolean keyInLimits(PdfDictionary node, String key) {
+        PdfBase limits = resolve(node.get(LIMITS));
+        if (!(limits instanceof PdfArray) || ((PdfArray) limits).size() < 2) return true;
+        String min = asString(resolve(((PdfArray) limits).get(0)));
+        String max = asString(resolve(((PdfArray) limits).get(1)));
         if (min != null && key.compareTo(min) < 0) return false;
         if (max != null && key.compareTo(max) > 0) return false;
         return true;
     }
 
-    private static void collectEntries(COSDictionary node, List<Map.Entry<String, COSBase>> out) {
-        COSBase names = resolve(node.get(NAMES));
-        if (names instanceof COSArray) {
-            COSArray arr = (COSArray) names;
+    private static void collectEntries(PdfDictionary node, List<Map.Entry<String, PdfBase>> out) {
+        PdfBase names = resolve(node.get(NAMES));
+        if (names instanceof PdfArray) {
+            PdfArray arr = (PdfArray) names;
             for (int i = 0; i + 1 < arr.size(); i += 2) {
                 String k = asString(resolve(arr.get(i)));
                 if (k != null) out.add(new AbstractMap.SimpleEntry<>(k, resolve(arr.get(i + 1))));
             }
         }
-        COSBase kids = resolve(node.get(KIDS));
-        if (kids instanceof COSArray) {
-            COSArray arr = (COSArray) kids;
+        PdfBase kids = resolve(node.get(KIDS));
+        if (kids instanceof PdfArray) {
+            PdfArray arr = (PdfArray) kids;
             for (int i = 0; i < arr.size(); i++) {
-                COSBase kid = resolve(arr.get(i));
-                if (kid instanceof COSDictionary) collectEntries((COSDictionary) kid, out);
+                PdfBase kid = resolve(arr.get(i));
+                if (kid instanceof PdfDictionary) collectEntries((PdfDictionary) kid, out);
             }
         }
     }
 
-    private static int countEntries(COSDictionary node) {
+    private static int countEntries(PdfDictionary node) {
         int n = 0;
-        COSBase names = resolve(node.get(NAMES));
-        if (names instanceof COSArray) n += ((COSArray) names).size() / 2;
-        COSBase kids = resolve(node.get(KIDS));
-        if (kids instanceof COSArray) {
-            COSArray arr = (COSArray) kids;
+        PdfBase names = resolve(node.get(NAMES));
+        if (names instanceof PdfArray) n += ((PdfArray) names).size() / 2;
+        PdfBase kids = resolve(node.get(KIDS));
+        if (kids instanceof PdfArray) {
+            PdfArray arr = (PdfArray) kids;
             for (int i = 0; i < arr.size(); i++) {
-                COSBase kid = resolve(arr.get(i));
-                if (kid instanceof COSDictionary) n += countEntries((COSDictionary) kid);
+                PdfBase kid = resolve(arr.get(i));
+                if (kid instanceof PdfDictionary) n += countEntries((PdfDictionary) kid);
             }
         }
         return n;
@@ -260,37 +260,37 @@ public final class NameTree {
     //  Writing
     // ────────────────────────────────────────────────────────────────────
 
-    private COSDictionary locateLeafForInsert(COSDictionary node, String key, List<COSDictionary> path) {
+    private PdfDictionary locateLeafForInsert(PdfDictionary node, String key, List<PdfDictionary> path) {
         path.add(node);
-        COSBase kids = resolve(node.get(KIDS));
-        if (!(kids instanceof COSArray) || ((COSArray) kids).size() == 0) {
+        PdfBase kids = resolve(node.get(KIDS));
+        if (!(kids instanceof PdfArray) || ((PdfArray) kids).size() == 0) {
             // Treat as a leaf: ensure /Names exists so the insert has somewhere to land.
-            if (!(resolve(node.get(NAMES)) instanceof COSArray)) {
-                node.set(NAMES, new COSArray());
+            if (!(resolve(node.get(NAMES)) instanceof PdfArray)) {
+                node.set(NAMES, new PdfArray());
             }
             return node;
         }
-        COSDictionary chosen = pickKidForKey((COSArray) kids, key);
+        PdfDictionary chosen = pickKidForKey((PdfArray) kids, key);
         return locateLeafForInsert(chosen, key, path);
     }
 
-    private COSDictionary locateLeafForLookup(COSDictionary node, String key, List<COSDictionary> path) {
+    private PdfDictionary locateLeafForLookup(PdfDictionary node, String key, List<PdfDictionary> path) {
         path.add(node);
         if (!keyInLimits(node, key)) {
             path.remove(path.size() - 1);
             return null;
         }
-        COSBase names = resolve(node.get(NAMES));
-        if (names instanceof COSArray && containsKeyInPairs((COSArray) names, key)) {
+        PdfBase names = resolve(node.get(NAMES));
+        if (names instanceof PdfArray && containsKeyInPairs((PdfArray) names, key)) {
             return node;
         }
-        COSBase kids = resolve(node.get(KIDS));
-        if (kids instanceof COSArray) {
-            COSArray arr = (COSArray) kids;
+        PdfBase kids = resolve(node.get(KIDS));
+        if (kids instanceof PdfArray) {
+            PdfArray arr = (PdfArray) kids;
             for (int i = 0; i < arr.size(); i++) {
-                COSBase kid = resolve(arr.get(i));
-                if (kid instanceof COSDictionary) {
-                    COSDictionary found = locateLeafForLookup((COSDictionary) kid, key, path);
+                PdfBase kid = resolve(arr.get(i));
+                if (kid instanceof PdfDictionary) {
+                    PdfDictionary found = locateLeafForLookup((PdfDictionary) kid, key, path);
                     if (found != null) return found;
                 }
             }
@@ -299,7 +299,7 @@ public final class NameTree {
         return null;
     }
 
-    private static boolean containsKeyInPairs(COSArray pairs, String key) {
+    private static boolean containsKeyInPairs(PdfArray pairs, String key) {
         for (int i = 0; i + 1 < pairs.size(); i += 2) {
             if (key.equals(asString(resolve(pairs.get(i))))) return true;
         }
@@ -313,27 +313,27 @@ public final class NameTree {
      * Kids without /Limits are treated as universal matches and chosen
      * preferentially over fallback kids.
      */
-    private COSDictionary pickKidForKey(COSArray kids, String key) {
-        COSDictionary universalFallback = null;
-        COSDictionary nearestBelow = null;  // largest /Limits[1] still < key
-        COSDictionary nearestAbove = null;  // smallest /Limits[0] still > key
+    private PdfDictionary pickKidForKey(PdfArray kids, String key) {
+        PdfDictionary universalFallback = null;
+        PdfDictionary nearestBelow = null;  // largest /Limits[1] still < key
+        PdfDictionary nearestAbove = null;  // smallest /Limits[0] still > key
         String nearestBelowMax = null;
         String nearestAboveMin = null;
-        COSDictionary firstKid = null;
-        COSDictionary lastKid = null;
+        PdfDictionary firstKid = null;
+        PdfDictionary lastKid = null;
         for (int i = 0; i < kids.size(); i++) {
-            COSBase kidObj = resolve(kids.get(i));
-            if (!(kidObj instanceof COSDictionary)) continue;
-            COSDictionary kid = (COSDictionary) kidObj;
+            PdfBase kidObj = resolve(kids.get(i));
+            if (!(kidObj instanceof PdfDictionary)) continue;
+            PdfDictionary kid = (PdfDictionary) kidObj;
             if (firstKid == null) firstKid = kid;
             lastKid = kid;
-            COSBase limits = resolve(kid.get(LIMITS));
-            if (!(limits instanceof COSArray) || ((COSArray) limits).size() < 2) {
+            PdfBase limits = resolve(kid.get(LIMITS));
+            if (!(limits instanceof PdfArray) || ((PdfArray) limits).size() < 2) {
                 if (universalFallback == null) universalFallback = kid;
                 continue;
             }
-            String min = asString(resolve(((COSArray) limits).get(0)));
-            String max = asString(resolve(((COSArray) limits).get(1)));
+            String min = asString(resolve(((PdfArray) limits).get(0)));
+            String max = asString(resolve(((PdfArray) limits).get(1)));
             if (min != null && max != null && key.compareTo(min) >= 0 && key.compareTo(max) <= 0) {
                 return kid;
             }
@@ -359,13 +359,13 @@ public final class NameTree {
      * Inserts (or overwrites) the pair in a sorted leaf {@code /Names}
      * array. Returns the previous value if the key was already present.
      */
-    private COSBase insertSorted(COSDictionary leaf, String key, COSBase value) {
-        COSBase namesObj = resolve(leaf.get(NAMES));
-        COSArray names;
-        if (namesObj instanceof COSArray) {
-            names = (COSArray) namesObj;
+    private PdfBase insertSorted(PdfDictionary leaf, String key, PdfBase value) {
+        PdfBase namesObj = resolve(leaf.get(NAMES));
+        PdfArray names;
+        if (namesObj instanceof PdfArray) {
+            names = (PdfArray) namesObj;
         } else {
-            names = new COSArray();
+            names = new PdfArray();
             leaf.set(NAMES, names);
         }
         int insertAt = names.size();
@@ -374,7 +374,7 @@ public final class NameTree {
             if (k == null) continue;
             int cmp = key.compareTo(k);
             if (cmp == 0) {
-                COSBase old = resolve(names.get(i + 1));
+                PdfBase old = resolve(names.get(i + 1));
                 names.set(i + 1, value);
                 return old;
             }
@@ -388,14 +388,14 @@ public final class NameTree {
         return null;
     }
 
-    private COSBase removeFromLeaf(COSDictionary leaf, String key) {
-        COSBase namesObj = resolve(leaf.get(NAMES));
-        if (!(namesObj instanceof COSArray)) return null;
-        COSArray names = (COSArray) namesObj;
+    private PdfBase removeFromLeaf(PdfDictionary leaf, String key) {
+        PdfBase namesObj = resolve(leaf.get(NAMES));
+        if (!(namesObj instanceof PdfArray)) return null;
+        PdfArray names = (PdfArray) namesObj;
         for (int i = 0; i + 1 < names.size(); i += 2) {
             String k = asString(resolve(names.get(i)));
             if (key.equals(k)) {
-                COSBase removed = resolve(names.get(i + 1));
+                PdfBase removed = resolve(names.get(i + 1));
                 names.remove(i + 1);
                 names.remove(i);
                 return removed;
@@ -409,9 +409,9 @@ public final class NameTree {
      * root (the root in a name tree carries no {@code /Limits} per spec).
      * Walks from leaf up so each ancestor sees a consistent child state.
      */
-    private void refreshLimitsAlongPath(List<COSDictionary> path) {
+    private void refreshLimitsAlongPath(List<PdfDictionary> path) {
         for (int i = path.size() - 1; i >= 0; i--) {
-            COSDictionary node = path.get(i);
+            PdfDictionary node = path.get(i);
             if (node == root) {
                 // §7.9.6 Table 36: root must NOT carry /Limits.
                 node.remove(LIMITS);
@@ -421,12 +421,12 @@ public final class NameTree {
         }
     }
 
-    private void refreshLimits(COSDictionary node) {
+    private void refreshLimits(PdfDictionary node) {
         String min = null;
         String max = null;
-        COSBase names = resolve(node.get(NAMES));
-        if (names instanceof COSArray) {
-            COSArray arr = (COSArray) names;
+        PdfBase names = resolve(node.get(NAMES));
+        if (names instanceof PdfArray) {
+            PdfArray arr = (PdfArray) names;
             for (int i = 0; i + 1 < arr.size(); i += 2) {
                 String k = asString(resolve(arr.get(i)));
                 if (k == null) continue;
@@ -434,16 +434,16 @@ public final class NameTree {
                 if (max == null || k.compareTo(max) > 0) max = k;
             }
         }
-        COSBase kids = resolve(node.get(KIDS));
-        if (kids instanceof COSArray) {
-            COSArray arr = (COSArray) kids;
+        PdfBase kids = resolve(node.get(KIDS));
+        if (kids instanceof PdfArray) {
+            PdfArray arr = (PdfArray) kids;
             for (int i = 0; i < arr.size(); i++) {
-                COSBase kid = resolve(arr.get(i));
-                if (!(kid instanceof COSDictionary)) continue;
-                COSBase kidLimits = resolve(((COSDictionary) kid).get(LIMITS));
-                if (!(kidLimits instanceof COSArray) || ((COSArray) kidLimits).size() < 2) continue;
-                String kMin = asString(resolve(((COSArray) kidLimits).get(0)));
-                String kMax = asString(resolve(((COSArray) kidLimits).get(1)));
+                PdfBase kid = resolve(arr.get(i));
+                if (!(kid instanceof PdfDictionary)) continue;
+                PdfBase kidLimits = resolve(((PdfDictionary) kid).get(LIMITS));
+                if (!(kidLimits instanceof PdfArray) || ((PdfArray) kidLimits).size() < 2) continue;
+                String kMin = asString(resolve(((PdfArray) kidLimits).get(0)));
+                String kMax = asString(resolve(((PdfArray) kidLimits).get(1)));
                 if (kMin != null && (min == null || kMin.compareTo(min) < 0)) min = kMin;
                 if (kMax != null && (max == null || kMax.compareTo(max) > 0)) max = kMax;
             }
@@ -452,7 +452,7 @@ public final class NameTree {
             node.remove(LIMITS);
             return;
         }
-        COSArray limits = new COSArray();
+        PdfArray limits = new PdfArray();
         limits.add(makeKey(min));
         limits.add(makeKey(max));
         node.set(LIMITS, limits);
@@ -466,10 +466,10 @@ public final class NameTree {
         if (root == null) throw new IllegalStateException("NameTree has no backing root dictionary");
     }
 
-    private static COSBase resolve(COSBase value) {
-        if (value instanceof COSObjectReference) {
+    private static PdfBase resolve(PdfBase value) {
+        if (value instanceof PdfObjectReference) {
             try {
-                return ((COSObjectReference) value).dereference();
+                return ((PdfObjectReference) value).dereference();
             } catch (IOException e) {
                 LOG.log(Level.WARNING, "Failed to dereference inside NameTree", e);
                 return null;
@@ -478,19 +478,19 @@ public final class NameTree {
         return value;
     }
 
-    private static String asString(COSBase value) {
-        if (value instanceof COSString) return ((COSString) value).getString();
-        if (value instanceof COSName) return ((COSName) value).getName();
+    private static String asString(PdfBase value) {
+        if (value instanceof PdfString) return ((PdfString) value).getString();
+        if (value instanceof PdfName) return ((PdfName) value).getName();
         return null;
     }
 
     /**
-     * Builds the COSString key. COSString(String) chooses PDFDocEncoding when
+     * Builds the PdfString key. PdfString(String) chooses PDFDocEncoding when
      * possible and falls back to UTF-16BE with BOM for non-encodable code
      * points — matching how strings are stored in conformant PDF writers.
      */
-    private static COSBase makeKey(String key) {
-        return new COSString(key);
+    private static PdfBase makeKey(String key) {
+        return new PdfString(key);
     }
 
     /**
@@ -499,7 +499,7 @@ public final class NameTree {
      *
      * @return unmodifiable entry list
      */
-    public List<Map.Entry<String, COSBase>> entriesUnmodifiable() {
+    public List<Map.Entry<String, PdfBase>> entriesUnmodifiable() {
         return Collections.unmodifiableList(entries());
     }
 }

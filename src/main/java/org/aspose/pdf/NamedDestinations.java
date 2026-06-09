@@ -1,12 +1,12 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSString;
-import org.aspose.pdf.engine.cos.NameTree;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
+import org.aspose.pdf.engine.pdfobjects.NameTree;
 import org.aspose.pdf.engine.parser.PDFParser;
 
 import java.io.IOException;
@@ -33,7 +33,7 @@ public class NamedDestinations {
 
     private static final Logger LOG = Logger.getLogger(NamedDestinations.class.getName());
 
-    private final COSDictionary catalog;
+    private final PdfDictionary catalog;
     private final Document doc;
     private final PDFParser parser;
 
@@ -44,7 +44,7 @@ public class NamedDestinations {
      * @param doc     the document for page resolution
      * @param parser  the PDF parser for resolving references
      */
-    public NamedDestinations(COSDictionary catalog, Document doc, PDFParser parser) {
+    public NamedDestinations(PdfDictionary catalog, Document doc, PDFParser parser) {
         this.catalog = catalog;
         this.doc = doc;
         this.parser = parser;
@@ -61,7 +61,7 @@ public class NamedDestinations {
     public ExplicitDestination get(String name) throws IOException {
         if (name == null) return null;
 
-        COSBase dest = lookupInNameTree(name);
+        PdfBase dest = lookupInNameTree(name);
         if (dest == null) {
             dest = lookupInDestsDict(name);
         }
@@ -83,14 +83,14 @@ public class NamedDestinations {
 
         NameTree tree = openNameTree();
         if (tree != null) {
-            for (Map.Entry<String, COSBase> e : tree.entries()) {
+            for (Map.Entry<String, PdfBase> e : tree.entries()) {
                 names.add(e.getKey());
             }
         }
 
-        COSBase destsObj = resolve(catalog.get("Dests"));
-        if (destsObj instanceof COSDictionary) {
-            for (COSName key : ((COSDictionary) destsObj).keySet()) {
+        PdfBase destsObj = resolve(catalog.get("Dests"));
+        if (destsObj instanceof PdfDictionary) {
+            for (PdfName key : ((PdfDictionary) destsObj).keySet()) {
                 names.add(key.getName());
             }
         }
@@ -143,20 +143,20 @@ public class NamedDestinations {
         if (name == null) throw new IllegalArgumentException("name must not be null");
         if (destination == null) throw new IllegalArgumentException("destination must not be null");
 
-        COSDictionary names = resolveDict(catalog.get("Names"));
+        PdfDictionary names = resolveDict(catalog.get("Names"));
         if (names == null) {
-            names = new COSDictionary();
-            catalog.set(COSName.of("Names"), names);
+            names = new PdfDictionary();
+            catalog.set(PdfName.of("Names"), names);
         }
-        COSDictionary destsRoot = resolveDict(names.get("Dests"));
+        PdfDictionary destsRoot = resolveDict(names.get("Dests"));
         if (destsRoot == null) {
-            destsRoot = new COSDictionary();
+            destsRoot = new PdfDictionary();
             // A fresh name tree root keeps an empty /Names array and no /Limits.
-            destsRoot.set(COSName.of("Names"), new COSArray());
-            names.set(COSName.of("Dests"), destsRoot);
+            destsRoot.set(PdfName.of("Names"), new PdfArray());
+            names.set(PdfName.of("Dests"), destsRoot);
         }
         NameTree tree = new NameTree(destsRoot);
-        tree.put(name, destination.toCOSArray());
+        tree.put(name, destination.toPdfArray());
     }
 
     /**
@@ -186,11 +186,11 @@ public class NamedDestinations {
             return true;
         }
         // Try the legacy /Dests dictionary.
-        COSBase destsObj = resolve(catalog.get("Dests"));
-        if (destsObj instanceof COSDictionary) {
-            COSDictionary destsDict = (COSDictionary) destsObj;
+        PdfBase destsObj = resolve(catalog.get("Dests"));
+        if (destsObj instanceof PdfDictionary) {
+            PdfDictionary destsDict = (PdfDictionary) destsObj;
             if (destsDict.get(name) != null) {
-                destsDict.remove(COSName.of(name));
+                destsDict.remove(PdfName.of(name));
                 return true;
             }
         }
@@ -202,14 +202,14 @@ public class NamedDestinations {
     // ═══════════════════════════════════════════════════════════════
 
     private NameTree openNameTree() throws IOException {
-        COSDictionary namesDict = resolveDict(catalog.get("Names"));
+        PdfDictionary namesDict = resolveDict(catalog.get("Names"));
         if (namesDict == null) return null;
-        COSBase destsTree = resolve(namesDict.get("Dests"));
-        if (!(destsTree instanceof COSDictionary)) return null;
-        return new NameTree((COSDictionary) destsTree);
+        PdfBase destsTree = resolve(namesDict.get("Dests"));
+        if (!(destsTree instanceof PdfDictionary)) return null;
+        return new NameTree((PdfDictionary) destsTree);
     }
 
-    private COSBase lookupInNameTree(String name) throws IOException {
+    private PdfBase lookupInNameTree(String name) throws IOException {
         NameTree tree = openNameTree();
         return tree == null ? null : tree.get(name);
     }
@@ -218,10 +218,10 @@ public class NamedDestinations {
     //  /Dests dictionary lookup (PDF 1.1)
     // ═══════════════════════════════════════════════════════════════
 
-    private COSBase lookupInDestsDict(String name) throws IOException {
-        COSBase destsObj = resolve(catalog.get("Dests"));
-        if (!(destsObj instanceof COSDictionary)) return null;
-        return resolve(((COSDictionary) destsObj).get(name));
+    private PdfBase lookupInDestsDict(String name) throws IOException {
+        PdfBase destsObj = resolve(catalog.get("Dests"));
+        if (!(destsObj instanceof PdfDictionary)) return null;
+        return resolve(((PdfDictionary) destsObj).get(name));
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -230,18 +230,18 @@ public class NamedDestinations {
 
     /**
      * Resolves a destination value which can be:
-     * - COSArray → explicit destination
-     * - COSDictionary with /D → destination dictionary (§12.3.2.3)
+     * - PdfArray → explicit destination
+     * - PdfDictionary with /D → destination dictionary (§12.3.2.3)
      */
-    private ExplicitDestination resolveDestValue(COSBase dest) throws IOException {
+    private ExplicitDestination resolveDestValue(PdfBase dest) throws IOException {
         dest = resolve(dest);
-        if (dest instanceof COSArray) {
-            return ExplicitDestination.fromCOSArray((COSArray) dest, doc);
+        if (dest instanceof PdfArray) {
+            return ExplicitDestination.fromPdfArray((PdfArray) dest, doc);
         }
-        if (dest instanceof COSDictionary) {
-            COSBase d = resolve(((COSDictionary) dest).get("D"));
-            if (d instanceof COSArray) {
-                return ExplicitDestination.fromCOSArray((COSArray) d, doc);
+        if (dest instanceof PdfDictionary) {
+            PdfBase d = resolve(((PdfDictionary) dest).get("D"));
+            if (d instanceof PdfArray) {
+                return ExplicitDestination.fromPdfArray((PdfArray) d, doc);
             }
         }
         return null;
@@ -251,15 +251,15 @@ public class NamedDestinations {
     //  Utilities
     // ═══════════════════════════════════════════════════════════════
 
-    private COSBase resolve(COSBase obj) throws IOException {
-        if (obj instanceof COSObjectReference) {
-            return ((COSObjectReference) obj).dereference();
+    private PdfBase resolve(PdfBase obj) throws IOException {
+        if (obj instanceof PdfObjectReference) {
+            return ((PdfObjectReference) obj).dereference();
         }
         return obj;
     }
 
-    private COSDictionary resolveDict(COSBase obj) throws IOException {
+    private PdfDictionary resolveDict(PdfBase obj) throws IOException {
         obj = resolve(obj);
-        return (obj instanceof COSDictionary) ? (COSDictionary) obj : null;
+        return (obj instanceof PdfDictionary) ? (PdfDictionary) obj : null;
     }
 }

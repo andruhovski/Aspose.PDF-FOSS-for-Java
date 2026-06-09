@@ -1,7 +1,7 @@
 package org.aspose.pdf.annotations;
 
 import org.aspose.pdf.*;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,12 +16,12 @@ import java.util.List;
 public class InkAnnotation extends MarkupAnnotation {
 
     /**
-     * Constructs an ink annotation from an existing COS dictionary.
+     * Constructs an ink annotation from an existing PDF dictionary.
      *
-     * @param dict the COS dictionary backing this annotation
+     * @param dict the PDF dictionary backing this annotation
      * @param page the page this annotation belongs to
      */
-    public InkAnnotation(COSDictionary dict, Page page) {
+    public InkAnnotation(PdfDictionary dict, Page page) {
         super(dict, page);
     }
 
@@ -33,7 +33,7 @@ public class InkAnnotation extends MarkupAnnotation {
      */
     public InkAnnotation(Page page, Rectangle rect) {
         super(page, rect);
-        dict.set(COSName.of("Subtype"), COSName.of("Ink"));
+        dict.set(PdfName.of("Subtype"), PdfName.of("Ink"));
     }
 
     /**
@@ -44,13 +44,13 @@ public class InkAnnotation extends MarkupAnnotation {
      */
     public List<double[]> getInkList() {
         List<double[]> result = new ArrayList<>();
-        COSBase ink = dict.get("InkList");
-        if (ink instanceof COSArray) {
-            COSArray outer = (COSArray) ink;
+        PdfBase ink = dict.get("InkList");
+        if (ink instanceof PdfArray) {
+            PdfArray outer = (PdfArray) ink;
             for (int i = 0; i < outer.size(); i++) {
-                COSBase inner = outer.get(i);
-                if (inner instanceof COSArray) {
-                    COSArray pts = (COSArray) inner;
+                PdfBase inner = outer.get(i);
+                if (inner instanceof PdfArray) {
+                    PdfArray pts = (PdfArray) inner;
                     double[] coords = new double[pts.size()];
                     for (int j = 0; j < pts.size(); j++) {
                         coords[j] = pts.getFloat(j, 0);
@@ -70,18 +70,18 @@ public class InkAnnotation extends MarkupAnnotation {
      */
     public void setInkList(List<double[]> paths) {
         if (paths == null) {
-            dict.remove(COSName.of("InkList"));
+            dict.remove(PdfName.of("InkList"));
             return;
         }
-        COSArray outer = new COSArray();
+        PdfArray outer = new PdfArray();
         for (double[] stroke : paths) {
             if (stroke == null) continue;
-            COSArray inner = new COSArray();
+            PdfArray inner = new PdfArray();
             for (double v : stroke) {
-                inner.add(new COSFloat(v));
+                inner.add(new PdfFloat(v));
             }
             outer.add(inner);
         }
-        dict.set(COSName.of("InkList"), outer);
+        dict.set(PdfName.of("InkList"), outer);
     }
 }

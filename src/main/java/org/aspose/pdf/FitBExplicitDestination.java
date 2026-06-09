@@ -1,7 +1,7 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 
 /** FitB explicit destination — fit page bounding box within window. */
 public class FitBExplicitDestination extends ExplicitDestination {
@@ -9,10 +9,10 @@ public class FitBExplicitDestination extends ExplicitDestination {
     FitBExplicitDestination(Page page, int pageNum) { super(page != null ? page : null); }
 
     @Override
-    public COSArray toCOSArray() {
-        COSArray arr = new COSArray();
-        arr.add(page != null ? page.getCOSDictionary() : org.aspose.pdf.engine.cos.COSNull.INSTANCE);
-        arr.add(COSName.of("FitB"));
+    public PdfArray toPdfArray() {
+        PdfArray arr = new PdfArray();
+        arr.add(page != null ? page.getPdfDictionary() : org.aspose.pdf.engine.pdfobjects.PdfNull.INSTANCE);
+        arr.add(PdfName.of("FitB"));
         return arr;
     }
 }

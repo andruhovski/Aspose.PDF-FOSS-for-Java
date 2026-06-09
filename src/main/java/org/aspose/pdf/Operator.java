@@ -1,9 +1,9 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSFloat;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfFloat;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -20,7 +20,7 @@ import java.util.logging.Logger;
  * Represents a PDF content stream operator (e.g., "BT", "Tf", "Td", "Tj", "q", "Q", "cm", "re").
  * <p>
  * A content stream is a sequence of operators, each preceded by zero or more operands.
- * This class captures both the operator keyword and its operands as COS objects.
+ * This class captures both the operator keyword and its operands as PDF objects.
  * See ISO 32000-1:2008, §7.8.2.
  * </p>
  * <p>
@@ -33,7 +33,7 @@ public class Operator {
     private static final Logger LOGGER = Logger.getLogger(Operator.class.getName());
 
     private final String name;
-    private final List<COSBase> operands;
+    private final List<PdfBase> operands;
     private int index = -1;
 
     /**
@@ -43,7 +43,7 @@ public class Operator {
      * @param operands the operands preceding this operator in the content stream
      * @throws IllegalArgumentException if name is null or empty
      */
-    public Operator(String name, List<COSBase> operands) {
+    public Operator(String name, List<PdfBase> operands) {
         if (name == null || name.isEmpty()) {
             throw new IllegalArgumentException("Operator name must not be null or empty");
         }
@@ -97,7 +97,7 @@ public class Operator {
      *
      * @return the operands
      */
-    public List<COSBase> getOperands() {
+    public List<PdfBase> getOperands() {
         return operands;
     }
 
@@ -113,7 +113,7 @@ public class Operator {
             return name;
         }
         StringBuilder sb = new StringBuilder();
-        for (COSBase operand : operands) {
+        for (PdfBase operand : operands) {
             if (sb.length() > 0) {
                 sb.append(' ');
             }
@@ -128,7 +128,7 @@ public class Operator {
      * Writes this operator's content-stream serialization to {@code os} preserving
      * exact operand bytes. Unlike {@link #toString()} (which routes operands through
      * a {@code US-ASCII} String and replaces any byte &ge; 0x80), this delegates to
-     * each operand's {@link COSBase#writeTo(OutputStream)} directly — so COSString
+     * each operand's {@link PdfBase#writeTo(OutputStream)} directly — so PdfString
      * operands carrying high bytes (CID/Identity-H glyph codes, MacRoman, raw binary)
      * survive a serialize→reparse round-trip intact. ISO 32000-1:2008 §7.8.2.
      *
@@ -137,7 +137,7 @@ public class Operator {
      */
     public void writeTo(OutputStream os) throws IOException {
         boolean first = true;
-        for (COSBase operand : operands) {
+        for (PdfBase operand : operands) {
             if (!first) {
                 os.write(' ');
             }
@@ -167,28 +167,31 @@ public class Operator {
     // ---- Static helper methods for subclasses ----
 
     /**
-     * Extracts a numeric value from a COS object.
+     * Extracts a numeric value from a PDF object.
      *
-     * @param val the COS object
+     * @param val the PDF object
      * @return the numeric value, or 0 if not a number
      */
-    protected static double getNumber(COSBase val) {
-        if (val instanceof COSInteger) return ((COSInteger) val).intValue();
-        if (val instanceof COSFloat) return ((COSFloat) val).doubleValue();
+    protected static double getNumber(PdfBase val) {
+        // Use longValue(), not intValue(): operands are returned as double, and a
+        // bogus-but-large coordinate (e.g. a corrupt content stream with a value
+        // above 2^31) must not throw ArithmeticException and abort text extraction.
+        if (val instanceof PdfInteger) return (double) ((PdfInteger) val).longValue();
+        if (val instanceof PdfFloat) return ((PdfFloat) val).doubleValue();
         return 0;
     }
 
     /**
-     * Creates a COSBase number — COSInteger for whole numbers, COSFloat otherwise.
+     * Creates a PdfBase number — PdfInteger for whole numbers, PdfFloat otherwise.
      *
      * @param v the numeric value
-     * @return the COS number object
+     * @return the PDF number object
      */
-    protected static COSBase num(double v) {
+    protected static PdfBase num(double v) {
         if (v == Math.floor(v) && !Double.isInfinite(v) && Math.abs(v) < Long.MAX_VALUE) {
-            return COSInteger.valueOf((long) v);
+            return PdfInteger.valueOf((long) v);
         }
-        return new COSFloat(v);
+        return new PdfFloat(v);
     }
 
     /**
@@ -198,7 +201,7 @@ public class Operator {
      * @param y the y coordinate
      * @return a two-element list
      */
-    protected static List<COSBase> coords(double x, double y) {
+    protected static List<PdfBase> coords(double x, double y) {
         return Arrays.asList(num(x), num(y));
     }
 
@@ -208,7 +211,7 @@ public class Operator {
      * @param m the matrix
      * @return a six-element list
      */
-    protected static List<COSBase> matrixToOperands(Matrix m) {
+    protected static List<PdfBase> matrixToOperands(Matrix m) {
         double[] v = m.getValues();
         return Arrays.asList(num(v[0]), num(v[1]), num(v[2]), num(v[3]), num(v[4]), num(v[5]));
     }
@@ -216,7 +219,7 @@ public class Operator {
     /**
      * Formats a single operand for content stream output.
      */
-    private String formatOperand(COSBase operand) {
+    private String formatOperand(PdfBase operand) {
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             operand.writeTo(baos);

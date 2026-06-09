@@ -1,7 +1,7 @@
 package org.aspose.pdf.forms;
 
 import org.aspose.pdf.*;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 /**
  * List box field (/FT /Ch, no combo flag) (ISO 32000-1:2008, §12.7.4.4).
@@ -13,13 +13,13 @@ import org.aspose.pdf.engine.cos.*;
 public class ListBoxField extends Field {
 
     /**
-     * Constructs a list box field from an existing COS dictionary.
+     * Constructs a list box field from an existing PDF dictionary.
      *
-     * @param dict     the COS dictionary backing this field
+     * @param dict     the PDF dictionary backing this field
      * @param page     the page this field belongs to (may be null)
      * @param fullName the fully-qualified dotted name
      */
-    public ListBoxField(COSDictionary dict, Page page, String fullName) {
+    public ListBoxField(PdfDictionary dict, Page page, String fullName) {
         super(dict, page, fullName);
     }
 
@@ -30,10 +30,10 @@ public class ListBoxField extends Field {
      * @param rect the field rectangle
      */
     public ListBoxField(Page page, Rectangle rect) {
-        super(new COSDictionary(), page, "");
-        dict.set(COSName.of("Type"), COSName.of("Annot"));
-        dict.set(COSName.of("Subtype"), COSName.of("Widget"));
-        dict.set(COSName.of("FT"), COSName.of("Ch"));
+        super(new PdfDictionary(), page, "");
+        dict.set(PdfName.of("Type"), PdfName.of("Annot"));
+        dict.set(PdfName.of("Subtype"), PdfName.of("Widget"));
+        dict.set(PdfName.of("FT"), PdfName.of("Ch"));
         setRectLenient(rect);
         if (getDefaultAppearance() == null) {
             setDefaultAppearance("/Helv 12 Tf 0 g");
@@ -46,8 +46,8 @@ public class ListBoxField extends Field {
      * @return the option collection (never null)
      */
     public OptionCollection getOptions() {
-        COSBase opt = dict.get("Opt");
-        return new OptionCollection(opt instanceof COSArray ? (COSArray) opt : new COSArray());
+        PdfBase opt = dict.get("Opt");
+        return new OptionCollection(opt instanceof PdfArray ? (PdfArray) opt : new PdfArray());
     }
 
     /**
@@ -95,15 +95,15 @@ public class ListBoxField extends Field {
      * @param value the option value to add
      */
     public void addOption(String value) {
-        COSBase opt = dict.get("Opt");
-        COSArray arr;
-        if (opt instanceof COSArray) {
-            arr = (COSArray) opt;
+        PdfBase opt = dict.get("Opt");
+        PdfArray arr;
+        if (opt instanceof PdfArray) {
+            arr = (PdfArray) opt;
         } else {
-            arr = new COSArray();
-            dict.set(COSName.of("Opt"), arr);
+            arr = new PdfArray();
+            dict.set(PdfName.of("Opt"), arr);
         }
-        arr.add(new COSString(value.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+        arr.add(new PdfString(value.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
     }
 
     /**

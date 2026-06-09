@@ -1,11 +1,11 @@
 package org.aspose.pdf.engine.colorspace;
 
 import org.aspose.pdf.Resources;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSStream;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 import org.aspose.pdf.engine.parser.PDFParser;
 
 import java.io.IOException;
@@ -41,38 +41,38 @@ public class IndexedColorSpace extends ColorSpaceBase {
     }
 
     /**
-     * Creates an IndexedColorSpace from a COSArray: [/Indexed base hival lookup].
+     * Creates an IndexedColorSpace from a PdfArray: [/Indexed base hival lookup].
      *
-     * @param arr       the COSArray definition
+     * @param arr       the PdfArray definition
      * @param resources the page resources (may be null)
      * @param parser    the PDF parser (may be null)
      * @return the IndexedColorSpace
      * @throws IOException if parsing fails
      */
-    public static IndexedColorSpace fromArray(COSArray arr, Resources resources,
+    public static IndexedColorSpace fromArray(PdfArray arr, Resources resources,
                                                PDFParser parser) throws IOException {
         if (arr.size() < 4) {
             return new IndexedColorSpace(DeviceRGB.INSTANCE, 0, new byte[0]);
         }
 
         // arr[1] = base color space
-        COSBase baseObj = resolveRef(arr.get(1));
+        PdfBase baseObj = resolveRef(arr.get(1));
         ColorSpaceBase base = ColorSpaceBase.resolve(baseObj, resources, parser);
 
         // arr[2] = hival
         int hival = 255;
-        COSBase hivalObj = arr.get(2);
-        if (hivalObj instanceof COSInteger) {
-            hival = ((COSInteger) hivalObj).intValue();
+        PdfBase hivalObj = arr.get(2);
+        if (hivalObj instanceof PdfInteger) {
+            hival = ((PdfInteger) hivalObj).intValue();
         }
 
         // arr[3] = lookup table (string or stream)
         byte[] lookup;
-        COSBase lookupObj = resolveRef(arr.get(3));
-        if (lookupObj instanceof COSString) {
-            lookup = ((COSString) lookupObj).getBytes();
-        } else if (lookupObj instanceof COSStream) {
-            lookup = ((COSStream) lookupObj).getDecodedData();
+        PdfBase lookupObj = resolveRef(arr.get(3));
+        if (lookupObj instanceof PdfString) {
+            lookup = ((PdfString) lookupObj).getBytes();
+        } else if (lookupObj instanceof PdfStream) {
+            lookup = ((PdfStream) lookupObj).getDecodedData();
         } else {
             lookup = new byte[0];
         }
@@ -115,5 +115,12 @@ public class IndexedColorSpace extends ColorSpaceBase {
             components[i] = (lookupTable[offset + i] & 0xFF) / 255.0;
         }
         return components;
+    }
+
+    /** Palette index -> base components -> base space's RGB. */
+    @Override
+    public int toRGBInt(double[] comps) {
+        if (comps == null || comps.length == 0) return 0xFF000000;
+        return base.toRGBInt(lookupColor((int) Math.round(comps[0])));
     }
 }

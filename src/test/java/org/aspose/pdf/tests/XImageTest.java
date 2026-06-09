@@ -2,7 +2,7 @@ package org.aspose.pdf.tests;
 
 import org.aspose.pdf.XImage;
 import org.aspose.pdf.engine.colorspace.*;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 import org.junit.jupiter.api.Test;
 
 import java.awt.image.BufferedImage;
@@ -18,11 +18,11 @@ public class XImageTest {
 
     @Test
     public void testBasicProperties() {
-        COSStream stream = new COSStream();
-        stream.set(COSName.of("Subtype"), COSName.of("Image"));
-        stream.set(COSName.of("Width"), COSInteger.valueOf(10));
-        stream.set(COSName.of("Height"), COSInteger.valueOf(20));
-        stream.set(COSName.of("BitsPerComponent"), COSInteger.valueOf(8));
+        PdfStream stream = new PdfStream();
+        stream.set(PdfName.of("Subtype"), PdfName.of("Image"));
+        stream.set(PdfName.of("Width"), PdfInteger.valueOf(10));
+        stream.set(PdfName.of("Height"), PdfInteger.valueOf(20));
+        stream.set(PdfName.of("BitsPerComponent"), PdfInteger.valueOf(8));
 
         XImage img = new XImage(stream, "Im1", null);
         assertEquals(10, img.getWidth());
@@ -33,10 +33,10 @@ public class XImageTest {
 
     @Test
     public void testDefaultColorSpace() throws IOException {
-        COSStream stream = new COSStream();
-        stream.set(COSName.of("Subtype"), COSName.of("Image"));
-        stream.set(COSName.of("Width"), COSInteger.valueOf(1));
-        stream.set(COSName.of("Height"), COSInteger.valueOf(1));
+        PdfStream stream = new PdfStream();
+        stream.set(PdfName.of("Subtype"), PdfName.of("Image"));
+        stream.set(PdfName.of("Width"), PdfInteger.valueOf(1));
+        stream.set(PdfName.of("Height"), PdfInteger.valueOf(1));
 
         XImage img = new XImage(stream, "Im1", null);
         ColorSpaceBase cs = img.getColorSpace();
@@ -45,11 +45,11 @@ public class XImageTest {
 
     @Test
     public void testExplicitColorSpace() throws IOException {
-        COSStream stream = new COSStream();
-        stream.set(COSName.of("Subtype"), COSName.of("Image"));
-        stream.set(COSName.of("Width"), COSInteger.valueOf(1));
-        stream.set(COSName.of("Height"), COSInteger.valueOf(1));
-        stream.set(COSName.of("ColorSpace"), COSName.of("DeviceGray"));
+        PdfStream stream = new PdfStream();
+        stream.set(PdfName.of("Subtype"), PdfName.of("Image"));
+        stream.set(PdfName.of("Width"), PdfInteger.valueOf(1));
+        stream.set(PdfName.of("Height"), PdfInteger.valueOf(1));
+        stream.set(PdfName.of("ColorSpace"), PdfName.of("DeviceGray"));
 
         XImage img = new XImage(stream, "Im1", null);
         ColorSpaceBase cs = img.getColorSpace();
@@ -58,15 +58,15 @@ public class XImageTest {
 
     @Test
     public void testIsImageMask() {
-        COSStream stream = new COSStream();
-        stream.set(COSName.of("ImageMask"), COSBoolean.TRUE);
+        PdfStream stream = new PdfStream();
+        stream.set(PdfName.of("ImageMask"), PdfBoolean.TRUE);
         XImage img = new XImage(stream, "Im1", null);
         assertTrue(img.isImageMask());
     }
 
     @Test
     public void testIsNotImageMask() {
-        COSStream stream = new COSStream();
+        PdfStream stream = new PdfStream();
         XImage img = new XImage(stream, "Im1", null);
         assertFalse(img.isImageMask());
     }
@@ -81,12 +81,12 @@ public class XImageTest {
             0, 0, (byte) 255,           // blue
             (byte) 255, (byte) 255, (byte) 255  // white
         };
-        COSStream stream = new COSStream(pixels);
-        stream.set(COSName.of("Subtype"), COSName.of("Image"));
-        stream.set(COSName.of("Width"), COSInteger.valueOf(w));
-        stream.set(COSName.of("Height"), COSInteger.valueOf(h));
-        stream.set(COSName.of("BitsPerComponent"), COSInteger.valueOf(8));
-        stream.set(COSName.of("ColorSpace"), COSName.of("DeviceRGB"));
+        PdfStream stream = new PdfStream(pixels);
+        stream.set(PdfName.of("Subtype"), PdfName.of("Image"));
+        stream.set(PdfName.of("Width"), PdfInteger.valueOf(w));
+        stream.set(PdfName.of("Height"), PdfInteger.valueOf(h));
+        stream.set(PdfName.of("BitsPerComponent"), PdfInteger.valueOf(8));
+        stream.set(PdfName.of("ColorSpace"), PdfName.of("DeviceRGB"));
 
         XImage img = new XImage(stream, "Im1", null);
         BufferedImage bi = img.toBufferedImage();
@@ -102,12 +102,12 @@ public class XImageTest {
     public void testToBufferedImageGray() throws IOException {
         int w = 2, h = 2;
         byte[] pixels = new byte[]{0, (byte) 128, (byte) 255, 64};
-        COSStream stream = new COSStream(pixels);
-        stream.set(COSName.of("Subtype"), COSName.of("Image"));
-        stream.set(COSName.of("Width"), COSInteger.valueOf(w));
-        stream.set(COSName.of("Height"), COSInteger.valueOf(h));
-        stream.set(COSName.of("BitsPerComponent"), COSInteger.valueOf(8));
-        stream.set(COSName.of("ColorSpace"), COSName.of("DeviceGray"));
+        PdfStream stream = new PdfStream(pixels);
+        stream.set(PdfName.of("Subtype"), PdfName.of("Image"));
+        stream.set(PdfName.of("Width"), PdfInteger.valueOf(w));
+        stream.set(PdfName.of("Height"), PdfInteger.valueOf(h));
+        stream.set(PdfName.of("BitsPerComponent"), PdfInteger.valueOf(8));
+        stream.set(PdfName.of("ColorSpace"), PdfName.of("DeviceGray"));
 
         XImage img = new XImage(stream, "Im1", null);
         BufferedImage bi = img.toBufferedImage();
@@ -120,11 +120,11 @@ public class XImageTest {
     public void testSaveAsJPEG() throws IOException {
         // Create a stream with DCTDecode filter
         byte[] fakeJpeg = new byte[]{(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE0};
-        COSStream stream = new COSStream(fakeJpeg);
-        stream.set(COSName.of("Subtype"), COSName.of("Image"));
-        stream.set(COSName.of("Width"), COSInteger.valueOf(1));
-        stream.set(COSName.of("Height"), COSInteger.valueOf(1));
-        stream.set(COSName.of("Filter"), COSName.of("DCTDecode"));
+        PdfStream stream = new PdfStream(fakeJpeg);
+        stream.set(PdfName.of("Subtype"), PdfName.of("Image"));
+        stream.set(PdfName.of("Width"), PdfInteger.valueOf(1));
+        stream.set(PdfName.of("Height"), PdfInteger.valueOf(1));
+        stream.set(PdfName.of("Filter"), PdfName.of("DCTDecode"));
 
         XImage img = new XImage(stream, "Im1", null);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -137,9 +137,9 @@ public class XImageTest {
     }
 
     @Test
-    public void testGetCOSStream() {
-        COSStream stream = new COSStream();
+    public void testGetPdfStream() {
+        PdfStream stream = new PdfStream();
         XImage img = new XImage(stream, "test", null);
-        assertSame(stream, img.getCOSStream());
+        assertSame(stream, img.getPdfStream());
     }
 }

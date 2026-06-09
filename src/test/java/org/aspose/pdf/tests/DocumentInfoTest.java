@@ -1,8 +1,8 @@
 package org.aspose.pdf.tests;
 
 import org.aspose.pdf.DocumentInfo;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 import org.junit.jupiter.api.Test;
 
 import java.util.Calendar;
@@ -23,21 +23,21 @@ public class DocumentInfoTest {
 
     @Test
     public void getTitleReturnsValue() {
-        COSDictionary dict = new COSDictionary();
-        dict.set("Title", new COSString("My Document"));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set("Title", new PdfString("My Document"));
         DocumentInfo info = new DocumentInfo(dict);
         assertEquals("My Document", info.getTitle());
     }
 
     @Test
     public void getTitleReturnsNullWhenAbsent() {
-        DocumentInfo info = new DocumentInfo(new COSDictionary());
+        DocumentInfo info = new DocumentInfo(new PdfDictionary());
         assertNull(info.getTitle());
     }
 
     @Test
     public void setTitleUpdatesDict() {
-        COSDictionary dict = new COSDictionary();
+        PdfDictionary dict = new PdfDictionary();
         DocumentInfo info = new DocumentInfo(dict);
         info.setTitle("New Title");
         assertEquals("New Title", info.getTitle());
@@ -45,8 +45,8 @@ public class DocumentInfoTest {
 
     @Test
     public void setTitleNullRemovesEntry() {
-        COSDictionary dict = new COSDictionary();
-        dict.set("Title", new COSString("Old Title"));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set("Title", new PdfString("Old Title"));
         DocumentInfo info = new DocumentInfo(dict);
         info.setTitle(null);
         assertNull(info.getTitle());
@@ -55,83 +55,83 @@ public class DocumentInfoTest {
 
     @Test
     public void getAuthorReturnsValue() {
-        COSDictionary dict = new COSDictionary();
-        dict.set("Author", new COSString("John Doe"));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set("Author", new PdfString("John Doe"));
         DocumentInfo info = new DocumentInfo(dict);
         assertEquals("John Doe", info.getAuthor());
     }
 
     @Test
     public void setAuthorUpdatesDict() {
-        DocumentInfo info = new DocumentInfo(new COSDictionary());
+        DocumentInfo info = new DocumentInfo(new PdfDictionary());
         info.setAuthor("Jane Doe");
         assertEquals("Jane Doe", info.getAuthor());
     }
 
     @Test
     public void getSubjectReturnsValue() {
-        COSDictionary dict = new COSDictionary();
-        dict.set("Subject", new COSString("PDF Testing"));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set("Subject", new PdfString("PDF Testing"));
         DocumentInfo info = new DocumentInfo(dict);
         assertEquals("PDF Testing", info.getSubject());
     }
 
     @Test
     public void setSubjectUpdatesDict() {
-        DocumentInfo info = new DocumentInfo(new COSDictionary());
+        DocumentInfo info = new DocumentInfo(new PdfDictionary());
         info.setSubject("New Subject");
         assertEquals("New Subject", info.getSubject());
     }
 
     @Test
     public void getKeywordsReturnsValue() {
-        COSDictionary dict = new COSDictionary();
-        dict.set("Keywords", new COSString("pdf, test, java"));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set("Keywords", new PdfString("pdf, test, java"));
         DocumentInfo info = new DocumentInfo(dict);
         assertEquals("pdf, test, java", info.getKeywords());
     }
 
     @Test
     public void setKeywordsUpdatesDict() {
-        DocumentInfo info = new DocumentInfo(new COSDictionary());
+        DocumentInfo info = new DocumentInfo(new PdfDictionary());
         info.setKeywords("a, b, c");
         assertEquals("a, b, c", info.getKeywords());
     }
 
     @Test
     public void getCreatorReturnsValue() {
-        COSDictionary dict = new COSDictionary();
-        dict.set("Creator", new COSString("TestApp"));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set("Creator", new PdfString("TestApp"));
         DocumentInfo info = new DocumentInfo(dict);
         assertEquals("TestApp", info.getCreator());
     }
 
     @Test
     public void setCreatorUpdatesDict() {
-        DocumentInfo info = new DocumentInfo(new COSDictionary());
+        DocumentInfo info = new DocumentInfo(new PdfDictionary());
         info.setCreator("MyApp");
         assertEquals("MyApp", info.getCreator());
     }
 
     @Test
     public void getProducerReturnsValue() {
-        COSDictionary dict = new COSDictionary();
-        dict.set("Producer", new COSString("OpenPDF"));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set("Producer", new PdfString("OpenPDF"));
         DocumentInfo info = new DocumentInfo(dict);
         assertEquals("OpenPDF", info.getProducer());
     }
 
     @Test
     public void setProducerUpdatesDict() {
-        DocumentInfo info = new DocumentInfo(new COSDictionary());
+        DocumentInfo info = new DocumentInfo(new PdfDictionary());
         info.setProducer("OpenPDF 1.0");
         assertEquals("OpenPDF 1.0", info.getProducer());
     }
 
     @Test
     public void getCreationDateParsesValidDate() {
-        COSDictionary dict = new COSDictionary();
-        dict.set("CreationDate", new COSString("D:20240315143000"));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set("CreationDate", new PdfString("D:20240315143000"));
         DocumentInfo info = new DocumentInfo(dict);
 
         Date date = info.getCreationDate();
@@ -149,14 +149,14 @@ public class DocumentInfoTest {
 
     @Test
     public void getCreationDateReturnsNullWhenAbsent() {
-        DocumentInfo info = new DocumentInfo(new COSDictionary());
+        DocumentInfo info = new DocumentInfo(new PdfDictionary());
         assertNull(info.getCreationDate());
     }
 
     @Test
     public void getModDateParsesValidDate() {
-        COSDictionary dict = new COSDictionary();
-        dict.set("ModDate", new COSString("D:20240601120000"));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set("ModDate", new PdfString("D:20240601120000"));
         DocumentInfo info = new DocumentInfo(dict);
 
         Date date = info.getModDate();
@@ -171,7 +171,7 @@ public class DocumentInfoTest {
 
     @Test
     public void setCreationDateWritesPdfDateString() {
-        COSDictionary dict = new COSDictionary();
+        PdfDictionary dict = new PdfDictionary();
         DocumentInfo info = new DocumentInfo(dict);
 
         Calendar cal = new GregorianCalendar(2024, Calendar.MARCH, 15, 14, 30, 0);
@@ -189,23 +189,23 @@ public class DocumentInfoTest {
 
     @Test
     public void setCreationDateNullRemovesEntry() {
-        COSDictionary dict = new COSDictionary();
-        dict.set("CreationDate", new COSString("D:20240101000000"));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set("CreationDate", new PdfString("D:20240101000000"));
         DocumentInfo info = new DocumentInfo(dict);
         info.setCreationDate(null);
         assertNull(info.getCreationDate());
     }
 
     @Test
-    public void getCOSDictionaryReturnsUnderlying() {
-        COSDictionary dict = new COSDictionary();
+    public void getPdfDictionaryReturnsUnderlying() {
+        PdfDictionary dict = new PdfDictionary();
         DocumentInfo info = new DocumentInfo(dict);
-        assertSame(dict, info.getCOSDictionary());
+        assertSame(dict, info.getPdfDictionary());
     }
 
     @Test
     public void allStringFieldsRoundTrip() {
-        DocumentInfo info = new DocumentInfo(new COSDictionary());
+        DocumentInfo info = new DocumentInfo(new PdfDictionary());
         info.setTitle("T");
         info.setAuthor("A");
         info.setSubject("S");

@@ -1,6 +1,6 @@
 package org.aspose.pdf.operators;
 
-import org.aspose.pdf.engine.cos.COSBase;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
 
 import java.util.Arrays;
 import java.util.List;
@@ -41,7 +41,7 @@ public class SetRGBColorStroke extends SetColorOperator {
      *
      * @param operands the operands from the content stream parser
      */
-    public SetRGBColorStroke(List<COSBase> operands) {
+    public SetRGBColorStroke(List<PdfBase> operands) {
         super("RG", operands);
         this.r = (operands != null && operands.size() > 0) ? getNumber(operands.get(0)) : 0;
         this.g = (operands != null && operands.size() > 1) ? getNumber(operands.get(1)) : 0;

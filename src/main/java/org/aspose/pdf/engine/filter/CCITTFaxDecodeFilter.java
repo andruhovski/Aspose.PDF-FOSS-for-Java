@@ -1,10 +1,10 @@
 package org.aspose.pdf.engine.filter;
 
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSBoolean;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfBoolean;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -26,7 +26,7 @@ import java.util.logging.Logger;
  *   <li>EndOfLine, EncodedByteAlign, EndOfBlock, BlackIs1</li>
  * </ul>
  */
-public final class CCITTFaxDecodeFilter implements COSFilter {
+public final class CCITTFaxDecodeFilter implements PdfFilter {
 
     private static final Logger LOG = Logger.getLogger(CCITTFaxDecodeFilter.class.getName());
 
@@ -269,20 +269,26 @@ public final class CCITTFaxDecodeFilter implements COSFilter {
         while (rows == 0 || linesDecoded < rows) {
             if (br.eof()) break;
 
-            // Skip EOL pattern (000000000001) if present
-            if (endOfLine) {
-                skipEOL(br);
-            }
+            // Consume an EOL pattern (≥11 zeros + 1, incl. fill bits) when one
+            // is ahead — T.4 streams routinely carry EOLs before every line
+            // even when the PDF /EndOfLine flag is false (corpus 29753: every
+            // row is EOL-prefixed; treating the EOL zeros as white-run data
+            // desynced the Huffman stream and smeared the whole fax page).
+            consumeEOLIfPresent(br);
             if (byteAlign) br.alignToByte();
 
             byte[] line = new byte[rowBytes];
             int col = 0;
             boolean white = true;
+            boolean rowError = false;
 
             while (col < columns) {
                 HNode tree = white ? WHITE_TREE : BLACK_TREE;
                 int run = readRun(br, tree);
-                if (run < 0) break;
+                if (run < 0) {
+                    rowError = true;
+                    break;
+                }
                 run = Math.min(run, columns - col);
                 if (!white) {
                     setBits(line, col, run);
@@ -293,11 +299,64 @@ public final class CCITTFaxDecodeFilter implements COSFilter {
             out.write(line);
             linesDecoded++;
 
+            // A bad code desyncs the bit stream — everything after it is
+            // garbage until the next EOL. Scan forward and resume there
+            // instead of decoding noise (each EOL marks a fresh row start).
+            if (rowError && !resyncToEOL(br)) {
+                break; // no further EOL — rest of the data is unusable
+            }
+
             // Check for RTC (6 consecutive EOLs = end of data)
             if (endOfBlock && detectRTC(br)) break;
         }
 
         return out.toByteArray();
+    }
+
+    /**
+     * Consumes one EOL — any number of fill zeros, at least 11 of them,
+     * terminated by a 1 bit (T.4 §4.1.2) — if and only if one starts at the
+     * current position. Restores the position when the bits ahead are not
+     * an EOL, so image data is never eaten.
+     */
+    static void consumeEOLIfPresent(BitReader br) {
+        int savedByte = br.bytePos, savedBit = br.bitPos;
+        int zeros = 0;
+        while (true) {
+            int b = br.readBit();
+            if (b < 0) {
+                br.bytePos = savedByte; br.bitPos = savedBit;
+                return;
+            }
+            if (b == 1) {
+                if (zeros >= 11) return; // EOL (with fill) consumed
+                br.bytePos = savedByte; br.bitPos = savedBit;
+                return; // not an EOL
+            }
+            if (++zeros > 4096) { // degenerate zero-run — bail out, restore
+                br.bytePos = savedByte; br.bitPos = savedBit;
+                return;
+            }
+        }
+    }
+
+    /**
+     * Scans forward to just past the next EOL (≥11 zeros then a 1).
+     *
+     * @return true if an EOL was found, false on EOF
+     */
+    static boolean resyncToEOL(BitReader br) {
+        int zeros = 0;
+        while (true) {
+            int b = br.readBit();
+            if (b < 0) return false;
+            if (b == 1) {
+                if (zeros >= 11) return true;
+                zeros = 0;
+            } else {
+                zeros++;
+            }
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -552,21 +611,6 @@ public final class CCITTFaxDecodeFilter implements COSFilter {
         return packed;
     }
 
-    /** Tries to skip EOL pattern: at least 11 zeros followed by a 1. */
-    private static void skipEOL(BitReader br) {
-        int zeros = 0;
-        while (true) {
-            int b = br.readBit();
-            if (b < 0) return;
-            if (b == 0) {
-                zeros++;
-            } else {
-                if (zeros >= 11) return; // valid EOL consumed
-                return; // not an EOL, but we've consumed bits — can't unread
-            }
-        }
-    }
-
     /** Detects RTC (Return To Control): 6 consecutive EOL codes. */
     private static boolean detectRTC(BitReader br) {
         // Simplified: don't look ahead for RTC; let row count or EOF handle termination
@@ -575,24 +619,24 @@ public final class CCITTFaxDecodeFilter implements COSFilter {
 
     // ─── Parameter extraction ────────────────────────────────────
 
-    private static int getInt(COSDictionary params, String key, int def) {
+    private static int getInt(PdfDictionary params, String key, int def) {
         if (params == null) return def;
-        COSBase v = params.get(key);
-        return (v instanceof COSInteger) ? ((COSInteger) v).intValue() : def;
+        PdfBase v = params.get(key);
+        return (v instanceof PdfInteger) ? ((PdfInteger) v).intValue() : def;
     }
 
-    private static boolean getBool(COSDictionary params, String key, boolean def) {
+    private static boolean getBool(PdfDictionary params, String key, boolean def) {
         if (params == null) return def;
-        COSBase v = params.get(key);
-        return (v instanceof COSBoolean) ? ((COSBoolean) v).getValue() : def;
+        PdfBase v = params.get(key);
+        return (v instanceof PdfBoolean) ? ((PdfBoolean) v).getValue() : def;
     }
 
     // ═══════════════════════════════════════════════════════════════
-    //  COSFilter interface
+    //  PdfFilter interface
     // ═══════════════════════════════════════════════════════════════
 
     @Override
-    public byte[] decode(byte[] encoded, COSDictionary params) throws IOException {
+    public byte[] decode(byte[] encoded, PdfDictionary params) throws IOException {
         if (encoded == null || encoded.length == 0) return new byte[0];
 
         int k          = getInt(params, "K", 0);
@@ -648,7 +692,7 @@ public final class CCITTFaxDecodeFilter implements COSFilter {
     }
 
     @Override
-    public byte[] encode(byte[] decoded, COSDictionary params) throws IOException {
+    public byte[] encode(byte[] decoded, PdfDictionary params) throws IOException {
         if (decoded == null || decoded.length == 0) return new byte[0];
 
         int k = getInt(params, "K", 0);
@@ -690,8 +734,8 @@ public final class CCITTFaxDecodeFilter implements COSFilter {
     }
 
     @Override
-    public COSName getName() {
-        return COSName.of("CCITTFaxDecode");
+    public PdfName getName() {
+        return PdfName.of("CCITTFaxDecode");
     }
 
     private static byte[] encodeGroup31D(byte[] decoded, int columns, int rows,

@@ -5,7 +5,7 @@ import org.aspose.pdf.OperatorCollection;
 import org.aspose.pdf.Page;
 import org.aspose.pdf.Rectangle;
 import org.aspose.pdf.Resources;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 import org.aspose.pdf.engine.parser.ContentStreamParser;
 import org.aspose.pdf.engine.text.TextExtractor;
 import org.aspose.pdf.text.TextAbsorber;
@@ -29,27 +29,27 @@ public class TextExtractorTest {
      */
     private Page createPageWithText(String contentStreamText) throws IOException {
         // Build font dictionary for F1 = Helvetica
-        COSDictionary fontDict = new COSDictionary();
-        fontDict.set(COSName.TYPE, COSName.of("Font"));
-        fontDict.set(COSName.of("Subtype"), COSName.of("Type1"));
-        fontDict.set(COSName.of("BaseFont"), COSName.of("Helvetica"));
+        PdfDictionary fontDict = new PdfDictionary();
+        fontDict.set(PdfName.TYPE, PdfName.of("Font"));
+        fontDict.set(PdfName.of("Subtype"), PdfName.of("Type1"));
+        fontDict.set(PdfName.of("BaseFont"), PdfName.of("Helvetica"));
 
-        COSDictionary fontsDict = new COSDictionary();
-        fontsDict.set(COSName.of("F1"), fontDict);
+        PdfDictionary fontsDict = new PdfDictionary();
+        fontsDict.set(PdfName.of("F1"), fontDict);
 
-        COSDictionary resourcesDict = new COSDictionary();
-        resourcesDict.set(COSName.of("Font"), fontsDict);
+        PdfDictionary resourcesDict = new PdfDictionary();
+        resourcesDict.set(PdfName.of("Font"), fontsDict);
 
         // Build content stream
         byte[] streamBytes = contentStreamText.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1);
-        COSStream contentStream = new COSStream(streamBytes);
+        PdfStream contentStream = new PdfStream(streamBytes);
 
         // Build page dictionary
-        COSDictionary pageDict = new COSDictionary();
-        pageDict.set(COSName.TYPE, COSName.PAGE);
-        pageDict.set(COSName.MEDIABOX, new Rectangle(0, 0, 595, 842).toCOSArray());
-        pageDict.set(COSName.RESOURCES, resourcesDict);
-        pageDict.set(COSName.CONTENTS, contentStream);
+        PdfDictionary pageDict = new PdfDictionary();
+        pageDict.set(PdfName.TYPE, PdfName.PAGE);
+        pageDict.set(PdfName.MEDIABOX, new Rectangle(0, 0, 595, 842).toPdfArray());
+        pageDict.set(PdfName.RESOURCES, resourcesDict);
+        pageDict.set(PdfName.CONTENTS, contentStream);
 
         return new Page(pageDict, null);
     }
@@ -147,9 +147,9 @@ public class TextExtractorTest {
 
     @Test
     public void testEmptyPage() throws IOException {
-        COSDictionary pageDict = new COSDictionary();
-        pageDict.set(COSName.TYPE, COSName.PAGE);
-        pageDict.set(COSName.MEDIABOX, new Rectangle(0, 0, 595, 842).toCOSArray());
+        PdfDictionary pageDict = new PdfDictionary();
+        pageDict.set(PdfName.TYPE, PdfName.PAGE);
+        pageDict.set(PdfName.MEDIABOX, new Rectangle(0, 0, 595, 842).toPdfArray());
         Page page = new Page(pageDict, null);
 
         TextAbsorber absorber = new TextAbsorber();
@@ -195,8 +195,8 @@ public class TextExtractorTest {
 
     @Test
     public void testAcceptNullThrows() {
-        COSDictionary pageDict = new COSDictionary();
-        pageDict.set(COSName.TYPE, COSName.PAGE);
+        PdfDictionary pageDict = new PdfDictionary();
+        pageDict.set(PdfName.TYPE, PdfName.PAGE);
         Page page = new Page(pageDict, null);
         assertThrows(IllegalArgumentException.class, () -> page.accept((org.aspose.pdf.text.TextAbsorber) null));
     }

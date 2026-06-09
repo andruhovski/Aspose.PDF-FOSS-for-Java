@@ -1,12 +1,12 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectKey;
-import org.aspose.pdf.engine.cos.COSObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectKey;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
 import org.aspose.pdf.engine.parser.PDFParser;
 import org.aspose.pdf.text.TextAbsorber;
 
@@ -30,14 +30,14 @@ public class PageCollection implements Iterable<Page> {
 
     private static final Logger LOG = Logger.getLogger(PageCollection.class.getName());
 
-    private final COSDictionary pagesDict;
+    private final PdfDictionary pagesDict;
     private final PDFParser parser;
     private Document owningDocument;
     // volatile so threads that read flatPages outside the synchronized block see
     // a fully-populated list (or null) — never the half-built intermediate state
     // that the legacy lazy-init pattern exposed during concurrent first access.
     private volatile List<Page> flatPages;
-    private final java.util.Map<COSDictionary, Page> pageCache = new java.util.IdentityHashMap<>();
+    private final java.util.Map<PdfDictionary, Page> pageCache = new java.util.IdentityHashMap<>();
     /** One importer per foreign source document — keeps shared resources deduplicated across successive page imports. */
     private final java.util.Map<Document, DocumentPageImporter> importers = new java.util.IdentityHashMap<>();
     private boolean treeRepairAttempted;
@@ -50,7 +50,7 @@ public class PageCollection implements Iterable<Page> {
      * @param parser    the PDF parser for resolving indirect references, may be null
      * @throws IllegalArgumentException if pagesDict is null
      */
-    public PageCollection(COSDictionary pagesDict, PDFParser parser) {
+    public PageCollection(PdfDictionary pagesDict, PDFParser parser) {
         if (pagesDict == null) {
             throw new IllegalArgumentException("Pages dictionary must not be null");
         }
@@ -161,10 +161,10 @@ public class PageCollection implements Iterable<Page> {
      * @return the newly created Page
      */
     public Page add() {
-        COSDictionary pageDict = new COSDictionary();
-        pageDict.set(COSName.TYPE, COSName.PAGE);
-        pageDict.set(COSName.MEDIABOX, new Rectangle(0, 0, 595, 842).toCOSArray());
-        pageDict.set(COSName.PARENT, pagesDict);
+        PdfDictionary pageDict = new PdfDictionary();
+        pageDict.set(PdfName.TYPE, PdfName.PAGE);
+        pageDict.set(PdfName.MEDIABOX, new Rectangle(0, 0, 595, 842).toPdfArray());
+        pageDict.set(PdfName.PARENT, pagesDict);
         Page page = new Page(pageDict, parser);
         page.setOwningDocument(owningDocument);
         pageCache.put(pageDict, page);
@@ -185,8 +185,8 @@ public class PageCollection implements Iterable<Page> {
             throw new IllegalArgumentException("Page must not be null");
         }
         Page attached = importIfForeign(page);
-        COSDictionary pageDict = attached.getCOSDictionary();
-        pageDict.set(COSName.PARENT, pagesDict);
+        PdfDictionary pageDict = attached.getPdfDictionary();
+        pageDict.set(PdfName.PARENT, pagesDict);
         pageCache.put(pageDict, attached);
         addToKids(pageDict, getKidsArray().size());
         invalidateCache();
@@ -222,11 +222,11 @@ public class PageCollection implements Iterable<Page> {
         if (otherPages == null) {
             throw new IllegalArgumentException("PageCollection must not be null");
         }
-        java.util.Map<COSDictionary, Integer> importedPages = new java.util.IdentityHashMap<>();
+        java.util.Map<PdfDictionary, Integer> importedPages = new java.util.IdentityHashMap<>();
         for (Page page : otherPages) {
             int targetIndexBefore = size();
             add(page);
-            importedPages.put(page.getCOSDictionary(), targetIndexBefore + 1);
+            importedPages.put(page.getPdfDictionary(), targetIndexBefore + 1);
         }
         if (owningDocument != null && !importedPages.isEmpty()) {
             Document foreignDocument = null;
@@ -266,9 +266,9 @@ public class PageCollection implements Iterable<Page> {
             throw new IndexOutOfBoundsException(
                     "Insert index " + index + " out of range [1, " + (currentSize + 1) + "]");
         }
-        COSDictionary pageDict = new COSDictionary();
-        pageDict.set(COSName.TYPE, COSName.PAGE);
-        pageDict.set(COSName.MEDIABOX, new Rectangle(0, 0, 595, 842).toCOSArray());
+        PdfDictionary pageDict = new PdfDictionary();
+        pageDict.set(PdfName.TYPE, PdfName.PAGE);
+        pageDict.set(PdfName.MEDIABOX, new Rectangle(0, 0, 595, 842).toPdfArray());
         Page page = new Page(pageDict, parser);
         page.setOwningDocument(owningDocument);
         insertIntoTree(index, pageDict);
@@ -299,7 +299,7 @@ public class PageCollection implements Iterable<Page> {
                     "Insert index " + index + " out of range [1, " + (currentSize + 1) + "]");
         }
         Page attached = importIfForeign(page);
-        COSDictionary pageDict = attached.getCOSDictionary();
+        PdfDictionary pageDict = attached.getPdfDictionary();
         pageCache.put(pageDict, attached);
         insertIntoTree(index, pageDict);
         invalidateCache();
@@ -316,8 +316,8 @@ public class PageCollection implements Iterable<Page> {
         // Reset the root /Kids and /Count entries on the pagesDict directly —
         // delete()-in-a-loop would walk inheritance chains for each call and
         // duplicate work for documents with nested page tree nodes.
-        COSArray kids = new COSArray();
-        pagesDict.set(COSName.KIDS, kids);
+        PdfArray kids = new PdfArray();
+        pagesDict.set(PdfName.KIDS, kids);
         updateCount(0);
         invalidateCache();
         LOG.fine("Cleared all pages");
@@ -336,10 +336,10 @@ public class PageCollection implements Iterable<Page> {
                     "Delete index " + index + " out of range [1, " + flatPages.size() + "]");
         }
         Page page = flatPages.get(index - 1);
-        COSDictionary pageDict = page.getCOSDictionary();
-        COSDictionary parent = (COSDictionary) resolveRef(pageDict.get(COSName.PARENT));
+        PdfDictionary pageDict = page.getPdfDictionary();
+        PdfDictionary parent = (PdfDictionary) resolveRef(pageDict.get(PdfName.PARENT));
         if (parent == null || !removeFromParent(parent, pageDict)) {
-            COSArray kids = getKidsArray();
+            PdfArray kids = getKidsArray();
             int fallbackIndex = Math.min(index - 1, kids.size() - 1);
             if (fallbackIndex < 0) {
                 throw new IndexOutOfBoundsException(
@@ -352,14 +352,14 @@ public class PageCollection implements Iterable<Page> {
         LOG.fine(() -> "Deleted page at index " + index + ", count=" + getCount());
     }
 
-    private boolean removeFromParent(COSDictionary parent, COSDictionary child) {
-        COSBase kidsValue = resolveRef(parent.get(COSName.KIDS));
-        if (!(kidsValue instanceof COSArray)) {
+    private boolean removeFromParent(PdfDictionary parent, PdfDictionary child) {
+        PdfBase kidsValue = resolveRef(parent.get(PdfName.KIDS));
+        if (!(kidsValue instanceof PdfArray)) {
             return false;
         }
-        COSArray kids = (COSArray) kidsValue;
+        PdfArray kids = (PdfArray) kidsValue;
         for (int i = 0; i < kids.size(); i++) {
-            COSBase candidate = resolveRef(kids.get(i));
+            PdfBase candidate = resolveRef(kids.get(i));
             if (candidate == child) {
                 kids.remove(i);
                 decrementCountsUpward(parent);
@@ -370,40 +370,40 @@ public class PageCollection implements Iterable<Page> {
         return false;
     }
 
-    private void decrementCountsUpward(COSDictionary node) {
-        COSDictionary current = node;
+    private void decrementCountsUpward(PdfDictionary node) {
+        PdfDictionary current = node;
         while (current != null) {
             int currentCount = current.getInt("Count", 0);
-            current.set(COSName.COUNT, COSInteger.valueOf(Math.max(0, currentCount - 1)));
-            COSBase parent = resolveRef(current.get(COSName.PARENT));
-            current = parent instanceof COSDictionary ? (COSDictionary) parent : null;
+            current.set(PdfName.COUNT, PdfInteger.valueOf(Math.max(0, currentCount - 1)));
+            PdfBase parent = resolveRef(current.get(PdfName.PARENT));
+            current = parent instanceof PdfDictionary ? (PdfDictionary) parent : null;
         }
     }
 
-    private void incrementCountsUpward(COSDictionary node) {
-        COSDictionary current = node;
+    private void incrementCountsUpward(PdfDictionary node) {
+        PdfDictionary current = node;
         while (current != null) {
             int currentCount = current.getInt("Count", 0);
-            current.set(COSName.COUNT, COSInteger.valueOf(currentCount + 1));
-            COSBase parent = resolveRef(current.get(COSName.PARENT));
-            current = parent instanceof COSDictionary ? (COSDictionary) parent : null;
+            current.set(PdfName.COUNT, PdfInteger.valueOf(currentCount + 1));
+            PdfBase parent = resolveRef(current.get(PdfName.PARENT));
+            current = parent instanceof PdfDictionary ? (PdfDictionary) parent : null;
         }
     }
 
-    private void pruneEmptyPagesNode(COSDictionary node) {
-        COSDictionary current = node;
+    private void pruneEmptyPagesNode(PdfDictionary node) {
+        PdfDictionary current = node;
         while (current != null && current != pagesDict) {
-            COSBase kidsValue = resolveRef(current.get(COSName.KIDS));
-            if (!(kidsValue instanceof COSArray) || ((COSArray) kidsValue).size() > 0) {
+            PdfBase kidsValue = resolveRef(current.get(PdfName.KIDS));
+            if (!(kidsValue instanceof PdfArray) || ((PdfArray) kidsValue).size() > 0) {
                 return;
             }
-            COSDictionary parent = (COSDictionary) resolveRef(current.get(COSName.PARENT));
+            PdfDictionary parent = (PdfDictionary) resolveRef(current.get(PdfName.PARENT));
             if (parent == null) {
                 return;
             }
-            COSBase parentKidsValue = resolveRef(parent.get(COSName.KIDS));
-            if (parentKidsValue instanceof COSArray) {
-                COSArray parentKids = (COSArray) parentKidsValue;
+            PdfBase parentKidsValue = resolveRef(parent.get(PdfName.KIDS));
+            if (parentKidsValue instanceof PdfArray) {
+                PdfArray parentKids = (PdfArray) parentKidsValue;
                 for (int i = 0; i < parentKids.size(); i++) {
                     if (resolveRef(parentKids.get(i)) == current) {
                         parentKids.remove(i);
@@ -416,31 +416,31 @@ public class PageCollection implements Iterable<Page> {
     }
 
     private Integer resolveImportedFieldPageNumber(org.aspose.pdf.forms.Field field,
-                                                   java.util.Map<COSDictionary, Integer> importedPages) {
+                                                   java.util.Map<PdfDictionary, Integer> importedPages) {
         Page fieldPage = field.getPage();
         if (fieldPage != null) {
-            Integer directMatch = importedPages.get(fieldPage.getCOSDictionary());
+            Integer directMatch = importedPages.get(fieldPage.getPdfDictionary());
             if (directMatch != null) {
                 return directMatch;
             }
         }
-        COSDictionary fieldDict = field.getCOSDictionary();
-        COSBase pageRef = resolveRef(fieldDict.get(COSName.of("P")));
-        if (pageRef instanceof COSDictionary) {
-            Integer match = importedPages.get((COSDictionary) pageRef);
+        PdfDictionary fieldDict = field.getPdfDictionary();
+        PdfBase pageRef = resolveRef(fieldDict.get(PdfName.of("P")));
+        if (pageRef instanceof PdfDictionary) {
+            Integer match = importedPages.get((PdfDictionary) pageRef);
             if (match != null) {
                 return match;
             }
         }
-        COSBase kidsRef = resolveRef(fieldDict.get(COSName.of("Kids")));
-        if (kidsRef instanceof COSArray) {
-            COSArray kids = (COSArray) kidsRef;
+        PdfBase kidsRef = resolveRef(fieldDict.get(PdfName.of("Kids")));
+        if (kidsRef instanceof PdfArray) {
+            PdfArray kids = (PdfArray) kidsRef;
             for (int i = 0; i < kids.size(); i++) {
-                COSBase kidRef = resolveRef(kids.get(i));
-                if (kidRef instanceof COSDictionary) {
-                    COSBase kidPageRef = resolveRef(((COSDictionary) kidRef).get(COSName.of("P")));
-                    if (kidPageRef instanceof COSDictionary) {
-                        Integer match = importedPages.get((COSDictionary) kidPageRef);
+                PdfBase kidRef = resolveRef(kids.get(i));
+                if (kidRef instanceof PdfDictionary) {
+                    PdfBase kidPageRef = resolveRef(((PdfDictionary) kidRef).get(PdfName.of("P")));
+                    if (kidPageRef instanceof PdfDictionary) {
+                        Integer match = importedPages.get((PdfDictionary) kidPageRef);
                         if (match != null) {
                             return match;
                         }
@@ -454,51 +454,51 @@ public class PageCollection implements Iterable<Page> {
     /**
      * Returns the /Kids array, creating it if absent.
      */
-    private COSArray getKidsArray() {
-        COSBase kidsValue = pagesDict.get(COSName.KIDS);
+    private PdfArray getKidsArray() {
+        PdfBase kidsValue = pagesDict.get(PdfName.KIDS);
         kidsValue = resolveRef(kidsValue);
-        if (kidsValue instanceof COSArray) {
-            return (COSArray) kidsValue;
+        if (kidsValue instanceof PdfArray) {
+            return (PdfArray) kidsValue;
         }
-        COSArray kids = new COSArray();
-        pagesDict.set(COSName.KIDS, kids);
+        PdfArray kids = new PdfArray();
+        pagesDict.set(PdfName.KIDS, kids);
         return kids;
     }
 
     /**
      * Adds a page dictionary to /Kids at the specified 0-based position and updates /Count.
      */
-    private void addToKids(COSDictionary pageDict, int position) {
-        COSArray kids = getKidsArray();
+    private void addToKids(PdfDictionary pageDict, int position) {
+        PdfArray kids = getKidsArray();
         kids.add(position, pageDict);
         updateCount(kids.size());
     }
 
-    private void insertIntoTree(int index, COSDictionary pageDict) {
+    private void insertIntoTree(int index, PdfDictionary pageDict) {
         if (flatPages == null) {
             ensureFlattened();
         }
         if (flatPages.isEmpty() || index == flatPages.size() + 1) {
-            pageDict.set(COSName.PARENT, pagesDict);
+            pageDict.set(PdfName.PARENT, pagesDict);
             addToKids(pageDict, getKidsArray().size());
             return;
         }
 
         Page targetPage = flatPages.get(index - 1);
-        COSDictionary targetPageDict = targetPage.getCOSDictionary();
-        COSDictionary parent = (COSDictionary) resolveRef(targetPageDict.get(COSName.PARENT));
+        PdfDictionary targetPageDict = targetPage.getPdfDictionary();
+        PdfDictionary parent = (PdfDictionary) resolveRef(targetPageDict.get(PdfName.PARENT));
         if (parent == null) {
-            pageDict.set(COSName.PARENT, pagesDict);
+            pageDict.set(PdfName.PARENT, pagesDict);
             addToKids(pageDict, getKidsArray().size());
             return;
         }
-        COSBase kidsValue = resolveRef(parent.get(COSName.KIDS));
-        if (!(kidsValue instanceof COSArray)) {
-            pageDict.set(COSName.PARENT, pagesDict);
+        PdfBase kidsValue = resolveRef(parent.get(PdfName.KIDS));
+        if (!(kidsValue instanceof PdfArray)) {
+            pageDict.set(PdfName.PARENT, pagesDict);
             addToKids(pageDict, getKidsArray().size());
             return;
         }
-        COSArray kids = (COSArray) kidsValue;
+        PdfArray kids = (PdfArray) kidsValue;
         int childPosition = -1;
         for (int i = 0; i < kids.size(); i++) {
             if (resolveRef(kids.get(i)) == targetPageDict) {
@@ -507,11 +507,11 @@ public class PageCollection implements Iterable<Page> {
             }
         }
         if (childPosition < 0) {
-            pageDict.set(COSName.PARENT, pagesDict);
+            pageDict.set(PdfName.PARENT, pagesDict);
             addToKids(pageDict, getKidsArray().size());
             return;
         }
-        pageDict.set(COSName.PARENT, parent);
+        pageDict.set(PdfName.PARENT, parent);
         kids.add(childPosition, pageDict);
         incrementCountsUpward(parent);
     }
@@ -520,7 +520,7 @@ public class PageCollection implements Iterable<Page> {
      * Updates the /Count entry in the pages dictionary.
      */
     private void updateCount(int count) {
-        pagesDict.set(COSName.COUNT, COSInteger.valueOf(count));
+        pagesDict.set(PdfName.COUNT, PdfInteger.valueOf(count));
     }
 
     /**
@@ -580,25 +580,25 @@ public class PageCollection implements Iterable<Page> {
             return;
         }
 
-        List<COSDictionary> currentPages = new ArrayList<>();
-        java.util.Set<COSDictionary> seenPages = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+        List<PdfDictionary> currentPages = new ArrayList<>();
+        java.util.Set<PdfDictionary> seenPages = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
         // The root /Pages dict must never appear as one of its own kids — guard
         // against malformed PDFs that mislabel the root with /Type /Page.
         seenPages.add(pagesDict);
         for (Page page : flatPages) {
-            COSDictionary pageDict = page.getCOSDictionary();
+            PdfDictionary pageDict = page.getPdfDictionary();
             if (pageDict != null && seenPages.add(pageDict)) {
                 currentPages.add(pageDict);
             }
         }
 
-        TreeMap<Integer, COSDictionary> recoveredPageObjects = new TreeMap<>();
-        for (COSObjectKey key : parser.getAllObjectKeys()) {
-            COSBase obj = parser.getObject(key);
-            if (!(obj instanceof COSDictionary)) {
+        TreeMap<Integer, PdfDictionary> recoveredPageObjects = new TreeMap<>();
+        for (PdfObjectKey key : parser.getAllObjectKeys()) {
+            PdfBase obj = parser.getObject(key);
+            if (!(obj instanceof PdfDictionary)) {
                 continue;
             }
-            COSDictionary dict = (COSDictionary) obj;
+            PdfDictionary dict = (PdfDictionary) obj;
             if (!looksLikePageCandidate(dict)) {
                 continue;
             }
@@ -612,15 +612,15 @@ public class PageCollection implements Iterable<Page> {
             return;
         }
 
-        List<COSDictionary> repairedPages = new ArrayList<>();
-        for (COSDictionary pageDict : currentPages) {
+        List<PdfDictionary> repairedPages = new ArrayList<>();
+        for (PdfDictionary pageDict : currentPages) {
             repairedPages.add(pageDict);
             if (repairedPages.size() >= declaredCount) {
                 break;
             }
         }
-        for (Map.Entry<Integer, COSDictionary> entry : recoveredPageObjects.entrySet()) {
-            COSDictionary pageDict = entry.getValue();
+        for (Map.Entry<Integer, PdfDictionary> entry : recoveredPageObjects.entrySet()) {
+            PdfDictionary pageDict = entry.getValue();
             if (!seenPages.add(pageDict)) {
                 continue;
             }
@@ -633,13 +633,13 @@ public class PageCollection implements Iterable<Page> {
             return;
         }
 
-        COSArray repairedKids = new COSArray();
-        for (COSDictionary pageDict : repairedPages) {
-            pageDict.set(COSName.PARENT, pagesDict);
+        PdfArray repairedKids = new PdfArray();
+        for (PdfDictionary pageDict : repairedPages) {
+            pageDict.set(PdfName.PARENT, pagesDict);
             repairedKids.add(pageDict);
         }
-        pagesDict.set(COSName.TYPE, COSName.PAGES);
-        pagesDict.set(COSName.KIDS, repairedKids);
+        pagesDict.set(PdfName.TYPE, PdfName.PAGES);
+        pagesDict.set(PdfName.KIDS, repairedKids);
         updateCount(repairedPages.size());
         treeRepaired = true;
         invalidateCache();
@@ -664,7 +664,7 @@ public class PageCollection implements Iterable<Page> {
      * @param node the page tree node dictionary
      * @param ancestors identity set of /Pages ancestors currently on the stack
      */
-    private void flattenNode(COSDictionary node, java.util.Set<COSDictionary> ancestors) {
+    private void flattenNode(PdfDictionary node, java.util.Set<PdfDictionary> ancestors) {
         if (ancestors.contains(node)) {
             LOG.warning(() -> "Cyclic /Pages tree detected; skipping repeated node");
             return;
@@ -683,11 +683,11 @@ public class PageCollection implements Iterable<Page> {
             return;
         }
         boolean looksLikePagesNode = "Pages".equals(type)
-                || (type == null && node.get(COSName.KIDS) != null);
+                || (type == null && node.get(PdfName.KIDS) != null);
         if (looksLikePagesNode) {
-            COSBase kidsValue = node.get(COSName.KIDS);
+            PdfBase kidsValue = node.get(PdfName.KIDS);
             kidsValue = resolveRef(kidsValue);
-            if (!(kidsValue instanceof COSArray)) {
+            if (!(kidsValue instanceof PdfArray)) {
                 if (looksLikePageCandidate(node)) {
                     flatPages.add(pageCache.computeIfAbsent(node, n -> {
                         Page p = new Page(n, parser);
@@ -702,12 +702,12 @@ public class PageCollection implements Iterable<Page> {
             }
             ancestors.add(node);
             try {
-                COSArray kids = (COSArray) kidsValue;
+                PdfArray kids = (PdfArray) kidsValue;
                 for (int i = 0; i < kids.size(); i++) {
-                    COSBase child = kids.get(i);
+                    PdfBase child = kids.get(i);
                     child = resolveRef(child);
-                    if (child instanceof COSDictionary) {
-                        flattenNode((COSDictionary) child, ancestors);
+                    if (child instanceof PdfDictionary) {
+                        flattenNode((PdfDictionary) child, ancestors);
                     } else {
                         LOG.warning(() -> "Unexpected non-dictionary child in /Kids");
                     }
@@ -736,43 +736,43 @@ public class PageCollection implements Iterable<Page> {
     }
 
     private int getDeclaredPageCount() {
-        COSBase count = resolveRef(pagesDict.get(COSName.COUNT));
-        if (count instanceof COSInteger) {
-            return ((COSInteger) count).intValue();
+        PdfBase count = resolveRef(pagesDict.get(PdfName.COUNT));
+        if (count instanceof PdfInteger) {
+            return ((PdfInteger) count).intValue();
         }
         return -1;
     }
 
-    private boolean looksLikePageCandidate(COSDictionary node) {
+    private boolean looksLikePageCandidate(PdfDictionary node) {
         if ("Page".equals(node.getType())) {
             return true;
         }
-        if (node.get(COSName.MEDIABOX) != null
-                && node.get(COSName.CONTENTS) != null
-                && node.get(COSName.RESOURCES) != null) {
+        if (node.get(PdfName.MEDIABOX) != null
+                && node.get(PdfName.CONTENTS) != null
+                && node.get(PdfName.RESOURCES) != null) {
             return true;
         }
         // Some malformed PDFs incorrectly mark a leaf page node as /Pages but
         // still store page-like content directly on the node with inherited
         // MediaBox. Accept those nodes so page-tree recovery can proceed.
-        return node.get(COSName.PARENT) != null
-                && node.get(COSName.CONTENTS) != null
-                && node.get(COSName.RESOURCES) != null;
+        return node.get(PdfName.PARENT) != null
+                && node.get(PdfName.CONTENTS) != null
+                && node.get(PdfName.RESOURCES) != null;
     }
 
     /**
      * Resolves an indirect object reference.
      *
-     * @param value the COS value
+     * @param value the PDF value
      * @return the resolved value, or null
      */
-    private COSBase resolveRef(COSBase value) {
+    private PdfBase resolveRef(PdfBase value) {
         if (value == null) {
             return null;
         }
-        if (value instanceof COSObjectReference) {
+        if (value instanceof PdfObjectReference) {
             try {
-                return ((COSObjectReference) value).dereference();
+                return ((PdfObjectReference) value).dereference();
             } catch (IOException e) {
                 LOG.warning(() -> "Failed to dereference: " + e.getMessage());
                 return null;

@@ -1,10 +1,10 @@
 package org.aspose.pdf.engine.font;
 
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 import org.aspose.pdf.engine.font.cmap.CMapParser;
 import org.aspose.pdf.engine.font.cmap.ToUnicodeCMap;
 import org.aspose.pdf.engine.parser.PDFParser;
@@ -26,7 +26,7 @@ public abstract class PdfFont {
     private static final Logger LOG = Logger.getLogger(PdfFont.class.getName());
 
     /** The underlying font dictionary. */
-    protected final COSDictionary fontDict;
+    protected final PdfDictionary fontDict;
     /** The PDF parser for resolving indirect references. */
     protected final PDFParser parser;
     /** Font name from /BaseFont. */
@@ -46,10 +46,18 @@ public abstract class PdfFont {
      * @param fontDict the font dictionary
      * @param parser   the PDF parser for resolving indirect references (may be null)
      */
-    protected PdfFont(COSDictionary fontDict, PDFParser parser) {
-        this.fontDict = fontDict != null ? fontDict : new COSDictionary();
+    protected PdfFont(PdfDictionary fontDict, PDFParser parser) {
+        this.fontDict = fontDict != null ? fontDict : new PdfDictionary();
         this.parser = parser;
         this.baseFont = this.fontDict.getNameAsString("BaseFont");
+        if (this.baseFont == null) {
+            // /BaseFont may be an indirect reference to a name object
+            // (rare but legal — any object may be indirect, §7.3.10).
+            PdfBase bf = resolve(this.fontDict.get("BaseFont"));
+            if (bf instanceof PdfName) {
+                this.baseFont = ((PdfName) bf).getName();
+            }
+        }
         initFontDescriptor();
         initToUnicode();
     }
@@ -162,7 +170,7 @@ public abstract class PdfFont {
      *
      * @return the font dictionary
      */
-    public COSDictionary getFontDictionary() {
+    public PdfDictionary getFontDictionary() {
         return fontDict;
     }
 
@@ -174,7 +182,7 @@ public abstract class PdfFont {
      * @return the appropriate PdfFont instance
      * @throws IOException if font creation fails
      */
-    public static PdfFont fromDictionary(COSDictionary fontDict, PDFParser parser) throws IOException {
+    public static PdfFont fromDictionary(PdfDictionary fontDict, PDFParser parser) throws IOException {
         if (fontDict == null) {
             throw new IllegalArgumentException("Font dictionary must not be null");
         }
@@ -204,15 +212,15 @@ public abstract class PdfFont {
     }
 
     /**
-     * Resolves a potentially indirect COS object reference.
+     * Resolves a potentially indirect PDF object reference.
      *
-     * @param obj the COS object
+     * @param obj the PDF object
      * @return the resolved object
      */
-    protected COSBase resolve(COSBase obj) {
-        if (obj instanceof COSObjectReference) {
+    protected PdfBase resolve(PdfBase obj) {
+        if (obj instanceof PdfObjectReference) {
             try {
-                return ((COSObjectReference) obj).dereference();
+                return ((PdfObjectReference) obj).dereference();
             } catch (IOException e) {
                 LOG.warning(() -> "Failed to dereference: " + e.getMessage());
                 return null;
@@ -222,22 +230,22 @@ public abstract class PdfFont {
     }
 
     /**
-     * Extracts a numeric value from a COS object.
+     * Extracts a numeric value from a PDF object.
      */
-    protected static double getNumber(COSBase val) {
-        if (val instanceof org.aspose.pdf.engine.cos.COSInteger) {
-            return ((org.aspose.pdf.engine.cos.COSInteger) val).intValue();
+    protected static double getNumber(PdfBase val) {
+        if (val instanceof org.aspose.pdf.engine.pdfobjects.PdfInteger) {
+            return ((org.aspose.pdf.engine.pdfobjects.PdfInteger) val).intValue();
         }
-        if (val instanceof org.aspose.pdf.engine.cos.COSFloat) {
-            return ((org.aspose.pdf.engine.cos.COSFloat) val).doubleValue();
+        if (val instanceof org.aspose.pdf.engine.pdfobjects.PdfFloat) {
+            return ((org.aspose.pdf.engine.pdfobjects.PdfFloat) val).doubleValue();
         }
         return 0;
     }
 
     private void initFontDescriptor() {
-        COSBase fdVal = resolve(fontDict.get("FontDescriptor"));
-        if (fdVal instanceof COSDictionary) {
-            this.fontDescriptor = new FontDescriptor((COSDictionary) fdVal);
+        PdfBase fdVal = resolve(fontDict.get("FontDescriptor"));
+        if (fdVal instanceof PdfDictionary) {
+            this.fontDescriptor = new FontDescriptor((PdfDictionary) fdVal);
             this.fontMetrics = new FontMetrics(this.fontDescriptor);
         } else {
             this.fontMetrics = new FontMetrics(null);
@@ -245,10 +253,10 @@ public abstract class PdfFont {
     }
 
     private void initToUnicode() {
-        COSBase tuVal = resolve(fontDict.get("ToUnicode"));
-        if (tuVal instanceof COSStream) {
+        PdfBase tuVal = resolve(fontDict.get("ToUnicode"));
+        if (tuVal instanceof PdfStream) {
             try {
-                this.toUnicode = CMapParser.parseToUnicode((COSStream) tuVal);
+                this.toUnicode = CMapParser.parseToUnicode((PdfStream) tuVal);
             } catch (IOException e) {
                 LOG.warning(() -> "Failed to parse ToUnicode CMap: " + e.getMessage());
             }

@@ -1,9 +1,9 @@
 package org.aspose.pdf.engine.colorspace;
 
 import org.aspose.pdf.Resources;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 import org.aspose.pdf.engine.function.PdfFunction;
 import org.aspose.pdf.engine.parser.PDFParser;
 
@@ -40,7 +40,7 @@ public final class DeviceNColorSpace extends ColorSpaceBase {
     }
 
     /**
-     * Parses a DeviceN color space from a COS array.
+     * Parses a DeviceN color space from a PDF array.
      *
      * @param arr       the array {@code [/DeviceN [names] alternateCS tintTransform]}
      * @param resources the page resources
@@ -48,17 +48,17 @@ public final class DeviceNColorSpace extends ColorSpaceBase {
      * @return the parsed color space
      * @throws IOException if parsing fails
      */
-    public static DeviceNColorSpace fromArray(COSArray arr, Resources resources,
+    public static DeviceNColorSpace fromArray(PdfArray arr, Resources resources,
                                                PDFParser parser) throws IOException {
         String[] names = new String[0];
         if (arr.size() > 1) {
-            COSBase namesObj = resolveRef(arr.get(1));
-            if (namesObj instanceof COSArray) {
-                COSArray namesArr = (COSArray) namesObj;
+            PdfBase namesObj = resolveRef(arr.get(1));
+            if (namesObj instanceof PdfArray) {
+                PdfArray namesArr = (PdfArray) namesObj;
                 names = new String[namesArr.size()];
                 for (int i = 0; i < namesArr.size(); i++) {
-                    COSBase n = resolveRef(namesArr.get(i));
-                    names[i] = (n instanceof COSName) ? ((COSName) n).getName() : "Unknown";
+                    PdfBase n = resolveRef(namesArr.get(i));
+                    names[i] = (n instanceof PdfName) ? ((PdfName) n).getName() : "Unknown";
                 }
             }
         }
@@ -89,6 +89,13 @@ public final class DeviceNColorSpace extends ColorSpaceBase {
 
     @Override
     public int getNumberOfComponents() { return colorantNames.length; }
+
+    /** Tints → alternate components (via tint transform) → alternate's RGB. */
+    @Override
+    public int toRGBInt(double[] comps) {
+        if (comps == null || comps.length == 0) return 0xFF000000;
+        return alternateCS.toRGBInt(tintsToAlternate(comps));
+    }
 
     /** Returns the colorant names. */
     public String[] getColorantNames() { return colorantNames.clone(); }

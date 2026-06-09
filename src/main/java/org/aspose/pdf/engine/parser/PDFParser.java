@@ -1,17 +1,17 @@
 package org.aspose.pdf.engine.parser;
 
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSBoolean;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSFloat;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSNull;
-import org.aspose.pdf.engine.cos.COSObjectKey;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSStream;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfBoolean;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfFloat;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfNull;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectKey;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 import org.aspose.pdf.engine.io.RandomAccessReader;
 import org.aspose.pdf.engine.security.PDFDecryptor;
 import org.aspose.pdf.engine.security.PDFEncryptionDict;
@@ -36,7 +36,7 @@ import java.util.regex.Pattern;
 /**
  * Full PDF file parser implementing lazy object loading.
  * Parses the PDF header, cross-reference table, and trailer on {@link #parse()},
- * then loads individual objects on demand via {@link #getObject(COSObjectKey)}.
+ * then loads individual objects on demand via {@link #getObject(PdfObjectKey)}.
  *
  * <p>Conforms to ISO 32000-1:2008, §7.5 (File Structure).</p>
  */
@@ -52,20 +52,20 @@ public final class PDFParser implements Closeable {
     private final XRefParser xrefParser;
 
     private float pdfVersion;
-    private COSDictionary trailer;
-    private Map<COSObjectKey, XRefEntry> xrefEntries;
+    private PdfDictionary trailer;
+    private Map<PdfObjectKey, XRefEntry> xrefEntries;
 
     /** Object cache for lazy loading (thread-safe). */
-    private final Map<COSObjectKey, COSBase> objectCache = new ConcurrentHashMap<>();
+    private final Map<PdfObjectKey, PdfBase> objectCache = new ConcurrentHashMap<>();
 
     /** Guard against circular references during object loading (thread-safe). */
-    private final Set<COSObjectKey> loadingInProgress = ConcurrentHashMap.newKeySet();
+    private final Set<PdfObjectKey> loadingInProgress = ConcurrentHashMap.newKeySet();
 
     /** Decryptor for encrypted PDFs. Null for unencrypted documents. */
     private PDFDecryptor decryptor;
 
     /** Object key of the /Encrypt dictionary — must NOT be decrypted. */
-    private COSObjectKey encryptDictKey;
+    private PdfObjectKey encryptDictKey;
 
     /**
      * Constructs a new PDFParser for the given source.
@@ -133,18 +133,18 @@ public final class PDFParser implements Closeable {
                     + "objects — file is not a usable PDF");
         }
         if (trailer == null) {
-            trailer = new COSDictionary();
+            trailer = new PdfDictionary();
         }
-        if (!trailer.containsKey(COSName.of("Size"))) {
+        if (!trailer.containsKey(PdfName.of("Size"))) {
             int maxObj = 0;
-            for (COSObjectKey key : xrefEntries.keySet()) {
+            for (PdfObjectKey key : xrefEntries.keySet()) {
                 maxObj = Math.max(maxObj, key.getObjectNumber());
             }
-            trailer.set(COSName.of("Size"), COSInteger.valueOf(maxObj + 1L));
+            trailer.set(PdfName.of("Size"), PdfInteger.valueOf(maxObj + 1L));
         }
     }
 
-    private COSDictionary scanTrailerDictionary() throws IOException {
+    private PdfDictionary scanTrailerDictionary() throws IOException {
         byte[] marker = "trailer".getBytes(StandardCharsets.US_ASCII);
         long trailerPos = reader.findBackward(marker, reader.getLength());
         if (trailerPos < 0) {
@@ -164,19 +164,19 @@ public final class PDFParser implements Closeable {
         return parseDictionary();
     }
 
-    private Map<COSObjectKey, XRefEntry> scanIndirectObjects() throws IOException {
+    private Map<PdfObjectKey, XRefEntry> scanIndirectObjects() throws IOException {
         reader.seek(0);
         byte[] bytes = reader.readFully((int) reader.getLength());
         String text = new String(bytes, StandardCharsets.US_ASCII);
         Pattern pattern = Pattern.compile("(?m)(\\d+)\\s+(\\d+)\\s+obj\\b");
         Matcher matcher = pattern.matcher(text);
-        Map<COSObjectKey, XRefEntry> scanned = new LinkedHashMap<>();
+        Map<PdfObjectKey, XRefEntry> scanned = new LinkedHashMap<>();
         while (matcher.find()) {
             int objectNumber = Integer.parseInt(matcher.group(1));
             int generation = XRefParser.sanitizeGeneration(objectNumber,
                     Integer.parseInt(matcher.group(2)));
             long offset = matcher.start();
-            COSObjectKey key = new COSObjectKey(objectNumber, generation);
+            PdfObjectKey key = new PdfObjectKey(objectNumber, generation);
             scanned.putIfAbsent(key, XRefEntry.inUse(objectNumber, generation, offset));
         }
         return scanned;
@@ -187,16 +187,16 @@ public final class PDFParser implements Closeable {
      * Objects are cached after first load.
      *
      * @param key the object key
-     * @return the COS object, or {@link COSNull#INSTANCE} if not found
+     * @return the PDF object, or {@link PdfNull#INSTANCE} if not found
      * @throws IOException if the object cannot be read
      */
-    public synchronized COSBase getObject(COSObjectKey key) throws IOException {
+    public synchronized PdfBase getObject(PdfObjectKey key) throws IOException {
         if (key == null) {
-            return COSNull.INSTANCE;
+            return PdfNull.INSTANCE;
         }
 
         // Check cache
-        COSBase cached = objectCache.get(key);
+        PdfBase cached = objectCache.get(key);
         if (cached != null) {
             return cached;
         }
@@ -204,13 +204,13 @@ public final class PDFParser implements Closeable {
         // Check for circular reference
         if (loadingInProgress.contains(key)) {
             LOGGER.log(Level.WARNING, "Circular reference detected for object {0}", key);
-            return COSNull.INSTANCE;
+            return PdfNull.INSTANCE;
         }
 
         // Find xref entry
         if (xrefEntries == null) {
             LOGGER.log(Level.WARNING, "XRef table not available (parse not called or failed)");
-            return COSNull.INSTANCE;
+            return PdfNull.INSTANCE;
         }
         XRefEntry entry = xrefEntries.get(key);
         if (entry == null) {
@@ -235,7 +235,7 @@ public final class PDFParser implements Closeable {
             } catch (IOException ignored) { /* recovery is best-effort */ }
             if (entry == null) {
                 LOGGER.log(Level.FINE, "Object {0} not found in xref or by scanning", key);
-                return COSNull.INSTANCE;
+                return PdfNull.INSTANCE;
             }
         }
 
@@ -252,14 +252,14 @@ public final class PDFParser implements Closeable {
                     // re-saved. PDFNEWNET_38682 / 37856 / 37430.
                     LOGGER.log(Level.WARNING, "Object {0} unresolvable ({1}); treating as null",
                             new Object[]{key, e.getMessage()});
-                    return COSNull.INSTANCE;
+                    return PdfNull.INSTANCE;
                 }
             case COMPRESSED:
                 return loadCompressedObject(key, entry);
             case FREE:
-                return COSNull.INSTANCE;
+                return PdfNull.INSTANCE;
             default:
-                return COSNull.INSTANCE;
+                return PdfNull.INSTANCE;
         }
     }
 
@@ -267,11 +267,11 @@ public final class PDFParser implements Closeable {
      * Loads an object by object number (generation 0).
      *
      * @param objectNumber the object number
-     * @return the COS object
+     * @return the PDF object
      * @throws IOException if the object cannot be read
      */
-    public COSBase getObject(int objectNumber) throws IOException {
-        return getObject(new COSObjectKey(objectNumber, 0));
+    public PdfBase getObject(int objectNumber) throws IOException {
+        return getObject(new PdfObjectKey(objectNumber, 0));
     }
 
     /**
@@ -279,7 +279,7 @@ public final class PDFParser implements Closeable {
      *
      * @return the trailer dictionary
      */
-    public COSDictionary getTrailer() {
+    public PdfDictionary getTrailer() {
         return trailer;
     }
 
@@ -298,9 +298,9 @@ public final class PDFParser implements Closeable {
      * @return the catalog dictionary
      * @throws IOException if the catalog cannot be loaded
      */
-    public COSDictionary getCatalog() throws IOException {
-        COSBase rootRef = trailer.get(COSName.of("Root"));
-        COSBase root;
+    public PdfDictionary getCatalog() throws IOException {
+        PdfBase rootRef = trailer.get(PdfName.of("Root"));
+        PdfBase root;
         try {
             root = resolveReference(rootRef);
         } catch (IOException e) {
@@ -309,21 +309,21 @@ public final class PDFParser implements Closeable {
                     e.getMessage());
             root = null;
         }
-        if (root instanceof COSDictionary
-                && "Catalog".equals(((COSDictionary) root).getNameAsString("Type"))) {
-            return (COSDictionary) root;
+        if (root instanceof PdfDictionary
+                && "Catalog".equals(((PdfDictionary) root).getNameAsString("Type"))) {
+            return (PdfDictionary) root;
         }
         // /Root referred to a non-catalog object — typical when xref offsets
         // are corrupted and the entry points into the middle of an unrelated
-        // object (e.g. an image stream that also extends COSDictionary).
+        // object (e.g. an image stream that also extends PdfDictionary).
         // Fall through to the recovery fallback rather than returning the
         // wrong object, which would silently break every page-tree walk.
-        if (root instanceof COSDictionary) {
+        if (root instanceof PdfDictionary) {
             LOGGER.log(Level.WARNING,
                     "Trailer /Root resolved to a {0} (not /Type /Catalog); attempting recovery",
-                    ((COSDictionary) root).getNameAsString("Type"));
+                    ((PdfDictionary) root).getNameAsString("Type"));
         }
-        COSDictionary recovered = findCatalogFallback();
+        PdfDictionary recovered = findCatalogFallback();
         if (recovered != null) {
             return recovered;
         }
@@ -331,17 +331,17 @@ public final class PDFParser implements Closeable {
                 "Cannot find /Root catalog dictionary in trailer — invalid or missing root object");
     }
 
-    private COSDictionary findCatalogFallback() throws IOException {
+    private PdfDictionary findCatalogFallback() throws IOException {
         if (xrefEntries == null) {
             return null;
         }
-        COSDictionary recovered = findCatalogInEntries(xrefEntries);
+        PdfDictionary recovered = findCatalogInEntries(xrefEntries);
         if (recovered != null) {
             return recovered;
         }
 
-        Map<COSObjectKey, XRefEntry> scannedEntries = scanIndirectObjects();
-        for (Map.Entry<COSObjectKey, XRefEntry> entry : scannedEntries.entrySet()) {
+        Map<PdfObjectKey, XRefEntry> scannedEntries = scanIndirectObjects();
+        for (Map.Entry<PdfObjectKey, XRefEntry> entry : scannedEntries.entrySet()) {
             xrefEntries.putIfAbsent(entry.getKey(), entry.getValue());
         }
         recovered = findCatalogInEntries(scannedEntries);
@@ -367,12 +367,12 @@ public final class PDFParser implements Closeable {
      * are rewritten so subsequent {@code getObject(key)} calls return the
      * same catalog rather than the integer the bad offset used to decode to.
      */
-    private COSDictionary findCatalogByDirectScan(Map<COSObjectKey, XRefEntry> scannedEntries)
+    private PdfDictionary findCatalogByDirectScan(Map<PdfObjectKey, XRefEntry> scannedEntries)
             throws IOException {
-        for (Map.Entry<COSObjectKey, XRefEntry> e : scannedEntries.entrySet()) {
-            COSObjectKey key = e.getKey();
+        for (Map.Entry<PdfObjectKey, XRefEntry> e : scannedEntries.entrySet()) {
+            PdfObjectKey key = e.getKey();
             XRefEntry scanned = e.getValue();
-            COSBase candidate;
+            PdfBase candidate;
             try {
                 // Wipe any stale cache entry from an earlier failed parse and
                 // load from the scanned offset.
@@ -384,25 +384,25 @@ public final class PDFParser implements Closeable {
                         new Object[]{key, ex.getMessage()});
                 continue;
             }
-            if (candidate instanceof COSDictionary
-                    && "Catalog".equals(((COSDictionary) candidate).getNameAsString("Type"))) {
+            if (candidate instanceof PdfDictionary
+                    && "Catalog".equals(((PdfDictionary) candidate).getNameAsString("Type"))) {
                 xrefEntries.put(key, scanned);
-                trailer.set(COSName.of("Root"),
-                        new COSObjectReference(key, this::getObject));
+                trailer.set(PdfName.of("Root"),
+                        new PdfObjectReference(key, this::getObject));
                 clearDirtyRecursive(trailer);
                 LOGGER.log(Level.WARNING,
                         "Catalog recovered via direct body scan (key {0} at offset {1}); "
                         + "trailer /Root rewritten",
                         new Object[]{key, scanned.getByteOffset()});
-                return (COSDictionary) candidate;
+                return (PdfDictionary) candidate;
             }
         }
         return null;
     }
 
-    private COSDictionary findCatalogInEntries(Map<COSObjectKey, XRefEntry> entriesToSearch) throws IOException {
-        for (COSObjectKey key : new java.util.ArrayList<>(entriesToSearch.keySet())) {
-            COSBase candidate;
+    private PdfDictionary findCatalogInEntries(Map<PdfObjectKey, XRefEntry> entriesToSearch) throws IOException {
+        for (PdfObjectKey key : new java.util.ArrayList<>(entriesToSearch.keySet())) {
+            PdfBase candidate;
             try {
                 candidate = getObject(key);
             } catch (IOException e) {
@@ -410,10 +410,10 @@ public final class PDFParser implements Closeable {
                         new Object[]{key, e.getMessage()});
                 continue;
             }
-            if (candidate instanceof COSDictionary) {
-                COSDictionary dict = (COSDictionary) candidate;
+            if (candidate instanceof PdfDictionary) {
+                PdfDictionary dict = (PdfDictionary) candidate;
                 if ("Catalog".equals(dict.getNameAsString("Type"))) {
-                    trailer.set(COSName.of("Root"), new COSObjectReference(key, this::getObject));
+                    trailer.set(PdfName.of("Root"), new PdfObjectReference(key, this::getObject));
                     clearDirtyRecursive(trailer);
                     return dict;
                 }
@@ -427,7 +427,7 @@ public final class PDFParser implements Closeable {
      *
      * @return the set of all object keys
      */
-    public Set<COSObjectKey> getAllObjectKeys() {
+    public Set<PdfObjectKey> getAllObjectKeys() {
         if (xrefEntries == null) {
             return java.util.Collections.emptySet();
         }
@@ -455,27 +455,27 @@ public final class PDFParser implements Closeable {
      */
     public void initSecurity(byte[] password, ICustomSecurityHandler customHandler) throws IOException {
         if (trailer == null) return;
-        COSBase encryptRef = trailer.get(COSName.of("Encrypt"));
+        PdfBase encryptRef = trailer.get(PdfName.of("Encrypt"));
         if (encryptRef == null) return; // not encrypted
 
         // Record the encrypt dict's object key so we don't decrypt it
-        if (encryptRef instanceof COSObjectReference) {
-            this.encryptDictKey = ((COSObjectReference) encryptRef).getKey();
+        if (encryptRef instanceof PdfObjectReference) {
+            this.encryptDictKey = ((PdfObjectReference) encryptRef).getKey();
         }
 
         // Load the encryption dictionary (it is NOT encrypted)
-        COSBase encryptObj = resolveReference(encryptRef);
-        if (!(encryptObj instanceof COSDictionary)) return;
+        PdfBase encryptObj = resolveReference(encryptRef);
+        if (!(encryptObj instanceof PdfDictionary)) return;
 
-        PDFEncryptionDict encDict = new PDFEncryptionDict((COSDictionary) encryptObj);
+        PDFEncryptionDict encDict = new PDFEncryptionDict((PdfDictionary) encryptObj);
 
         // Get document ID from trailer
         byte[] documentId = null;
-        COSBase idArray = trailer.get(COSName.of("ID"));
-        if (idArray instanceof COSArray && ((COSArray) idArray).size() > 0) {
-            COSBase firstId = ((COSArray) idArray).get(0);
-            if (firstId instanceof COSString) {
-                documentId = ((COSString) firstId).getBytes();
+        PdfBase idArray = trailer.get(PdfName.of("ID"));
+        if (idArray instanceof PdfArray && ((PdfArray) idArray).size() > 0) {
+            PdfBase firstId = ((PdfArray) idArray).get(0);
+            if (firstId instanceof PdfString) {
+                documentId = ((PdfString) firstId).getBytes();
             }
         }
 
@@ -527,7 +527,7 @@ public final class PDFParser implements Closeable {
      * Returns true if this document is encrypted.
      */
     public boolean isEncrypted() {
-        return trailer != null && trailer.get(COSName.of("Encrypt")) != null;
+        return trailer != null && trailer.get(PdfName.of("Encrypt")) != null;
     }
 
     /**
@@ -547,16 +547,16 @@ public final class PDFParser implements Closeable {
     }
 
     /**
-     * Resolves a COS object reference to the actual object.
+     * Resolves a PDF object reference to the actual object.
      * If the input is already a direct object, returns it as-is.
      *
      * @param obj the object or reference to resolve
      * @return the resolved object
      * @throws IOException if resolution fails
      */
-    public COSBase resolveReference(COSBase obj) throws IOException {
-        if (obj instanceof COSObjectReference) {
-            COSObjectKey key = ((COSObjectReference) obj).getKey();
+    public PdfBase resolveReference(PdfBase obj) throws IOException {
+        if (obj instanceof PdfObjectReference) {
+            PdfObjectKey key = ((PdfObjectReference) obj).getKey();
             return getObject(key);
         }
         return obj;
@@ -564,12 +564,12 @@ public final class PDFParser implements Closeable {
 
     /**
      * Parses an object body at the current lexer position.
-     * This is the main recursive descent parser for COS objects.
+     * This is the main recursive descent parser for PDF objects.
      *
-     * @return the parsed COS object
+     * @return the parsed PDF object
      * @throws IOException if parsing fails
      */
-    public COSBase parseObjectBody() throws IOException {
+    public PdfBase parseObjectBody() throws IOException {
         PDFLexer.Token token = lexer.peekToken();
 
         switch (token.getType()) {
@@ -585,7 +585,7 @@ public final class PDFParser implements Closeable {
                         LOGGER.log(Level.WARNING,
                                 "Malformed indirect reference starting with oversized integer {0}; recovering as null",
                                 token.getValue());
-                        return COSNull.INSTANCE;
+                        return PdfNull.INSTANCE;
                     }
                     // Extremely large integers (e.g. Float.MAX_VALUE written as int)
                     // fall back to real number representation
@@ -593,9 +593,9 @@ public final class PDFParser implements Closeable {
                     lexer.clearPeek();
                     try {
                         double dVal = Double.parseDouble(token.getValue());
-                        return new COSFloat((float) dVal);
+                        return new PdfFloat((float) dVal);
                     } catch (NumberFormatException e2) {
-                        return COSInteger.valueOf(0);
+                        return PdfInteger.valueOf(0);
                     }
                 }
 
@@ -606,14 +606,14 @@ public final class PDFParser implements Closeable {
                     PDFLexer.Token rToken = lexer.peekToken();
                     if (rToken.getType() == PDFLexer.TokenType.KEYWORD && "R".equals(rToken.getValue())) {
                         lexer.nextToken(); // consume 'R'
-                        COSObjectKey refKey = new COSObjectKey((int) intVal, Integer.parseInt(genToken.getValue()));
-                        COSObjectReference ref = new COSObjectReference(refKey);
+                        PdfObjectKey refKey = new PdfObjectKey((int) intVal, Integer.parseInt(genToken.getValue()));
+                        PdfObjectReference ref = new PdfObjectReference(refKey);
                         ref.setResolver(key -> {
                             try {
                                 return this.getObject(key);
                             } catch (IOException e) {
                                 LOGGER.log(Level.WARNING, "Failed to resolve reference {0}", key);
-                                return COSNull.INSTANCE;
+                                return PdfNull.INSTANCE;
                             }
                         });
                         return ref;
@@ -626,23 +626,23 @@ public final class PDFParser implements Closeable {
                     // The peeked token stays valid in the lexer
                 }
 
-                return COSInteger.valueOf(intVal);
+                return PdfInteger.valueOf(intVal);
             }
             case REAL: {
                 lexer.nextToken();
-                return new COSFloat(Float.parseFloat(token.getValue()));
+                return new PdfFloat(Float.parseFloat(token.getValue()));
             }
             case NAME: {
                 lexer.nextToken();
-                return COSName.of(token.getValue());
+                return PdfName.of(token.getValue());
             }
             case LITERAL_STRING: {
                 lexer.nextToken();
-                return new COSString(token.getValue().getBytes(StandardCharsets.ISO_8859_1));
+                return new PdfString(token.getValue().getBytes(StandardCharsets.ISO_8859_1));
             }
             case HEX_STRING: {
                 lexer.nextToken();
-                COSString s = new COSString(token.getValue().getBytes(StandardCharsets.ISO_8859_1));
+                PdfString s = new PdfString(token.getValue().getBytes(StandardCharsets.ISO_8859_1));
                 s.setForceHex(true);
                 return s;
             }
@@ -650,17 +650,17 @@ public final class PDFParser implements Closeable {
                 String kw = token.getValue();
                 if ("true".equals(kw)) {
                     lexer.nextToken();
-                    return COSBoolean.TRUE;
+                    return PdfBoolean.TRUE;
                 } else if ("false".equals(kw)) {
                     lexer.nextToken();
-                    return COSBoolean.FALSE;
+                    return PdfBoolean.FALSE;
                 } else if ("null".equals(kw)) {
                     lexer.nextToken();
-                    return COSNull.INSTANCE;
+                    return PdfNull.INSTANCE;
                 }
                 // "endobj" with no body means an empty/null object
                 if ("endobj".equals(kw)) {
-                    return COSNull.INSTANCE;
+                    return PdfNull.INSTANCE;
                 }
                 // Other keywords (endstream, etc.) are not objects
                 throw new IOException("Unexpected keyword while parsing object body: " + kw
@@ -670,7 +670,7 @@ public final class PDFParser implements Closeable {
                 return parseArray();
             }
             case DICT_OPEN: {
-                COSDictionary dict = parseDictionary();
+                PdfDictionary dict = parseDictionary();
                 // Check if followed by "stream"
                 PDFLexer.Token peek = lexer.peekToken();
                 if (peek.getType() == PDFLexer.TokenType.KEYWORD && "stream".equals(peek.getValue())) {
@@ -679,7 +679,7 @@ public final class PDFParser implements Closeable {
                 return dict;
             }
             case EOF:
-                return COSNull.INSTANCE;
+                return PdfNull.INSTANCE;
             default:
                 throw new IOException("Unexpected token: " + token);
         }
@@ -689,7 +689,7 @@ public final class PDFParser implements Closeable {
 
     /**
      * Parses the PDF/FDF header (%PDF-X.Y or %FDF-X.Y).
-     * FDF (Forms Data Format) files use the same COS object model as PDF (ISO 32000-1 §12.7.7).
+     * FDF (Forms Data Format) files use the same PDF object model as PDF (ISO 32000-1 §12.7.7).
      */
     private void parseHeader() throws IOException {
         reader.seek(0);
@@ -699,6 +699,25 @@ public final class PDFParser implements Closeable {
             long fdfHeaderPos = reader.findForward("%FDF-".getBytes(StandardCharsets.US_ASCII), 0);
             long headerPos = chooseHeaderPosition(pdfHeaderPos, fdfHeaderPos);
             if (headerPos < 0 || headerPos > 1024) {
+                // No %PDF-/%FDF- header anywhere in the file. Some real-world files
+                // have their header bytes corrupted or overwritten (damaged download,
+                // re-wrapped container) yet retain a complete object body + xref. If
+                // the file clearly contains PDF structure, proceed headerless with a
+                // conservative default version and let the xref parser (and its
+                // object-scan rebuild) recover the objects — mirrors Acrobat / pdf.js,
+                // which open such files. We require BOTH an indirect-object header and
+                // a startxref keyword to avoid mis-classifying genuinely non-PDF data.
+                long objPos = reader.findForward(" obj".getBytes(StandardCharsets.US_ASCII), 0);
+                long startxrefPos =
+                        reader.findForward("startxref".getBytes(StandardCharsets.US_ASCII), 0);
+                if (objPos >= 0 && startxrefPos >= 0) {
+                    LOGGER.log(Level.WARNING,
+                            "No %PDF- header found, but file contains PDF structure "
+                            + "(obj@{0}, startxref@{1}); assuming version 1.4 and continuing headerless",
+                            new Object[]{objPos, startxrefPos});
+                    pdfVersion = 1.4f;
+                    return;
+                }
                 throw new IOException("Not a PDF/FDF file: missing %PDF- or %FDF- header");
             }
             LOGGER.log(Level.WARNING, "Found PDF/FDF header at offset {0}; tolerating leading junk bytes", headerPos);
@@ -738,7 +757,7 @@ public final class PDFParser implements Closeable {
      * Loads an in-use object from its byte offset.
      * If the xref offset is incorrect, falls back to scanning for the object header.
      */
-    private COSBase loadInUseObject(COSObjectKey key, XRefEntry entry) throws IOException {
+    private PdfBase loadInUseObject(PdfObjectKey key, XRefEntry entry) throws IOException {
         loadingInProgress.add(key);
         try {
             long offset = entry.getByteOffset();
@@ -757,7 +776,7 @@ public final class PDFParser implements Closeable {
             }
 
             // Parse the object body
-            COSBase object = parseObjectBody();
+            PdfBase object = parseObjectBody();
             object.setObjectKey(key);
 
             // Decrypt if needed (skip encryption dict itself and XRef streams)
@@ -786,7 +805,7 @@ public final class PDFParser implements Closeable {
      * at the given offset. Returns true if successful, false if the offset is wrong.
      * Resets reader/lexer state cleanly on failure.
      */
-    private boolean trySeekToObj(COSObjectKey key, long offset) throws IOException {
+    private boolean trySeekToObj(PdfObjectKey key, long offset) throws IOException {
         if (offset < 0 || offset > reader.getLength()) {
             return false;
         }
@@ -837,7 +856,7 @@ public final class PDFParser implements Closeable {
      * @param key the object key to find
      * @return the byte offset of the object header, or -1 if not found
      */
-    private long scanForObject(COSObjectKey key, long expectedOffset) throws IOException {
+    private long scanForObject(PdfObjectKey key, long expectedOffset) throws IOException {
         byte[] pattern = (key.getObjectNumber() + " " + key.getGenerationNumber() + " obj").getBytes(StandardCharsets.US_ASCII);
         // Prefer candidates at or after the broken xref offset. In corrupted
         // PDFs there may be earlier textual occurrences of "N G obj" inside
@@ -880,17 +899,17 @@ public final class PDFParser implements Closeable {
     /**
      * Loads a compressed object from an object stream.
      */
-    private COSBase loadCompressedObject(COSObjectKey key, XRefEntry entry) throws IOException {
+    private PdfBase loadCompressedObject(PdfObjectKey key, XRefEntry entry) throws IOException {
         loadingInProgress.add(key);
         try {
             // Load the object stream
-            COSBase streamObj = getObject(new COSObjectKey(entry.getObjectStreamNumber(), 0));
-            if (!(streamObj instanceof COSStream)) {
+            PdfBase streamObj = getObject(new PdfObjectKey(entry.getObjectStreamNumber(), 0));
+            if (!(streamObj instanceof PdfStream)) {
                 throw new IOException("Object stream " + entry.getObjectStreamNumber() + " is not a stream");
             }
-            COSStream objStream = (COSStream) streamObj;
+            PdfStream objStream = (PdfStream) streamObj;
 
-            // Get stream properties (COSStream extends COSDictionary)
+            // Get stream properties (PdfStream extends PdfDictionary)
             int first = objStream.getInt("First", 0);
             int n = objStream.getInt("N", 0);
 
@@ -921,11 +940,11 @@ public final class PDFParser implements Closeable {
             streamReader.seek(objectOffset);
 
             // Parse the object using a temporary parser for the stream data.
-            // IMPORTANT: We must fix up any COSObjectReferences created during parsing
+            // IMPORTANT: We must fix up any PdfObjectReferences created during parsing
             // so their resolver points to the MAIN parser (this), not the stream parser
             // which has no xref table.
             PDFParser streamParser = new PDFParser(streamReader);
-            COSBase object = streamParser.parseObjectBody();
+            PdfBase object = streamParser.parseObjectBody();
             object.setObjectKey(key);
             fixResolvers(object);
 
@@ -938,25 +957,25 @@ public final class PDFParser implements Closeable {
     }
 
     /**
-     * Recursively fixes resolvers on COSObjectReferences within a parsed object tree
+     * Recursively fixes resolvers on PdfObjectReferences within a parsed object tree
      * so they point to this (main) parser instead of a temporary stream parser.
      */
-    private void fixResolvers(COSBase object) {
-        if (object instanceof COSObjectReference) {
-            ((COSObjectReference) object).setResolver(k -> {
+    private void fixResolvers(PdfBase object) {
+        if (object instanceof PdfObjectReference) {
+            ((PdfObjectReference) object).setResolver(k -> {
                 try {
                     return this.getObject(k);
                 } catch (IOException e) {
                     LOGGER.log(Level.WARNING, "Failed to resolve reference {0}", k);
-                    return COSNull.INSTANCE;
+                    return PdfNull.INSTANCE;
                 }
             });
-        } else if (object instanceof COSDictionary) {
-            for (COSName key : ((COSDictionary) object).keySet()) {
-                fixResolvers(((COSDictionary) object).get(key.getName()));
+        } else if (object instanceof PdfDictionary) {
+            for (PdfName key : ((PdfDictionary) object).keySet()) {
+                fixResolvers(((PdfDictionary) object).get(key.getName()));
             }
-        } else if (object instanceof COSArray) {
-            COSArray array = (COSArray) object;
+        } else if (object instanceof PdfArray) {
+            PdfArray array = (PdfArray) object;
             for (int i = 0; i < array.size(); i++) {
                 fixResolvers(array.get(i));
             }
@@ -966,9 +985,9 @@ public final class PDFParser implements Closeable {
     /**
      * Parses an array object.
      */
-    private COSArray parseArray() throws IOException {
+    private PdfArray parseArray() throws IOException {
         lexer.nextToken(); // consume '['
-        COSArray array = new COSArray();
+        PdfArray array = new PdfArray();
 
         while (true) {
             PDFLexer.Token peek = lexer.peekToken();
@@ -988,9 +1007,9 @@ public final class PDFParser implements Closeable {
     /**
      * Parses a dictionary object (after consuming '&lt;&lt;').
      */
-    private COSDictionary parseDictionary() throws IOException {
+    private PdfDictionary parseDictionary() throws IOException {
         lexer.nextToken(); // consume '<<'
-        COSDictionary dict = new COSDictionary();
+        PdfDictionary dict = new PdfDictionary();
 
         while (true) {
             PDFLexer.Token peek = lexer.peekToken();
@@ -1013,13 +1032,13 @@ public final class PDFParser implements Closeable {
             if (keyToken.getType() != PDFLexer.TokenType.NAME) {
                 throw new IOException("Expected name as dictionary key, got: " + keyToken);
             }
-            COSName key = COSName.of(keyToken.getValue());
+            PdfName key = PdfName.of(keyToken.getValue());
 
             // Value
             PDFLexer.Token valuePeek = lexer.peekToken();
             if (shouldTreatMissingDictionaryValue(key, valuePeek)) {
                 LOGGER.log(Level.WARNING, "Treating missing value for dictionary key /{0} as null", key.getName());
-                dict.set(key, COSNull.INSTANCE);
+                dict.set(key, PdfNull.INSTANCE);
                 continue;
             }
             if (shouldTreatKeywordAsNameInDictionaryValue(valuePeek)) {
@@ -1027,10 +1046,10 @@ public final class PDFParser implements Closeable {
                         "Treating bare keyword value ''{0}'' for dictionary key /{1} as a name object",
                         new Object[]{valuePeek.getValue(), key.getName()});
                 lexer.nextToken();
-                dict.set(key, COSName.of(valuePeek.getValue()));
+                dict.set(key, PdfName.of(valuePeek.getValue()));
                 continue;
             }
-            COSBase value = parseObjectBody();
+            PdfBase value = parseObjectBody();
             dict.set(key, value);
         }
 
@@ -1055,7 +1074,7 @@ public final class PDFParser implements Closeable {
         return false;
     }
 
-    private boolean shouldTreatMissingDictionaryValue(COSName key, PDFLexer.Token valuePeek) {
+    private boolean shouldTreatMissingDictionaryValue(PdfName key, PDFLexer.Token valuePeek) {
         if (valuePeek.getType() == PDFLexer.TokenType.DICT_CLOSE
                 || valuePeek.getType() == PDFLexer.TokenType.EOF) {
             return true;
@@ -1094,14 +1113,25 @@ public final class PDFParser implements Closeable {
      * exactly CR+LF or LF (NOT CR alone).
      *
      * @param dict the stream's dictionary
-     * @return a COSStream wrapping the dictionary and raw data
+     * @return a PdfStream wrapping the dictionary and raw data
      */
-    private COSStream parseStream(COSDictionary dict) throws IOException {
+    private PdfStream parseStream(PdfDictionary dict) throws IOException {
         // Consume "stream" keyword
         lexer.nextToken();
 
-        // After "stream", must be CR+LF or LF (per §7.3.8.1)
-        // Use peek() first to avoid consuming data bytes if EOL was already skipped
+        // After "stream", must be CR+LF or LF (per §7.3.8.1).
+        // Use peek() first to avoid consuming data bytes if EOL was already skipped.
+        //
+        // Tolerance: some non-conformant producers emit spaces/tabs before the
+        // required EOL ("stream<SP><CR><LF>"). Those leading spaces would otherwise
+        // be read as the first stream bytes, shifting a Flate stream's zlib header
+        // and causing "incorrect header check". Skip them — but ONLY when an EOL
+        // follows, since a stream's actual data may legitimately begin with spaces.
+        long afterStreamKeyword = reader.getPosition();
+        int probe;
+        while ((probe = reader.peek()) == ' ' || probe == '\t') {
+            reader.read();
+        }
         int c = reader.peek();
         if (c == '\r') {
             reader.read(); // consume CR
@@ -1110,25 +1140,29 @@ public final class PDFParser implements Closeable {
             }
         } else if (c == '\n') {
             reader.read(); // consume LF
+        } else {
+            // No EOL after the skipped spaces — they were stream data, not a
+            // separator. Rewind so they are preserved (also a no-op when nothing
+            // was skipped and the reader is already at stream data).
+            reader.seek(afterStreamKeyword);
         }
-        // If c is neither CR nor LF, reader is already at stream data — do not consume
 
         // Remember stream data start position BEFORE resolving /Length
         long streamDataStart = reader.getPosition();
 
         // Read stream data based on /Length
-        COSBase lengthObj = dict.get(COSName.of("Length"));
+        PdfBase lengthObj = dict.get(PdfName.of("Length"));
         int length = -1;
-        if (lengthObj instanceof COSInteger) {
-            length = ((COSInteger) lengthObj).intValue();
-        } else if (lengthObj instanceof COSObjectReference) {
+        if (lengthObj instanceof PdfInteger) {
+            length = ((PdfInteger) lengthObj).intValue();
+        } else if (lengthObj instanceof PdfObjectReference) {
             // /Length might be an indirect reference — resolve it
             // IMPORTANT: resolveReference() calls getObject() which does
             // reader.seek() to another object! Must restore position after.
-            COSBase resolved = resolveReference(lengthObj);
-            if (resolved instanceof COSInteger) {
-                length = ((COSInteger) resolved).intValue();
-                dict.set(COSName.of("Length"), COSInteger.valueOf(length));
+            PdfBase resolved = resolveReference(lengthObj);
+            if (resolved instanceof PdfInteger) {
+                length = ((PdfInteger) resolved).intValue();
+                dict.set(PdfName.of("Length"), PdfInteger.valueOf(length));
             }
             // CRITICAL: restore reader position after resolveReference moved it
             reader.seek(streamDataStart);
@@ -1136,8 +1170,21 @@ public final class PDFParser implements Closeable {
 
         if (length < 0) {
             length = inferStreamLength(streamDataStart);
-            dict.set(COSName.of("Length"), COSInteger.valueOf(length));
+            dict.set(PdfName.of("Length"), PdfInteger.valueOf(length));
             reader.seek(streamDataStart);
+        }
+
+        // A corrupt /Length larger than the file's remaining bytes would
+        // allocate (up to gigabytes of) memory only to hit EOF. Clamp to what
+        // is physically left — the endstream check below then re-derives the
+        // true length by scanning, exactly as for any other /Length mismatch.
+        long remaining = reader.getLength() - streamDataStart;
+        if (length > remaining) {
+            final int badLength = length;
+            LOGGER.log(Level.WARNING,
+                    "Stream /Length {0} exceeds remaining file bytes {1}; clamping",
+                    new Object[]{badLength, remaining});
+            length = (int) Math.max(0, remaining);
         }
 
         byte[] rawData = reader.readFully(length);
@@ -1145,13 +1192,37 @@ public final class PDFParser implements Closeable {
         // Skip to "endstream"
         lexer.skipWhitespaceAndComments();
         PDFLexer.Token endstream = lexer.nextToken();
-        if (endstream.getType() != PDFLexer.TokenType.KEYWORD || !"endstream".equals(endstream.getValue())) {
-            LOGGER.log(Level.WARNING, "Expected 'endstream', got: {0}", endstream);
+        boolean atEndstream = endstream.getType() == PDFLexer.TokenType.KEYWORD
+                && "endstream".equals(endstream.getValue());
+        if (!atEndstream) {
+            // The declared /Length disagrees with the stream's actual extent: the
+            // bytes just read either overshot 'endstream' (capturing trailing junk
+            // that corrupts the decode filter — e.g. Flate "incorrect header check"
+            // or ASCII85 "invalid character '~'" from the next object) or stopped
+            // short. Re-derive the true length by scanning for 'endstream' and
+            // re-read, so the filter receives exactly the stream bytes (§7.3.8.2).
+            LOGGER.log(Level.WARNING,
+                    "Stream /Length {0} disagrees with endstream position; recovering by scan",
+                    length);
+            try {
+                int corrected = inferStreamLength(streamDataStart);
+                reader.seek(streamDataStart);
+                rawData = reader.readFully(corrected);
+                dict.set(PdfName.of("Length"), PdfInteger.valueOf(corrected));
+                // Re-position past the real 'endstream' for subsequent parsing.
+                lexer.skipWhitespaceAndComments();
+                lexer.nextToken();
+            } catch (IOException scanFailed) {
+                // 'endstream' not found at all — keep the original bytes and let the
+                // filter's own salvage logic recover what it can.
+                LOGGER.log(Level.WARNING, "Stream length recovery failed: {0}",
+                        scanFailed.getMessage());
+            }
         }
 
-        // COSStream extends COSDictionary — create stream and copy dict entries
-        COSStream stream = new COSStream(rawData);
-        for (java.util.Map.Entry<COSName, COSBase> entry : dict) {
+        // PdfStream extends PdfDictionary — create stream and copy dict entries
+        PdfStream stream = new PdfStream(rawData);
+        for (java.util.Map.Entry<PdfName, PdfBase> entry : dict) {
             stream.set(entry.getKey(), entry.getValue());
         }
         return stream;
@@ -1160,8 +1231,8 @@ public final class PDFParser implements Closeable {
     // ── Decryption support ──
 
     /**
-     * Recursively decrypts an object: replaces COSString bytes with decrypted bytes,
-     * and attaches the decryptor to COSStream instances.
+     * Recursively decrypts an object: replaces PdfString bytes with decrypted bytes,
+     * and attaches the decryptor to PdfStream instances.
      */
     /**
      * Best-effort fallback for malformed streams with missing or invalid /Length.
@@ -1204,59 +1275,59 @@ public final class PDFParser implements Closeable {
         }
     }
 
-    private COSBase decryptObject(COSBase obj, COSObjectKey key) {
-        if (obj instanceof COSStream) {
-            COSStream stream = (COSStream) obj;
+    private PdfBase decryptObject(PdfBase obj, PdfObjectKey key) {
+        if (obj instanceof PdfStream) {
+            PdfStream stream = (PdfStream) obj;
             // Decrypt strings inside the stream dictionary
             decryptDictEntries(stream, key);
             // Attach decryptor for stream data (decrypted lazily in getDecodedData)
             stream.setDecryptor(decryptor, key.getObjectNumber(), key.getGenerationNumber());
             return stream;
         }
-        if (obj instanceof COSDictionary) {
-            decryptDictEntries((COSDictionary) obj, key);
+        if (obj instanceof PdfDictionary) {
+            decryptDictEntries((PdfDictionary) obj, key);
             return obj;
         }
-        if (obj instanceof COSArray) {
-            decryptArrayEntries((COSArray) obj, key);
+        if (obj instanceof PdfArray) {
+            decryptArrayEntries((PdfArray) obj, key);
             return obj;
         }
-        if (obj instanceof COSString) {
-            return decryptString((COSString) obj, key);
+        if (obj instanceof PdfString) {
+            return decryptString((PdfString) obj, key);
         }
         return obj;
     }
 
-    private void decryptDictEntries(COSDictionary dict, COSObjectKey key) {
-        for (COSName name : new java.util.ArrayList<>(dict.keySet())) {
-            COSBase val = dict.get(name);
-            if (val instanceof COSString) {
-                dict.set(name, decryptString((COSString) val, key));
-            } else if (val instanceof COSArray) {
-                decryptArrayEntries((COSArray) val, key);
-            } else if (val instanceof COSDictionary && !(val instanceof COSStream)) {
-                decryptDictEntries((COSDictionary) val, key);
+    private void decryptDictEntries(PdfDictionary dict, PdfObjectKey key) {
+        for (PdfName name : new java.util.ArrayList<>(dict.keySet())) {
+            PdfBase val = dict.get(name);
+            if (val instanceof PdfString) {
+                dict.set(name, decryptString((PdfString) val, key));
+            } else if (val instanceof PdfArray) {
+                decryptArrayEntries((PdfArray) val, key);
+            } else if (val instanceof PdfDictionary && !(val instanceof PdfStream)) {
+                decryptDictEntries((PdfDictionary) val, key);
             }
         }
     }
 
-    private void decryptArrayEntries(COSArray arr, COSObjectKey key) {
+    private void decryptArrayEntries(PdfArray arr, PdfObjectKey key) {
         for (int i = 0; i < arr.size(); i++) {
-            COSBase elem = arr.get(i);
-            if (elem instanceof COSString) {
-                arr.set(i, decryptString((COSString) elem, key));
-            } else if (elem instanceof COSArray) {
-                decryptArrayEntries((COSArray) elem, key);
-            } else if (elem instanceof COSDictionary && !(elem instanceof COSStream)) {
-                decryptDictEntries((COSDictionary) elem, key);
+            PdfBase elem = arr.get(i);
+            if (elem instanceof PdfString) {
+                arr.set(i, decryptString((PdfString) elem, key));
+            } else if (elem instanceof PdfArray) {
+                decryptArrayEntries((PdfArray) elem, key);
+            } else if (elem instanceof PdfDictionary && !(elem instanceof PdfStream)) {
+                decryptDictEntries((PdfDictionary) elem, key);
             }
         }
     }
 
-    private COSString decryptString(COSString str, COSObjectKey key) {
+    private PdfString decryptString(PdfString str, PdfObjectKey key) {
         byte[] decrypted = decryptor.decrypt(str.getBytes(),
                 key.getObjectNumber(), key.getGenerationNumber());
-        COSString result = new COSString(decrypted);
+        PdfString result = new PdfString(decrypted);
         if (str.isForceHex()) result.setForceHex(true);
         return result;
     }
@@ -1268,21 +1339,21 @@ public final class PDFParser implements Closeable {
      *
      * @param obj the object to clean
      */
-    private void clearDirtyRecursive(COSBase obj) {
+    private void clearDirtyRecursive(PdfBase obj) {
         if (obj == null) return;
         obj.setDirty(false);
-        if (obj instanceof COSDictionary) {
-            COSDictionary dict = (COSDictionary) obj;
-            for (COSBase value : dict.values()) {
-                if (value != null && !(value instanceof COSObjectReference)) {
+        if (obj instanceof PdfDictionary) {
+            PdfDictionary dict = (PdfDictionary) obj;
+            for (PdfBase value : dict.values()) {
+                if (value != null && !(value instanceof PdfObjectReference)) {
                     clearDirtyRecursive(value);
                 }
             }
-        } else if (obj instanceof COSArray) {
-            COSArray arr = (COSArray) obj;
+        } else if (obj instanceof PdfArray) {
+            PdfArray arr = (PdfArray) obj;
             for (int i = 0; i < arr.size(); i++) {
-                COSBase item = arr.get(i);
-                if (item != null && !(item instanceof COSObjectReference)) {
+                PdfBase item = arr.get(i);
+                if (item != null && !(item instanceof PdfObjectReference)) {
                     clearDirtyRecursive(item);
                 }
             }

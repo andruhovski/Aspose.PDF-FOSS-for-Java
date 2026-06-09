@@ -1,10 +1,10 @@
 package org.aspose.pdf.forms;
 
 import org.aspose.pdf.XForm;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -32,7 +32,7 @@ import java.util.Set;
  */
 public class AppearanceDictionary {
 
-    private final COSDictionary apDict;
+    private final PdfDictionary apDict;
 
     /**
      * Wraps the given /AP dictionary. The caller is responsible for ensuring
@@ -42,7 +42,7 @@ public class AppearanceDictionary {
      * @param apDict the /AP dictionary (must not be null)
      * @throws IllegalArgumentException if {@code apDict} is null
      */
-    public AppearanceDictionary(COSDictionary apDict) {
+    public AppearanceDictionary(PdfDictionary apDict) {
         if (apDict == null) {
             throw new IllegalArgumentException("apDict must not be null");
         }
@@ -57,11 +57,11 @@ public class AppearanceDictionary {
      * @return the state names in insertion order (immutable view)
      */
     public Set<String> getStateNames() {
-        COSBase n = apDict.get(COSName.N);
-        // COSStream extends COSDictionary, so check stream first to exclude it.
-        if (n instanceof COSDictionary && !(n instanceof COSStream)) {
+        PdfBase n = apDict.get(PdfName.N);
+        // PdfStream extends PdfDictionary, so check stream first to exclude it.
+        if (n instanceof PdfDictionary && !(n instanceof PdfStream)) {
             Set<String> out = new LinkedHashSet<>();
-            for (COSName key : ((COSDictionary) n).keySet()) {
+            for (PdfName key : ((PdfDictionary) n).keySet()) {
                 out.add(key.getName());
             }
             return out;
@@ -79,11 +79,11 @@ public class AppearanceDictionary {
      */
     public XForm get(String stateName) {
         if (stateName == null) return null;
-        COSBase n = apDict.get(COSName.N);
-        if (n instanceof COSDictionary && !(n instanceof COSStream)) {
-            COSBase entry = ((COSDictionary) n).get(COSName.of(stateName));
-            if (entry instanceof COSStream) {
-                return new XForm((COSStream) entry, stateName, null);
+        PdfBase n = apDict.get(PdfName.N);
+        if (n instanceof PdfDictionary && !(n instanceof PdfStream)) {
+            PdfBase entry = ((PdfDictionary) n).get(PdfName.of(stateName));
+            if (entry instanceof PdfStream) {
+                return new XForm((PdfStream) entry, stateName, null);
             }
         }
         return null;
@@ -97,9 +97,9 @@ public class AppearanceDictionary {
      * @return the XForm wrapping /AP/N (when it is a stream), or null
      */
     public XForm getNormal() {
-        COSBase n = apDict.get(COSName.N);
-        if (n instanceof COSStream) {
-            return new XForm((COSStream) n, "N", null);
+        PdfBase n = apDict.get(PdfName.N);
+        if (n instanceof PdfStream) {
+            return new XForm((PdfStream) n, "N", null);
         }
         return null;
     }
@@ -111,16 +111,16 @@ public class AppearanceDictionary {
      * @return whether this appearance is multi-state
      */
     public boolean isMultiState() {
-        COSBase n = apDict.get(COSName.N);
-        return n instanceof COSDictionary && !(n instanceof COSStream);
+        PdfBase n = apDict.get(PdfName.N);
+        return n instanceof PdfDictionary && !(n instanceof PdfStream);
     }
 
     /**
-     * Returns the underlying /AP COS dictionary for engine-side use.
+     * Returns the underlying /AP PDF dictionary for engine-side use.
      *
      * @return the wrapped dictionary
      */
-    public COSDictionary getCOSDictionary() {
+    public PdfDictionary getPdfDictionary() {
         return apDict;
     }
 }

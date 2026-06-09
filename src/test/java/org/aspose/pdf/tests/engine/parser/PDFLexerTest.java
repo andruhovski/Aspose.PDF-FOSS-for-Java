@@ -113,6 +113,42 @@ public class PDFLexerTest {
     }
 
     @Test
+    public void testNameWithInvalidHexEscapeKeepsHashLiterally() throws IOException {
+        // Real-world tolerance (corpus 28762.pdf): '#' not followed by two hex
+        // digits is kept literally — Acrobat/PDFBox accept such names; throwing
+        // would lose the whole enclosing object (there: page /Resources).
+        PDFLexer lexer = lexerFor("/grd0#2_2");
+        PDFLexer.Token token = lexer.nextToken();
+        assertEquals(PDFLexer.TokenType.NAME, token.getType());
+        assertEquals("grd0#2_2", token.getValue());
+    }
+
+    @Test
+    public void testNameWithHashAtEnd() throws IOException {
+        // '#' as the last character of a name (no hex digits follow).
+        PDFLexer lexer = lexerFor("/Name# /Next");
+        PDFLexer.Token token = lexer.nextToken();
+        assertEquals(PDFLexer.TokenType.NAME, token.getType());
+        assertEquals("Name#", token.getValue());
+        PDFLexer.Token next = lexer.nextToken();
+        assertEquals(PDFLexer.TokenType.NAME, next.getType());
+        assertEquals("Next", next.getValue());
+    }
+
+    @Test
+    public void testNameWithHashSingleHexDigitBeforeDelimiter() throws IOException {
+        // '#' + one hex digit + delimiter: both characters kept literally,
+        // and the delimiter must not be consumed.
+        PDFLexer lexer = lexerFor("/grd0#2/Next");
+        PDFLexer.Token token = lexer.nextToken();
+        assertEquals(PDFLexer.TokenType.NAME, token.getType());
+        assertEquals("grd0#2", token.getValue());
+        PDFLexer.Token next = lexer.nextToken();
+        assertEquals(PDFLexer.TokenType.NAME, next.getType());
+        assertEquals("Next", next.getValue());
+    }
+
+    @Test
     public void testNameEmpty() throws IOException {
         // "/" alone is a valid empty name
         PDFLexer lexer = lexerFor("/ ");
@@ -509,5 +545,62 @@ public class PDFLexerTest {
         PDFLexer.Token t = lexerFor(". ").nextToken();
         assertEquals(PDFLexer.TokenType.REAL, t.getType());
         assertEquals(".", t.getValue());
+    }
+
+    // === Type 3 glyph-metrics operators d0 / d1 (ISO 32000 §9.6.5) ===
+    // The only PDF operators containing a digit. The packed-stream digit-stop
+    // heuristic ("nq0.000000" → n q 0.000000, PDFNEWNET-33721) must not split
+    // them — that turned the digit into a stray operand of the next operator
+    // and degenerated Type3 glyph matrices (corpus 30506.pdf: all text gone).
+
+    @Test
+    public void testD1KeywordNotSplit() throws IOException {
+        PDFLexer lexer = lexerFor("24 0 0 1 24 37 d1 24 0 0 36 0 1 cm");
+        for (int i = 0; i < 6; i++) {
+            assertEquals(PDFLexer.TokenType.INTEGER, lexer.nextToken().getType());
+        }
+        PDFLexer.Token t = lexer.nextToken();
+        assertEquals(PDFLexer.TokenType.KEYWORD, t.getType());
+        assertEquals("d1", t.getValue());
+        // The next token must be the first cm operand, not a stray "1"
+        PDFLexer.Token n = lexer.nextToken();
+        assertEquals(PDFLexer.TokenType.INTEGER, n.getType());
+        assertEquals("24", n.getValue());
+    }
+
+    @Test
+    public void testD0KeywordNotSplit() throws IOException {
+        PDFLexer lexer = lexerFor("10 0 d0 ");
+        lexer.nextToken();
+        lexer.nextToken();
+        PDFLexer.Token t = lexer.nextToken();
+        assertEquals(PDFLexer.TokenType.KEYWORD, t.getType());
+        assertEquals("d0", t.getValue());
+    }
+
+    @Test
+    public void testPackedDashOperatorStillSplits() throws IOException {
+        // "d0.000000" is a packed dash operator + the next op's number — the
+        // 33721 recovery must still split it ('.' follows the digit).
+        PDFLexer lexer = lexerFor("d0.000000 w");
+        PDFLexer.Token t = lexer.nextToken();
+        assertEquals(PDFLexer.TokenType.KEYWORD, t.getType());
+        assertEquals("d", t.getValue());
+        PDFLexer.Token n = lexer.nextToken();
+        assertEquals(PDFLexer.TokenType.REAL, n.getType());
+        assertEquals("0.000000", n.getValue());
+    }
+
+    @Test
+    public void testPackedDigitAfterOtherKeywordStillSplits() throws IOException {
+        // The lexer stops the keyword at the digit ("nq" + 0.000000); the
+        // compound-keyword split (n + q) happens later in ContentStreamParser.
+        PDFLexer lexer = lexerFor("nq0.000000");
+        PDFLexer.Token kw = lexer.nextToken();
+        assertEquals(PDFLexer.TokenType.KEYWORD, kw.getType());
+        assertEquals("nq", kw.getValue());
+        PDFLexer.Token n = lexer.nextToken();
+        assertEquals(PDFLexer.TokenType.REAL, n.getType());
+        assertEquals("0.000000", n.getValue());
     }
 }

@@ -1,10 +1,10 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.NameTree;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.NameTree;
 import org.aspose.pdf.engine.parser.PDFParser;
 
 import java.io.IOException;
@@ -28,8 +28,8 @@ public class EmbeddedFileCollection implements Iterable<FileSpecification> {
 
     private static final Logger LOG = Logger.getLogger(EmbeddedFileCollection.class.getName());
 
-    private static final COSName NAMES = COSName.of("Names");
-    private static final COSName EMBEDDED_FILES = COSName.of("EmbeddedFiles");
+    private static final PdfName NAMES = PdfName.of("Names");
+    private static final PdfName EMBEDDED_FILES = PdfName.of("EmbeddedFiles");
 
     private final Document document;
     private final PDFParser parser;
@@ -82,10 +82,10 @@ public class EmbeddedFileCollection implements Iterable<FileSpecification> {
         ensureLoaded();
         files.clear();
         try {
-            COSDictionary catalog = document.getCatalog();
-            COSBase names = resolveRef(catalog.get(NAMES));
-            if (names instanceof COSDictionary) {
-                ((COSDictionary) names).remove(EMBEDDED_FILES);
+            PdfDictionary catalog = document.getCatalog();
+            PdfBase names = resolveRef(catalog.get(NAMES));
+            if (names instanceof PdfDictionary) {
+                ((PdfDictionary) names).remove(EMBEDDED_FILES);
             }
         } catch (IOException e) {
             LOG.warning(() -> "Failed to remove EmbeddedFiles: " + e.getMessage());
@@ -134,12 +134,12 @@ public class EmbeddedFileCollection implements Iterable<FileSpecification> {
         if (files != null) return;
         files = new ArrayList<>();
         try {
-            COSDictionary efRoot = embeddedFilesRoot(false);
+            PdfDictionary efRoot = embeddedFilesRoot(false);
             if (efRoot == null) return;
-            for (Map.Entry<String, COSBase> entry : new NameTree(efRoot).entries()) {
-                COSBase value = entry.getValue();
-                if (value instanceof COSDictionary) {
-                    files.add(new FileSpecification((COSDictionary) value));
+            for (Map.Entry<String, PdfBase> entry : new NameTree(efRoot).entries()) {
+                PdfBase value = entry.getValue();
+                if (value instanceof PdfDictionary) {
+                    files.add(new FileSpecification((PdfDictionary) value));
                 }
             }
         } catch (IOException e) {
@@ -149,10 +149,10 @@ public class EmbeddedFileCollection implements Iterable<FileSpecification> {
 
     private void addToNameTree(FileSpecification fs) {
         try {
-            COSDictionary efRoot = embeddedFilesRoot(true);
+            PdfDictionary efRoot = embeddedFilesRoot(true);
             if (efRoot == null) return;
             String name = fs.getName() != null ? fs.getName() : "attachment" + files.size();
-            new NameTree(efRoot).put(name, fs.getCOSDictionary());
+            new NameTree(efRoot).put(name, fs.getPdfDictionary());
         } catch (IOException e) {
             LOG.warning(() -> "Failed to add to name tree: " + e.getMessage());
         }
@@ -161,7 +161,7 @@ public class EmbeddedFileCollection implements Iterable<FileSpecification> {
     private void removeFromNameTreeByName(String name) {
         if (name == null) return;
         try {
-            COSDictionary efRoot = embeddedFilesRoot(false);
+            PdfDictionary efRoot = embeddedFilesRoot(false);
             if (efRoot != null) {
                 new NameTree(efRoot).remove(name);
             }
@@ -175,28 +175,28 @@ public class EmbeddedFileCollection implements Iterable<FileSpecification> {
      * creating it (and its parent {@code /Names}) when {@code createIfMissing}
      * is true.
      */
-    private COSDictionary embeddedFilesRoot(boolean createIfMissing) throws IOException {
-        COSDictionary catalog = document.getCatalog();
-        COSBase names = resolveRef(catalog.get(NAMES));
-        if (!(names instanceof COSDictionary)) {
+    private PdfDictionary embeddedFilesRoot(boolean createIfMissing) throws IOException {
+        PdfDictionary catalog = document.getCatalog();
+        PdfBase names = resolveRef(catalog.get(NAMES));
+        if (!(names instanceof PdfDictionary)) {
             if (!createIfMissing) return null;
-            COSDictionary fresh = new COSDictionary();
+            PdfDictionary fresh = new PdfDictionary();
             catalog.set(NAMES, fresh);
             names = fresh;
         }
-        COSBase ef = resolveRef(((COSDictionary) names).get(EMBEDDED_FILES));
-        if (!(ef instanceof COSDictionary)) {
+        PdfBase ef = resolveRef(((PdfDictionary) names).get(EMBEDDED_FILES));
+        if (!(ef instanceof PdfDictionary)) {
             if (!createIfMissing) return null;
-            COSDictionary fresh = new COSDictionary();
-            ((COSDictionary) names).set(EMBEDDED_FILES, fresh);
+            PdfDictionary fresh = new PdfDictionary();
+            ((PdfDictionary) names).set(EMBEDDED_FILES, fresh);
             ef = fresh;
         }
-        return (COSDictionary) ef;
+        return (PdfDictionary) ef;
     }
 
-    private COSBase resolveRef(COSBase val) {
-        if (val instanceof COSObjectReference) {
-            try { return ((COSObjectReference) val).dereference(); } catch (Exception e) { return null; }
+    private PdfBase resolveRef(PdfBase val) {
+        if (val instanceof PdfObjectReference) {
+            try { return ((PdfObjectReference) val).dereference(); } catch (Exception e) { return null; }
         }
         return val;
     }

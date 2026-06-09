@@ -1,7 +1,7 @@
 package org.aspose.pdf.operators;
 
 import org.aspose.pdf.Operator;
-import org.aspose.pdf.engine.cos.COSBase;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
 
 import java.util.List;
 
@@ -20,7 +20,7 @@ public class Stroke extends Operator {
     }
 
     /** Creates a Stroke operator from parsed operands. */
-    public Stroke(List<COSBase> operands) {
+    public Stroke(List<PdfBase> operands) {
         super("S", operands);
     }
 }

@@ -1,6 +1,6 @@
 package org.aspose.pdf.engine.pattern;
 
-import org.aspose.pdf.engine.cos.COSDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
 import org.aspose.pdf.engine.function.PdfFunction;
 import org.aspose.pdf.engine.parser.PDFParser;
 
@@ -26,7 +26,7 @@ public final class AxialShading extends Shading {
      * @param parser the PDF parser
      * @throws IOException if the function cannot be parsed
      */
-    public AxialShading(COSDictionary dict, PDFParser parser) throws IOException {
+    public AxialShading(PdfDictionary dict, PDFParser parser) throws IOException {
         super(dict, parser);
         double[] coords = getNumberArray(dict, "Coords");
         if (coords == null || coords.length < 4) coords = new double[]{0, 0, 1, 0};
@@ -58,11 +58,17 @@ public final class AxialShading extends Shading {
         } else {
             t = ((x - x0) * dx + (y - y0) * dy) / lenSq;
         }
+        // Outside the axis span with /Extend false -> NOT painted
+        // (ISO 32000 8.7.4.5.2); see RadialShading for the corpus rationale.
+        if (t < 0) {
+            if (!extendStart) return null;
+            t = 0;
+        } else if (t > 1) {
+            if (!extendEnd) return null;
+            t = 1;
+        }
         // Map from [0,1] projection to [t0,t1]
         t = t0 + t * (t1 - t0);
-        // Clamp or extend
-        if (t < t0) t = extendStart ? t0 : t0;
-        if (t > t1) t = extendEnd ? t1 : t1;
         t = Math.max(t0, Math.min(t1, t));
 
         return evaluateFunction(t);

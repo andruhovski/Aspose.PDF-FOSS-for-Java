@@ -1,7 +1,7 @@
 package org.aspose.pdf.annotations;
 
 import org.aspose.pdf.*;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.io.IOException;
 
@@ -16,12 +16,12 @@ import java.io.IOException;
 public class LinkAnnotation extends Annotation {
 
     /**
-     * Constructs a link annotation from an existing COS dictionary.
+     * Constructs a link annotation from an existing PDF dictionary.
      *
-     * @param dict the COS dictionary backing this annotation
+     * @param dict the PDF dictionary backing this annotation
      * @param page the page this annotation belongs to
      */
-    public LinkAnnotation(COSDictionary dict, Page page) {
+    public LinkAnnotation(PdfDictionary dict, Page page) {
         super(dict, page);
     }
 
@@ -33,7 +33,7 @@ public class LinkAnnotation extends Annotation {
      */
     public LinkAnnotation(Page page, Rectangle rect) {
         super(page, rect);
-        dict.set(COSName.of("Subtype"), COSName.of("Link"));
+        dict.set(PdfName.of("Subtype"), PdfName.of("Link"));
     }
 
     /**
@@ -43,9 +43,9 @@ public class LinkAnnotation extends Annotation {
      * @throws IOException if parsing fails
      */
     public PdfAction getAction() throws IOException {
-        COSBase a = resolveRef(dict.get("A"));
-        if (a instanceof COSDictionary) {
-            return PdfAction.fromDictionary((COSDictionary) a, null);
+        PdfBase a = resolveRef(dict.get("A"));
+        if (a instanceof PdfDictionary) {
+            return PdfAction.fromDictionary((PdfDictionary) a, null);
         }
         return null;
     }
@@ -57,9 +57,9 @@ public class LinkAnnotation extends Annotation {
      */
     public void setAction(PdfAction action) {
         if (action != null) {
-            dict.set(COSName.of("A"), action.getCOSDictionary());
+            dict.set(PdfName.of("A"), action.getPdfDictionary());
         } else {
-            dict.remove(COSName.of("A"));
+            dict.remove(PdfName.of("A"));
         }
     }
 
@@ -71,15 +71,15 @@ public class LinkAnnotation extends Annotation {
      * @throws IOException if resolution fails
      */
     public ExplicitDestination getDestination(Document doc) throws IOException {
-        COSBase dest = resolveRef(dict.get("Dest"));
-        if (dest instanceof COSArray) {
-            return ExplicitDestination.fromCOSArray((COSArray) dest, doc);
+        PdfBase dest = resolveRef(dict.get("Dest"));
+        if (dest instanceof PdfArray) {
+            return ExplicitDestination.fromPdfArray((PdfArray) dest, doc);
         }
         // Named destination (string or name) — resolve through document
-        if (dest instanceof COSString || dest instanceof COSName) {
-            String name = (dest instanceof COSString)
-                    ? ((COSString) dest).getString()
-                    : ((COSName) dest).getName();
+        if (dest instanceof PdfString || dest instanceof PdfName) {
+            String name = (dest instanceof PdfString)
+                    ? ((PdfString) dest).getString()
+                    : ((PdfName) dest).getName();
             if (doc != null) {
                 NamedDestinations nd = doc.getNamedDestinations();
                 if (nd != null) return nd.get(name);
@@ -94,10 +94,10 @@ public class LinkAnnotation extends Annotation {
      * @param val the value to resolve
      * @return the resolved value, or the original if not an indirect reference
      */
-    private COSBase resolveRef(COSBase val) {
-        if (val instanceof COSObjectReference) {
+    private PdfBase resolveRef(PdfBase val) {
+        if (val instanceof PdfObjectReference) {
             try {
-                return ((COSObjectReference) val).dereference();
+                return ((PdfObjectReference) val).dereference();
             } catch (IOException e) {
                 return null;
             }

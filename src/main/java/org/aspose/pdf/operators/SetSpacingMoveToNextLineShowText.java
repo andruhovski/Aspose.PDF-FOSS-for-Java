@@ -1,7 +1,7 @@
 package org.aspose.pdf.operators;
 
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -36,7 +36,7 @@ public class SetSpacingMoveToNextLineShowText extends TextShowOperator {
      */
     public SetSpacingMoveToNextLineShowText(double aw, double ac, String text) {
         super("\"", Arrays.asList(num(aw), num(ac),
-                new COSString(text.getBytes(StandardCharsets.ISO_8859_1))));
+                new PdfString(text.getBytes(StandardCharsets.ISO_8859_1))));
         if (text == null) {
             throw new IllegalArgumentException("Text must not be null");
         }
@@ -48,12 +48,12 @@ public class SetSpacingMoveToNextLineShowText extends TextShowOperator {
     /**
      * Creates a SetSpacingMoveToNextLineShowText (") operator from parsed operands.
      * <p>
-     * Expects three operands: wordSpacing (number), charSpacing (number), and a COSString.
+     * Expects three operands: wordSpacing (number), charSpacing (number), and a PdfString.
      * </p>
      *
      * @param operands the operands from the content stream parser
      */
-    public SetSpacingMoveToNextLineShowText(List<COSBase> operands) {
+    public SetSpacingMoveToNextLineShowText(List<PdfBase> operands) {
         super("\"", operands);
         this.wordSpacing = (operands != null && operands.size() > 0)
                 ? getNumber(operands.get(0))
@@ -61,8 +61,8 @@ public class SetSpacingMoveToNextLineShowText extends TextShowOperator {
         this.charSpacing = (operands != null && operands.size() > 1)
                 ? getNumber(operands.get(1))
                 : 0;
-        if (operands != null && operands.size() > 2 && operands.get(2) instanceof COSString) {
-            this.text = ((COSString) operands.get(2)).getString();
+        if (operands != null && operands.size() > 2 && operands.get(2) instanceof PdfString) {
+            this.text = ((PdfString) operands.get(2)).getString();
         } else {
             this.text = "";
         }

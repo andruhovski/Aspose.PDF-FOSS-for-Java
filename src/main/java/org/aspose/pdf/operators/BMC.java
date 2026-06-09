@@ -1,8 +1,8 @@
 package org.aspose.pdf.operators;
 
 import org.aspose.pdf.Operator;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 
 import java.util.Collections;
 import java.util.List;
@@ -26,7 +26,7 @@ public class BMC extends Operator {
      * @throws IllegalArgumentException if tag is null or empty
      */
     public BMC(String tag) {
-        super("BMC", Collections.singletonList(COSName.of(tag)));
+        super("BMC", Collections.singletonList(PdfName.of(tag)));
         if (tag == null || tag.isEmpty()) {
             throw new IllegalArgumentException("Tag must not be null or empty");
         }
@@ -36,15 +36,15 @@ public class BMC extends Operator {
     /**
      * Creates a BMC operator from parsed operands.
      * <p>
-     * Expects one operand: a {@link COSName} for the tag.
+     * Expects one operand: a {@link PdfName} for the tag.
      * </p>
      *
      * @param operands the operands from the content stream parser
      */
-    public BMC(List<COSBase> operands) {
+    public BMC(List<PdfBase> operands) {
         super("BMC", operands);
-        this.tag = (operands != null && operands.size() > 0 && operands.get(0) instanceof COSName)
-                ? ((COSName) operands.get(0)).getName()
+        this.tag = (operands != null && operands.size() > 0 && operands.get(0) instanceof PdfName)
+                ? ((PdfName) operands.get(0)).getName()
                 : "";
     }
 

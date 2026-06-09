@@ -2,7 +2,7 @@ package org.aspose.pdf.forms;
 
 import org.aspose.pdf.*;
 import org.aspose.pdf.annotations.Annotation;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 import org.aspose.pdf.engine.parser.PDFParser;
 import org.aspose.pdf.forms.xfa.XfaForm;
 
@@ -19,7 +19,7 @@ public class Form implements Iterable<Field> {
 
     private static final Logger LOG = Logger.getLogger(Form.class.getName());
 
-    private final COSDictionary acroFormDict;
+    private final PdfDictionary acroFormDict;
     private final Document document;
     private final PDFParser parser;
     private List<Field> fields;
@@ -27,8 +27,8 @@ public class Form implements Iterable<Field> {
     private XfaForm xfaForm;
     private FlattenSettings flattenSettings;
 
-    public Form(COSDictionary acroFormDict, Document document, PDFParser parser) {
-        this.acroFormDict = acroFormDict != null ? acroFormDict : new COSDictionary();
+    public Form(PdfDictionary acroFormDict, Document document, PDFParser parser) {
+        this.acroFormDict = acroFormDict != null ? acroFormDict : new PdfDictionary();
         this.document = document;
         this.parser = parser;
     }
@@ -100,7 +100,7 @@ public class Form implements Iterable<Field> {
 
     /** Form type — detects XFA presence from the /XFA entry in the AcroForm dictionary. */
     public FormType getType() {
-        COSBase xfa = resolveRef(acroFormDict.get("XFA"));
+        PdfBase xfa = resolveRef(acroFormDict.get("XFA"));
         if (xfa == null) return FormType.Standard;
         return FormType.XFA;
     }
@@ -114,7 +114,7 @@ public class Form implements Iterable<Field> {
      */
     public void setType(FormType type) {
         if (type == FormType.Standard) {
-            acroFormDict.remove(COSName.of("XFA"));
+            acroFormDict.remove(PdfName.of("XFA"));
             this.xfaForm = null;
         }
     }
@@ -126,7 +126,7 @@ public class Form implements Iterable<Field> {
      * @return the XfaForm, or null if no /XFA entry exists
      */
     public XfaForm getXFA() {
-        COSBase xfa = resolveRef(acroFormDict.get("XFA"));
+        PdfBase xfa = resolveRef(acroFormDict.get("XFA"));
         if (xfa == null) return null;
         if (xfaForm == null) {
             try {
@@ -144,19 +144,19 @@ public class Form implements Iterable<Field> {
         return acroFormDict.getBoolean("NeedAppearances", false);
     }
     public void setNeedAppearances(boolean value) {
-        acroFormDict.set(COSName.of("NeedAppearances"), COSBoolean.valueOf(value));
+        acroFormDict.set(PdfName.of("NeedAppearances"), PdfBoolean.valueOf(value));
     }
 
     /** /DA — default appearance */
     public String getDefaultAppearance() {
-        COSBase da = acroFormDict.get("DA");
-        return (da instanceof COSString) ? ((COSString) da).getString() : null;
+        PdfBase da = acroFormDict.get("DA");
+        return (da instanceof PdfString) ? ((PdfString) da).getString() : null;
     }
 
     /** /DR — default resources */
     public Resources getDefaultResources() {
-        COSBase dr = resolveRef(acroFormDict.get("DR"));
-        return (dr instanceof COSDictionary) ? new Resources((COSDictionary) dr) : null;
+        PdfBase dr = resolveRef(acroFormDict.get("DR"));
+        return (dr instanceof PdfDictionary) ? new Resources((PdfDictionary) dr) : null;
     }
 
     /** Add a field */
@@ -167,13 +167,13 @@ public class Form implements Iterable<Field> {
         }
         ensureDefaultResources();
         if (field.getPage() != null) {
-            field.getCOSDictionary().set(COSName.of("P"), field.getPage().getCOSDictionary());
+            field.getPdfDictionary().set(PdfName.of("P"), field.getPage().getPdfDictionary());
             field.getPage().getAnnotations().add(field);
         }
         fields.add(field);
         fieldsByName.put(field.getFullName(), field);
-        COSArray fieldsArray = getFieldsArray();
-        COSBase fieldEntry = field.getCOSDictionary();
+        PdfArray fieldsArray = getFieldsArray();
+        PdfBase fieldEntry = field.getPdfDictionary();
         if (document != null && fieldEntry.getObjectKey() == null) {
             fieldEntry = document.registerImportedObject(fieldEntry);
         }
@@ -190,21 +190,21 @@ public class Form implements Iterable<Field> {
      * <p>Idempotent: a second call leaves existing entries untouched.</p>
      */
     private void ensureDefaultResources() {
-        COSBase drVal = resolveRef(acroFormDict.get("DR"));
-        COSDictionary dr;
-        if (drVal instanceof COSDictionary) {
-            dr = (COSDictionary) drVal;
+        PdfBase drVal = resolveRef(acroFormDict.get("DR"));
+        PdfDictionary dr;
+        if (drVal instanceof PdfDictionary) {
+            dr = (PdfDictionary) drVal;
         } else {
-            dr = new COSDictionary();
-            acroFormDict.set(COSName.of("DR"), dr);
+            dr = new PdfDictionary();
+            acroFormDict.set(PdfName.of("DR"), dr);
         }
-        COSBase fontsVal = resolveRef(dr.get("Font"));
-        COSDictionary fonts;
-        if (fontsVal instanceof COSDictionary) {
-            fonts = (COSDictionary) fontsVal;
+        PdfBase fontsVal = resolveRef(dr.get("Font"));
+        PdfDictionary fonts;
+        if (fontsVal instanceof PdfDictionary) {
+            fonts = (PdfDictionary) fontsVal;
         } else {
-            fonts = new COSDictionary();
-            dr.set(COSName.of("Font"), fonts);
+            fonts = new PdfDictionary();
+            dr.set(PdfName.of("Font"), fonts);
         }
         ensureStandardFont(fonts, "Helv", "Helvetica", "Type1");
         ensureStandardFont(fonts, "ZaDb", "ZapfDingbats", "Type1");
@@ -214,21 +214,21 @@ public class Form implements Iterable<Field> {
         // poppler/mupdf log "Missing 'Tf' operator in field's DA string" for
         // such fields. Uses /Helv which the /DR above provides.
         if (acroFormDict.get("DA") == null) {
-            acroFormDict.set(COSName.of("DA"), new COSString("/Helv 0 Tf 0 g"));
+            acroFormDict.set(PdfName.of("DA"), new PdfString("/Helv 0 Tf 0 g"));
         }
     }
 
-    private static void ensureStandardFont(COSDictionary fonts, String resName,
+    private static void ensureStandardFont(PdfDictionary fonts, String resName,
                                            String baseFont, String subtype) {
         if (fonts.get(resName) != null) return;
-        COSDictionary f = new COSDictionary();
-        f.set(COSName.of("Type"), COSName.of("Font"));
-        f.set(COSName.of("Subtype"), COSName.of(subtype));
-        f.set(COSName.of("BaseFont"), COSName.of(baseFont));
+        PdfDictionary f = new PdfDictionary();
+        f.set(PdfName.of("Type"), PdfName.of("Font"));
+        f.set(PdfName.of("Subtype"), PdfName.of(subtype));
+        f.set(PdfName.of("BaseFont"), PdfName.of(baseFont));
         if (!"ZapfDingbats".equals(baseFont)) {
-            f.set(COSName.of("Encoding"), COSName.of("WinAnsiEncoding"));
+            f.set(PdfName.of("Encoding"), PdfName.of("WinAnsiEncoding"));
         }
-        fonts.set(COSName.of(resName), f);
+        fonts.set(PdfName.of(resName), f);
     }
 
     /**
@@ -257,7 +257,7 @@ public class Form implements Iterable<Field> {
      * <p>
      * This mirrors the common Aspose API workflow used by regression tests:
      * the original field remains in the form, while the returned field is a newly
-     * created copy with an independent COS dictionary.
+     * created copy with an independent PDF dictionary.
      * </p>
      *
      * @param field      the source field to copy
@@ -280,21 +280,21 @@ public class Form implements Iterable<Field> {
             }
         }
 
-        COSDictionary clonedDict = cloneDictionary(field.getCOSDictionary());
+        PdfDictionary clonedDict = cloneDictionary(field.getPdfDictionary());
         materializeKidsArray(clonedDict);
-        clonedDict.remove(COSName.of("Parent"));
-        clonedDict.set(COSName.of("T"), new COSString((newName != null ? newName : "")
+        clonedDict.remove(PdfName.of("Parent"));
+        clonedDict.set(PdfName.of("T"), new PdfString((newName != null ? newName : "")
                 .getBytes(java.nio.charset.StandardCharsets.UTF_8)));
 
         if (page != null) {
-            rebindWidgetsToPage(clonedDict, page.getCOSDictionary());
+            rebindWidgetsToPage(clonedDict, page.getPdfDictionary());
         } else {
             clearWidgetPageReferences(clonedDict);
         }
 
-        COSBase ft = clonedDict.get("FT");
+        PdfBase ft = clonedDict.get("FT");
         if (ft == null) {
-            ft = field.getCOSDictionary().get("FT");
+            ft = field.getPdfDictionary().get("FT");
         }
 
         Field copiedField = Field.fromDictionary(clonedDict, ft, newName, page, parser);
@@ -319,7 +319,7 @@ public class Form implements Iterable<Field> {
             return;
         }
 
-        removeWidgets(field.getCOSDictionary());
+        removeWidgets(field.getPdfDictionary());
 
         while (true) {
             Field removed = fieldsByName.remove(fieldName);
@@ -329,10 +329,10 @@ public class Form implements Iterable<Field> {
             fields.remove(removed);
         }
 
-        COSArray fieldsArray = getFieldsArray();
+        PdfArray fieldsArray = getFieldsArray();
         for (int i = fieldsArray.size() - 1; i >= 0; i--) {
-            COSBase item = resolveRef(fieldsArray.get(i));
-            if (item == field.getCOSDictionary()) {
+            PdfBase item = resolveRef(fieldsArray.get(i));
+            if (item == field.getPdfDictionary()) {
                 fieldsArray.remove(i);
             }
         }
@@ -362,13 +362,13 @@ public class Form implements Iterable<Field> {
                 pagesToFlatten.add(page);
             }
             // Also check /Kids for widget annotations on different pages
-            COSBase kids = resolveRef(field.getCOSDictionary().get("Kids"));
-            if (kids instanceof COSArray) {
-                COSArray kidsArr = (COSArray) kids;
+            PdfBase kids = resolveRef(field.getPdfDictionary().get("Kids"));
+            if (kids instanceof PdfArray) {
+                PdfArray kidsArr = (PdfArray) kids;
                 for (int i = 0; i < kidsArr.size(); i++) {
-                    COSBase kid = resolveRef(kidsArr.get(i));
-                    if (kid instanceof COSDictionary) {
-                        Page kidPage = findPage((COSDictionary) kid);
+                    PdfBase kid = resolveRef(kidsArr.get(i));
+                    if (kid instanceof PdfDictionary) {
+                        Page kidPage = findPage((PdfDictionary) kid);
                         if (kidPage != null) pagesToFlatten.add(kidPage);
                     }
                 }
@@ -383,7 +383,7 @@ public class Form implements Iterable<Field> {
         // Clear the fields list and AcroForm /Fields array
         fields.clear();
         fieldsByName.clear();
-        COSArray fieldsArray = getFieldsArray();
+        PdfArray fieldsArray = getFieldsArray();
         while (fieldsArray.size() > 0) fieldsArray.remove(0);
     }
 
@@ -425,7 +425,7 @@ public class Form implements Iterable<Field> {
         this.flattenSettings = settings;
     }
 
-    public COSDictionary getCOSDictionary() { return acroFormDict; }
+    public PdfDictionary getPdfDictionary() { return acroFormDict; }
 
     /**
      * Settings that control how form fields are flattened into page content.
@@ -568,11 +568,11 @@ public class Form implements Iterable<Field> {
 
     // ── Internal ──
 
-    private COSArray getFieldsArray() {
-        COSBase f = resolveRef(acroFormDict.get("Fields"));
-        if (f instanceof COSArray) return (COSArray) f;
-        COSArray arr = new COSArray();
-        acroFormDict.set(COSName.of("Fields"), arr);
+    private PdfArray getFieldsArray() {
+        PdfBase f = resolveRef(acroFormDict.get("Fields"));
+        if (f instanceof PdfArray) return (PdfArray) f;
+        PdfArray arr = new PdfArray();
+        acroFormDict.set(PdfName.of("Fields"), arr);
         return arr;
     }
 
@@ -591,18 +591,18 @@ public class Form implements Iterable<Field> {
         fields = new ArrayList<>();
         fieldsByName = new HashMap<>();
 
-        COSBase fieldsRef = acroFormDict.get("Fields");
-        COSBase resolved = resolveRef(fieldsRef);
-        if (!(resolved instanceof COSArray)) return;
+        PdfBase fieldsRef = acroFormDict.get("Fields");
+        PdfBase resolved = resolveRef(fieldsRef);
+        if (!(resolved instanceof PdfArray)) return;
 
-        collectFields((COSArray) resolved, null, "");
+        collectFields((PdfArray) resolved, null, "");
     }
 
-    private void collectFields(COSArray fieldsArray, COSDictionary parent, String parentName) {
+    private void collectFields(PdfArray fieldsArray, PdfDictionary parent, String parentName) {
         for (int i = 0; i < fieldsArray.size(); i++) {
-            COSBase item = resolveRef(fieldsArray.get(i));
-            if (!(item instanceof COSDictionary)) continue;
-            COSDictionary fieldDict = (COSDictionary) item;
+            PdfBase item = resolveRef(fieldsArray.get(i));
+            if (!(item instanceof PdfDictionary)) continue;
+            PdfDictionary fieldDict = (PdfDictionary) item;
 
             String partialName = getStringValue(fieldDict, "T");
             String fullName;
@@ -612,17 +612,17 @@ public class Form implements Iterable<Field> {
                 fullName = partialName != null ? parentName + "." + partialName : parentName;
             }
 
-            COSBase ft = fieldDict.get("FT");
+            PdfBase ft = fieldDict.get("FT");
             if (ft == null && parent != null) ft = parent.get("FT");
 
-            COSBase kids = resolveRef(fieldDict.get("Kids"));
+            PdfBase kids = resolveRef(fieldDict.get("Kids"));
 
-            if (kids instanceof COSArray) {
-                COSArray kidsArray = (COSArray) kids;
+            if (kids instanceof PdfArray) {
+                PdfArray kidsArray = (PdfArray) kids;
                 boolean hasFieldKids = false;
                 for (int j = 0; j < kidsArray.size(); j++) {
-                    COSBase kid = resolveRef(kidsArray.get(j));
-                    if (kid instanceof COSDictionary && ((COSDictionary) kid).get("T") != null) {
+                    PdfBase kid = resolveRef(kidsArray.get(j));
+                    if (kid instanceof PdfDictionary && ((PdfDictionary) kid).get("T") != null) {
                         hasFieldKids = true;
                         break;
                     }
@@ -642,139 +642,139 @@ public class Form implements Iterable<Field> {
         }
     }
 
-    private Page findPage(COSDictionary fieldDict) {
+    private Page findPage(PdfDictionary fieldDict) {
         if (document == null) return null;
-        COSBase p = resolveRef(fieldDict.get("P"));
-        if (p instanceof COSDictionary) {
+        PdfBase p = resolveRef(fieldDict.get("P"));
+        if (p instanceof PdfDictionary) {
             try {
                 PageCollection pages = document.getPages();
                 for (int i = 1; i <= pages.getCount(); i++) {
-                    if (pages.get(i).getCOSDictionary() == p) return pages.get(i);
+                    if (pages.get(i).getPdfDictionary() == p) return pages.get(i);
                 }
             } catch (IOException e) { /* ignore */ }
         }
         return null;
     }
 
-    private String getStringValue(COSDictionary dict, String key) {
-        COSBase val = dict.get(key);
-        if (val instanceof COSString) return ((COSString) val).getString();
-        if (val instanceof COSName) return ((COSName) val).getName();
+    private String getStringValue(PdfDictionary dict, String key) {
+        PdfBase val = dict.get(key);
+        if (val instanceof PdfString) return ((PdfString) val).getString();
+        if (val instanceof PdfName) return ((PdfName) val).getName();
         return null;
     }
 
-    private COSBase resolveRef(COSBase val) {
-        if (val instanceof COSObjectReference) {
-            try { return ((COSObjectReference) val).dereference(); }
+    private PdfBase resolveRef(PdfBase val) {
+        if (val instanceof PdfObjectReference) {
+            try { return ((PdfObjectReference) val).dereference(); }
             catch (Exception e) { return null; }
         }
         return val;
     }
 
-    private static COSDictionary cloneDictionary(COSDictionary source) {
-        COSDictionary copy = new COSDictionary();
-        for (Map.Entry<COSName, COSBase> entry : source) {
+    private static PdfDictionary cloneDictionary(PdfDictionary source) {
+        PdfDictionary copy = new PdfDictionary();
+        for (Map.Entry<PdfName, PdfBase> entry : source) {
             copy.set(entry.getKey(), deepClone(entry.getValue()));
         }
         return copy;
     }
 
-    private static COSBase deepClone(COSBase value) {
+    private static PdfBase deepClone(PdfBase value) {
         if (value == null) {
             return null;
         }
-        if (value instanceof COSDictionary && !(value instanceof COSStream)) {
-            return cloneDictionary((COSDictionary) value);
+        if (value instanceof PdfDictionary && !(value instanceof PdfStream)) {
+            return cloneDictionary((PdfDictionary) value);
         }
-        if (value instanceof COSStream) {
-            COSStream stream = (COSStream) value;
-            COSStream copy = new COSStream(cloneDictionary(stream), stream.getEncodedData());
+        if (value instanceof PdfStream) {
+            PdfStream stream = (PdfStream) value;
+            PdfStream copy = new PdfStream(cloneDictionary(stream), stream.getEncodedData());
             copy.setObjectKey(null);
             return copy;
         }
-        if (value instanceof COSArray) {
-            COSArray sourceArray = (COSArray) value;
-            COSArray copy = new COSArray(sourceArray.size());
-            for (COSBase item : sourceArray) {
+        if (value instanceof PdfArray) {
+            PdfArray sourceArray = (PdfArray) value;
+            PdfArray copy = new PdfArray(sourceArray.size());
+            for (PdfBase item : sourceArray) {
                 copy.add(deepClone(item));
             }
             return copy;
         }
-        if (value instanceof COSString) {
-            return new COSString(((COSString) value).getBytes());
+        if (value instanceof PdfString) {
+            return new PdfString(((PdfString) value).getBytes());
         }
         return value;
     }
 
-    private static void rebindWidgetsToPage(COSDictionary fieldDict, COSDictionary pageDict) {
-        fieldDict.set(COSName.of("P"), pageDict);
-        COSBase kids = fieldDict.get("Kids");
-        if (kids instanceof COSArray) {
-            COSArray kidsArray = (COSArray) kids;
-            for (COSBase kid : kidsArray) {
-                if (kid instanceof COSDictionary) {
-                    COSDictionary kidDict = (COSDictionary) kid;
-                    kidDict.set(COSName.of("Parent"), fieldDict);
-                    kidDict.set(COSName.of("P"), pageDict);
-                    kidDict.remove(COSName.of("T"));
-                    kidDict.remove(COSName.of("FT"));
+    private static void rebindWidgetsToPage(PdfDictionary fieldDict, PdfDictionary pageDict) {
+        fieldDict.set(PdfName.of("P"), pageDict);
+        PdfBase kids = fieldDict.get("Kids");
+        if (kids instanceof PdfArray) {
+            PdfArray kidsArray = (PdfArray) kids;
+            for (PdfBase kid : kidsArray) {
+                if (kid instanceof PdfDictionary) {
+                    PdfDictionary kidDict = (PdfDictionary) kid;
+                    kidDict.set(PdfName.of("Parent"), fieldDict);
+                    kidDict.set(PdfName.of("P"), pageDict);
+                    kidDict.remove(PdfName.of("T"));
+                    kidDict.remove(PdfName.of("FT"));
                 }
             }
         }
     }
 
-    private static void materializeKidsArray(COSDictionary fieldDict) {
-        COSBase kids = fieldDict.get("Kids");
-        if (!(kids instanceof COSArray)) {
+    private static void materializeKidsArray(PdfDictionary fieldDict) {
+        PdfBase kids = fieldDict.get("Kids");
+        if (!(kids instanceof PdfArray)) {
             return;
         }
-        COSArray kidsArray = (COSArray) kids;
+        PdfArray kidsArray = (PdfArray) kids;
         for (int i = 0; i < kidsArray.size(); i++) {
-            COSBase kid = kidsArray.get(i);
-            if (kid instanceof COSObjectReference) {
+            PdfBase kid = kidsArray.get(i);
+            if (kid instanceof PdfObjectReference) {
                 try {
-                    kid = ((COSObjectReference) kid).dereference();
+                    kid = ((PdfObjectReference) kid).dereference();
                 } catch (Exception e) {
                     continue;
                 }
             }
-            if (kid instanceof COSDictionary) {
-                kidsArray.set(i, cloneDictionary((COSDictionary) kid));
+            if (kid instanceof PdfDictionary) {
+                kidsArray.set(i, cloneDictionary((PdfDictionary) kid));
             }
         }
     }
 
-    private static void clearWidgetPageReferences(COSDictionary fieldDict) {
-        fieldDict.remove(COSName.of("P"));
-        COSBase kids = fieldDict.get("Kids");
-        if (kids instanceof COSArray) {
-            COSArray kidsArray = (COSArray) kids;
-            for (COSBase kid : kidsArray) {
-                if (kid instanceof COSDictionary) {
-                    ((COSDictionary) kid).remove(COSName.of("P"));
+    private static void clearWidgetPageReferences(PdfDictionary fieldDict) {
+        fieldDict.remove(PdfName.of("P"));
+        PdfBase kids = fieldDict.get("Kids");
+        if (kids instanceof PdfArray) {
+            PdfArray kidsArray = (PdfArray) kids;
+            for (PdfBase kid : kidsArray) {
+                if (kid instanceof PdfDictionary) {
+                    ((PdfDictionary) kid).remove(PdfName.of("P"));
                 }
             }
         }
     }
 
-    private void removeWidgets(COSDictionary fieldDict) {
+    private void removeWidgets(PdfDictionary fieldDict) {
         if (fieldDict == null) {
             return;
         }
         removeWidgetAnnotation(fieldDict);
-        COSBase kids = resolveRef(fieldDict.get("Kids"));
-        if (kids instanceof COSArray) {
-            COSArray kidsArray = (COSArray) kids;
+        PdfBase kids = resolveRef(fieldDict.get("Kids"));
+        if (kids instanceof PdfArray) {
+            PdfArray kidsArray = (PdfArray) kids;
             for (int i = 0; i < kidsArray.size(); i++) {
-                COSBase kid = resolveRef(kidsArray.get(i));
-                if (kid instanceof COSDictionary) {
-                    removeWidgetAnnotation((COSDictionary) kid);
+                PdfBase kid = resolveRef(kidsArray.get(i));
+                if (kid instanceof PdfDictionary) {
+                    removeWidgetAnnotation((PdfDictionary) kid);
                 }
             }
         }
     }
 
-    private void removeWidgetAnnotation(COSDictionary widgetDict) {
+    private void removeWidgetAnnotation(PdfDictionary widgetDict) {
         Page page = findPage(widgetDict);
         if (page == null) {
             return;

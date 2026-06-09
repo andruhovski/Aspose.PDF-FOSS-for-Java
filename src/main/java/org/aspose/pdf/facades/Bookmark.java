@@ -10,7 +10,7 @@ import java.util.logging.Logger;
 /**
  * Represents a bookmark (outline item) in a PDF document.
  * This is a simple data class used by {@link PdfBookmarkEditor} to expose
- * bookmark information without requiring direct access to the COS layer.
+ * bookmark information without requiring direct access to the PDF object layer.
  */
 public class Bookmark {
 

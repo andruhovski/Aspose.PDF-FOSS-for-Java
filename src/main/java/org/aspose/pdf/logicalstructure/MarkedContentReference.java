@@ -1,8 +1,8 @@
 package org.aspose.pdf.logicalstructure;
 
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
 
 import java.io.IOException;
 
@@ -16,7 +16,7 @@ import java.io.IOException;
 public class MarkedContentReference {
 
     private final int mcid;
-    private final COSDictionary page;
+    private final PdfDictionary page;
 
     /**
      * Creates a marked content reference.
@@ -24,7 +24,7 @@ public class MarkedContentReference {
      * @param mcid the marked content identifier
      * @param page the page dictionary (may be null if inherited)
      */
-    public MarkedContentReference(int mcid, COSDictionary page) {
+    public MarkedContentReference(int mcid, PdfDictionary page) {
         this.mcid = mcid;
         this.page = page;
     }
@@ -33,24 +33,24 @@ public class MarkedContentReference {
     public int getMCID() { return mcid; }
 
     /** Returns the page dictionary, or {@code null} if inherited from parent. */
-    public COSDictionary getPage() { return page; }
+    public PdfDictionary getPage() { return page; }
 
     /**
-     * Parses a MCR from a COS dictionary.
+     * Parses a MCR from a PDF dictionary.
      *
      * @param dict the MCR dictionary
      * @return the marked content reference
      */
-    public static MarkedContentReference fromDictionary(COSDictionary dict) {
+    public static MarkedContentReference fromDictionary(PdfDictionary dict) {
         int mcid = dict.getInt("MCID", -1);
-        COSBase pg = resolve(dict.get("Pg"));
+        PdfBase pg = resolve(dict.get("Pg"));
         return new MarkedContentReference(mcid,
-                (pg instanceof COSDictionary) ? (COSDictionary) pg : null);
+                (pg instanceof PdfDictionary) ? (PdfDictionary) pg : null);
     }
 
-    private static COSBase resolve(COSBase obj) {
-        if (obj instanceof COSObjectReference) {
-            try { return ((COSObjectReference) obj).dereference(); }
+    private static PdfBase resolve(PdfBase obj) {
+        if (obj instanceof PdfObjectReference) {
+            try { return ((PdfObjectReference) obj).dereference(); }
             catch (IOException e) { return null; }
         }
         return obj;

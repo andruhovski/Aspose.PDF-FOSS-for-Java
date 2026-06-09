@@ -186,9 +186,9 @@ public class StandardSecurityHandler {
             if (Arrays.equals(hash, Arrays.copyOf(u, 32))) {
                 this.encryptionKey = encDict.getR() == 6
                         ? PDFKeyDerivation.computeEncryptionKeyR6User(password, encDict)
-                        : PDFKeyDerivation.computeEncryptionKeyR6User(password, encDict);
+                        : PDFKeyDerivation.computeEncryptionKeyR5User(password, encDict);
                 this.authenticated = true;
-                LOG.fine("User password authenticated (R=6)");
+                LOG.fine(() -> "User password authenticated (R=" + encDict.getR() + ")");
                 return true;
             }
             return false;
@@ -214,9 +214,9 @@ public class StandardSecurityHandler {
             if (Arrays.equals(hash, Arrays.copyOf(o, 32))) {
                 this.encryptionKey = encDict.getR() == 6
                         ? PDFKeyDerivation.computeEncryptionKeyR6Owner(password, encDict)
-                        : PDFKeyDerivation.computeEncryptionKeyR6Owner(password, encDict);
+                        : PDFKeyDerivation.computeEncryptionKeyR5Owner(password, encDict);
                 this.authenticated = true;
-                LOG.fine("Owner password authenticated (R=6)");
+                LOG.fine(() -> "Owner password authenticated (R=" + encDict.getR() + ")");
                 return true;
             }
             return false;

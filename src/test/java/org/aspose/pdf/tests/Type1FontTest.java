@@ -1,9 +1,9 @@
 package org.aspose.pdf.tests;
 
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 import org.aspose.pdf.engine.font.Type1Font;
 import org.junit.jupiter.api.Test;
 
@@ -18,10 +18,10 @@ public class Type1FontTest {
 
     @Test
     public void testStandard14Helvetica() throws IOException {
-        COSDictionary fontDict = new COSDictionary();
-        fontDict.set(COSName.TYPE, COSName.of("Font"));
-        fontDict.set(COSName.of("Subtype"), COSName.of("Type1"));
-        fontDict.set(COSName.of("BaseFont"), COSName.of("Helvetica"));
+        PdfDictionary fontDict = new PdfDictionary();
+        fontDict.set(PdfName.TYPE, PdfName.of("Font"));
+        fontDict.set(PdfName.of("Subtype"), PdfName.of("Type1"));
+        fontDict.set(PdfName.of("BaseFont"), PdfName.of("Helvetica"));
 
         Type1Font font = new Type1Font(fontDict, null);
         assertEquals("Helvetica", font.getBaseFont());
@@ -29,9 +29,9 @@ public class Type1FontTest {
 
     @Test
     public void testDecodeAscii() throws IOException {
-        COSDictionary fontDict = new COSDictionary();
-        fontDict.set(COSName.of("Subtype"), COSName.of("Type1"));
-        fontDict.set(COSName.of("BaseFont"), COSName.of("Helvetica"));
+        PdfDictionary fontDict = new PdfDictionary();
+        fontDict.set(PdfName.of("Subtype"), PdfName.of("Type1"));
+        fontDict.set(PdfName.of("BaseFont"), PdfName.of("Helvetica"));
 
         Type1Font font = new Type1Font(fontDict, null);
         String decoded = font.decode("Hello".getBytes());
@@ -40,9 +40,9 @@ public class Type1FontTest {
 
     @Test
     public void testGetWidthA() throws IOException {
-        COSDictionary fontDict = new COSDictionary();
-        fontDict.set(COSName.of("Subtype"), COSName.of("Type1"));
-        fontDict.set(COSName.of("BaseFont"), COSName.of("Helvetica"));
+        PdfDictionary fontDict = new PdfDictionary();
+        fontDict.set(PdfName.of("Subtype"), PdfName.of("Type1"));
+        fontDict.set(PdfName.of("BaseFont"), PdfName.of("Helvetica"));
 
         Type1Font font = new Type1Font(fontDict, null);
         assertEquals(667.0, font.getWidth(65), 0.1); // 'A'
@@ -50,9 +50,9 @@ public class Type1FontTest {
 
     @Test
     public void testGetWidthSpace() throws IOException {
-        COSDictionary fontDict = new COSDictionary();
-        fontDict.set(COSName.of("Subtype"), COSName.of("Type1"));
-        fontDict.set(COSName.of("BaseFont"), COSName.of("Helvetica"));
+        PdfDictionary fontDict = new PdfDictionary();
+        fontDict.set(PdfName.of("Subtype"), PdfName.of("Type1"));
+        fontDict.set(PdfName.of("BaseFont"), PdfName.of("Helvetica"));
 
         Type1Font font = new Type1Font(fontDict, null);
         assertEquals(278.0, font.getWidth(32), 0.1); // space
@@ -60,18 +60,18 @@ public class Type1FontTest {
 
     @Test
     public void testCustomEncoding() throws IOException {
-        COSDictionary fontDict = new COSDictionary();
-        fontDict.set(COSName.of("Subtype"), COSName.of("Type1"));
-        fontDict.set(COSName.of("BaseFont"), COSName.of("Helvetica"));
+        PdfDictionary fontDict = new PdfDictionary();
+        fontDict.set(PdfName.of("Subtype"), PdfName.of("Type1"));
+        fontDict.set(PdfName.of("BaseFont"), PdfName.of("Helvetica"));
 
         // Custom encoding with Differences
-        COSDictionary encDict = new COSDictionary();
-        encDict.set(COSName.of("BaseEncoding"), COSName.of("WinAnsiEncoding"));
-        COSArray diff = new COSArray();
-        diff.add(COSInteger.valueOf(65));
-        diff.add(COSName.of("Euro"));
-        encDict.set(COSName.of("Differences"), diff);
-        fontDict.set(COSName.ENCODING, encDict);
+        PdfDictionary encDict = new PdfDictionary();
+        encDict.set(PdfName.of("BaseEncoding"), PdfName.of("WinAnsiEncoding"));
+        PdfArray diff = new PdfArray();
+        diff.add(PdfInteger.valueOf(65));
+        diff.add(PdfName.of("Euro"));
+        encDict.set(PdfName.of("Differences"), diff);
+        fontDict.set(PdfName.ENCODING, encDict);
 
         Type1Font font = new Type1Font(fontDict, null);
         // Code 65 now maps to "Euro" glyph
@@ -82,15 +82,15 @@ public class Type1FontTest {
 
     @Test
     public void testCustomWidths() throws IOException {
-        COSDictionary fontDict = new COSDictionary();
-        fontDict.set(COSName.of("Subtype"), COSName.of("Type1"));
-        fontDict.set(COSName.of("BaseFont"), COSName.of("CustomFont"));
-        fontDict.set(COSName.of("FirstChar"), COSInteger.valueOf(32));
+        PdfDictionary fontDict = new PdfDictionary();
+        fontDict.set(PdfName.of("Subtype"), PdfName.of("Type1"));
+        fontDict.set(PdfName.of("BaseFont"), PdfName.of("CustomFont"));
+        fontDict.set(PdfName.of("FirstChar"), PdfInteger.valueOf(32));
 
-        COSArray widths = new COSArray();
-        widths.add(COSInteger.valueOf(250)); // code 32 = space
-        widths.add(COSInteger.valueOf(300)); // code 33 = !
-        fontDict.set(COSName.WIDTHS, widths);
+        PdfArray widths = new PdfArray();
+        widths.add(PdfInteger.valueOf(250)); // code 32 = space
+        widths.add(PdfInteger.valueOf(300)); // code 33 = !
+        fontDict.set(PdfName.WIDTHS, widths);
 
         Type1Font font = new Type1Font(fontDict, null);
         assertEquals(250.0, font.getWidth(32), 0.1);
@@ -99,9 +99,9 @@ public class Type1FontTest {
 
     @Test
     public void testCourierWidth() throws IOException {
-        COSDictionary fontDict = new COSDictionary();
-        fontDict.set(COSName.of("Subtype"), COSName.of("Type1"));
-        fontDict.set(COSName.of("BaseFont"), COSName.of("Courier"));
+        PdfDictionary fontDict = new PdfDictionary();
+        fontDict.set(PdfName.of("Subtype"), PdfName.of("Type1"));
+        fontDict.set(PdfName.of("BaseFont"), PdfName.of("Courier"));
 
         Type1Font font = new Type1Font(fontDict, null);
         // All Courier chars are 600

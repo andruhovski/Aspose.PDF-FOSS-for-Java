@@ -2,13 +2,13 @@ package org.aspose.pdf.tests;
 
 import org.aspose.pdf.Operator;
 import org.aspose.pdf.OperatorCollection;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSFloat;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSStream;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfFloat;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 import org.aspose.pdf.engine.parser.ContentStreamParser;
 import org.junit.jupiter.api.Test;
 
@@ -37,22 +37,22 @@ public class ContentStreamParserTest {
         // /F1 12 Tf
         assertEquals("Tf", ops.get(1).getName());
         assertEquals(2, ops.get(1).getOperands().size());
-        assertTrue(ops.get(1).getOperands().get(0) instanceof COSName);
-        assertEquals("F1", ((COSName) ops.get(1).getOperands().get(0)).getName());
-        assertTrue(ops.get(1).getOperands().get(1) instanceof COSInteger);
-        assertEquals(12, ((COSInteger) ops.get(1).getOperands().get(1)).intValue());
+        assertTrue(ops.get(1).getOperands().get(0) instanceof PdfName);
+        assertEquals("F1", ((PdfName) ops.get(1).getOperands().get(0)).getName());
+        assertTrue(ops.get(1).getOperands().get(1) instanceof PdfInteger);
+        assertEquals(12, ((PdfInteger) ops.get(1).getOperands().get(1)).intValue());
 
         // 100 700 Td
         assertEquals("Td", ops.get(2).getName());
         assertEquals(2, ops.get(2).getOperands().size());
-        assertEquals(100, ((COSInteger) ops.get(2).getOperands().get(0)).intValue());
-        assertEquals(700, ((COSInteger) ops.get(2).getOperands().get(1)).intValue());
+        assertEquals(100, ((PdfInteger) ops.get(2).getOperands().get(0)).intValue());
+        assertEquals(700, ((PdfInteger) ops.get(2).getOperands().get(1)).intValue());
 
         // (Hello World) Tj
         assertEquals("Tj", ops.get(3).getName());
         assertEquals(1, ops.get(3).getOperands().size());
-        assertTrue(ops.get(3).getOperands().get(0) instanceof COSString);
-        assertEquals("Hello World", ((COSString) ops.get(3).getOperands().get(0)).getString());
+        assertTrue(ops.get(3).getOperands().get(0) instanceof PdfString);
+        assertEquals("Hello World", ((PdfString) ops.get(3).getOperands().get(0)).getString());
 
         // ET — no operands
         assertEquals("ET", ops.get(4).getName());
@@ -69,10 +69,10 @@ public class ContentStreamParserTest {
         // 0 0 100 100 re
         assertEquals("re", ops.get(0).getName());
         assertEquals(4, ops.get(0).getOperands().size());
-        assertEquals(0, ((COSInteger) ops.get(0).getOperands().get(0)).intValue());
-        assertEquals(0, ((COSInteger) ops.get(0).getOperands().get(1)).intValue());
-        assertEquals(100, ((COSInteger) ops.get(0).getOperands().get(2)).intValue());
-        assertEquals(100, ((COSInteger) ops.get(0).getOperands().get(3)).intValue());
+        assertEquals(0, ((PdfInteger) ops.get(0).getOperands().get(0)).intValue());
+        assertEquals(0, ((PdfInteger) ops.get(0).getOperands().get(1)).intValue());
+        assertEquals(100, ((PdfInteger) ops.get(0).getOperands().get(2)).intValue());
+        assertEquals(100, ((PdfInteger) ops.get(0).getOperands().get(3)).intValue());
 
         // S
         assertEquals("S", ops.get(1).getName());
@@ -100,9 +100,9 @@ public class ContentStreamParserTest {
         assertEquals("RG", ops.get(0).getName());
         assertEquals(3, ops.get(0).getOperands().size());
         // 0.5 parses as REAL
-        COSBase first = ops.get(0).getOperands().get(0);
-        assertTrue(first instanceof COSFloat);
-        assertEquals(0.5, ((COSFloat) first).doubleValue(), 1e-10);
+        PdfBase first = ops.get(0).getOperands().get(0);
+        assertTrue(first instanceof PdfFloat);
+        assertEquals(0.5, ((PdfFloat) first).doubleValue(), 1e-10);
     }
 
     @Test
@@ -116,13 +116,13 @@ public class ContentStreamParserTest {
 
         assertEquals("TJ", ops.get(1).getName());
         assertEquals(1, ops.get(1).getOperands().size());
-        assertTrue(ops.get(1).getOperands().get(0) instanceof COSArray);
-        COSArray arr = (COSArray) ops.get(1).getOperands().get(0);
+        assertTrue(ops.get(1).getOperands().get(0) instanceof PdfArray);
+        PdfArray arr = (PdfArray) ops.get(1).getOperands().get(0);
         assertEquals(3, arr.size());
-        assertTrue(arr.get(0) instanceof COSString);
-        assertTrue(arr.get(1) instanceof COSInteger);
-        assertEquals(-100, ((COSInteger) arr.get(1)).intValue());
-        assertTrue(arr.get(2) instanceof COSString);
+        assertTrue(arr.get(0) instanceof PdfString);
+        assertTrue(arr.get(1) instanceof PdfInteger);
+        assertEquals(-100, ((PdfInteger) arr.get(1)).intValue());
+        assertTrue(arr.get(2) instanceof PdfString);
 
         assertEquals("ET", ops.get(2).getName());
     }
@@ -139,9 +139,9 @@ public class ContentStreamParserTest {
     }
 
     @Test
-    public void parseToCollectionFromCOSStream() throws IOException {
+    public void parseToCollectionFromPdfStream() throws IOException {
         String content = "BT /F1 12 Tf ET";
-        COSStream stream = new COSStream(content.getBytes(StandardCharsets.US_ASCII));
+        PdfStream stream = new PdfStream(content.getBytes(StandardCharsets.US_ASCII));
         OperatorCollection coll = ContentStreamParser.parseToCollection(stream);
 
         assertEquals(3, coll.size());
@@ -152,7 +152,7 @@ public class ContentStreamParserTest {
 
     @Test
     public void parseToCollectionNullThrows() {
-        assertThrows(IllegalArgumentException.class, () -> ContentStreamParser.parseToCollection((org.aspose.pdf.engine.cos.COSStream) null));
+        assertThrows(IllegalArgumentException.class, () -> ContentStreamParser.parseToCollection((org.aspose.pdf.engine.pdfobjects.PdfStream) null));
     }
 
     @Test
@@ -162,8 +162,8 @@ public class ContentStreamParserTest {
 
         assertEquals(1, ops.size());
         assertEquals("Tj", ops.get(0).getName());
-        assertTrue(ops.get(0).getOperands().get(0) instanceof COSString);
-        assertEquals("Hello", ((COSString) ops.get(0).getOperands().get(0)).getString());
+        assertTrue(ops.get(0).getOperands().get(0) instanceof PdfString);
+        assertEquals("Hello", ((PdfString) ops.get(0).getOperands().get(0)).getString());
     }
 
     @Test
@@ -176,7 +176,7 @@ public class ContentStreamParserTest {
         assertEquals("cm", ops.get(1).getName());
         assertEquals("Do", ops.get(2).getName());
         assertEquals(1, ops.get(2).getOperands().size());
-        assertEquals("Im1", ((COSName) ops.get(2).getOperands().get(0)).getName());
+        assertEquals("Im1", ((PdfName) ops.get(2).getOperands().get(0)).getName());
         assertEquals("Q", ops.get(3).getName());
     }
 
@@ -188,8 +188,8 @@ public class ContentStreamParserTest {
         assertEquals(1, ops.size());
         assertEquals("m", ops.get(0).getName());
         assertEquals(2, ops.get(0).getOperands().size());
-        assertEquals(-10, ((COSInteger) ops.get(0).getOperands().get(0)).intValue());
-        assertEquals(-20.5, ((COSFloat) ops.get(0).getOperands().get(1)).doubleValue(), 1e-10);
+        assertEquals(-10, ((PdfInteger) ops.get(0).getOperands().get(0)).intValue());
+        assertEquals(-20.5, ((PdfFloat) ops.get(0).getOperands().get(1)).doubleValue(), 1e-10);
     }
 
     @Test
@@ -200,9 +200,9 @@ public class ContentStreamParserTest {
         assertEquals(1, ops.size());
         assertEquals("Td", ops.get(0).getName());
         assertEquals(2, ops.get(0).getOperands().size());
-        assertTrue(ops.get(0).getOperands().get(0) instanceof COSFloat);
-        assertEquals(0.0, ((COSFloat) ops.get(0).getOperands().get(0)).doubleValue(), 1e-10);
-        assertEquals(10, ((COSInteger) ops.get(0).getOperands().get(1)).intValue());
+        assertTrue(ops.get(0).getOperands().get(0) instanceof PdfFloat);
+        assertEquals(0.0, ((PdfFloat) ops.get(0).getOperands().get(0)).doubleValue(), 1e-10);
+        assertEquals(10, ((PdfInteger) ops.get(0).getOperands().get(1)).intValue());
     }
 
     @Test
@@ -212,12 +212,12 @@ public class ContentStreamParserTest {
 
         assertEquals(1, ops.size());
         assertEquals("TJ", ops.get(0).getName());
-        assertTrue(ops.get(0).getOperands().get(0) instanceof COSArray);
-        COSArray array = (COSArray) ops.get(0).getOperands().get(0);
+        assertTrue(ops.get(0).getOperands().get(0) instanceof PdfArray);
+        PdfArray array = (PdfArray) ops.get(0).getOperands().get(0);
         assertEquals(3, array.size());
-        assertEquals("Hel", ((COSString) array.get(0)).getString());
-        assertEquals("o", ((COSString) array.get(1)).getString());
-        assertEquals("lo", ((COSString) array.get(2)).getString());
+        assertEquals("Hel", ((PdfString) array.get(0)).getString());
+        assertEquals("o", ((PdfString) array.get(1)).getString());
+        assertEquals("lo", ((PdfString) array.get(2)).getString());
     }
 
     @Test
@@ -236,9 +236,9 @@ public class ContentStreamParserTest {
         assertEquals(1, ops.size());
         assertEquals("BI", ops.get(0).getName());
         assertEquals(2, ops.get(0).getOperands().size());
-        assertTrue(ops.get(0).getOperands().get(0) instanceof org.aspose.pdf.engine.cos.COSDictionary);
-        assertTrue(ops.get(0).getOperands().get(1) instanceof COSString);
-        assertTrue(((COSString) ops.get(0).getOperands().get(1)).getBytes().length > 0);
+        assertTrue(ops.get(0).getOperands().get(0) instanceof org.aspose.pdf.engine.pdfobjects.PdfDictionary);
+        assertTrue(ops.get(0).getOperands().get(1) instanceof PdfString);
+        assertTrue(((PdfString) ops.get(0).getOperands().get(1)).getBytes().length > 0);
     }
 
     @Test

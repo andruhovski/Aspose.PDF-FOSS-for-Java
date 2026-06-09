@@ -1,10 +1,10 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 
 /**
  * Hide action — shows or hides annotations (ISO 32000-1:2008, §12.6.4.10).
@@ -18,7 +18,7 @@ public class HideAction extends PdfAction {
      *
      * @param dict the action dictionary
      */
-    public HideAction(COSDictionary dict) {
+    public HideAction(PdfDictionary dict) {
         this.actionDict = dict;
     }
 
@@ -29,9 +29,9 @@ public class HideAction extends PdfAction {
      * @param hide           {@code true} to hide, {@code false} to show
      */
     public HideAction(String annotationName, boolean hide) {
-        this.actionDict = new COSDictionary();
-        actionDict.set(COSName.of("S"), COSName.of("Hide"));
-        actionDict.set(COSName.of("T"), new COSString(annotationName));
+        this.actionDict = new PdfDictionary();
+        actionDict.set(PdfName.of("S"), PdfName.of("Hide"));
+        actionDict.set(PdfName.of("T"), new PdfString(annotationName));
         actionDict.setBoolean("H", hide);
     }
 
@@ -42,13 +42,13 @@ public class HideAction extends PdfAction {
      * @param hide            {@code true} to hide, {@code false} to show
      */
     public HideAction(String[] annotationNames, boolean hide) {
-        this.actionDict = new COSDictionary();
-        actionDict.set(COSName.of("S"), COSName.of("Hide"));
-        COSArray arr = new COSArray();
+        this.actionDict = new PdfDictionary();
+        actionDict.set(PdfName.of("S"), PdfName.of("Hide"));
+        PdfArray arr = new PdfArray();
         for (String name : annotationNames) {
-            arr.add(new COSString(name));
+            arr.add(new PdfString(name));
         }
-        actionDict.set(COSName.of("T"), arr);
+        actionDict.set(PdfName.of("T"), arr);
         actionDict.setBoolean("H", hide);
     }
 
@@ -76,16 +76,16 @@ public class HideAction extends PdfAction {
      * @return array of annotation names (may be empty)
      */
     public String[] getAnnotationNames() {
-        COSBase t = resolve(actionDict.get("T"));
-        if (t instanceof COSString) {
-            return new String[]{((COSString) t).getString()};
+        PdfBase t = resolve(actionDict.get("T"));
+        if (t instanceof PdfString) {
+            return new String[]{((PdfString) t).getString()};
         }
-        if (t instanceof COSArray) {
-            COSArray arr = (COSArray) t;
+        if (t instanceof PdfArray) {
+            PdfArray arr = (PdfArray) t;
             String[] names = new String[arr.size()];
             for (int i = 0; i < arr.size(); i++) {
-                COSBase item = resolve(arr.get(i));
-                names[i] = (item instanceof COSString) ? ((COSString) item).getString() : "";
+                PdfBase item = resolve(arr.get(i));
+                names[i] = (item instanceof PdfString) ? ((PdfString) item).getString() : "";
             }
             return names;
         }

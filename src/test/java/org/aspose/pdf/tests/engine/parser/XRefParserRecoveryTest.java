@@ -1,6 +1,6 @@
 package org.aspose.pdf.tests.engine.parser;
 
-import org.aspose.pdf.engine.cos.COSObjectKey;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectKey;
 import org.aspose.pdf.engine.io.RandomAccessReader;
 import org.aspose.pdf.engine.parser.PDFLexer;
 import org.aspose.pdf.engine.parser.XRefEntry;
@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Recovery-path tests for {@link XRefParser}: malformed xref entries that the
  * parser must tolerate by clamping into the legal range required by
- * {@link COSObjectKey}, while still emitting a WARNING for traceability.
+ * {@link PdfObjectKey}, while still emitting a WARNING for traceability.
  *
  * <p>The trigger case in production is the free-list head written with
  * {@code gen=65536} (one over the spec maximum of 65535) — a quirk produced
@@ -62,12 +62,12 @@ public class XRefParserRecoveryTest {
             PDFLexer lexer = new PDFLexer(reader);
             XRefParser parser = new XRefParser(reader, lexer);
 
-            // Must not throw IllegalArgumentException from COSObjectKey ctor.
+            // Must not throw IllegalArgumentException from PdfObjectKey ctor.
             assertDoesNotThrow(() -> parser.parse(0));
 
             // Entry for obj 0 must be present, with gen clamped to 65535.
-            Map<COSObjectKey, XRefEntry> entries = parser.getEntries();
-            XRefEntry free = entries.get(new COSObjectKey(0, 65535));
+            Map<PdfObjectKey, XRefEntry> entries = parser.getEntries();
+            XRefEntry free = entries.get(new PdfObjectKey(0, 65535));
             assertNotNull(free, "Free-head entry must be registered with clamped gen=65535");
             assertEquals(XRefEntry.Type.FREE, free.getType());
 

@@ -4,9 +4,9 @@ import org.aspose.pdf.CryptoAlgorithm;
 import org.aspose.pdf.Document;
 import org.aspose.pdf.Page;
 import org.aspose.pdf.Rectangle;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 import org.aspose.pdf.engine.security.PDFEncryptionDict;
 import org.aspose.pdf.engine.security.PDFKeyDerivation;
 import org.aspose.pdf.forms.RadioButtonField;
@@ -90,19 +90,19 @@ class EveryStreamDecryptsTest {
                 new org.aspose.pdf.engine.parser.PDFParser(
                         org.aspose.pdf.engine.io.RandomAccessReader.fromBytes(pdfBytes));
         parser.parse();
-        COSDictionary trailer = parser.getTrailer();
-        COSBase encRef = trailer.get(COSName.of("Encrypt"));
-        COSBase enc = parser.resolveReference(encRef);
-        PDFEncryptionDict encDict = new PDFEncryptionDict((COSDictionary) enc);
+        PdfDictionary trailer = parser.getTrailer();
+        PdfBase encRef = trailer.get(PdfName.of("Encrypt"));
+        PdfBase enc = parser.resolveReference(encRef);
+        PDFEncryptionDict encDict = new PDFEncryptionDict((PdfDictionary) enc);
         byte[] pwBytes = password.getBytes(StandardCharsets.UTF_8);
         int R = encDict.getR();
         byte[] documentId = null;
-        COSBase id = trailer.get(COSName.of("ID"));
-        if (id instanceof org.aspose.pdf.engine.cos.COSArray
-                && ((org.aspose.pdf.engine.cos.COSArray) id).size() > 0) {
-            COSBase first = ((org.aspose.pdf.engine.cos.COSArray) id).get(0);
-            if (first instanceof org.aspose.pdf.engine.cos.COSString) {
-                documentId = ((org.aspose.pdf.engine.cos.COSString) first).getBytes();
+        PdfBase id = trailer.get(PdfName.of("ID"));
+        if (id instanceof org.aspose.pdf.engine.pdfobjects.PdfArray
+                && ((org.aspose.pdf.engine.pdfobjects.PdfArray) id).size() > 0) {
+            PdfBase first = ((org.aspose.pdf.engine.pdfobjects.PdfArray) id).get(0);
+            if (first instanceof org.aspose.pdf.engine.pdfobjects.PdfString) {
+                documentId = ((org.aspose.pdf.engine.pdfobjects.PdfString) first).getBytes();
             }
         }
         if (R >= 5) {
@@ -137,10 +137,10 @@ class EveryStreamDecryptsTest {
                 new org.aspose.pdf.engine.parser.PDFParser(
                         org.aspose.pdf.engine.io.RandomAccessReader.fromBytes(pdf));
         parser.parse();
-        COSDictionary trailer = parser.getTrailer();
-        COSBase encRef = trailer.get(COSName.of("Encrypt"));
-        COSBase enc = parser.resolveReference(encRef);
-        PDFEncryptionDict encDict = new PDFEncryptionDict((COSDictionary) enc);
+        PdfDictionary trailer = parser.getTrailer();
+        PdfBase encRef = trailer.get(PdfName.of("Encrypt"));
+        PdfBase enc = parser.resolveReference(encRef);
+        PDFEncryptionDict encDict = new PDFEncryptionDict((PdfDictionary) enc);
         int R = encDict.getR();
         boolean aes = (R == 4 || R == 6);
         byte[] fileKey = deriveFileKey(pdf, password);
@@ -305,18 +305,18 @@ class EveryStreamDecryptsTest {
                 new org.aspose.pdf.engine.parser.PDFParser(
                         org.aspose.pdf.engine.io.RandomAccessReader.fromBytes(bytes));
         parser.parse();
-        COSDictionary trailer = parser.getTrailer();
-        COSBase catalog = parser.resolveReference(trailer.get(COSName.ROOT));
-        assertTrue(catalog instanceof COSDictionary);
-        COSBase ext = ((COSDictionary) catalog).get(COSName.of("Extensions"));
-        assertTrue(ext instanceof COSDictionary, "AES-256 catalog must contain /Extensions");
-        COSBase adbe = ((COSDictionary) ext).get(COSName.of("ADBE"));
-        assertTrue(adbe instanceof COSDictionary, "AES-256 /Extensions must contain /ADBE entry");
-        COSBase bv = ((COSDictionary) adbe).get(COSName.of("BaseVersion"));
-        COSBase el = ((COSDictionary) adbe).get(COSName.of("ExtensionLevel"));
-        assertEquals("1.7", bv instanceof COSName ? ((COSName) bv).getName() : String.valueOf(bv));
-        assertEquals(3, el instanceof org.aspose.pdf.engine.cos.COSInteger
-                ? ((org.aspose.pdf.engine.cos.COSInteger) el).intValue() : -1);
+        PdfDictionary trailer = parser.getTrailer();
+        PdfBase catalog = parser.resolveReference(trailer.get(PdfName.ROOT));
+        assertTrue(catalog instanceof PdfDictionary);
+        PdfBase ext = ((PdfDictionary) catalog).get(PdfName.of("Extensions"));
+        assertTrue(ext instanceof PdfDictionary, "AES-256 catalog must contain /Extensions");
+        PdfBase adbe = ((PdfDictionary) ext).get(PdfName.of("ADBE"));
+        assertTrue(adbe instanceof PdfDictionary, "AES-256 /Extensions must contain /ADBE entry");
+        PdfBase bv = ((PdfDictionary) adbe).get(PdfName.of("BaseVersion"));
+        PdfBase el = ((PdfDictionary) adbe).get(PdfName.of("ExtensionLevel"));
+        assertEquals("1.7", bv instanceof PdfName ? ((PdfName) bv).getName() : String.valueOf(bv));
+        assertEquals(3, el instanceof org.aspose.pdf.engine.pdfobjects.PdfInteger
+                ? ((org.aspose.pdf.engine.pdfobjects.PdfInteger) el).intValue() : -1);
     }
 
     private static byte[] tinyJpeg() throws IOException {

@@ -1,10 +1,10 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSStream;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -22,7 +22,7 @@ public class JavaScriptAction extends PdfAction {
      *
      * @param dict the action dictionary
      */
-    public JavaScriptAction(COSDictionary dict) {
+    public JavaScriptAction(PdfDictionary dict) {
         this.actionDict = dict;
     }
 
@@ -32,9 +32,9 @@ public class JavaScriptAction extends PdfAction {
      * @param script the JavaScript source code
      */
     public JavaScriptAction(String script) {
-        this.actionDict = new COSDictionary();
-        actionDict.set(COSName.of("S"), COSName.of("JavaScript"));
-        actionDict.set(COSName.of("JS"), new COSString(script));
+        this.actionDict = new PdfDictionary();
+        actionDict.set(PdfName.of("S"), PdfName.of("JavaScript"));
+        actionDict.set(PdfName.of("JS"), new PdfString(script));
     }
 
     /**
@@ -43,11 +43,11 @@ public class JavaScriptAction extends PdfAction {
      * @return the script string, or {@code null}
      */
     public String getScript() {
-        COSBase js = resolve(actionDict.get("JS"));
-        if (js instanceof COSString) return ((COSString) js).getString();
-        if (js instanceof COSStream) {
+        PdfBase js = resolve(actionDict.get("JS"));
+        if (js instanceof PdfString) return ((PdfString) js).getString();
+        if (js instanceof PdfStream) {
             try {
-                byte[] data = ((COSStream) js).getDecodedData();
+                byte[] data = ((PdfStream) js).getDecodedData();
                 return new String(data, StandardCharsets.UTF_8);
             } catch (IOException e) {
                 return "";
@@ -62,6 +62,6 @@ public class JavaScriptAction extends PdfAction {
      * @param script the JavaScript source code
      */
     public void setScript(String script) {
-        actionDict.set(COSName.of("JS"), new COSString(script));
+        actionDict.set(PdfName.of("JS"), new PdfString(script));
     }
 }

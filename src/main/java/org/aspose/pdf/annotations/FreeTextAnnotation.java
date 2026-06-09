@@ -1,7 +1,7 @@
 package org.aspose.pdf.annotations;
 
 import org.aspose.pdf.*;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 import org.aspose.pdf.text.RichTextFontStyles;
 import org.aspose.pdf.text.TextState;
 
@@ -24,12 +24,12 @@ public class FreeTextAnnotation extends MarkupAnnotation {
     private TextState textStyle;
 
     /**
-     * Constructs a free text annotation from an existing COS dictionary.
+     * Constructs a free text annotation from an existing PDF dictionary.
      *
-     * @param dict the COS dictionary backing this annotation
+     * @param dict the PDF dictionary backing this annotation
      * @param page the page this annotation belongs to
      */
-    public FreeTextAnnotation(COSDictionary dict, Page page) {
+    public FreeTextAnnotation(PdfDictionary dict, Page page) {
         super(dict, page);
     }
 
@@ -41,7 +41,7 @@ public class FreeTextAnnotation extends MarkupAnnotation {
      */
     public FreeTextAnnotation(Page page, Rectangle rect) {
         super(page, rect);
-        dict.set(COSName.of("Subtype"), COSName.of("FreeText"));
+        dict.set(PdfName.of("Subtype"), PdfName.of("FreeText"));
     }
 
     /**
@@ -57,7 +57,7 @@ public class FreeTextAnnotation extends MarkupAnnotation {
      */
     public FreeTextAnnotation(Page page, Rectangle rect, DefaultAppearance defaultAppearance) {
         super(page, rect);
-        dict.set(COSName.of("Subtype"), COSName.of("FreeText"));
+        dict.set(PdfName.of("Subtype"), PdfName.of("FreeText"));
         setDefaultAppearance(defaultAppearance);
     }
 
@@ -70,8 +70,8 @@ public class FreeTextAnnotation extends MarkupAnnotation {
         if (defaultAppearanceObj != null) {
             return defaultAppearanceObj.getText();
         }
-        COSBase da = dict.get("DA");
-        return (da instanceof COSString) ? ((COSString) da).getString() : null;
+        PdfBase da = dict.get("DA");
+        return (da instanceof PdfString) ? ((PdfString) da).getString() : null;
     }
 
     /**
@@ -95,7 +95,7 @@ public class FreeTextAnnotation extends MarkupAnnotation {
     public void setDefaultAppearance(String da) {
         this.defaultAppearanceObj = null;
         if (da != null) {
-            dict.set(COSName.of("DA"), new COSString(da.getBytes(StandardCharsets.UTF_8)));
+            dict.set(PdfName.of("DA"), new PdfString(da.getBytes(StandardCharsets.UTF_8)));
         }
     }
 
@@ -118,7 +118,7 @@ public class FreeTextAnnotation extends MarkupAnnotation {
         this.defaultAppearanceObj = da;
         if (da != null) {
             String daStr = da.getText();
-            dict.set(COSName.of("DA"), new COSString(daStr.getBytes(StandardCharsets.UTF_8)));
+            dict.set(PdfName.of("DA"), new PdfString(daStr.getBytes(StandardCharsets.UTF_8)));
         }
     }
 
@@ -312,9 +312,9 @@ public class FreeTextAnnotation extends MarkupAnnotation {
 
     // ── /IT intent, /Rotate, /CL callout ─────────────────────────────────
 
-    private static final COSName N_IT     = COSName.of("IT");
-    private static final COSName N_ROTATE = COSName.of("Rotate");
-    private static final COSName N_CL     = COSName.of("CL");
+    private static final PdfName N_IT     = PdfName.of("IT");
+    private static final PdfName N_ROTATE = PdfName.of("Rotate");
+    private static final PdfName N_CL     = PdfName.of("CL");
 
     /**
      * Returns the intent (/IT) of this annotation, or {@link FreeTextIntent#Undefined}
@@ -323,9 +323,9 @@ public class FreeTextAnnotation extends MarkupAnnotation {
      * @return the intent, never null
      */
     public FreeTextIntent getIntent() {
-        COSBase it = dict.get(N_IT);
-        if (it instanceof COSName) {
-            return FreeTextIntent.fromPdfName(((COSName) it).getName());
+        PdfBase it = dict.get(N_IT);
+        if (it instanceof PdfName) {
+            return FreeTextIntent.fromPdfName(((PdfName) it).getName());
         }
         return FreeTextIntent.Undefined;
     }
@@ -345,7 +345,7 @@ public class FreeTextAnnotation extends MarkupAnnotation {
         if (name == null) {
             dict.remove(N_IT);
         } else {
-            dict.set(N_IT, COSName.of(name));
+            dict.set(N_IT, PdfName.of(name));
         }
     }
 
@@ -356,12 +356,12 @@ public class FreeTextAnnotation extends MarkupAnnotation {
      * @return the rotation
      */
     public int getRotate() {
-        COSBase r = dict.get(N_ROTATE);
-        if (r instanceof COSInteger) {
-            return ((COSInteger) r).intValue();
+        PdfBase r = dict.get(N_ROTATE);
+        if (r instanceof PdfInteger) {
+            return ((PdfInteger) r).intValue();
         }
-        if (r instanceof COSFloat) {
-            return (int) ((COSFloat) r).doubleValue();
+        if (r instanceof PdfFloat) {
+            return (int) ((PdfFloat) r).doubleValue();
         }
         return 0;
     }
@@ -376,7 +376,7 @@ public class FreeTextAnnotation extends MarkupAnnotation {
         if (rotate % 90 != 0) {
             LOG.warning(() -> "FreeTextAnnotation Rotate should be a multiple of 90, got " + rotate);
         }
-        dict.set(N_ROTATE, COSInteger.valueOf(rotate));
+        dict.set(N_ROTATE, PdfInteger.valueOf(rotate));
     }
 
     /**
@@ -388,9 +388,9 @@ public class FreeTextAnnotation extends MarkupAnnotation {
      * @return array of points, or null
      */
     public double[][] getCallout() {
-        COSBase cl = dict.get(N_CL);
-        if (!(cl instanceof COSArray)) return null;
-        COSArray arr = (COSArray) cl;
+        PdfBase cl = dict.get(N_CL);
+        if (!(cl instanceof PdfArray)) return null;
+        PdfArray arr = (PdfArray) cl;
         int n = arr.size();
         if (n != 4 && n != 6) return null;
         int numPoints = n / 2;
@@ -418,14 +418,14 @@ public class FreeTextAnnotation extends MarkupAnnotation {
             LOG.warning(() -> "FreeTextAnnotation callout must be 2 or 3 points, got " + points.length);
             return;
         }
-        COSArray arr = new COSArray();
+        PdfArray arr = new PdfArray();
         for (double[] p : points) {
             if (p == null || p.length != 2) {
                 LOG.warning("FreeTextAnnotation callout point must be 2 numbers");
                 return;
             }
-            arr.add(new COSFloat(p[0]));
-            arr.add(new COSFloat(p[1]));
+            arr.add(new PdfFloat(p[0]));
+            arr.add(new PdfFloat(p[1]));
         }
         dict.set(N_CL, arr);
     }
@@ -438,16 +438,16 @@ public class FreeTextAnnotation extends MarkupAnnotation {
      *
      * <p>Unlike {@link LineAnnotation} (which stores {@code /LE} as a two-entry
      * array for start+end), a FreeText callout has a single endpoint, so
-     * {@code /LE} is stored as a bare {@link org.aspose.pdf.engine.cos.COSName}.</p>
+     * {@code /LE} is stored as a bare {@link org.aspose.pdf.engine.pdfobjects.PdfName}.</p>
      *
      * @return the ending style, or {@link LineEnding#None} if not set or
      *         unrecognised
      */
     public LineEnding getEndingStyle() {
-        COSBase le = dict.get("LE");
-        if (le instanceof COSName) {
+        PdfBase le = dict.get("LE");
+        if (le instanceof PdfName) {
             try {
-                return LineEnding.valueOf(((COSName) le).getName());
+                return LineEnding.valueOf(((PdfName) le).getName());
             } catch (IllegalArgumentException e) {
                 return LineEnding.None;
             }
@@ -464,9 +464,9 @@ public class FreeTextAnnotation extends MarkupAnnotation {
      */
     public void setEndingStyle(LineEnding style) {
         if (style == null || style == LineEnding.None) {
-            dict.remove(COSName.of("LE"));
+            dict.remove(PdfName.of("LE"));
         } else {
-            dict.set(COSName.of("LE"), COSName.of(style.name()));
+            dict.set(PdfName.of("LE"), PdfName.of(style.name()));
         }
     }
 }

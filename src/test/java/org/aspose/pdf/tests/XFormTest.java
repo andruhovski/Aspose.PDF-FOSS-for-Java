@@ -1,7 +1,7 @@
 package org.aspose.pdf.tests;
 
 import org.aspose.pdf.*;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -15,13 +15,13 @@ public class XFormTest {
 
     @Test
     public void testGetBBox() {
-        COSStream stream = new COSStream();
-        COSArray bbox = new COSArray();
-        bbox.add(COSInteger.valueOf(0));
-        bbox.add(COSInteger.valueOf(0));
-        bbox.add(COSInteger.valueOf(200));
-        bbox.add(COSInteger.valueOf(100));
-        stream.set(COSName.of("BBox"), bbox);
+        PdfStream stream = new PdfStream();
+        PdfArray bbox = new PdfArray();
+        bbox.add(PdfInteger.valueOf(0));
+        bbox.add(PdfInteger.valueOf(0));
+        bbox.add(PdfInteger.valueOf(200));
+        bbox.add(PdfInteger.valueOf(100));
+        stream.set(PdfName.of("BBox"), bbox);
 
         XForm form = new XForm(stream, "Fm1", null);
         Rectangle r = form.getBBox();
@@ -34,15 +34,15 @@ public class XFormTest {
 
     @Test
     public void testGetMatrix() {
-        COSStream stream = new COSStream();
-        COSArray matrix = new COSArray();
-        matrix.add(new COSFloat(2));
-        matrix.add(COSInteger.valueOf(0));
-        matrix.add(COSInteger.valueOf(0));
-        matrix.add(new COSFloat(2));
-        matrix.add(new COSFloat(50));
-        matrix.add(new COSFloat(100));
-        stream.set(COSName.of("Matrix"), matrix);
+        PdfStream stream = new PdfStream();
+        PdfArray matrix = new PdfArray();
+        matrix.add(new PdfFloat(2));
+        matrix.add(PdfInteger.valueOf(0));
+        matrix.add(PdfInteger.valueOf(0));
+        matrix.add(new PdfFloat(2));
+        matrix.add(new PdfFloat(50));
+        matrix.add(new PdfFloat(100));
+        stream.set(PdfName.of("Matrix"), matrix);
 
         XForm form = new XForm(stream, "Fm1", null);
         Matrix m = form.getMatrix();
@@ -54,7 +54,7 @@ public class XFormTest {
 
     @Test
     public void testDefaultMatrix() {
-        COSStream stream = new COSStream();
+        PdfStream stream = new PdfStream();
         XForm form = new XForm(stream, "Fm1", null);
         Matrix m = form.getMatrix();
         assertEquals(Matrix.IDENTITY, m);
@@ -62,10 +62,10 @@ public class XFormTest {
 
     @Test
     public void testGetResources() {
-        COSStream stream = new COSStream();
-        COSDictionary res = new COSDictionary();
-        res.set(COSName.of("Font"), new COSDictionary());
-        stream.set(COSName.of("Resources"), res);
+        PdfStream stream = new PdfStream();
+        PdfDictionary res = new PdfDictionary();
+        res.set(PdfName.of("Font"), new PdfDictionary());
+        stream.set(PdfName.of("Resources"), res);
 
         XForm form = new XForm(stream, "Fm1", null);
         Resources r = form.getResources();
@@ -75,7 +75,7 @@ public class XFormTest {
 
     @Test
     public void testNullResources() {
-        COSStream stream = new COSStream();
+        PdfStream stream = new PdfStream();
         XForm form = new XForm(stream, "Fm1", null);
         assertNull(form.getResources());
     }
@@ -83,7 +83,7 @@ public class XFormTest {
     @Test
     public void testGetContents() throws IOException {
         byte[] content = "q 1 0 0 1 0 0 cm Q".getBytes();
-        COSStream stream = new COSStream(content);
+        PdfStream stream = new PdfStream(content);
         XForm form = new XForm(stream, "Fm1", null);
 
         OperatorCollection ops = form.getContents();
@@ -93,14 +93,14 @@ public class XFormTest {
 
     @Test
     public void testGetName() {
-        COSStream stream = new COSStream();
+        PdfStream stream = new PdfStream();
         XForm form = new XForm(stream, "TestForm", null);
         assertEquals("TestForm", form.getName());
     }
 
     @Test
     public void testNoBBox() {
-        COSStream stream = new COSStream();
+        PdfStream stream = new PdfStream();
         XForm form = new XForm(stream, "Fm1", null);
         assertNull(form.getBBox());
     }

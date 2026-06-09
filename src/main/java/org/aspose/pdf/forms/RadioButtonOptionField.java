@@ -1,7 +1,7 @@
 package org.aspose.pdf.forms;
 
 import org.aspose.pdf.*;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 /**
  * A single option in a radio button group.
@@ -13,8 +13,8 @@ import org.aspose.pdf.engine.cos.*;
  */
 public class RadioButtonOptionField {
 
-    /** The underlying COS dictionary for this option. */
-    private final COSDictionary dict;
+    /** The underlying PDF dictionary for this option. */
+    private final PdfDictionary dict;
 
     /** The page this option belongs to (may be null). */
     private final Page page;
@@ -26,12 +26,12 @@ public class RadioButtonOptionField {
     private AppearanceCharacteristics cachedCharacteristics;
 
     /**
-     * Constructs a radio button option from a COS dictionary.
+     * Constructs a radio button option from a PDF dictionary.
      *
-     * @param dict the COS dictionary
+     * @param dict the PDF dictionary
      * @param page the page (may be null)
      */
-    public RadioButtonOptionField(COSDictionary dict, Page page) {
+    public RadioButtonOptionField(PdfDictionary dict, Page page) {
         this.dict = dict;
         this.page = page;
     }
@@ -60,18 +60,18 @@ public class RadioButtonOptionField {
     public RadioButtonOptionField(Page page, Rectangle rect) {
         this(buildDefaultWidgetDict(), page);
         if (rect != null) {
-            this.dict.set(COSName.of("Rect"), rect.toCOSArray());
+            this.dict.set(PdfName.of("Rect"), rect.toPdfArray());
         }
         if (page != null) {
-            this.dict.set(COSName.of("P"), page.getCOSDictionary());
+            this.dict.set(PdfName.of("P"), page.getPdfDictionary());
         }
     }
 
-    private static COSDictionary buildDefaultWidgetDict() {
-        COSDictionary d = new COSDictionary();
-        d.set(COSName.TYPE, COSName.of("Annot"));
-        d.set(COSName.SUBTYPE, COSName.of("Widget"));
-        d.set(COSName.of("FT"), COSName.of("Btn"));
+    private static PdfDictionary buildDefaultWidgetDict() {
+        PdfDictionary d = new PdfDictionary();
+        d.set(PdfName.TYPE, PdfName.of("Annot"));
+        d.set(PdfName.SUBTYPE, PdfName.of("Widget"));
+        d.set(PdfName.of("FT"), PdfName.of("Btn"));
         return d;
     }
 
@@ -84,11 +84,11 @@ public class RadioButtonOptionField {
      * @return the option value, or null if undetermined
      */
     public String getOptionValue() {
-        COSBase ap = dict.get("AP");
-        if (ap instanceof COSDictionary) {
-            COSBase n = ((COSDictionary) ap).get("N");
-            if (n instanceof COSDictionary) {
-                for (COSName key : ((COSDictionary) n).keySet()) {
+        PdfBase ap = dict.get("AP");
+        if (ap instanceof PdfDictionary) {
+            PdfBase n = ((PdfDictionary) ap).get("N");
+            if (n instanceof PdfDictionary) {
+                for (PdfName key : ((PdfDictionary) n).keySet()) {
                     if (!"Off".equals(key.getName())) return key.getName();
                 }
             }
@@ -102,16 +102,16 @@ public class RadioButtonOptionField {
      * @return the rectangle, or null if /Rect is not present
      */
     public Rectangle getRect() {
-        COSBase r = dict.get("Rect");
-        return (r instanceof COSArray) ? Rectangle.fromCOSArray((COSArray) r) : null;
+        PdfBase r = dict.get("Rect");
+        return (r instanceof PdfArray) ? Rectangle.fromPdfArray((PdfArray) r) : null;
     }
 
     /**
-     * Returns the underlying COS dictionary.
+     * Returns the underlying PDF dictionary.
      *
-     * @return the COS dictionary
+     * @return the PDF dictionary
      */
-    public COSDictionary getCOSDictionary() {
+    public PdfDictionary getPdfDictionary() {
         return dict;
     }
 
@@ -161,8 +161,8 @@ public class RadioButtonOptionField {
     public String getOptionName() {
         String fromAp = getOptionValue();
         if (fromAp != null) return fromAp;
-        COSBase as = dict.get("AS");
-        if (as instanceof COSName) return ((COSName) as).getName();
+        PdfBase as = dict.get("AS");
+        if (as instanceof PdfName) return ((PdfName) as).getName();
         return null;
     }
 
@@ -179,34 +179,34 @@ public class RadioButtonOptionField {
      */
     public void setOptionName(String name) {
         // Ensure /AP/N substructure exists
-        COSDictionary ap = (COSDictionary) dict.get(COSName.of("AP"));
+        PdfDictionary ap = (PdfDictionary) dict.get(PdfName.of("AP"));
         if (ap == null) {
-            ap = new COSDictionary();
-            dict.set(COSName.of("AP"), ap);
+            ap = new PdfDictionary();
+            dict.set(PdfName.of("AP"), ap);
         }
-        COSDictionary n = (COSDictionary) ap.get(COSName.of("N"));
+        PdfDictionary n = (PdfDictionary) ap.get(PdfName.of("N"));
         if (n == null) {
-            n = new COSDictionary();
-            ap.set(COSName.of("N"), n);
+            n = new PdfDictionary();
+            ap.set(PdfName.of("N"), n);
         }
         // Drop any previous non-Off entries so a single name remains
-        java.util.List<COSName> toRemove = new java.util.ArrayList<>();
-        for (COSName key : n.keySet()) {
+        java.util.List<PdfName> toRemove = new java.util.ArrayList<>();
+        for (PdfName key : n.keySet()) {
             if (!"Off".equals(key.getName())) toRemove.add(key);
         }
-        for (COSName key : toRemove) n.remove(key);
+        for (PdfName key : toRemove) n.remove(key);
 
         // Always keep an Off placeholder
-        if (n.get(COSName.of("Off")) == null) {
-            n.set(COSName.of("Off"), emptyAppearanceStream());
+        if (n.get(PdfName.of("Off")) == null) {
+            n.set(PdfName.of("Off"), emptyAppearanceStream());
         }
 
         if (name == null) {
-            dict.remove(COSName.of("AS"));
+            dict.remove(PdfName.of("AS"));
             return;
         }
-        n.set(COSName.of(name), emptyAppearanceStream());
-        dict.set(COSName.of("AS"), COSName.of(name));
+        n.set(PdfName.of(name), emptyAppearanceStream());
+        dict.set(PdfName.of("AS"), PdfName.of(name));
     }
 
     /**
@@ -220,7 +220,7 @@ public class RadioButtonOptionField {
         Rectangle next = r != null
                 ? new Rectangle(r.getLLX(), r.getLLY(), r.getLLX() + width, r.getURY())
                 : new Rectangle(0, 0, width, 0);
-        dict.set(COSName.of("Rect"), next.toCOSArray());
+        dict.set(PdfName.of("Rect"), next.toPdfArray());
     }
 
     /**
@@ -234,13 +234,13 @@ public class RadioButtonOptionField {
         Rectangle next = r != null
                 ? new Rectangle(r.getLLX(), r.getLLY(), r.getURX(), r.getLLY() + height)
                 : new Rectangle(0, 0, 0, height);
-        dict.set(COSName.of("Rect"), next.toCOSArray());
+        dict.set(PdfName.of("Rect"), next.toPdfArray());
     }
 
-    private static COSStream emptyAppearanceStream() {
-        COSStream s = new COSStream();
-        s.set(COSName.TYPE, COSName.of("XObject"));
-        s.set(COSName.SUBTYPE, COSName.of("Form"));
+    private static PdfStream emptyAppearanceStream() {
+        PdfStream s = new PdfStream();
+        s.set(PdfName.TYPE, PdfName.of("XObject"));
+        s.set(PdfName.SUBTYPE, PdfName.of("Form"));
         s.setDecodedData(new byte[0]);
         return s;
     }
@@ -262,9 +262,9 @@ public class RadioButtonOptionField {
      */
     public void setRect(Rectangle rect) {
         if (rect == null) {
-            dict.remove(COSName.of("Rect"));
+            dict.remove(PdfName.of("Rect"));
         } else {
-            dict.set(COSName.of("Rect"), rect.toCOSArray());
+            dict.set(PdfName.of("Rect"), rect.toPdfArray());
         }
     }
 
@@ -275,16 +275,16 @@ public class RadioButtonOptionField {
      * @return the border wrapper, or null
      */
     public org.aspose.pdf.annotations.Border getBorder() {
-        COSBase v = dict.get("BS");
-        if (v instanceof COSDictionary) {
+        PdfBase v = dict.get("BS");
+        if (v instanceof PdfDictionary) {
             org.aspose.pdf.annotations.Border b =
                     new org.aspose.pdf.annotations.Border((org.aspose.pdf.annotations.Annotation) null);
             // Width is the only entry our Border class round-trips through COS today
-            COSBase w = ((COSDictionary) v).get("W");
-            if (w instanceof org.aspose.pdf.engine.cos.COSFloat) {
-                b.setWidth(((org.aspose.pdf.engine.cos.COSFloat) w).doubleValue());
-            } else if (w instanceof org.aspose.pdf.engine.cos.COSInteger) {
-                b.setWidth(((org.aspose.pdf.engine.cos.COSInteger) w).intValue());
+            PdfBase w = ((PdfDictionary) v).get("W");
+            if (w instanceof org.aspose.pdf.engine.pdfobjects.PdfFloat) {
+                b.setWidth(((org.aspose.pdf.engine.pdfobjects.PdfFloat) w).doubleValue());
+            } else if (w instanceof org.aspose.pdf.engine.pdfobjects.PdfInteger) {
+                b.setWidth(((org.aspose.pdf.engine.pdfobjects.PdfInteger) w).intValue());
             }
             return b;
         }
@@ -299,16 +299,16 @@ public class RadioButtonOptionField {
      */
     public void setBorder(org.aspose.pdf.annotations.Border border) {
         if (border == null) {
-            dict.remove(COSName.of("BS"));
+            dict.remove(PdfName.of("BS"));
             return;
         }
-        COSDictionary bs = new COSDictionary();
-        bs.set(COSName.TYPE, COSName.of("Border"));
-        bs.set(COSName.of("W"), new org.aspose.pdf.engine.cos.COSFloat(border.getWidth()));
+        PdfDictionary bs = new PdfDictionary();
+        bs.set(PdfName.TYPE, PdfName.of("Border"));
+        bs.set(PdfName.of("W"), new org.aspose.pdf.engine.pdfobjects.PdfFloat(border.getWidth()));
         // /S = solid/dashed/beveled/inset/underline — we serialise the enum's first letter
-        bs.set(COSName.of("S"),
-                COSName.of(border.getStyle() != null ? border.getStyle().name().substring(0, 1) : "S"));
-        dict.set(COSName.of("BS"), bs);
+        bs.set(PdfName.of("S"),
+                PdfName.of(border.getStyle() != null ? border.getStyle().name().substring(0, 1) : "S"));
+        dict.set(PdfName.of("BS"), bs);
     }
 
     /**
@@ -351,9 +351,9 @@ public class RadioButtonOptionField {
      * @return the DA string, or null
      */
     public String getDefaultAppearance() {
-        COSBase v = dict.get("DA");
-        if (v instanceof org.aspose.pdf.engine.cos.COSString) {
-            return ((org.aspose.pdf.engine.cos.COSString) v).getString();
+        PdfBase v = dict.get("DA");
+        if (v instanceof org.aspose.pdf.engine.pdfobjects.PdfString) {
+            return ((org.aspose.pdf.engine.pdfobjects.PdfString) v).getString();
         }
         return null;
     }
@@ -366,9 +366,9 @@ public class RadioButtonOptionField {
      */
     public void setDefaultAppearance(String da) {
         if (da == null) {
-            dict.remove(COSName.of("DA"));
+            dict.remove(PdfName.of("DA"));
         } else {
-            dict.set(COSName.of("DA"), new org.aspose.pdf.engine.cos.COSString(da));
+            dict.set(PdfName.of("DA"), new org.aspose.pdf.engine.pdfobjects.PdfString(da));
         }
     }
 
@@ -380,7 +380,7 @@ public class RadioButtonOptionField {
      */
     public void setDefaultAppearance(org.aspose.pdf.annotations.DefaultAppearance da) {
         if (da == null) {
-            dict.remove(COSName.of("DA"));
+            dict.remove(PdfName.of("DA"));
         } else {
             setDefaultAppearance(da.toString());
         }
@@ -394,13 +394,13 @@ public class RadioButtonOptionField {
      * @return the appearance dictionary (never null; /AP created lazily)
      */
     public AppearanceDictionary getAppearance() {
-        COSBase ap = dict.get(COSName.of("AP"));
-        COSDictionary apDict;
-        if (ap instanceof COSDictionary) {
-            apDict = (COSDictionary) ap;
+        PdfBase ap = dict.get(PdfName.of("AP"));
+        PdfDictionary apDict;
+        if (ap instanceof PdfDictionary) {
+            apDict = (PdfDictionary) ap;
         } else {
-            apDict = new COSDictionary();
-            dict.set(COSName.of("AP"), apDict);
+            apDict = new PdfDictionary();
+            dict.set(PdfName.of("AP"), apDict);
         }
         return new AppearanceDictionary(apDict);
     }
@@ -417,8 +417,8 @@ public class RadioButtonOptionField {
         if (r == null) return;
         String onState = getOptionName();
         if (onState == null) onState = "On";
-        COSStream onStream = FieldAppearanceBuilder.buildRadioAppearance(r, true, style);
-        COSStream offStream = FieldAppearanceBuilder.buildRadioAppearance(r, false, style);
+        PdfStream onStream = FieldAppearanceBuilder.buildRadioAppearance(r, true, style);
+        PdfStream offStream = FieldAppearanceBuilder.buildRadioAppearance(r, false, style);
         FieldAppearanceBuilder.installAppearance(dict, onStream, onState, offStream);
     }
 }

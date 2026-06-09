@@ -1,10 +1,10 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 
 import java.nio.charset.StandardCharsets;
 
@@ -19,9 +19,9 @@ public class UriAction extends PdfAction {
      * @param uri the URI to open
      */
     public UriAction(String uri) {
-        this.actionDict = new COSDictionary();
-        actionDict.set(COSName.of("S"), COSName.of("URI"));
-        actionDict.set(COSName.of("URI"), new COSString(uri.getBytes(StandardCharsets.UTF_8)));
+        this.actionDict = new PdfDictionary();
+        actionDict.set(PdfName.of("S"), PdfName.of("URI"));
+        actionDict.set(PdfName.of("URI"), new PdfString(uri.getBytes(StandardCharsets.UTF_8)));
     }
 
     /**
@@ -29,7 +29,7 @@ public class UriAction extends PdfAction {
      *
      * @param dict the action dictionary
      */
-    public UriAction(COSDictionary dict) {
+    public UriAction(PdfDictionary dict) {
         this.actionDict = dict;
     }
 
@@ -39,16 +39,16 @@ public class UriAction extends PdfAction {
      * @return the URI, or null
      */
     public String getUri() {
-        COSBase uri = actionDict.get("URI");
-        if (uri instanceof COSObjectReference) {
+        PdfBase uri = actionDict.get("URI");
+        if (uri instanceof PdfObjectReference) {
             try {
-                uri = ((COSObjectReference) uri).dereference();
+                uri = ((PdfObjectReference) uri).dereference();
             } catch (java.io.IOException e) {
                 return null;
             }
         }
-        if (uri instanceof COSString) return ((COSString) uri).getString();
-        if (uri instanceof COSName) return ((COSName) uri).getName();
+        if (uri instanceof PdfString) return ((PdfString) uri).getString();
+        if (uri instanceof PdfName) return ((PdfName) uri).getName();
         return null;
     }
 
@@ -58,6 +58,6 @@ public class UriAction extends PdfAction {
      * @param uri the URI
      */
     public void setUri(String uri) {
-        actionDict.set(COSName.of("URI"), new COSString(uri.getBytes(StandardCharsets.UTF_8)));
+        actionDict.set(PdfName.of("URI"), new PdfString(uri.getBytes(StandardCharsets.UTF_8)));
     }
 }

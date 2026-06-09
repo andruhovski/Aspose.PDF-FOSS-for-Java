@@ -1,7 +1,7 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSFloat;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfFloat;
 
 import java.util.Arrays;
 import java.util.logging.Logger;
@@ -232,18 +232,18 @@ public class Matrix {
     }
 
     /**
-     * Creates a Matrix from a COS array of six numbers.
+     * Creates a Matrix from a PDF array of six numbers.
      *
-     * @param array the COS array containing [a, b, c, d, e, f]
+     * @param array the PDF array containing [a, b, c, d, e, f]
      * @return a new Matrix
      * @throws IllegalArgumentException if the array is null or does not have exactly 6 elements
      */
-    public static Matrix fromCOSArray(COSArray array) {
+    public static Matrix fromPdfArray(PdfArray array) {
         if (array == null) {
-            throw new IllegalArgumentException("COSArray must not be null");
+            throw new IllegalArgumentException("PdfArray must not be null");
         }
         if (array.size() != 6) {
-            throw new IllegalArgumentException("Matrix COSArray must have exactly 6 elements, got " + array.size());
+            throw new IllegalArgumentException("Matrix PdfArray must have exactly 6 elements, got " + array.size());
         }
         return new Matrix(
                 array.getFloat(0, 0f),
@@ -256,18 +256,18 @@ public class Matrix {
     }
 
     /**
-     * Converts this matrix to a COS array of six numbers.
+     * Converts this matrix to a PDF array of six numbers.
      *
-     * @return a COSArray containing [a, b, c, d, e, f]
+     * @return a PdfArray containing [a, b, c, d, e, f]
      */
-    public COSArray toCOSArray() {
-        COSArray array = new COSArray(6);
-        array.add(new COSFloat(a));
-        array.add(new COSFloat(b));
-        array.add(new COSFloat(c));
-        array.add(new COSFloat(d));
-        array.add(new COSFloat(e));
-        array.add(new COSFloat(f));
+    public PdfArray toPdfArray() {
+        PdfArray array = new PdfArray(6);
+        array.add(new PdfFloat(a));
+        array.add(new PdfFloat(b));
+        array.add(new PdfFloat(c));
+        array.add(new PdfFloat(d));
+        array.add(new PdfFloat(e));
+        array.add(new PdfFloat(f));
         return array;
     }
 

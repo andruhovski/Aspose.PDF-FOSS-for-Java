@@ -1,6 +1,6 @@
 package org.aspose.pdf.engine.linearization;
 
-import org.aspose.pdf.engine.cos.COSObjectKey;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectKey;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -20,13 +20,13 @@ import java.util.Map;
  */
 public final class LinearizationPlan {
 
-    private final List<COSObjectKey> pageKeys;
+    private final List<PdfObjectKey> pageKeys;
     private final int firstPageIndex;
-    private final List<COSObjectKey> firstPagePrivate;
-    private final List<COSObjectKey> firstPageShared;
-    private final Map<Integer, List<COSObjectKey>> otherPagePrivate;
-    private final List<COSObjectKey> sharedObjects;
-    private final List<COSObjectKey> documentLevel;
+    private final List<PdfObjectKey> firstPagePrivate;
+    private final List<PdfObjectKey> firstPageShared;
+    private final Map<Integer, List<PdfObjectKey>> otherPagePrivate;
+    private final List<PdfObjectKey> sharedObjects;
+    private final List<PdfObjectKey> documentLevel;
     private final int numPages;
 
     /**
@@ -42,10 +42,10 @@ public final class LinearizationPlan {
      * @param numPages          total number of pages
      */
     public LinearizationPlan(
-            List<COSObjectKey> pageKeys, int firstPageIndex,
-            List<COSObjectKey> firstPagePrivate, List<COSObjectKey> firstPageShared,
-            Map<Integer, List<COSObjectKey>> otherPagePrivate,
-            List<COSObjectKey> sharedObjects, List<COSObjectKey> documentLevel,
+            List<PdfObjectKey> pageKeys, int firstPageIndex,
+            List<PdfObjectKey> firstPagePrivate, List<PdfObjectKey> firstPageShared,
+            Map<Integer, List<PdfObjectKey>> otherPagePrivate,
+            List<PdfObjectKey> sharedObjects, List<PdfObjectKey> documentLevel,
             int numPages) {
         this.pageKeys = Collections.unmodifiableList(new ArrayList<>(pageKeys));
         this.firstPageIndex = firstPageIndex;
@@ -58,39 +58,39 @@ public final class LinearizationPlan {
     }
 
     /** Returns page object keys in document order. */
-    public List<COSObjectKey> getPageKeys() { return pageKeys; }
+    public List<PdfObjectKey> getPageKeys() { return pageKeys; }
 
     /** Returns the index of the first page to display. */
     public int getFirstPageIndex() { return firstPageIndex; }
 
     /** Returns objects private to the first page (Part 6). */
-    public List<COSObjectKey> getFirstPagePrivate() { return firstPagePrivate; }
+    public List<PdfObjectKey> getFirstPagePrivate() { return firstPagePrivate; }
 
     /** Returns shared objects needed for the first page (Part 6). */
-    public List<COSObjectKey> getFirstPageShared() { return firstPageShared; }
+    public List<PdfObjectKey> getFirstPageShared() { return firstPageShared; }
 
     /** Returns all objects for Part 6 (first page private + shared). */
-    public List<COSObjectKey> getFirstPageObjects() {
-        List<COSObjectKey> result = new ArrayList<>(firstPagePrivate.size() + firstPageShared.size());
+    public List<PdfObjectKey> getFirstPageObjects() {
+        List<PdfObjectKey> result = new ArrayList<>(firstPagePrivate.size() + firstPageShared.size());
         result.addAll(firstPagePrivate);
         result.addAll(firstPageShared);
         return result;
     }
 
     /** Returns private objects for a given page index (Part 7). */
-    public List<COSObjectKey> getPagePrivateObjects(int pageIndex) {
-        List<COSObjectKey> list = otherPagePrivate.get(pageIndex);
+    public List<PdfObjectKey> getPagePrivateObjects(int pageIndex) {
+        List<PdfObjectKey> list = otherPagePrivate.get(pageIndex);
         return list != null ? list : Collections.emptyList();
     }
 
     /** Returns the per-page private objects map. */
-    public Map<Integer, List<COSObjectKey>> getOtherPagePrivate() { return otherPagePrivate; }
+    public Map<Integer, List<PdfObjectKey>> getOtherPagePrivate() { return otherPagePrivate; }
 
     /** Returns shared objects for non-first pages (Part 8). */
-    public List<COSObjectKey> getSharedObjects() { return sharedObjects; }
+    public List<PdfObjectKey> getSharedObjects() { return sharedObjects; }
 
     /** Returns document-level objects (Parts 4/9). */
-    public List<COSObjectKey> getDocumentLevel() { return documentLevel; }
+    public List<PdfObjectKey> getDocumentLevel() { return documentLevel; }
 
     /** Returns the total number of pages. */
     public int getNumPages() { return numPages; }

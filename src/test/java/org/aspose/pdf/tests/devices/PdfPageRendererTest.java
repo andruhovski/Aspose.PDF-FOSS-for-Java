@@ -3,10 +3,10 @@ package org.aspose.pdf.tests.devices;
 import org.aspose.pdf.devices.*;
 
 import org.aspose.pdf.Page;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSFloat;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfFloat;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 import org.aspose.pdf.engine.render.PdfPageRenderer;
 import org.junit.jupiter.api.Test;
 
@@ -23,14 +23,14 @@ public class PdfPageRendererTest {
      * Creates a minimal Page with a MediaBox but no content stream.
      */
     private Page createEmptyPage(double width, double height) {
-        COSDictionary pageDict = new COSDictionary();
-        pageDict.set(COSName.of("Type"), COSName.of("Page"));
-        COSArray mediaBox = new COSArray(4);
-        mediaBox.add(new COSFloat(0));
-        mediaBox.add(new COSFloat(0));
-        mediaBox.add(new COSFloat(width));
-        mediaBox.add(new COSFloat(height));
-        pageDict.set(COSName.of("MediaBox"), mediaBox);
+        PdfDictionary pageDict = new PdfDictionary();
+        pageDict.set(PdfName.of("Type"), PdfName.of("Page"));
+        PdfArray mediaBox = new PdfArray(4);
+        mediaBox.add(new PdfFloat(0));
+        mediaBox.add(new PdfFloat(0));
+        mediaBox.add(new PdfFloat(width));
+        mediaBox.add(new PdfFloat(height));
+        pageDict.set(PdfName.of("MediaBox"), mediaBox);
         return new Page(pageDict, null);
     }
 

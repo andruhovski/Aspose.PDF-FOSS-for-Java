@@ -1,10 +1,10 @@
 package org.aspose.pdf.tests;
 
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSFloat;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfFloat;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 import org.aspose.pdf.engine.function.ExponentialFunction;
 import org.aspose.pdf.engine.function.PostScriptFunction;
 import org.aspose.pdf.engine.function.StitchingFunction;
@@ -65,16 +65,16 @@ public class PdfFunctionTest {
 
     @Test
     public void exponentialFromDict() {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("FunctionType"), COSInteger.valueOf(2));
-        dict.set(COSName.of("N"), new COSFloat(1.0f));
-        COSArray domain = new COSArray();
-        domain.add(COSInteger.valueOf(0)); domain.add(COSInteger.valueOf(1));
-        dict.set(COSName.of("Domain"), domain);
-        COSArray c0 = new COSArray(); c0.add(new COSFloat(0f));
-        COSArray c1 = new COSArray(); c1.add(new COSFloat(1f));
-        dict.set(COSName.of("C0"), c0);
-        dict.set(COSName.of("C1"), c1);
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("FunctionType"), PdfInteger.valueOf(2));
+        dict.set(PdfName.of("N"), new PdfFloat(1.0f));
+        PdfArray domain = new PdfArray();
+        domain.add(PdfInteger.valueOf(0)); domain.add(PdfInteger.valueOf(1));
+        dict.set(PdfName.of("Domain"), domain);
+        PdfArray c0 = new PdfArray(); c0.add(new PdfFloat(0f));
+        PdfArray c1 = new PdfArray(); c1.add(new PdfFloat(1f));
+        dict.set(PdfName.of("C0"), c0);
+        dict.set(PdfName.of("C1"), c1);
 
         ExponentialFunction f = new ExponentialFunction(dict,
                 new double[]{0, 1}, new double[]{0, 1});
@@ -168,15 +168,97 @@ public class PdfFunctionTest {
 
     @Test
     public void parseType2() throws Exception {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("FunctionType"), COSInteger.valueOf(2));
-        dict.set(COSName.of("N"), new COSFloat(1.0f));
-        COSArray domain = new COSArray();
-        domain.add(new COSFloat(0f)); domain.add(new COSFloat(1f));
-        dict.set(COSName.of("Domain"), domain);
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("FunctionType"), PdfInteger.valueOf(2));
+        dict.set(PdfName.of("N"), new PdfFloat(1.0f));
+        PdfArray domain = new PdfArray();
+        domain.add(new PdfFloat(0f)); domain.add(new PdfFloat(1f));
+        dict.set(PdfName.of("Domain"), domain);
 
         PdfFunction f = PdfFunction.parse(dict, null);
         assertNotNull(f);
         assertTrue(f instanceof ExponentialFunction);
+    }
+
+    @org.junit.jupiter.api.Test
+    public void postScriptInputsPushedInOrder() {
+        // ISO 32000 7.10.5.1: first input deepest, LAST input on top.
+        // exch swaps [first, last] -> [last, first]; pop drops first ->
+        // the LAST input (0.75) remains. The old reversed push order
+        // yielded 0.25 here (and swapped DeviceN colorants in 29077.pdf).
+        PostScriptFunction f = new PostScriptFunction(
+                new double[]{0, 1, 0, 1}, new double[]{0, 1}, "{ exch pop }");
+        double[] r = f.evaluate(new double[]{0.25, 0.75});
+        assertEquals(0.75, r[0], 1e-6);
+    }
+
+    @org.junit.jupiter.api.Test
+    public void postScriptRoll() {
+        // 1 2 3 -> "3 1 roll" -> 3 1 2
+        PostScriptFunction f = new PostScriptFunction(
+                new double[]{}, new double[]{0, 10, 0, 10, 0, 10},
+                "{ 1 2 3 3 1 roll }");
+        double[] r = f.evaluate(new double[]{});
+        assertEquals(3.0, r[0], 1e-6);
+        assertEquals(1.0, r[1], 1e-6);
+        assertEquals(2.0, r[2], 1e-6);
+    }
+
+    @org.junit.jupiter.api.Test
+    public void postScriptRollNegative() {
+        // 1 2 3 -> "3 -1 roll" -> 2 3 1
+        PostScriptFunction f = new PostScriptFunction(
+                new double[]{}, new double[]{0, 10, 0, 10, 0, 10},
+                "{ 1 2 3 3 -1 roll }");
+        double[] r = f.evaluate(new double[]{});
+        assertEquals(2.0, r[0], 1e-6);
+        assertEquals(3.0, r[1], 1e-6);
+        assertEquals(1.0, r[2], 1e-6);
+    }
+
+    @org.junit.jupiter.api.Test
+    public void postScriptCvrCvi() {
+        // 3 cvr -> 3.0; 2.7 cvi -> 2; sum 5
+        PostScriptFunction f = new PostScriptFunction(
+                new double[]{0, 10}, new double[]{0, 10}, "{ cvr 2.7 cvi add }");
+        assertEquals(5.0, f.evaluate(new double[]{3.0})[0], 1e-6);
+    }
+
+    @org.junit.jupiter.api.Test
+    public void postScriptIfTrueExecutesBody() {
+        PostScriptFunction f = new PostScriptFunction(
+                new double[]{0, 1}, new double[]{0, 10},
+                "{ 0.6 gt { 5 } if }");
+        assertEquals(5.0, f.evaluate(new double[]{0.9})[0], 1e-6);
+    }
+
+    @org.junit.jupiter.api.Test
+    public void postScriptIfElse() {
+        PostScriptFunction f = new PostScriptFunction(
+                new double[]{0, 1}, new double[]{0, 10},
+                "{ 0.5 lt { 1 } { 2 } ifelse }");
+        assertEquals(1.0, f.evaluate(new double[]{0.2})[0], 1e-6);
+        assertEquals(2.0, f.evaluate(new double[]{0.8})[0], 1e-6);
+    }
+
+    /**
+     * The exact DeviceN [Cyan Magenta] -> CMYK tint transform from corpus
+     * 29077.pdf (llPDFLib): expected output is [c, m, 0, 0]. With roll
+     * unimplemented the result degenerated to [1,1,1,1] = black label.
+     */
+    @org.junit.jupiter.api.Test
+    public void postScript29077TintTransform() {
+        String prog = "{1 index 1.000000 cvr exch sub 3 1 roll 0 index 1.000000 cvr exch sub "
+                + "3 1 roll 1.000000 3 1 roll 1.000000 3 1 roll 6 -1 roll 1.000000 "
+                + "cvr exch sub 6 1 roll 5 -1 roll 1.000000 cvr exch sub 5 1 "
+                + "roll 4 -1 roll 1.000000 cvr exch sub 4 1 roll 3 -1 roll 1.000000 "
+                + "cvr exch sub 3 1 roll pop pop }";
+        PostScriptFunction f = new PostScriptFunction(
+                new double[]{0, 1, 0, 1}, new double[]{0, 1, 0, 1, 0, 1, 0, 1}, prog);
+        double[] r = f.evaluate(new double[]{0.96, 0.69});
+        assertEquals(0.96, r[0], 1e-6, "C");
+        assertEquals(0.69, r[1], 1e-6, "M");
+        assertEquals(0.0,  r[2], 1e-6, "Y");
+        assertEquals(0.0,  r[3], 1e-6, "K");
     }
 }

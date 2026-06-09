@@ -1,12 +1,12 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSFloat;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfFloat;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 
 import java.io.IOException;
 import java.util.ArrayDeque;
@@ -45,7 +45,7 @@ public class ImagePlacementAbsorber {
     public void visit(Page page) throws IOException {
         Resources res = page.getResources();
         if (res == null) return;
-        COSDictionary xobjects = res.getXObjects();
+        PdfDictionary xobjects = res.getXObjects();
         if (xobjects == null) return;
 
         // Track CTM through content stream
@@ -55,7 +55,7 @@ public class ImagePlacementAbsorber {
         OperatorCollection ops = page.getContents();
         for (Operator op : ops) {
             String name = op.getName();
-            List<COSBase> operands = op.getOperands();
+            List<PdfBase> operands = op.getOperands();
             switch (name) {
                 case "q":
                     ctmStack.push(ctm.clone());
@@ -70,12 +70,12 @@ public class ImagePlacementAbsorber {
                     }
                     break;
                 case "Do":
-                    if (operands.size() >= 1 && operands.get(0) instanceof COSName) {
-                        String xName = ((COSName) operands.get(0)).getName();
-                        COSBase xobj = xobjects.get(xName);
+                    if (operands.size() >= 1 && operands.get(0) instanceof PdfName) {
+                        String xName = ((PdfName) operands.get(0)).getName();
+                        PdfBase xobj = xobjects.get(xName);
                         xobj = resolveRef(xobj);
-                        if (xobj instanceof COSStream) {
-                            COSStream s = (COSStream) xobj;
+                        if (xobj instanceof PdfStream) {
+                            PdfStream s = (PdfStream) xobj;
                             String subtype = s.getNameAsString("Subtype");
                             if ("Image".equals(subtype)) {
                                 XImage img = new XImage(s, xName, null);
@@ -108,7 +108,7 @@ public class ImagePlacementAbsorber {
         placements.clear();
     }
 
-    private static double[] extractMatrix(List<COSBase> operands) {
+    private static double[] extractMatrix(List<PdfBase> operands) {
         double[] m = new double[6];
         for (int i = 0; i < 6 && i < operands.size(); i++) {
             m[i] = getNumber(operands.get(i));
@@ -127,16 +127,16 @@ public class ImagePlacementAbsorber {
         };
     }
 
-    private static double getNumber(COSBase val) {
-        if (val instanceof COSInteger) return ((COSInteger) val).intValue();
-        if (val instanceof COSFloat) return ((COSFloat) val).doubleValue();
+    private static double getNumber(PdfBase val) {
+        if (val instanceof PdfInteger) return ((PdfInteger) val).intValue();
+        if (val instanceof PdfFloat) return ((PdfFloat) val).doubleValue();
         return 0;
     }
 
-    private static COSBase resolveRef(COSBase val) {
-        if (val instanceof COSObjectReference) {
+    private static PdfBase resolveRef(PdfBase val) {
+        if (val instanceof PdfObjectReference) {
             try {
-                return ((COSObjectReference) val).dereference();
+                return ((PdfObjectReference) val).dereference();
             } catch (IOException e) {
                 LOG.warning(() -> "Failed to dereference: " + e.getMessage());
                 return null;

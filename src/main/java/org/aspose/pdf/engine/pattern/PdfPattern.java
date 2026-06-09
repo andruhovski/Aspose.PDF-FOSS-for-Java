@@ -1,11 +1,11 @@
 package org.aspose.pdf.engine.pattern;
 
 import org.aspose.pdf.Matrix;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 import org.aspose.pdf.engine.parser.PDFParser;
 
 import java.io.IOException;
@@ -20,9 +20,9 @@ public abstract class PdfPattern {
     private static final Logger LOG = Logger.getLogger(PdfPattern.class.getName());
 
     /** The underlying pattern dictionary (or stream for tiling patterns). */
-    protected final COSDictionary dict;
+    protected final PdfDictionary dict;
 
-    protected PdfPattern(COSDictionary dict) {
+    protected PdfPattern(PdfDictionary dict) {
         this.dict = dict;
     }
 
@@ -39,37 +39,37 @@ public abstract class PdfPattern {
      * @return the matrix, or {@link Matrix#IDENTITY} if not specified
      */
     public Matrix getMatrix() {
-        COSBase m = resolveRef(dict.get("Matrix"));
-        if (m instanceof COSArray && ((COSArray) m).size() == 6) {
-            return Matrix.fromCOSArray((COSArray) m);
+        PdfBase m = resolveRef(dict.get("Matrix"));
+        if (m instanceof PdfArray && ((PdfArray) m).size() == 6) {
+            return Matrix.fromPdfArray((PdfArray) m);
         }
         return Matrix.IDENTITY;
     }
 
     /**
-     * Returns the underlying COS dictionary.
+     * Returns the underlying PDF dictionary.
      *
      * @return the pattern dictionary
      */
-    public COSDictionary getCOSDictionary() { return dict; }
+    public PdfDictionary getPdfDictionary() { return dict; }
 
     /**
-     * Factory: parses a pattern from a COS object.
+     * Factory: parses a pattern from a PDF object.
      *
      * @param obj    the pattern object (dictionary or stream)
      * @param parser the PDF parser for resolving references
      * @return the parsed pattern, or {@code null} if unparseable
      * @throws IOException if parsing fails
      */
-    public static PdfPattern parse(COSBase obj, PDFParser parser) throws IOException {
+    public static PdfPattern parse(PdfBase obj, PDFParser parser) throws IOException {
         obj = resolveRef(obj);
-        if (obj instanceof COSStream) {
-            COSStream stream = (COSStream) obj;
+        if (obj instanceof PdfStream) {
+            PdfStream stream = (PdfStream) obj;
             int type = stream.getInt("PatternType", 0);
             if (type == 1) return new TilingPattern(stream, parser);
             if (type == 2) return new ShadingPattern(stream, parser);
-        } else if (obj instanceof COSDictionary) {
-            COSDictionary dict = (COSDictionary) obj;
+        } else if (obj instanceof PdfDictionary) {
+            PdfDictionary dict = (PdfDictionary) obj;
             int type = dict.getInt("PatternType", 0);
             if (type == 1) return new TilingPattern(dict, parser);
             if (type == 2) return new ShadingPattern(dict, parser);
@@ -80,9 +80,9 @@ public abstract class PdfPattern {
     /**
      * Resolves indirect object references.
      */
-    protected static COSBase resolveRef(COSBase obj) {
-        if (obj instanceof COSObjectReference) {
-            try { return ((COSObjectReference) obj).dereference(); }
+    protected static PdfBase resolveRef(PdfBase obj) {
+        if (obj instanceof PdfObjectReference) {
+            try { return ((PdfObjectReference) obj).dereference(); }
             catch (IOException e) { return null; }
         }
         return obj;
@@ -91,10 +91,10 @@ public abstract class PdfPattern {
     /**
      * Extracts a numeric array from a dictionary entry.
      */
-    protected static double[] getNumberArray(COSDictionary dict, String key) {
-        COSBase val = dict.get(key);
-        if (val instanceof COSArray) {
-            COSArray arr = (COSArray) val;
+    protected static double[] getNumberArray(PdfDictionary dict, String key) {
+        PdfBase val = dict.get(key);
+        if (val instanceof PdfArray) {
+            PdfArray arr = (PdfArray) val;
             double[] result = new double[arr.size()];
             for (int i = 0; i < arr.size(); i++) {
                 result[i] = arr.getFloat(i, 0f);
@@ -107,15 +107,15 @@ public abstract class PdfPattern {
     /**
      * Extracts a boolean array from a dictionary entry.
      */
-    protected static boolean[] getBooleanArray(COSDictionary dict, String key) {
-        COSBase val = dict.get(key);
-        if (val instanceof COSArray) {
-            COSArray arr = (COSArray) val;
+    protected static boolean[] getBooleanArray(PdfDictionary dict, String key) {
+        PdfBase val = dict.get(key);
+        if (val instanceof PdfArray) {
+            PdfArray arr = (PdfArray) val;
             boolean[] result = new boolean[arr.size()];
             for (int i = 0; i < arr.size(); i++) {
-                COSBase item = arr.get(i);
-                if (item instanceof org.aspose.pdf.engine.cos.COSBoolean) {
-                    result[i] = ((org.aspose.pdf.engine.cos.COSBoolean) item).getValue();
+                PdfBase item = arr.get(i);
+                if (item instanceof org.aspose.pdf.engine.pdfobjects.PdfBoolean) {
+                    result[i] = ((org.aspose.pdf.engine.pdfobjects.PdfBoolean) item).getValue();
                 }
             }
             return result;

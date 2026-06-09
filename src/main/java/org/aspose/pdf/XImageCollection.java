@@ -1,10 +1,10 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 import org.aspose.pdf.engine.parser.PDFParser;
 
 import java.io.ByteArrayOutputStream;
@@ -26,12 +26,12 @@ public class XImageCollection implements Iterable<XImage> {
 
     private static final Logger LOG = Logger.getLogger(XImageCollection.class.getName());
 
-    private static final COSName XOBJECT = COSName.of("XObject");
-    private static final COSName PATTERN = COSName.of("Pattern");
-    private static final COSName RESOURCES = COSName.of("Resources");
+    private static final PdfName XOBJECT = PdfName.of("XObject");
+    private static final PdfName PATTERN = PdfName.of("Pattern");
+    private static final PdfName RESOURCES = PdfName.of("Resources");
 
-    private final COSDictionary resourcesDict;
-    private final COSDictionary xobjectDict;
+    private final PdfDictionary resourcesDict;
+    private final PdfDictionary xobjectDict;
     private final PDFParser parser;
     private List<XImage> images;
 
@@ -41,7 +41,7 @@ public class XImageCollection implements Iterable<XImage> {
      * @param xobjectDict the /XObject sub-dictionary
      * @param parser      the PDF parser (may be null)
      */
-    public XImageCollection(COSDictionary resourcesDict, COSDictionary xobjectDict, PDFParser parser) {
+    public XImageCollection(PdfDictionary resourcesDict, PdfDictionary xobjectDict, PDFParser parser) {
         this.resourcesDict = resourcesDict;
         this.xobjectDict = xobjectDict;
         this.parser = parser;
@@ -53,12 +53,12 @@ public class XImageCollection implements Iterable<XImage> {
      * @param xobjectDict the /XObject sub-dictionary
      * @param parser the PDF parser (may be null)
      */
-    public XImageCollection(COSDictionary xobjectDict, PDFParser parser) {
+    public XImageCollection(PdfDictionary xobjectDict, PDFParser parser) {
         this(synthesizeResources(xobjectDict), xobjectDict, parser);
     }
 
-    private static COSDictionary synthesizeResources(COSDictionary xobjectDict) {
-        COSDictionary resources = new COSDictionary();
+    private static PdfDictionary synthesizeResources(PdfDictionary xobjectDict) {
+        PdfDictionary resources = new PdfDictionary();
         if (xobjectDict != null) {
             resources.set(XOBJECT, xobjectDict);
         }
@@ -157,8 +157,8 @@ public class XImageCollection implements Iterable<XImage> {
     public void add(InputStream imageStream) throws IOException {
         byte[] data = readAll(imageStream);
         String name = "Im" + (getCount() + 1);
-        COSStream imgStream = XImage.createImageStream(data);
-        xobjectDict.set(COSName.of(name), imgStream);
+        PdfStream imgStream = XImage.createImageStream(data);
+        xobjectDict.set(PdfName.of(name), imgStream);
         invalidateCache();
     }
 
@@ -223,56 +223,56 @@ public class XImageCollection implements Iterable<XImage> {
         LOG.fine(() -> "XImageCollection loaded: " + images.size() + " images");
     }
 
-    private void collectImagesFromResources(COSDictionary resources,
-                                            java.util.IdentityHashMap<COSDictionary, Boolean> visited) {
+    private void collectImagesFromResources(PdfDictionary resources,
+                                            java.util.IdentityHashMap<PdfDictionary, Boolean> visited) {
         if (resources == null || visited.put(resources, Boolean.TRUE) != null) {
             return;
         }
-        COSBase xObjectsBase = resources.get(XOBJECT);
-        COSBase resolvedXObjects = resolveRef(xObjectsBase);
-        if (resolvedXObjects instanceof COSDictionary) {
-            collectImagesFromXObjectDictionary((COSDictionary) resolvedXObjects, visited);
+        PdfBase xObjectsBase = resources.get(XOBJECT);
+        PdfBase resolvedXObjects = resolveRef(xObjectsBase);
+        if (resolvedXObjects instanceof PdfDictionary) {
+            collectImagesFromXObjectDictionary((PdfDictionary) resolvedXObjects, visited);
         }
-        COSBase patternsBase = resources.get(PATTERN);
-        COSBase resolvedPatterns = resolveRef(patternsBase);
-        if (resolvedPatterns instanceof COSDictionary) {
-            collectImagesFromPatternDictionary((COSDictionary) resolvedPatterns, visited);
+        PdfBase patternsBase = resources.get(PATTERN);
+        PdfBase resolvedPatterns = resolveRef(patternsBase);
+        if (resolvedPatterns instanceof PdfDictionary) {
+            collectImagesFromPatternDictionary((PdfDictionary) resolvedPatterns, visited);
         }
     }
 
-    private void collectImagesFromXObjectDictionary(COSDictionary dictionary,
-                                                    java.util.IdentityHashMap<COSDictionary, Boolean> visited) {
-        for (COSName key : dictionary.keySet()) {
-            COSBase val = resolveRef(dictionary.get(key));
-            if (!(val instanceof COSStream)) {
+    private void collectImagesFromXObjectDictionary(PdfDictionary dictionary,
+                                                    java.util.IdentityHashMap<PdfDictionary, Boolean> visited) {
+        for (PdfName key : dictionary.keySet()) {
+            PdfBase val = resolveRef(dictionary.get(key));
+            if (!(val instanceof PdfStream)) {
                 continue;
             }
-            COSStream stream = (COSStream) val;
+            PdfStream stream = (PdfStream) val;
             String subtype = stream.getNameAsString("Subtype");
             if ("Image".equals(subtype)) {
                 XImage img = new XImage(stream, key.getName(), parser);
                 img.setXObjectDictionary(dictionary);
                 images.add(img);
             } else if ("Form".equals(subtype)) {
-                COSBase nestedResources = resolveRef(stream.get(RESOURCES));
-                if (nestedResources instanceof COSDictionary) {
-                    collectImagesFromResources((COSDictionary) nestedResources, visited);
+                PdfBase nestedResources = resolveRef(stream.get(RESOURCES));
+                if (nestedResources instanceof PdfDictionary) {
+                    collectImagesFromResources((PdfDictionary) nestedResources, visited);
                 }
             }
         }
     }
 
-    private void collectImagesFromPatternDictionary(COSDictionary patternDict,
-                                                    java.util.IdentityHashMap<COSDictionary, Boolean> visited) {
-        for (COSName key : patternDict.keySet()) {
-            COSBase val = resolveRef(patternDict.get(key));
-            if (!(val instanceof COSStream)) {
+    private void collectImagesFromPatternDictionary(PdfDictionary patternDict,
+                                                    java.util.IdentityHashMap<PdfDictionary, Boolean> visited) {
+        for (PdfName key : patternDict.keySet()) {
+            PdfBase val = resolveRef(patternDict.get(key));
+            if (!(val instanceof PdfStream)) {
                 continue;
             }
-            COSStream patternStream = (COSStream) val;
-            COSBase nestedResources = resolveRef(patternStream.get(RESOURCES));
-            if (nestedResources instanceof COSDictionary) {
-                collectImagesFromResources((COSDictionary) nestedResources, visited);
+            PdfStream patternStream = (PdfStream) val;
+            PdfBase nestedResources = resolveRef(patternStream.get(RESOURCES));
+            if (nestedResources instanceof PdfDictionary) {
+                collectImagesFromResources((PdfDictionary) nestedResources, visited);
             }
         }
     }
@@ -281,10 +281,10 @@ public class XImageCollection implements Iterable<XImage> {
         images = null;
     }
 
-    private COSBase resolveRef(COSBase val) {
-        if (val instanceof COSObjectReference) {
+    private PdfBase resolveRef(PdfBase val) {
+        if (val instanceof PdfObjectReference) {
             try {
-                return ((COSObjectReference) val).dereference();
+                return ((PdfObjectReference) val).dereference();
             } catch (IOException e) {
                 LOG.warning(() -> "Failed to dereference XObject: " + e.getMessage());
                 return null;

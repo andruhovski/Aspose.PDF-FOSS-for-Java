@@ -1,7 +1,7 @@
 package org.aspose.pdf.tests;
 
 import org.aspose.pdf.*;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -14,9 +14,9 @@ import static org.junit.jupiter.api.Assertions.*;
 public class ActionTest {
 
     private Page createPage() {
-        COSDictionary pageDict = new COSDictionary();
-        pageDict.set(COSName.TYPE, COSName.PAGE);
-        pageDict.set(COSName.MEDIABOX, new Rectangle(0, 0, 595, 842).toCOSArray());
+        PdfDictionary pageDict = new PdfDictionary();
+        pageDict.set(PdfName.TYPE, PdfName.PAGE);
+        pageDict.set(PdfName.MEDIABOX, new Rectangle(0, 0, 595, 842).toPdfArray());
         return new Page(pageDict, null);
     }
 
@@ -83,9 +83,9 @@ public class ActionTest {
 
     @Test
     public void testGoToRemoteAction() {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("S"), COSName.of("GoToR"));
-        dict.set(COSName.of("F"), new COSString("other.pdf".getBytes()));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("S"), PdfName.of("GoToR"));
+        dict.set(PdfName.of("F"), new PdfString("other.pdf".getBytes()));
         GoToRemoteAction action = new GoToRemoteAction(dict);
         assertEquals("GoToR", action.getType());
         assertEquals("other.pdf", action.getFile());
@@ -95,12 +95,12 @@ public class ActionTest {
 
     @Test
     public void testFromDictionaryGoTo() throws IOException {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("S"), COSName.of("GoTo"));
-        COSArray dest = new COSArray();
-        dest.add(COSNull.INSTANCE);
-        dest.add(COSName.of("Fit"));
-        dict.set(COSName.of("D"), dest);
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("S"), PdfName.of("GoTo"));
+        PdfArray dest = new PdfArray();
+        dest.add(PdfNull.INSTANCE);
+        dest.add(PdfName.of("Fit"));
+        dict.set(PdfName.of("D"), dest);
 
         PdfAction action = PdfAction.fromDictionary(dict, null);
         assertTrue(action instanceof GoToAction);
@@ -108,9 +108,9 @@ public class ActionTest {
 
     @Test
     public void testFromDictionaryUri() throws IOException {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("S"), COSName.of("URI"));
-        dict.set(COSName.of("URI"), new COSString("https://test.com".getBytes()));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("S"), PdfName.of("URI"));
+        dict.set(PdfName.of("URI"), new PdfString("https://test.com".getBytes()));
 
         PdfAction action = PdfAction.fromDictionary(dict, null);
         assertTrue(action instanceof UriAction);
@@ -119,9 +119,9 @@ public class ActionTest {
 
     @Test
     public void testFromDictionaryNamed() throws IOException {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("S"), COSName.of("Named"));
-        dict.set(COSName.of("N"), COSName.of("FirstPage"));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("S"), PdfName.of("Named"));
+        dict.set(PdfName.of("N"), PdfName.of("FirstPage"));
 
         PdfAction action = PdfAction.fromDictionary(dict, null);
         assertTrue(action instanceof NamedAction);
@@ -135,8 +135,8 @@ public class ActionTest {
 
     @Test
     public void testFromDictionaryUnknown() throws IOException {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("S"), COSName.of("SomeUnknownType"));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("S"), PdfName.of("SomeUnknownType"));
 
         PdfAction action = PdfAction.fromDictionary(dict, null);
         assertTrue(action instanceof GenericAction);
@@ -153,9 +153,9 @@ public class ActionTest {
 
     @Test
     public void testLaunchActionFromDict() throws IOException {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("S"), COSName.of("Launch"));
-        dict.set(COSName.of("F"), new COSString("test.doc"));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("S"), PdfName.of("Launch"));
+        dict.set(PdfName.of("F"), new PdfString("test.doc"));
         PdfAction action = PdfAction.fromDictionary(dict, null);
         assertTrue(action instanceof LaunchAction);
         assertEquals("test.doc", ((LaunchAction) action).getFile());
@@ -171,11 +171,11 @@ public class ActionTest {
 
     @Test
     public void testGoToEmbeddedAction() throws IOException {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("S"), COSName.of("GoToE"));
-        COSDictionary target = new COSDictionary();
-        target.set(COSName.of("R"), COSName.of("C"));
-        dict.set(COSName.of("T"), target);
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("S"), PdfName.of("GoToE"));
+        PdfDictionary target = new PdfDictionary();
+        target.set(PdfName.of("R"), PdfName.of("C"));
+        dict.set(PdfName.of("T"), target);
         PdfAction action = PdfAction.fromDictionary(dict, null);
         assertTrue(action instanceof GoToEmbeddedAction);
         assertNotNull(((GoToEmbeddedAction) action).getTarget());
@@ -204,9 +204,9 @@ public class ActionTest {
 
     @Test
     public void testHideActionDefaultIsHide() {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("S"), COSName.of("Hide"));
-        dict.set(COSName.of("T"), new COSString("field"));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("S"), PdfName.of("Hide"));
+        dict.set(PdfName.of("T"), new PdfString("field"));
         HideAction action = new HideAction(dict);
         assertTrue(action.isHide()); // default true per spec
     }
@@ -220,9 +220,9 @@ public class ActionTest {
 
     @Test
     public void testJavaScriptActionFromDict() throws IOException {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("S"), COSName.of("JavaScript"));
-        dict.set(COSName.of("JS"), new COSString("var x = 1;"));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("S"), PdfName.of("JavaScript"));
+        dict.set(PdfName.of("JS"), new PdfString("var x = 1;"));
         PdfAction action = PdfAction.fromDictionary(dict, null);
         assertTrue(action instanceof JavaScriptAction);
         assertEquals("var x = 1;", ((JavaScriptAction) action).getScript());
@@ -261,9 +261,9 @@ public class ActionTest {
     @Test
     public void testResetFormActionFields() {
         ResetFormAction action = new ResetFormAction();
-        COSArray fields = new COSArray();
-        fields.add(new COSString("Name"));
-        fields.add(new COSString("Address"));
+        PdfArray fields = new PdfArray();
+        fields.add(new PdfString("Name"));
+        fields.add(new PdfString("Address"));
         action.setFields(fields);
         assertNotNull(action.getFields());
         assertEquals(2, action.getFields().size());
@@ -278,11 +278,11 @@ public class ActionTest {
 
     @Test
     public void testSetOCGStateAction() throws IOException {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("S"), COSName.of("SetOCGState"));
-        COSArray state = new COSArray();
-        state.add(COSName.of("ON"));
-        dict.set(COSName.of("State"), state);
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("S"), PdfName.of("SetOCGState"));
+        PdfArray state = new PdfArray();
+        state.add(PdfName.of("ON"));
+        dict.set(PdfName.of("State"), state);
         PdfAction action = PdfAction.fromDictionary(dict, null);
         assertTrue(action instanceof SetOCGStateAction);
         assertNotNull(((SetOCGStateAction) action).getState());
@@ -291,8 +291,8 @@ public class ActionTest {
 
     @Test
     public void testRenditionAction() throws IOException {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("S"), COSName.of("Rendition"));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("S"), PdfName.of("Rendition"));
         dict.setInt("OP", RenditionAction.OP_PLAY);
         PdfAction action = PdfAction.fromDictionary(dict, null);
         assertTrue(action instanceof RenditionAction);
@@ -301,11 +301,11 @@ public class ActionTest {
 
     @Test
     public void testTransitionAction() throws IOException {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("S"), COSName.of("Trans"));
-        COSDictionary trans = new COSDictionary();
-        trans.set(COSName.of("Type"), COSName.of("Trans"));
-        dict.set(COSName.of("Trans"), trans);
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("S"), PdfName.of("Trans"));
+        PdfDictionary trans = new PdfDictionary();
+        trans.set(PdfName.of("Type"), PdfName.of("Trans"));
+        dict.set(PdfName.of("Trans"), trans);
         PdfAction action = PdfAction.fromDictionary(dict, null);
         assertTrue(action instanceof TransitionAction);
         assertNotNull(((TransitionAction) action).getTransition());
@@ -313,17 +313,17 @@ public class ActionTest {
 
     @Test
     public void testFromDictionaryJavaScript() throws IOException {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("S"), COSName.of("JavaScript"));
-        dict.set(COSName.of("JS"), new COSString("alert(1)"));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("S"), PdfName.of("JavaScript"));
+        dict.set(PdfName.of("JS"), new PdfString("alert(1)"));
         PdfAction action = PdfAction.fromDictionary(dict, null);
         assertTrue(action instanceof JavaScriptAction);
     }
 
     @Test
     public void testFromDictionaryHide() throws IOException {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("S"), COSName.of("Hide"));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("S"), PdfName.of("Hide"));
         PdfAction action = PdfAction.fromDictionary(dict, null);
         assertTrue(action instanceof HideAction);
     }
@@ -341,22 +341,22 @@ public class ActionTest {
     }
 
     @Test
-    public void testXYZToCOSArray() {
+    public void testXYZToPdfArray() {
         Page page = createPage();
         XYZExplicitDestination dest = new XYZExplicitDestination(page, 100, 200, 2.0);
-        COSArray arr = dest.toCOSArray();
+        PdfArray arr = dest.toPdfArray();
         assertNotNull(arr);
         assertEquals(5, arr.size());
-        assertEquals("XYZ", ((COSName) arr.get(1)).getName());
+        assertEquals("XYZ", ((PdfName) arr.get(1)).getName());
     }
 
     @Test
     public void testFitDestination() {
         Page page = createPage();
         FitExplicitDestination dest = new FitExplicitDestination(page);
-        COSArray arr = dest.toCOSArray();
+        PdfArray arr = dest.toPdfArray();
         assertEquals(2, arr.size());
-        assertEquals("Fit", ((COSName) arr.get(1)).getName());
+        assertEquals("Fit", ((PdfName) arr.get(1)).getName());
     }
 
     @Test
@@ -364,9 +364,9 @@ public class ActionTest {
         Page page = createPage();
         FitHExplicitDestination dest = new FitHExplicitDestination(page, 500);
         assertEquals(500.0, dest.getTop());
-        COSArray arr = dest.toCOSArray();
+        PdfArray arr = dest.toPdfArray();
         assertEquals(3, arr.size());
-        assertEquals("FitH", ((COSName) arr.get(1)).getName());
+        assertEquals("FitH", ((PdfName) arr.get(1)).getName());
     }
 
     @Test
@@ -382,7 +382,7 @@ public class ActionTest {
         FitRExplicitDestination dest = new FitRExplicitDestination(page, 0, 0, 200, 300);
         assertEquals(0.0, dest.getLeft());
         assertEquals(300.0, dest.getTop());
-        COSArray arr = dest.toCOSArray();
+        PdfArray arr = dest.toPdfArray();
         assertEquals(6, arr.size());
     }
 
@@ -390,21 +390,21 @@ public class ActionTest {
     public void testFitBDestination() {
         Page page = createPage();
         FitBExplicitDestination dest = new FitBExplicitDestination(page);
-        COSArray arr = dest.toCOSArray();
+        PdfArray arr = dest.toPdfArray();
         assertEquals(2, arr.size());
-        assertEquals("FitB", ((COSName) arr.get(1)).getName());
+        assertEquals("FitB", ((PdfName) arr.get(1)).getName());
     }
 
     @Test
     public void testParseXYZFromArray() throws IOException {
-        COSArray arr = new COSArray();
-        arr.add(COSNull.INSTANCE); // page ref
-        arr.add(COSName.of("XYZ"));
-        arr.add(COSInteger.valueOf(100));
-        arr.add(COSInteger.valueOf(700));
-        arr.add(new COSFloat(1.5));
+        PdfArray arr = new PdfArray();
+        arr.add(PdfNull.INSTANCE); // page ref
+        arr.add(PdfName.of("XYZ"));
+        arr.add(PdfInteger.valueOf(100));
+        arr.add(PdfInteger.valueOf(700));
+        arr.add(new PdfFloat(1.5));
 
-        ExplicitDestination dest = ExplicitDestination.fromCOSArray(arr, null);
+        ExplicitDestination dest = ExplicitDestination.fromPdfArray(arr, null);
         assertNotNull(dest);
         assertTrue(dest instanceof XYZExplicitDestination);
         XYZExplicitDestination xyz = (XYZExplicitDestination) dest;
@@ -415,33 +415,33 @@ public class ActionTest {
 
     @Test
     public void testParseFitFromArray() throws IOException {
-        COSArray arr = new COSArray();
-        arr.add(COSNull.INSTANCE);
-        arr.add(COSName.of("Fit"));
+        PdfArray arr = new PdfArray();
+        arr.add(PdfNull.INSTANCE);
+        arr.add(PdfName.of("Fit"));
 
-        ExplicitDestination dest = ExplicitDestination.fromCOSArray(arr, null);
+        ExplicitDestination dest = ExplicitDestination.fromPdfArray(arr, null);
         assertTrue(dest instanceof FitExplicitDestination);
     }
 
     @Test
     public void testParseFitHFromArray() throws IOException {
-        COSArray arr = new COSArray();
-        arr.add(COSNull.INSTANCE);
-        arr.add(COSName.of("FitH"));
-        arr.add(COSInteger.valueOf(500));
+        PdfArray arr = new PdfArray();
+        arr.add(PdfNull.INSTANCE);
+        arr.add(PdfName.of("FitH"));
+        arr.add(PdfInteger.valueOf(500));
 
-        ExplicitDestination dest = ExplicitDestination.fromCOSArray(arr, null);
+        ExplicitDestination dest = ExplicitDestination.fromPdfArray(arr, null);
         assertTrue(dest instanceof FitHExplicitDestination);
         assertEquals(500.0, ((FitHExplicitDestination) dest).getTop());
     }
 
     @Test
     public void testParseNullArray() throws IOException {
-        assertNull(ExplicitDestination.fromCOSArray(null, null));
+        assertNull(ExplicitDestination.fromPdfArray(null, null));
     }
 
     @Test
     public void testParseEmptyArray() throws IOException {
-        assertNull(ExplicitDestination.fromCOSArray(new COSArray(), null));
+        assertNull(ExplicitDestination.fromPdfArray(new PdfArray(), null));
     }
 }

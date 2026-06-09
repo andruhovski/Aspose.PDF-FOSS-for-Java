@@ -57,8 +57,8 @@ Tests should always be green on `main`. If a test is intentionally not yet passi
     │   ├── text/                                ← TextFragment, TextAbsorber, …
     │   ├── drawing/                             ← Color, graphics
     │   ├── devices/                             ← page rasterization (PNG, JPEG, …)
-    │   ├── engine/                              ← low-level COS layer
-    │   │   ├── cos/                             ← COSDictionary, COSArray, …
+    │   ├── engine/                              ← low-level PDF layer
+    │   │   ├── pdfobjects/                      ← PdfDictionary, PdfArray, …
     │   │   ├── parser/                          ← XRefParser, PDFParser
     │   │   ├── writer/                          ← PDFWriter
     │   │   ├── filter/                          ← FlateDecode, JBIG2, JPXDecode, …
@@ -88,16 +88,16 @@ The library uses only the standard Java platform:
 
 Test dependencies (JUnit) are fine, but should remain `<scope>test</scope>`.
 
-### 2. COS objects are the single source of truth
+### 2. PDF objects are the single source of truth
 
-Every public API class (e.g. `Document`, `Page`, `Annotation`, `Field`) wraps a `COSDictionary` or `COSArray`. Mutations go through the underlying COS object — they are not stored in separate Java fields that need to be synced.
+Every public API class (e.g. `Document`, `Page`, `Annotation`, `Field`) wraps a `PdfDictionary` or `PdfArray`. Mutations go through the underlying COS object — they are not stored in separate Java fields that need to be synced.
 
 When implementing a new property, write through to the COS dictionary:
 
 ```java
 // Good
 public void setRotate(int rotate) {
-    dict.put(COSName.of("Rotate"), COSInteger.of(rotate));
+    dict.put(PdfName.of("Rotate"), PdfInteger.of(rotate));
 }
 
 // Bad — Java field will go out of sync with serialized PDF
@@ -165,7 +165,7 @@ void saveAndReload_roundtripsCorrectly() throws Exception {
 Free-form is fine, but keep the subject line under 72 characters and use the imperative mood:
 
 ```
-Fix infinite recursion in COSDictionary.writeTo for indirect references
+Fix infinite recursion in PdfDictionary.writeTo for indirect references
 
 The writeTo() method was not checking isIndirect() before recursing,
 which caused stack overflow when a dictionary contained a reference

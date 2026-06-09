@@ -1,9 +1,9 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 
 /**
  * ImportData action — imports form data from an FDF or XFDF file
@@ -16,7 +16,7 @@ public class ImportDataAction extends PdfAction {
      *
      * @param dict the action dictionary
      */
-    public ImportDataAction(COSDictionary dict) {
+    public ImportDataAction(PdfDictionary dict) {
         this.actionDict = dict;
     }
 
@@ -26,9 +26,9 @@ public class ImportDataAction extends PdfAction {
      * @param filePath the FDF/XFDF file path
      */
     public ImportDataAction(String filePath) {
-        this.actionDict = new COSDictionary();
-        actionDict.set(COSName.of("S"), COSName.of("ImportData"));
-        actionDict.set(COSName.of("F"), new COSString(filePath));
+        this.actionDict = new PdfDictionary();
+        actionDict.set(PdfName.of("S"), PdfName.of("ImportData"));
+        actionDict.set(PdfName.of("F"), new PdfString(filePath));
     }
 
     /**
@@ -37,9 +37,9 @@ public class ImportDataAction extends PdfAction {
      * @return the file path, or {@code null}
      */
     public String getFile() {
-        COSBase f = resolve(actionDict.get("F"));
-        if (f instanceof COSString) return ((COSString) f).getString();
-        if (f instanceof COSDictionary) return ((COSDictionary) f).getString("F");
+        PdfBase f = resolve(actionDict.get("F"));
+        if (f instanceof PdfString) return ((PdfString) f).getString();
+        if (f instanceof PdfDictionary) return ((PdfDictionary) f).getString("F");
         return null;
     }
 }

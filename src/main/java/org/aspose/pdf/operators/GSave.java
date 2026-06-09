@@ -1,7 +1,7 @@
 package org.aspose.pdf.operators;
 
 import org.aspose.pdf.Operator;
-import org.aspose.pdf.engine.cos.COSBase;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
 
 import java.util.List;
 
@@ -20,7 +20,7 @@ public class GSave extends Operator {
     }
 
     /** Creates a GSave operator from parsed operands. */
-    public GSave(List<COSBase> operands) {
+    public GSave(List<PdfBase> operands) {
         super("q", operands);
     }
 }

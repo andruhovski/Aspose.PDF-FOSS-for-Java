@@ -2,10 +2,10 @@ package org.aspose.pdf.tests.generation;
 
 import org.aspose.pdf.Document;
 import org.aspose.pdf.Page;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
 import org.aspose.pdf.CryptoAlgorithm;
 import org.aspose.pdf.text.Position;
 import org.aspose.pdf.text.TextBuilder;
@@ -34,7 +34,7 @@ class EncryptDictComplianceTest {
 
     /** Build a tiny 1-page doc, encrypt with the given algorithm, save, reopen,
      *  and return the resolved encryption dictionary from the trailer. */
-    private COSDictionary saveAndGetEncryptDict(CryptoAlgorithm algorithm, String label) throws IOException {
+    private PdfDictionary saveAndGetEncryptDict(CryptoAlgorithm algorithm, String label) throws IOException {
         Path out = tempDir.resolve(label + ".pdf");
         try (Document doc = new Document()) {
             Page page = doc.getPages().add();
@@ -45,15 +45,15 @@ class EncryptDictComplianceTest {
             doc.save(out.toString());
         }
         Document r = new Document(out.toString(), "pw");
-        COSDictionary trailer = r.getTrailer();
-        COSBase encRef = trailer.get(COSName.of("Encrypt"));
+        PdfDictionary trailer = r.getTrailer();
+        PdfBase encRef = trailer.get(PdfName.of("Encrypt"));
         assertNotNull(encRef, "trailer must contain an /Encrypt entry for an encrypted PDF");
         // /Encrypt is typically an indirect reference. References parsed
         // from disk don't carry their own resolver; the parser does.
-        COSBase enc = r.getParser().resolveReference(encRef);
-        assertTrue(enc instanceof COSDictionary,
+        PdfBase enc = r.getParser().resolveReference(encRef);
+        assertTrue(enc instanceof PdfDictionary,
                 "/Encrypt must resolve to a dictionary, got " + enc.getClass().getSimpleName());
-        return (COSDictionary) enc;
+        return (PdfDictionary) enc;
     }
 
     @Test
@@ -65,7 +65,7 @@ class EncryptDictComplianceTest {
         // decrypted", even though every stream is correctly AES-encrypted.
         // ISO 32000-2 Annex K's example dict for AESV3 also includes
         // /Length 256.
-        COSDictionary enc = saveAndGetEncryptDict(CryptoAlgorithm.AESx256, "aes256-len");
+        PdfDictionary enc = saveAndGetEncryptDict(CryptoAlgorithm.AESx256, "aes256-len");
         assertEquals(256, enc.getInt("Length", -1),
                 "AES-256 (V=5) encrypt dict must carry /Length 256 (bits) for Adobe Reader compatibility");
     }
@@ -84,15 +84,15 @@ class EncryptDictComplianceTest {
             doc.save(out.toString());
         }
         try (Document r = new Document(out.toString(), "pw")) {
-            COSBase enc = r.getParser().resolveReference(
-                    r.getTrailer().get(COSName.of("Encrypt")));
-            assertTrue(enc instanceof COSDictionary);
-            COSBase cf = r.getParser().resolveReference(((COSDictionary) enc).get(COSName.of("CF")));
-            assertTrue(cf instanceof COSDictionary, "/CF must be a dict");
-            COSBase stdCf = r.getParser().resolveReference(
-                    ((COSDictionary) cf).get(COSName.of("StdCF")));
-            assertTrue(stdCf instanceof COSDictionary, "/CF/StdCF must be a dict");
-            assertEquals(32, ((COSDictionary) stdCf).getInt("Length", -1),
+            PdfBase enc = r.getParser().resolveReference(
+                    r.getTrailer().get(PdfName.of("Encrypt")));
+            assertTrue(enc instanceof PdfDictionary);
+            PdfBase cf = r.getParser().resolveReference(((PdfDictionary) enc).get(PdfName.of("CF")));
+            assertTrue(cf instanceof PdfDictionary, "/CF must be a dict");
+            PdfBase stdCf = r.getParser().resolveReference(
+                    ((PdfDictionary) cf).get(PdfName.of("StdCF")));
+            assertTrue(stdCf instanceof PdfDictionary, "/CF/StdCF must be a dict");
+            assertEquals(32, ((PdfDictionary) stdCf).getInt("Length", -1),
                     "/CF/StdCF/Length must be 32 (bytes) for AES-256");
         }
     }
@@ -100,7 +100,7 @@ class EncryptDictComplianceTest {
     @Test
     @DisplayName("AES-128: top-level encrypt dict has /Length 128")
     void aes128Encrypt_topLevelDictHasLength128() throws IOException {
-        COSDictionary enc = saveAndGetEncryptDict(CryptoAlgorithm.AESx128, "aes128-len");
+        PdfDictionary enc = saveAndGetEncryptDict(CryptoAlgorithm.AESx128, "aes128-len");
         assertEquals(128, enc.getInt("Length", -1),
                 "AES-128 (V=4) encrypt dict must carry /Length 128 (bits) per ISO Table 20");
     }
@@ -108,7 +108,7 @@ class EncryptDictComplianceTest {
     @Test
     @DisplayName("RC4-128: top-level encrypt dict has /Length 128")
     void rc4_128Encrypt_topLevelDictHasLength128() throws IOException {
-        COSDictionary enc = saveAndGetEncryptDict(CryptoAlgorithm.RC4x128, "rc4_128-len");
+        PdfDictionary enc = saveAndGetEncryptDict(CryptoAlgorithm.RC4x128, "rc4_128-len");
         assertEquals(128, enc.getInt("Length", -1),
                 "RC4-128 (V=2) encrypt dict must carry /Length 128 (bits)");
     }
@@ -116,7 +116,7 @@ class EncryptDictComplianceTest {
     @Test
     @DisplayName("RC4-40: top-level encrypt dict has /Length 40")
     void rc4_40Encrypt_topLevelDictHasLength40() throws IOException {
-        COSDictionary enc = saveAndGetEncryptDict(CryptoAlgorithm.RC4x40, "rc4_40-len");
+        PdfDictionary enc = saveAndGetEncryptDict(CryptoAlgorithm.RC4x40, "rc4_40-len");
         assertEquals(40, enc.getInt("Length", -1),
                 "RC4-40 (V=1) encrypt dict carries /Length 40 (bits) — matches the spec default");
     }

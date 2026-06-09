@@ -1,9 +1,9 @@
 package org.aspose.pdf.tests;
 
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 import org.aspose.pdf.engine.security.PDFEncryptionDict;
 import org.aspose.pdf.engine.security.PDFKeyDerivation;
 import org.aspose.pdf.engine.security.StandardSecurityHandler;
@@ -262,30 +262,30 @@ public class PDFKeyGenerationTest {
     }
 
     /**
-     * Builds a PDFEncryptionDict from raw parameters using a manual COSDictionary.
+     * Builds a PDFEncryptionDict from raw parameters using a manual PdfDictionary.
      */
     private PDFEncryptionDict buildEncDict(int V, int R, int lengthBits,
                                             int P, byte[] O, byte[] U) {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("Filter"), COSName.of("Standard"));
-        dict.set(COSName.of("V"), COSInteger.valueOf(V));
-        dict.set(COSName.of("R"), COSInteger.valueOf(R));
-        dict.set(COSName.of("Length"), COSInteger.valueOf(lengthBits));
-        dict.set(COSName.of("P"), COSInteger.valueOf(P));
-        dict.set(COSName.of("O"), new COSString(O));
-        dict.set(COSName.of("U"), new COSString(U));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("Filter"), PdfName.of("Standard"));
+        dict.set(PdfName.of("V"), PdfInteger.valueOf(V));
+        dict.set(PdfName.of("R"), PdfInteger.valueOf(R));
+        dict.set(PdfName.of("Length"), PdfInteger.valueOf(lengthBits));
+        dict.set(PdfName.of("P"), PdfInteger.valueOf(P));
+        dict.set(PdfName.of("O"), new PdfString(O));
+        dict.set(PdfName.of("U"), new PdfString(U));
 
         // For V=4 (R=4), add CF/StmF/StrF for AES-128
         if (V == 4) {
-            dict.set(COSName.of("StmF"), COSName.of("StdCF"));
-            dict.set(COSName.of("StrF"), COSName.of("StdCF"));
-            COSDictionary stdCF = new COSDictionary();
-            stdCF.set(COSName.of("CFM"), COSName.of("AESV2"));
-            stdCF.set(COSName.of("AuthEvent"), COSName.of("DocOpen"));
-            stdCF.set(COSName.of("Length"), COSInteger.valueOf(16));
-            COSDictionary cf = new COSDictionary();
-            cf.set(COSName.of("StdCF"), stdCF);
-            dict.set(COSName.of("CF"), cf);
+            dict.set(PdfName.of("StmF"), PdfName.of("StdCF"));
+            dict.set(PdfName.of("StrF"), PdfName.of("StdCF"));
+            PdfDictionary stdCF = new PdfDictionary();
+            stdCF.set(PdfName.of("CFM"), PdfName.of("AESV2"));
+            stdCF.set(PdfName.of("AuthEvent"), PdfName.of("DocOpen"));
+            stdCF.set(PdfName.of("Length"), PdfInteger.valueOf(16));
+            PdfDictionary cf = new PdfDictionary();
+            cf.set(PdfName.of("StdCF"), stdCF);
+            dict.set(PdfName.of("CF"), cf);
         }
 
         return new PDFEncryptionDict(dict);

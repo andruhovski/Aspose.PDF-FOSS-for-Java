@@ -1,13 +1,13 @@
 package org.aspose.pdf.forms;
 
 import org.aspose.pdf.Color;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSFloat;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfFloat;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 
 import java.util.logging.Logger;
 
@@ -32,9 +32,9 @@ public class AppearanceCharacteristics {
 
     private static final Logger LOG = Logger.getLogger(AppearanceCharacteristics.class.getName());
 
-    private final COSDictionary owner;
+    private final PdfDictionary owner;
 
-    public AppearanceCharacteristics(COSDictionary owner) {
+    public AppearanceCharacteristics(PdfDictionary owner) {
         this.owner = owner;
     }
 
@@ -61,11 +61,11 @@ public class AppearanceCharacteristics {
      * @return the rotation, default 0
      */
     public int getRotate() {
-        COSBase mk = owner.get("MK");
-        if (!(mk instanceof COSDictionary)) return 0;
-        COSBase r = ((COSDictionary) mk).get("R");
-        if (r instanceof COSInteger) return ((COSInteger) r).intValue();
-        if (r instanceof COSFloat) return (int) ((COSFloat) r).doubleValue();
+        PdfBase mk = owner.get("MK");
+        if (!(mk instanceof PdfDictionary)) return 0;
+        PdfBase r = ((PdfDictionary) mk).get("R");
+        if (r instanceof PdfInteger) return ((PdfInteger) r).intValue();
+        if (r instanceof PdfFloat) return (int) ((PdfFloat) r).doubleValue();
         return 0;
     }
 
@@ -79,7 +79,7 @@ public class AppearanceCharacteristics {
         if (rotate % 90 != 0) {
             LOG.warning(() -> "MK /R rotate should be a multiple of 90, got " + rotate);
         }
-        getOrCreateMk().set(COSName.of("R"), COSInteger.valueOf(rotate));
+        getOrCreateMk().set(PdfName.of("R"), PdfInteger.valueOf(rotate));
     }
 
     /**
@@ -109,30 +109,30 @@ public class AppearanceCharacteristics {
      *
      * @return the /MK dictionary (never null)
      */
-    public COSDictionary getCOSDictionary() {
+    public PdfDictionary getPdfDictionary() {
         return getOrCreateMk();
     }
 
-    private COSDictionary getOrCreateMk() {
-        COSBase mk = owner.get("MK");
-        if (mk instanceof COSDictionary) {
-            return (COSDictionary) mk;
+    private PdfDictionary getOrCreateMk() {
+        PdfBase mk = owner.get("MK");
+        if (mk instanceof PdfDictionary) {
+            return (PdfDictionary) mk;
         }
-        COSDictionary dict = new COSDictionary();
-        owner.set(COSName.of("MK"), dict);
+        PdfDictionary dict = new PdfDictionary();
+        owner.set(PdfName.of("MK"), dict);
         return dict;
     }
 
     private Color readColor(String key) {
-        COSBase mk = owner.get("MK");
-        if (!(mk instanceof COSDictionary)) {
+        PdfBase mk = owner.get("MK");
+        if (!(mk instanceof PdfDictionary)) {
             return null;
         }
-        COSBase val = ((COSDictionary) mk).get(key);
-        if (!(val instanceof COSArray)) {
+        PdfBase val = ((PdfDictionary) mk).get(key);
+        if (!(val instanceof PdfArray)) {
             return null;
         }
-        COSArray arr = (COSArray) val;
+        PdfArray arr = (PdfArray) val;
         if (arr.size() == 1) {
             return Color.fromGray(arr.getFloat(0, 0));
         }
@@ -146,31 +146,31 @@ public class AppearanceCharacteristics {
     }
 
     private void writeColor(String key, Color color) {
-        COSDictionary mk = getOrCreateMk();
+        PdfDictionary mk = getOrCreateMk();
         if (color == null) {
-            mk.remove(COSName.of(key));
+            mk.remove(PdfName.of(key));
             return;
         }
-        COSArray arr = new COSArray();
-        arr.add(new COSFloat(color.getR()));
-        arr.add(new COSFloat(color.getG()));
-        arr.add(new COSFloat(color.getB()));
-        mk.set(COSName.of(key), arr);
+        PdfArray arr = new PdfArray();
+        arr.add(new PdfFloat(color.getR()));
+        arr.add(new PdfFloat(color.getG()));
+        arr.add(new PdfFloat(color.getB()));
+        mk.set(PdfName.of(key), arr);
     }
 
     private String readString(String key) {
-        COSBase mk = owner.get("MK");
-        if (!(mk instanceof COSDictionary)) return null;
-        COSBase v = ((COSDictionary) mk).get(key);
-        return (v instanceof COSString) ? ((COSString) v).getString() : null;
+        PdfBase mk = owner.get("MK");
+        if (!(mk instanceof PdfDictionary)) return null;
+        PdfBase v = ((PdfDictionary) mk).get(key);
+        return (v instanceof PdfString) ? ((PdfString) v).getString() : null;
     }
 
     private void writeString(String key, String value) {
-        COSDictionary mk = getOrCreateMk();
+        PdfDictionary mk = getOrCreateMk();
         if (value == null) {
-            mk.remove(COSName.of(key));
+            mk.remove(PdfName.of(key));
             return;
         }
-        mk.set(COSName.of(key), new COSString(value));
+        mk.set(PdfName.of(key), new PdfString(value));
     }
 }

@@ -1,7 +1,7 @@
 package org.aspose.pdf.tests;
 
 import org.aspose.pdf.engine.colorspace.*;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -79,27 +79,27 @@ public class ColorSpaceTest {
 
     @Test
     public void testResolveDeviceRGBName() throws IOException {
-        ColorSpaceBase cs = ColorSpaceBase.resolve(COSName.of("DeviceRGB"), null, null);
+        ColorSpaceBase cs = ColorSpaceBase.resolve(PdfName.of("DeviceRGB"), null, null);
         assertSame(DeviceRGB.INSTANCE, cs);
     }
 
     @Test
     public void testResolveDeviceCMYKName() throws IOException {
-        ColorSpaceBase cs = ColorSpaceBase.resolve(COSName.of("DeviceCMYK"), null, null);
+        ColorSpaceBase cs = ColorSpaceBase.resolve(PdfName.of("DeviceCMYK"), null, null);
         assertSame(DeviceCMYK.INSTANCE, cs);
     }
 
     @Test
     public void testResolveDeviceGrayName() throws IOException {
-        ColorSpaceBase cs = ColorSpaceBase.resolve(COSName.of("DeviceGray"), null, null);
+        ColorSpaceBase cs = ColorSpaceBase.resolve(PdfName.of("DeviceGray"), null, null);
         assertSame(DeviceGray.INSTANCE, cs);
     }
 
     @Test
     public void testResolveShortNames() throws IOException {
-        assertSame(DeviceRGB.INSTANCE, ColorSpaceBase.resolve(COSName.of("RGB"), null, null));
-        assertSame(DeviceCMYK.INSTANCE, ColorSpaceBase.resolve(COSName.of("CMYK"), null, null));
-        assertSame(DeviceGray.INSTANCE, ColorSpaceBase.resolve(COSName.of("G"), null, null));
+        assertSame(DeviceRGB.INSTANCE, ColorSpaceBase.resolve(PdfName.of("RGB"), null, null));
+        assertSame(DeviceCMYK.INSTANCE, ColorSpaceBase.resolve(PdfName.of("CMYK"), null, null));
+        assertSame(DeviceGray.INSTANCE, ColorSpaceBase.resolve(PdfName.of("G"), null, null));
     }
 
     @Test
@@ -110,10 +110,10 @@ public class ColorSpaceTest {
 
     @Test
     public void testResolveICCBased() throws IOException {
-        COSStream iccStream = new COSStream();
-        iccStream.set(COSName.of("N"), COSInteger.valueOf(3));
-        COSArray arr = new COSArray();
-        arr.add(COSName.of("ICCBased"));
+        PdfStream iccStream = new PdfStream();
+        iccStream.set(PdfName.of("N"), PdfInteger.valueOf(3));
+        PdfArray arr = new PdfArray();
+        arr.add(PdfName.of("ICCBased"));
         arr.add(iccStream);
 
         ColorSpaceBase cs = ColorSpaceBase.resolve(arr, null, null);
@@ -124,8 +124,8 @@ public class ColorSpaceTest {
 
     @Test
     public void testICCBasedAlternate() throws IOException {
-        COSStream iccStream = new COSStream();
-        iccStream.set(COSName.of("N"), COSInteger.valueOf(1));
+        PdfStream iccStream = new PdfStream();
+        iccStream.set(PdfName.of("N"), PdfInteger.valueOf(1));
         ICCBasedColorSpace cs = new ICCBasedColorSpace(iccStream, null);
         assertEquals(1, cs.getNumberOfComponents());
         assertSame(DeviceGray.INSTANCE, cs.getAlternate());
@@ -133,8 +133,8 @@ public class ColorSpaceTest {
 
     @Test
     public void testICCBasedDefaultAlternate4() throws IOException {
-        COSStream iccStream = new COSStream();
-        iccStream.set(COSName.of("N"), COSInteger.valueOf(4));
+        PdfStream iccStream = new PdfStream();
+        iccStream.set(PdfName.of("N"), PdfInteger.valueOf(4));
         ICCBasedColorSpace cs = new ICCBasedColorSpace(iccStream, null);
         assertSame(DeviceCMYK.INSTANCE, cs.getAlternate());
     }
@@ -167,11 +167,11 @@ public class ColorSpaceTest {
     @Test
     public void testIndexedFromArray() throws IOException {
         byte[] palette = new byte[]{(byte) 255, 0, 0, 0, (byte) 255, 0};
-        COSArray arr = new COSArray();
-        arr.add(COSName.of("Indexed"));
-        arr.add(COSName.of("DeviceRGB"));
-        arr.add(COSInteger.valueOf(1));
-        arr.add(new COSString(palette));
+        PdfArray arr = new PdfArray();
+        arr.add(PdfName.of("Indexed"));
+        arr.add(PdfName.of("DeviceRGB"));
+        arr.add(PdfInteger.valueOf(1));
+        arr.add(new PdfString(palette));
 
         ColorSpaceBase cs = ColorSpaceBase.resolve(arr, null, null);
         assertTrue(cs instanceof IndexedColorSpace);
@@ -187,9 +187,9 @@ public class ColorSpaceTest {
 
     @Test
     public void testResolveCalGray() throws IOException {
-        COSArray arr = new COSArray();
-        arr.add(COSName.of("CalGray"));
-        arr.add(new COSDictionary());
+        PdfArray arr = new PdfArray();
+        arr.add(PdfName.of("CalGray"));
+        arr.add(new PdfDictionary());
         ColorSpaceBase cs = ColorSpaceBase.resolve(arr, null, null);
         assertTrue(cs instanceof CalGrayColorSpace);
         assertEquals("CalGray", cs.getName());
@@ -198,8 +198,8 @@ public class ColorSpaceTest {
 
     @Test
     public void testCalGrayGamma1MidGray() {
-        COSDictionary params = new COSDictionary();
-        params.set(COSName.of("Gamma"), new COSFloat(1.0f));
+        PdfDictionary params = new PdfDictionary();
+        params.set(PdfName.of("Gamma"), new PdfFloat(1.0f));
         CalGrayColorSpace cs = new CalGrayColorSpace(params);
         double[] rgb = cs.toRGB(0.5);
         // With gamma=1 and D65 whitepoint, 0.5 should produce a mid-gray
@@ -210,13 +210,13 @@ public class ColorSpaceTest {
 
     @Test
     public void testCalGrayGamma22() {
-        COSDictionary params = new COSDictionary();
-        params.set(COSName.of("Gamma"), new COSFloat(2.2f));
+        PdfDictionary params = new PdfDictionary();
+        params.set(PdfName.of("Gamma"), new PdfFloat(2.2f));
         CalGrayColorSpace cs = new CalGrayColorSpace(params);
         double[] rgb1 = cs.toRGB(0.5);
         // With gamma 2.2, 0.5^2.2 ≈ 0.217 → darker than gamma 1
-        COSDictionary params2 = new COSDictionary();
-        params2.set(COSName.of("Gamma"), new COSFloat(1.0f));
+        PdfDictionary params2 = new PdfDictionary();
+        params2.set(PdfName.of("Gamma"), new PdfFloat(1.0f));
         CalGrayColorSpace cs2 = new CalGrayColorSpace(params2);
         double[] rgb2 = cs2.toRGB(0.5);
         assertTrue(rgb1[0] < rgb2[0], "Gamma 2.2 should be darker at 0.5 than gamma 1");
@@ -228,9 +228,9 @@ public class ColorSpaceTest {
 
     @Test
     public void testResolveCalRGB() throws IOException {
-        COSArray arr = new COSArray();
-        arr.add(COSName.of("CalRGB"));
-        arr.add(new COSDictionary());
+        PdfArray arr = new PdfArray();
+        arr.add(PdfName.of("CalRGB"));
+        arr.add(new PdfDictionary());
         ColorSpaceBase cs = ColorSpaceBase.resolve(arr, null, null);
         assertTrue(cs instanceof CalRGBColorSpace);
         assertEquals("CalRGB", cs.getName());
@@ -239,7 +239,7 @@ public class ColorSpaceTest {
 
     @Test
     public void testCalRGBIdentityMatrix() {
-        COSDictionary params = new COSDictionary();
+        PdfDictionary params = new PdfDictionary();
         // Identity matrix + gamma 1 → should approximate pass-through
         CalRGBColorSpace cs = new CalRGBColorSpace(params);
         double[] rgb = cs.toRGB(1, 0, 0);
@@ -253,9 +253,9 @@ public class ColorSpaceTest {
 
     @Test
     public void testResolveLab() throws IOException {
-        COSArray arr = new COSArray();
-        arr.add(COSName.of("Lab"));
-        arr.add(new COSDictionary());
+        PdfArray arr = new PdfArray();
+        arr.add(PdfName.of("Lab"));
+        arr.add(new PdfDictionary());
         ColorSpaceBase cs = ColorSpaceBase.resolve(arr, null, null);
         assertTrue(cs instanceof LabColorSpace);
         assertEquals("Lab", cs.getName());
@@ -264,7 +264,7 @@ public class ColorSpaceTest {
 
     @Test
     public void testLabWhite() {
-        COSDictionary params = new COSDictionary();
+        PdfDictionary params = new PdfDictionary();
         LabColorSpace cs = new LabColorSpace(params);
         double[] rgb = cs.toRGB(100, 0, 0); // L*=100, a*=0, b*=0 → white
         assertTrue(rgb[0] > 0.95, "R should be near 1.0 for white: " + rgb[0]);
@@ -274,7 +274,7 @@ public class ColorSpaceTest {
 
     @Test
     public void testLabBlack() {
-        COSDictionary params = new COSDictionary();
+        PdfDictionary params = new PdfDictionary();
         LabColorSpace cs = new LabColorSpace(params);
         double[] rgb = cs.toRGB(0, 0, 0); // L*=0 → black
         assertTrue(rgb[0] < 0.05, "R should be near 0 for black: " + rgb[0]);
@@ -284,7 +284,7 @@ public class ColorSpaceTest {
 
     @Test
     public void testLabRedish() {
-        COSDictionary params = new COSDictionary();
+        PdfDictionary params = new PdfDictionary();
         LabColorSpace cs = new LabColorSpace(params);
         double[] rgb = cs.toRGB(50, 80, 0); // L*=50, a*=80 → reddish
         assertTrue(rgb[0] > rgb[1], "R should be greater than G for positive a*");
@@ -344,7 +344,7 @@ public class ColorSpaceTest {
 
     @Test
     public void testResolvePatternByName() throws IOException {
-        ColorSpaceBase cs = ColorSpaceBase.resolve(COSName.of("Pattern"), null, null);
+        ColorSpaceBase cs = ColorSpaceBase.resolve(PdfName.of("Pattern"), null, null);
         assertSame(PatternColorSpace.INSTANCE, cs);
     }
 }

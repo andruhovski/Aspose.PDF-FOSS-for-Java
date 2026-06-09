@@ -195,10 +195,10 @@ public class PdfSignatureTest {
 
     @Test
     public void testUnsignedFieldIsNotSigned() {
-        org.aspose.pdf.engine.cos.COSDictionary dict =
-                new org.aspose.pdf.engine.cos.COSDictionary();
-        dict.set(org.aspose.pdf.engine.cos.COSName.of("FT"),
-                org.aspose.pdf.engine.cos.COSName.of("Sig"));
+        org.aspose.pdf.engine.pdfobjects.PdfDictionary dict =
+                new org.aspose.pdf.engine.pdfobjects.PdfDictionary();
+        dict.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("FT"),
+                org.aspose.pdf.engine.pdfobjects.PdfName.of("Sig"));
 
         SignatureField sf = new SignatureField(dict, null, "EmptySig");
         assertFalse(sf.isSigned());

@@ -59,7 +59,7 @@ public final class PdfAValidationResult {
      *
      * @param ruleId     the rule identifier
      * @param message    the violation message
-     * @param objectPath the COS object path (may be {@code null})
+     * @param objectPath the PDF object path (may be {@code null})
      * @param clause     the ISO clause reference (may be {@code null})
      */
     public void addError(String ruleId, String message, String objectPath, String clause) {
@@ -71,7 +71,7 @@ public final class PdfAValidationResult {
      *
      * @param ruleId     the rule identifier
      * @param message    the violation message
-     * @param objectPath the COS object path (may be {@code null})
+     * @param objectPath the PDF object path (may be {@code null})
      * @param clause     the ISO clause reference (may be {@code null})
      */
     public void addWarning(String ruleId, String message, String objectPath, String clause) {
@@ -118,6 +118,12 @@ public final class PdfAValidationResult {
      * @throws IOException if an I/O error occurs
      */
     public void writeXmlLog(String filePath) throws IOException {
+        if (filePath == null) {
+            // A null log path means "no log file requested" — same semantics as
+            // convert()/validate() with a null logFileName. Skip silently rather
+            // than NPE in new FileOutputStream(null).
+            return;
+        }
         try (FileOutputStream fos = new FileOutputStream(filePath)) {
             writeXmlLog(fos);
         }

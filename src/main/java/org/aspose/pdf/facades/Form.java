@@ -1,12 +1,12 @@
 package org.aspose.pdf.facades;
 
 import org.aspose.pdf.Document;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 import org.aspose.pdf.engine.io.RandomAccessReader;
 import org.aspose.pdf.engine.parser.PDFParser;
 import org.aspose.pdf.forms.ButtonField;
@@ -472,27 +472,27 @@ public class Form implements AutoCloseable {
             RandomAccessReader reader = RandomAccessReader.fromStream(fdfInputStream);
             PDFParser fdfParser = new PDFParser(reader);
             fdfParser.parse();
-            COSDictionary catalog = fdfParser.getCatalog();
-            COSBase fdfBase = catalog.get("FDF");
-            if (fdfBase instanceof COSObjectReference) {
+            PdfDictionary catalog = fdfParser.getCatalog();
+            PdfBase fdfBase = catalog.get("FDF");
+            if (fdfBase instanceof PdfObjectReference) {
                 fdfBase = fdfParser.resolveReference(fdfBase);
             }
-            if (!(fdfBase instanceof COSDictionary)) {
+            if (!(fdfBase instanceof PdfDictionary)) {
                 LOG.warning("FDF catalog does not contain /FDF dictionary");
                 fdfParser.close();
                 return;
             }
-            COSDictionary fdfDict = (COSDictionary) fdfBase;
-            COSBase fieldsBase = fdfDict.get("Fields");
-            if (fieldsBase instanceof COSObjectReference) {
+            PdfDictionary fdfDict = (PdfDictionary) fdfBase;
+            PdfBase fieldsBase = fdfDict.get("Fields");
+            if (fieldsBase instanceof PdfObjectReference) {
                 fieldsBase = fdfParser.resolveReference(fieldsBase);
             }
-            if (!(fieldsBase instanceof COSArray)) {
+            if (!(fieldsBase instanceof PdfArray)) {
                 LOG.warning("FDF dictionary does not contain /Fields array");
                 fdfParser.close();
                 return;
             }
-            COSArray fields = (COSArray) fieldsBase;
+            PdfArray fields = (PdfArray) fieldsBase;
             org.aspose.pdf.forms.Form form = document.getForm();
             if (form == null) {
                 LOG.warning("Document has no AcroForm — cannot import FDF fields");
@@ -500,27 +500,27 @@ public class Form implements AutoCloseable {
                 return;
             }
             for (int i = 0; i < fields.size(); i++) {
-                COSBase entry = fields.get(i);
-                if (entry instanceof COSObjectReference) {
+                PdfBase entry = fields.get(i);
+                if (entry instanceof PdfObjectReference) {
                     entry = fdfParser.resolveReference(entry);
                 }
-                if (!(entry instanceof COSDictionary)) {
+                if (!(entry instanceof PdfDictionary)) {
                     continue;
                 }
-                COSDictionary fieldDict = (COSDictionary) entry;
+                PdfDictionary fieldDict = (PdfDictionary) entry;
                 String fieldName = fieldDict.getString("T");
                 if (fieldName == null) {
                     continue;
                 }
-                COSBase valueObj = fieldDict.get("V");
-                if (valueObj instanceof COSObjectReference) {
+                PdfBase valueObj = fieldDict.get("V");
+                if (valueObj instanceof PdfObjectReference) {
                     valueObj = fdfParser.resolveReference(valueObj);
                 }
                 String value = null;
-                if (valueObj instanceof COSString) {
-                    value = ((COSString) valueObj).getString();
-                } else if (valueObj instanceof COSName) {
-                    value = ((COSName) valueObj).getName();
+                if (valueObj instanceof PdfString) {
+                    value = ((PdfString) valueObj).getString();
+                } else if (valueObj instanceof PdfName) {
+                    value = ((PdfName) valueObj).getName();
                 }
                 if (value != null) {
                     Field field = form.get(fieldName);

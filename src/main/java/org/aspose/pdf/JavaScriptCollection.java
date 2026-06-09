@@ -1,11 +1,11 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSStream;
-import org.aspose.pdf.engine.cos.COSString;
-import org.aspose.pdf.engine.cos.NameTree;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
+import org.aspose.pdf.engine.pdfobjects.NameTree;
 import org.aspose.pdf.engine.parser.PDFParser;
 
 import java.io.IOException;
@@ -37,18 +37,18 @@ public class JavaScriptCollection implements Iterable<Map.Entry<String, String>>
      * @param catalog the document catalog dictionary
      * @param parser  the PDF parser for resolving references (may be null)
      */
-    public JavaScriptCollection(COSDictionary catalog, PDFParser parser) {
+    public JavaScriptCollection(PdfDictionary catalog, PDFParser parser) {
         this.scripts = new LinkedHashMap<>();
         if (catalog == null) return;
         try {
-            COSBase namesObj = resolve(catalog.get("Names"), parser);
-            if (!(namesObj instanceof COSDictionary)) return;
+            PdfBase namesObj = resolve(catalog.get("Names"), parser);
+            if (!(namesObj instanceof PdfDictionary)) return;
 
-            COSBase jsObj = resolve(((COSDictionary) namesObj).get("JavaScript"), parser);
-            if (!(jsObj instanceof COSDictionary)) return;
+            PdfBase jsObj = resolve(((PdfDictionary) namesObj).get("JavaScript"), parser);
+            if (!(jsObj instanceof PdfDictionary)) return;
 
-            NameTree tree = new NameTree((COSDictionary) jsObj);
-            for (Map.Entry<String, COSBase> entry : tree.entries()) {
+            NameTree tree = new NameTree((PdfDictionary) jsObj);
+            for (Map.Entry<String, PdfBase> entry : tree.entries()) {
                 String jsCode = extractJavaScript(entry.getValue());
                 if (jsCode != null) {
                     scripts.put(entry.getKey(), jsCode);
@@ -102,19 +102,19 @@ public class JavaScriptCollection implements Iterable<Map.Entry<String, String>>
      * direct string or a JavaScript action dictionary
      * ({@code /S /JavaScript /JS …}).
      */
-    private String extractJavaScript(COSBase value) {
-        if (value instanceof COSString) {
-            return ((COSString) value).getString();
+    private String extractJavaScript(PdfBase value) {
+        if (value instanceof PdfString) {
+            return ((PdfString) value).getString();
         }
-        if (value instanceof COSDictionary) {
-            COSDictionary actionDict = (COSDictionary) value;
-            COSBase jsVal = resolve(actionDict.get("JS"), null);
-            if (jsVal instanceof COSString) {
-                return ((COSString) jsVal).getString();
+        if (value instanceof PdfDictionary) {
+            PdfDictionary actionDict = (PdfDictionary) value;
+            PdfBase jsVal = resolve(actionDict.get("JS"), null);
+            if (jsVal instanceof PdfString) {
+                return ((PdfString) jsVal).getString();
             }
-            if (jsVal instanceof COSStream) {
+            if (jsVal instanceof PdfStream) {
                 try {
-                    byte[] data = ((COSStream) jsVal).getDecodedData();
+                    byte[] data = ((PdfStream) jsVal).getDecodedData();
                     return new String(data, java.nio.charset.StandardCharsets.UTF_8);
                 } catch (Exception e) {
                     LOG.fine(() -> "Failed to read JS stream: " + e.getMessage());
@@ -128,9 +128,9 @@ public class JavaScriptCollection implements Iterable<Map.Entry<String, String>>
      * Resolves an indirect reference. Prefers the parser when supplied (it can
      * pull objects from compressed object streams that the reference's own
      * resolver might not be aware of), and otherwise falls back to the
-     * built-in {@link COSObjectReference#dereference} path.
+     * built-in {@link PdfObjectReference#dereference} path.
      */
-    private static COSBase resolve(COSBase obj, PDFParser parser) {
+    private static PdfBase resolve(PdfBase obj, PDFParser parser) {
         if (obj == null) return null;
         if (parser != null) {
             try {
@@ -139,9 +139,9 @@ public class JavaScriptCollection implements Iterable<Map.Entry<String, String>>
                 return obj;
             }
         }
-        if (obj instanceof COSObjectReference) {
+        if (obj instanceof PdfObjectReference) {
             try {
-                return ((COSObjectReference) obj).dereference();
+                return ((PdfObjectReference) obj).dereference();
             } catch (IOException e) {
                 return obj;
             }

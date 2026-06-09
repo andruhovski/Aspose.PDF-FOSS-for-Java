@@ -2,14 +2,14 @@ package org.aspose.pdf.engine.parser;
 
 import org.aspose.pdf.Operator;
 import org.aspose.pdf.OperatorCollection;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSFloat;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSString;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfFloat;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 import org.aspose.pdf.engine.io.RandomAccessReader;
 
 import java.io.ByteArrayOutputStream;
@@ -55,10 +55,13 @@ public final class ContentStreamParser {
             return new ArrayList<>();
         }
 
-        RandomAccessReader reader = RandomAccessReader.fromBytes(streamData);
+        // No defensive copy: the decoded content stream buffer is handed to us
+        // for parsing only and can reach hundreds of MB (corpus 33809.pdf) —
+        // the clone in fromBytes() doubled peak memory and OOM'd mass runs.
+        RandomAccessReader reader = RandomAccessReader.fromBytesNoCopy(streamData);
         PDFLexer lexer = new PDFLexer(reader);
         List<Operator> operators = new ArrayList<>();
-        List<COSBase> operands = new ArrayList<>();
+        List<PdfBase> operands = new ArrayList<>();
 
         while (true) {
             PDFLexer.Token token;
@@ -76,6 +79,7 @@ public final class ContentStreamParser {
                 break;
             }
 
+            try {
             switch (type) {
                 case INTEGER:
                     operands.add(parseIntegerValue(token, "content-stream operand"));
@@ -86,15 +90,15 @@ public final class ContentStreamParser {
                     break;
 
                 case NAME:
-                    operands.add(COSName.of(token.getValue()));
+                    operands.add(PdfName.of(token.getValue()));
                     break;
 
                 case LITERAL_STRING:
-                    operands.add(new COSString(token.getValue().getBytes(java.nio.charset.StandardCharsets.ISO_8859_1)));
+                    operands.add(new PdfString(token.getValue().getBytes(java.nio.charset.StandardCharsets.ISO_8859_1)));
                     break;
 
                 case HEX_STRING:
-                    COSString hexStr = new COSString(token.getValue().getBytes(java.nio.charset.StandardCharsets.ISO_8859_1));
+                    PdfString hexStr = new PdfString(token.getValue().getBytes(java.nio.charset.StandardCharsets.ISO_8859_1));
                     hexStr.setForceHex(true);
                     operands.add(hexStr);
                     break;
@@ -116,11 +120,11 @@ public final class ContentStreamParser {
                         operators.add(biOp);
                         operands.clear();
                     } else if ("true".equals(keyword)) {
-                        operands.add(org.aspose.pdf.engine.cos.COSBoolean.TRUE);
+                        operands.add(org.aspose.pdf.engine.pdfobjects.PdfBoolean.TRUE);
                     } else if ("false".equals(keyword)) {
-                        operands.add(org.aspose.pdf.engine.cos.COSBoolean.FALSE);
+                        operands.add(org.aspose.pdf.engine.pdfobjects.PdfBoolean.FALSE);
                     } else if ("null".equals(keyword)) {
-                        operands.add(org.aspose.pdf.engine.cos.COSNull.INSTANCE);
+                        operands.add(org.aspose.pdf.engine.pdfobjects.PdfNull.INSTANCE);
                     } else if (operands.isEmpty() && isRunOnNoOperandOps(keyword)) {
                         // Some content streams pack multiple no-operand single-letter
                         // operators back-to-back without whitespace ("QQQQQ" → Q Q Q Q Q,
@@ -144,6 +148,16 @@ public final class ContentStreamParser {
                     LOGGER.log(Level.WARNING, "Unexpected token type in content stream: {0}", token);
                     break;
             }
+            } catch (Exception bodyEx) {
+                // A malformed operator / dictionary / array (e.g. a non-name key,
+                // binary inline-image residue, or out-of-range operand) must not
+                // discard the whole page. Stop here and return the operators parsed
+                // so far — best-effort extraction, mirroring Acrobat / pdf.js.
+                LOGGER.log(Level.WARNING,
+                        "Recovering malformed content stream after parse error at token {0}: {1}",
+                        new Object[]{token, bodyEx.getMessage()});
+                break;
+            }
         }
 
         // Any remaining operands without an operator are discarded (malformed stream)
@@ -156,14 +170,14 @@ public final class ContentStreamParser {
     }
 
     /**
-     * Parses a content stream from a COSStream and returns an OperatorCollection.
+     * Parses a content stream from a PdfStream and returns an OperatorCollection.
      *
-     * @param stream the COSStream containing the content stream
+     * @param stream the PdfStream containing the content stream
      * @return the parsed operator collection
      * @throws IOException if parsing or decoding fails
      * @throws IllegalArgumentException if stream is null
      */
-    public static OperatorCollection parseToCollection(COSStream stream) throws IOException {
+    public static OperatorCollection parseToCollection(PdfStream stream) throws IOException {
         if (stream == null) {
             throw new IllegalArgumentException("Stream must not be null");
         }
@@ -208,7 +222,7 @@ public final class ContentStreamParser {
      * Creates a typed Operator subclass based on the operator keyword.
      * Falls back to generic Operator for unrecognized keywords.
      */
-    private static Operator createTypedOperator(String keyword, List<COSBase> operands) {
+    private static Operator createTypedOperator(String keyword, List<PdfBase> operands) {
         switch (keyword) {
             // --- Graphics state ---
             case "q":  return new org.aspose.pdf.operators.GSave(operands);
@@ -316,8 +330,8 @@ public final class ContentStreamParser {
     /**
      * Parses an array from the content stream. The opening '[' has already been consumed.
      */
-    private static COSArray parseArray(PDFLexer lexer) throws IOException {
-        COSArray array = new COSArray();
+    private static PdfArray parseArray(PDFLexer lexer) throws IOException {
+        PdfArray array = new PdfArray();
         while (true) {
             PDFLexer.Token token;
             try {
@@ -346,13 +360,13 @@ public final class ContentStreamParser {
                     array.add(parseRealValue(token));
                     break;
                 case NAME:
-                    array.add(COSName.of(token.getValue()));
+                    array.add(PdfName.of(token.getValue()));
                     break;
                 case LITERAL_STRING:
-                    array.add(new COSString(token.getValue().getBytes(java.nio.charset.StandardCharsets.ISO_8859_1)));
+                    array.add(new PdfString(token.getValue().getBytes(java.nio.charset.StandardCharsets.ISO_8859_1)));
                     break;
                 case HEX_STRING:
-                    COSString hs = new COSString(token.getValue().getBytes(java.nio.charset.StandardCharsets.ISO_8859_1));
+                    PdfString hs = new PdfString(token.getValue().getBytes(java.nio.charset.StandardCharsets.ISO_8859_1));
                     hs.setForceHex(true);
                     array.add(hs);
                     break;
@@ -365,16 +379,16 @@ public final class ContentStreamParser {
                 case KEYWORD:
                     // true/false/null can appear in arrays
                     if ("true".equals(token.getValue())) {
-                        array.add(org.aspose.pdf.engine.cos.COSBoolean.TRUE);
+                        array.add(org.aspose.pdf.engine.pdfobjects.PdfBoolean.TRUE);
                     } else if ("false".equals(token.getValue())) {
-                        array.add(org.aspose.pdf.engine.cos.COSBoolean.FALSE);
+                        array.add(org.aspose.pdf.engine.pdfobjects.PdfBoolean.FALSE);
                     } else if ("null".equals(token.getValue())) {
-                        array.add(org.aspose.pdf.engine.cos.COSNull.INSTANCE);
+                        array.add(org.aspose.pdf.engine.pdfobjects.PdfNull.INSTANCE);
                     } else {
                         LOGGER.log(Level.WARNING,
                                 "Recovering unexpected keyword in content-stream array as string: {0}",
                                 token.getValue());
-                        array.add(new COSString(token.getValue()
+                        array.add(new PdfString(token.getValue()
                                 .getBytes(java.nio.charset.StandardCharsets.ISO_8859_1)));
                     }
                     break;
@@ -388,8 +402,8 @@ public final class ContentStreamParser {
     /**
      * Parses a dictionary from the content stream. The opening '&lt;&lt;' has already been consumed.
      */
-    private static COSDictionary parseDictionary(PDFLexer lexer) throws IOException {
-        COSDictionary dict = new COSDictionary();
+    private static PdfDictionary parseDictionary(PDFLexer lexer) throws IOException {
+        PdfDictionary dict = new PdfDictionary();
         while (true) {
             PDFLexer.Token keyToken = lexer.nextToken();
             if (keyToken.getType() == PDFLexer.TokenType.EOF) {
@@ -402,12 +416,12 @@ public final class ContentStreamParser {
                 throw new IOException("Expected name as dictionary key, got: " + keyToken);
             }
 
-            COSName key = COSName.of(keyToken.getValue());
+            PdfName key = PdfName.of(keyToken.getValue());
 
             PDFLexer.Token valToken = lexer.nextToken();
             PDFLexer.TokenType valType = valToken.getType();
 
-            COSBase value;
+            PdfBase value;
             switch (valType) {
                 case INTEGER:
                     value = parseIntegerValue(valToken, "content-stream dictionary");
@@ -416,13 +430,13 @@ public final class ContentStreamParser {
                     value = parseRealValue(valToken);
                     break;
                 case NAME:
-                    value = COSName.of(valToken.getValue());
+                    value = PdfName.of(valToken.getValue());
                     break;
                 case LITERAL_STRING:
-                    value = new COSString(valToken.getValue().getBytes(java.nio.charset.StandardCharsets.ISO_8859_1));
+                    value = new PdfString(valToken.getValue().getBytes(java.nio.charset.StandardCharsets.ISO_8859_1));
                     break;
                 case HEX_STRING:
-                    COSString hvs = new COSString(valToken.getValue().getBytes(java.nio.charset.StandardCharsets.ISO_8859_1));
+                    PdfString hvs = new PdfString(valToken.getValue().getBytes(java.nio.charset.StandardCharsets.ISO_8859_1));
                     hvs.setForceHex(true);
                     value = hvs;
                     break;
@@ -434,11 +448,11 @@ public final class ContentStreamParser {
                     break;
                 case KEYWORD:
                     if ("true".equals(valToken.getValue())) {
-                        value = org.aspose.pdf.engine.cos.COSBoolean.TRUE;
+                        value = org.aspose.pdf.engine.pdfobjects.PdfBoolean.TRUE;
                     } else if ("false".equals(valToken.getValue())) {
-                        value = org.aspose.pdf.engine.cos.COSBoolean.FALSE;
+                        value = org.aspose.pdf.engine.pdfobjects.PdfBoolean.FALSE;
                     } else if ("null".equals(valToken.getValue())) {
-                        value = org.aspose.pdf.engine.cos.COSNull.INSTANCE;
+                        value = org.aspose.pdf.engine.pdfobjects.PdfNull.INSTANCE;
                     } else {
                         throw new IOException("Unexpected keyword as dictionary value: " + valToken.getValue());
                     }
@@ -458,7 +472,7 @@ public final class ContentStreamParser {
      */
     private static Operator parseInlineImage(PDFLexer lexer, RandomAccessReader reader) throws IOException {
         // Parse dictionary key-value pairs until "ID"
-        COSDictionary imageDict = new COSDictionary();
+        PdfDictionary imageDict = new PdfDictionary();
         while (true) {
             PDFLexer.Token token = lexer.nextToken();
             if (token.getType() == PDFLexer.TokenType.EOF) {
@@ -469,16 +483,16 @@ public final class ContentStreamParser {
             }
 
             // Key should be a name
-            COSName key;
+            PdfName key;
             if (token.getType() == PDFLexer.TokenType.NAME) {
-                key = COSName.of(token.getValue());
+                key = PdfName.of(token.getValue());
             } else {
                 throw new IOException("Expected name in inline image dict, got: " + token);
             }
 
             // Value
             PDFLexer.Token valToken = lexer.nextToken();
-            COSBase value;
+            PdfBase value;
             switch (valToken.getType()) {
                 case INTEGER:
                     value = parseIntegerValue(valToken, "inline-image dictionary");
@@ -487,13 +501,13 @@ public final class ContentStreamParser {
                     value = parseRealValue(valToken);
                     break;
                 case NAME:
-                    value = COSName.of(valToken.getValue());
+                    value = PdfName.of(valToken.getValue());
                     break;
                 case LITERAL_STRING:
-                    value = new COSString(valToken.getValue().getBytes(java.nio.charset.StandardCharsets.ISO_8859_1));
+                    value = new PdfString(valToken.getValue().getBytes(java.nio.charset.StandardCharsets.ISO_8859_1));
                     break;
                 case HEX_STRING:
-                    COSString hvs = new COSString(valToken.getValue().getBytes(java.nio.charset.StandardCharsets.ISO_8859_1));
+                    PdfString hvs = new PdfString(valToken.getValue().getBytes(java.nio.charset.StandardCharsets.ISO_8859_1));
                     hvs.setForceHex(true);
                     value = hvs;
                     break;
@@ -505,12 +519,12 @@ public final class ContentStreamParser {
                     break;
                 case KEYWORD:
                     if ("true".equals(valToken.getValue())) {
-                        value = org.aspose.pdf.engine.cos.COSBoolean.TRUE;
+                        value = org.aspose.pdf.engine.pdfobjects.PdfBoolean.TRUE;
                     } else if ("false".equals(valToken.getValue())) {
-                        value = org.aspose.pdf.engine.cos.COSBoolean.FALSE;
+                        value = org.aspose.pdf.engine.pdfobjects.PdfBoolean.FALSE;
                     } else {
                         // Abbreviated names in inline images (e.g., "AHx" for ASCIIHexDecode)
-                        value = COSName.of(valToken.getValue());
+                        value = PdfName.of(valToken.getValue());
                     }
                     break;
                 default:
@@ -533,9 +547,9 @@ public final class ContentStreamParser {
             int b = reader.read();
             if (b == -1) {
                 LOGGER.warning("Unexpected EOF in inline image data; recovering partial inline image");
-                List<COSBase> biOperands = new ArrayList<>();
+                List<PdfBase> biOperands = new ArrayList<>();
                 biOperands.add(imageDict);
-                biOperands.add(new COSString(imageData.toByteArray()));
+                biOperands.add(new PdfString(imageData.toByteArray()));
                 lexer.clearPeek();
                 return new org.aspose.pdf.operators.BI(biOperands);
             }
@@ -556,9 +570,9 @@ public final class ContentStreamParser {
 
                     lexer.clearPeek();
 
-                    List<COSBase> biOperands = new ArrayList<>();
+                    List<PdfBase> biOperands = new ArrayList<>();
                     biOperands.add(imageDict);
-                    biOperands.add(new COSString(trimmed));
+                    biOperands.add(new PdfString(trimmed));
                     return new org.aspose.pdf.operators.BI(biOperands);
                 }
             }
@@ -582,26 +596,26 @@ public final class ContentStreamParser {
      * where a numeric operand was expected. In that case we recover as {@code 0} so the
      * surrounding operators can still be parsed and downstream extractors can salvage text.
      */
-    private static COSFloat parseRealValue(PDFLexer.Token token) {
+    private static PdfFloat parseRealValue(PDFLexer.Token token) {
         String textValue = token.getValue();
         if (".".equals(textValue) || "+.".equals(textValue) || "-.".equals(textValue)) {
             LOGGER.log(Level.WARNING,
                     "Recovering malformed real token \"{0}\" as 0 at content stream position {1}",
                     new Object[]{textValue, token.getPosition()});
-            return new COSFloat(0.0);
+            return new PdfFloat(0.0);
         }
-        return new COSFloat(textValue);
+        return new PdfFloat(textValue);
     }
 
-    private static COSBase parseIntegerValue(PDFLexer.Token token, String context) {
+    private static PdfBase parseIntegerValue(PDFLexer.Token token, String context) {
         String textValue = token.getValue();
         try {
-            return COSInteger.valueOf(Long.parseLong(textValue));
+            return PdfInteger.valueOf(Long.parseLong(textValue));
         } catch (NumberFormatException ex) {
             LOGGER.log(Level.WARNING,
                     "Recovering malformed integer token \"{0}\" in {1} as string at content stream position {2}",
                     new Object[]{textValue, context, token.getPosition()});
-            return new COSString(textValue.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1));
+            return new PdfString(textValue.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1));
         }
     }
 }

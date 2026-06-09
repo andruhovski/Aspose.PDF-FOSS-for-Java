@@ -1,7 +1,7 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 
 /**
  * FitH explicit destination — fit page width, position at top coordinate.
@@ -23,10 +23,10 @@ public class FitHExplicitDestination extends ExplicitDestination {
     public double getTop() { return top; }
 
     @Override
-    public COSArray toCOSArray() {
-        COSArray arr = new COSArray();
-        arr.add(page != null ? page.getCOSDictionary() : org.aspose.pdf.engine.cos.COSNull.INSTANCE);
-        arr.add(COSName.of("FitH"));
+    public PdfArray toPdfArray() {
+        PdfArray arr = new PdfArray();
+        arr.add(page != null ? page.getPdfDictionary() : org.aspose.pdf.engine.pdfobjects.PdfNull.INSTANCE);
+        arr.add(PdfName.of("FitH"));
         arr.add(numOrNull(top));
         return arr;
     }

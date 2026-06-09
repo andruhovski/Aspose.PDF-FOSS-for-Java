@@ -1,14 +1,14 @@
 package org.aspose.pdf.engine.writer;
 
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectKey;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSStream;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectKey;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 import org.aspose.pdf.engine.filter.FlateFilter;
 import org.aspose.pdf.engine.io.RandomAccessReader;
 import org.aspose.pdf.engine.parser.XRefParser;
@@ -28,7 +28,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Serializes a graph of COS objects into a valid PDF file.
+ * Serializes a graph of PDF objects into a valid PDF file.
  * Writes the header, body (all indirect objects), cross-reference table, and trailer,
  * conforming to ISO 32000-1:2008, §7.5.
  *
@@ -46,7 +46,7 @@ public final class PDFWriter {
     private final float pdfVersion;
 
     /** Tracks byte offsets of each object for the xref table. */
-    private final Map<COSObjectKey, Long> objectOffsets = new LinkedHashMap<>();
+    private final Map<PdfObjectKey, Long> objectOffsets = new LinkedHashMap<>();
 
     /** Current byte position in the output. */
     private long currentOffset = 0;
@@ -58,7 +58,7 @@ public final class PDFWriter {
     private PDFEncryptor encryptor;
 
     /** Object key of the /Encrypt dictionary — excluded from encryption per ISO 32000 §7.6.1. */
-    private COSObjectKey encryptDictKey;
+    private PdfObjectKey encryptDictKey;
 
     /**
      * Sets the encryptor for write-side encryption.
@@ -68,7 +68,7 @@ public final class PDFWriter {
      * @param encryptor      the encryptor (null to disable encryption)
      * @param encryptDictKey the object key of the /Encrypt dictionary (excluded from encryption)
      */
-    public void setEncryptor(PDFEncryptor encryptor, COSObjectKey encryptDictKey) {
+    public void setEncryptor(PDFEncryptor encryptor, PdfObjectKey encryptDictKey) {
         this.encryptor = encryptor;
         this.encryptDictKey = encryptDictKey;
     }
@@ -91,13 +91,13 @@ public final class PDFWriter {
      * Writes a complete PDF file: header, objects, xref table, and trailer.
      *
      * @param trailer the trailer dictionary (must contain /Root at minimum)
-     * @param objects the map of object keys to COS objects
+     * @param objects the map of object keys to PDF objects
      * @throws IOException if writing fails
      */
-    public void write(COSDictionary trailer, Map<COSObjectKey, COSBase> objects) throws IOException {
+    public void write(PdfDictionary trailer, Map<PdfObjectKey, PdfBase> objects) throws IOException {
         LOGGER.log(Level.FINE, "Writing PDF {0} with {1} objects", new Object[]{pdfVersion, objects.size()});
 
-        // 0. Promote any in-graph COSStream that lacks an object key to an
+        // 0. Promote any in-graph PdfStream that lacks an object key to an
         //    indirect object — per ISO 32000-1:2008 §7.3.8.1 streams MUST be
         //    indirect objects. (Bug N2: without this pass the writer emitted
         //    inline `<<…>> stream…endstream` constructs inside parent dicts,
@@ -108,10 +108,10 @@ public final class PDFWriter {
         writeHeader();
 
         // 2. Write objects sorted by object number
-        List<Map.Entry<COSObjectKey, COSBase>> sorted = new ArrayList<>(objects.entrySet());
+        List<Map.Entry<PdfObjectKey, PdfBase>> sorted = new ArrayList<>(objects.entrySet());
         sorted.sort(Comparator.comparingInt(e -> e.getKey().getObjectNumber()));
 
-        for (Map.Entry<COSObjectKey, COSBase> entry : sorted) {
+        for (Map.Entry<PdfObjectKey, PdfBase> entry : sorted) {
             writeObject(entry.getKey(), entry.getValue());
         }
 
@@ -120,9 +120,9 @@ public final class PDFWriter {
         writeXRefTable(objects);
 
         // 4. Write trailer
-        COSDictionary finalTrailer = copyDictionary(trailer);
-        finalTrailer.set(COSName.PREV, null);
-        finalTrailer.set(COSName.of("XRefStm"), null);
+        PdfDictionary finalTrailer = copyDictionary(trailer);
+        finalTrailer.set(PdfName.PREV, null);
+        finalTrailer.set(PdfName.of("XRefStm"), null);
         writeTrailer(finalTrailer, getMaxObjectNumber(objects) + 1, xrefOffset);
 
         output.flush();
@@ -140,8 +140,8 @@ public final class PDFWriter {
      * @throws IOException if writing fails
      */
     public void writeIncremental(RandomAccessReader original,
-                                  COSDictionary trailer,
-                                  Map<COSObjectKey, COSBase> modifiedObjects) throws IOException {
+                                  PdfDictionary trailer,
+                                  Map<PdfObjectKey, PdfBase> modifiedObjects) throws IOException {
         LOGGER.log(Level.FINE, "Writing incremental update with {0} modified objects", modifiedObjects.size());
 
         // Copy original file content
@@ -165,7 +165,7 @@ public final class PDFWriter {
         registerOrphanStreams(modifiedObjects, trailer);
 
         // Write modified objects
-        for (Map.Entry<COSObjectKey, COSBase> entry : modifiedObjects.entrySet()) {
+        for (Map.Entry<PdfObjectKey, PdfBase> entry : modifiedObjects.entrySet()) {
             writeObject(entry.getKey(), entry.getValue());
         }
 
@@ -174,15 +174,15 @@ public final class PDFWriter {
         writeIncrementalXRefTable();
 
         // Compute /Size: max across all revisions (original + modified)
-        COSBase origSize = trailer.get("Size");
-        int originalSize = (origSize instanceof COSInteger) ? ((COSInteger) origSize).intValue() : 0;
+        PdfBase origSize = trailer.get("Size");
+        int originalSize = (origSize instanceof PdfInteger) ? ((PdfInteger) origSize).intValue() : 0;
         int newMaxObj = getMaxObjectNumber(modifiedObjects);
         int newSize = Math.max(originalSize, newMaxObj + 1);
 
         // Write new trailer with /Prev
-        COSDictionary newTrailer = copyDictionary(trailer);
-        newTrailer.set(COSName.of("Prev"), COSInteger.valueOf(oldXrefOffset));
-        newTrailer.set(COSName.of("XRefStm"), null);
+        PdfDictionary newTrailer = copyDictionary(trailer);
+        newTrailer.set(PdfName.of("Prev"), PdfInteger.valueOf(oldXrefOffset));
+        newTrailer.set(PdfName.of("XRefStm"), null);
         writeTrailer(newTrailer, newSize, newXrefOffset);
 
         output.flush();
@@ -193,48 +193,48 @@ public final class PDFWriter {
      * Assigns a new object number and returns the key.
      * Useful when adding new objects that don't yet have a key.
      *
-     * @return a new COSObjectKey with the next available object number
+     * @return a new PdfObjectKey with the next available object number
      */
-    public COSObjectKey allocateObjectNumber() {
-        return new COSObjectKey(nextObjectNumber++, 0);
+    public PdfObjectKey allocateObjectNumber() {
+        return new PdfObjectKey(nextObjectNumber++, 0);
     }
 
     // ========== Private implementation methods ==========
 
     /**
      * Walks the object graph rooted at {@code objects.values()} (and the
-     * trailer) and ensures every {@link COSStream} reachable from it has an
+     * trailer) and ensures every {@link PdfStream} reachable from it has an
      * object key and is registered in {@code objects}. After this pass
-     * {@link COSDictionary#writeTo} sees an object key on every stream and
+     * {@link PdfDictionary#writeTo} sees an object key on every stream and
      * emits a reference ({@code N G R}) rather than serialising the stream
      * inline — which would violate ISO 32000-1:2008 §7.3.8.1 ("All streams
      * shall be indirect objects").
      *
      * <p>Three cases are handled:</p>
      * <ul>
-     *   <li><strong>Inline orphan</strong> — {@code COSStream} with no
+     *   <li><strong>Inline orphan</strong> — {@code PdfStream} with no
      *       object key. Assigned a fresh key and added to {@code objects}.</li>
-     *   <li><strong>Stale reference</strong> — {@code COSObjectReference}
-     *       whose target is a {@code COSStream} with a key from a previous
+     *   <li><strong>Stale reference</strong> — {@code PdfObjectReference}
+     *       whose target is a {@code PdfStream} with a key from a previous
      *       save, but the target is missing from the current {@code objects}
      *       map. The target is re-registered under the reference's key (if
      *       free) or under a fresh key (in which case the parent slot is
      *       rewritten to point at the new key). Surfaces on the second save
      *       of any {@code Document} that contains annotation appearance
      *       streams ({@code /AP /N}) or imported content streams — those
-     *       sit behind {@code COSObjectReference} after the first save.</li>
+     *       sit behind {@code PdfObjectReference} after the first save.</li>
      *   <li><strong>Active reference</strong> — target stream is already
      *       in {@code objects}; no-op but descend into the target so nested
      *       streams (e.g. a Form XObject's {@code /Resources}) get walked.</li>
      * </ul>
      */
-    private void registerOrphanStreams(Map<COSObjectKey, COSBase> objects,
-                                       COSDictionary trailer) {
-        java.util.Set<COSBase> visited =
+    private void registerOrphanStreams(Map<PdfObjectKey, PdfBase> objects,
+                                       PdfDictionary trailer) {
+        java.util.Set<PdfBase> visited =
                 java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
         // Visit every existing indirect object so its key marks the stream as
         // already registered (and so we walk its children).
-        for (COSBase root : new java.util.ArrayList<>(objects.values())) {
+        for (PdfBase root : new java.util.ArrayList<>(objects.values())) {
             collectOrphanStreams(root, visited, objects);
         }
         if (trailer != null) {
@@ -250,10 +250,10 @@ public final class PDFWriter {
      * is allocated and the caller is expected to rewrite the parent slot
      * to use the new key.
      */
-    private COSObjectKey registerStreamUnderRefKey(COSStream s,
-                                                    COSObjectKey refKey,
-                                                    Map<COSObjectKey, COSBase> objects) {
-        COSBase existing = objects.get(refKey);
+    private PdfObjectKey registerStreamUnderRefKey(PdfStream s,
+                                                    PdfObjectKey refKey,
+                                                    Map<PdfObjectKey, PdfBase> objects) {
+        PdfBase existing = objects.get(refKey);
         if (existing == s) {
             return refKey;  // already registered, nothing to do
         }
@@ -264,7 +264,7 @@ public final class PDFWriter {
         }
         // Collision: another object owns refKey. Allocate fresh.
         int next = getMaxObjectNumber(objects) + 1;
-        COSObjectKey fresh = new COSObjectKey(next, 0);
+        PdfObjectKey fresh = new PdfObjectKey(next, 0);
         s.setObjectKey(fresh);
         objects.put(fresh, s);
         return fresh;
@@ -273,20 +273,20 @@ public final class PDFWriter {
     /**
      * Recursively walks {@code node}, registering any orphan / stale
      * streams it encounters per the contract on
-     * {@link #registerOrphanStreams(Map, COSDictionary)}.
+     * {@link #registerOrphanStreams(Map, PdfDictionary)}.
      */
-    private void collectOrphanStreams(COSBase node,
-                                      java.util.Set<COSBase> visited,
-                                      Map<COSObjectKey, COSBase> objects) {
+    private void collectOrphanStreams(PdfBase node,
+                                      java.util.Set<PdfBase> visited,
+                                      Map<PdfObjectKey, PdfBase> objects) {
         if (node == null || !visited.add(node)) return;
 
-        if (node instanceof COSStream) {
-            COSStream s = (COSStream) node;
-            COSObjectKey existing = s.getObjectKey();
+        if (node instanceof PdfStream) {
+            PdfStream s = (PdfStream) node;
+            PdfObjectKey existing = s.getObjectKey();
             if (existing == null) {
                 // Inline orphan — assign fresh key.
                 int next = getMaxObjectNumber(objects) + 1;
-                COSObjectKey fresh = new COSObjectKey(next, 0);
+                PdfObjectKey fresh = new PdfObjectKey(next, 0);
                 s.setObjectKey(fresh);
                 objects.put(fresh, s);
             } else if (objects.get(existing) != s) {
@@ -298,25 +298,25 @@ public final class PDFWriter {
             // fall through to descend into the stream's dict entries
         }
 
-        if (node instanceof COSDictionary) {
+        if (node instanceof PdfDictionary) {
             // Snapshot keys because we may rewrite entries when a reference
             // collides and forces a re-key.
-            java.util.List<COSName> keys =
-                    new java.util.ArrayList<>(((COSDictionary) node).keySet());
-            for (COSName k : keys) {
-                COSBase value = ((COSDictionary) node).get(k);
-                COSBase recurseInto = walkReferenceForReregistration(
+            java.util.List<PdfName> keys =
+                    new java.util.ArrayList<>(((PdfDictionary) node).keySet());
+            for (PdfName k : keys) {
+                PdfBase value = ((PdfDictionary) node).get(k);
+                PdfBase recurseInto = walkReferenceForReregistration(
                         value, objects,
-                        newRef -> ((COSDictionary) node).set(k, newRef));
+                        newRef -> ((PdfDictionary) node).set(k, newRef));
                 collectOrphanStreams(recurseInto != null ? recurseInto : value,
                         visited, objects);
             }
-        } else if (node instanceof COSArray) {
-            COSArray arr = (COSArray) node;
+        } else if (node instanceof PdfArray) {
+            PdfArray arr = (PdfArray) node;
             for (int i = 0; i < arr.size(); i++) {
                 final int idx = i;
-                COSBase value = arr.get(i);
-                COSBase recurseInto = walkReferenceForReregistration(
+                PdfBase value = arr.get(i);
+                PdfBase recurseInto = walkReferenceForReregistration(
                         value, objects, newRef -> arr.set(idx, newRef));
                 collectOrphanStreams(recurseInto != null ? recurseInto : value,
                         visited, objects);
@@ -325,21 +325,21 @@ public final class PDFWriter {
     }
 
     /**
-     * If {@code value} is a {@link COSObjectReference} whose target is a
-     * {@link COSStream}, ensure the target is registered in {@code objects}
+     * If {@code value} is a {@link PdfObjectReference} whose target is a
+     * {@link PdfStream}, ensure the target is registered in {@code objects}
      * (possibly under a fresh key, in which case {@code slotSetter} is
      * invoked to rewrite the parent slot to point at the new key). Returns
      * the dereferenced target so the caller can continue walking into it,
      * or {@code null} when {@code value} is not a reference (caller falls
      * through to walking {@code value} directly).
      */
-    private COSBase walkReferenceForReregistration(COSBase value,
-                                                    Map<COSObjectKey, COSBase> objects,
-                                                    java.util.function.Consumer<COSObjectReference> slotSetter) {
-        if (!(value instanceof COSObjectReference)) return null;
-        COSObjectReference ref = (COSObjectReference) value;
-        COSObjectKey refKey = ref.getKey();
-        COSBase target;
+    private PdfBase walkReferenceForReregistration(PdfBase value,
+                                                    Map<PdfObjectKey, PdfBase> objects,
+                                                    java.util.function.Consumer<PdfObjectReference> slotSetter) {
+        if (!(value instanceof PdfObjectReference)) return null;
+        PdfObjectReference ref = (PdfObjectReference) value;
+        PdfObjectKey refKey = ref.getKey();
+        PdfBase target;
         try {
             target = ref.dereference();
         } catch (IOException | IllegalStateException e) {
@@ -350,13 +350,13 @@ public final class PDFWriter {
             // registered by some other code path.
             return null;
         }
-        if (target instanceof COSStream) {
-            COSStream s = (COSStream) target;
-            COSObjectKey effectiveKey = registerStreamUnderRefKey(s, refKey, objects);
+        if (target instanceof PdfStream) {
+            PdfStream s = (PdfStream) target;
+            PdfObjectKey effectiveKey = registerStreamUnderRefKey(s, refKey, objects);
             if (!effectiveKey.equals(refKey)) {
                 // Re-keyed due to collision — rewrite the slot so the
                 // parent points at the new key.
-                slotSetter.accept(new COSObjectReference(effectiveKey, k -> objects.get(k)));
+                slotSetter.accept(new PdfObjectReference(effectiveKey, k -> objects.get(k)));
             }
         }
         return target;
@@ -385,7 +385,7 @@ public final class PDFWriter {
      * XRef streams are excluded from encryption.
      * </p>
      */
-    private void writeObject(COSObjectKey key, COSBase object) throws IOException {
+    private void writeObject(PdfObjectKey key, PdfBase object) throws IOException {
         objectOffsets.put(key, currentOffset);
 
         // "N G obj\n"
@@ -413,9 +413,9 @@ public final class PDFWriter {
      * Returns true if the object is an XRef stream (/Type /XRef).
      * XRef streams are not encrypted per ISO 32000-1:2008 §7.6.1.
      */
-    private boolean isXRefStream(COSBase object) {
-        if (object instanceof COSDictionary) {
-            String type = ((COSDictionary) object).getNameAsString("Type");
+    private boolean isXRefStream(PdfBase object) {
+        if (object instanceof PdfDictionary) {
+            String type = ((PdfDictionary) object).getNameAsString("Type");
             return "XRef".equals(type);
         }
         return false;
@@ -424,25 +424,25 @@ public final class PDFWriter {
     /**
      * Writes an object with encryption applied to strings and stream data.
      */
-    private void writeEncryptedObject(COSObjectKey key, COSBase object) throws IOException {
+    private void writeEncryptedObject(PdfObjectKey key, PdfBase object) throws IOException {
         int objNum = key.getObjectNumber();
         int genNum = key.getGenerationNumber();
 
-        if (object instanceof COSStream) {
-            writeEncryptedStream(key, (COSStream) object);
-        } else if (object instanceof COSDictionary) {
-            COSDictionary copy = encryptDictionaryStrings((COSDictionary) object, objNum, genNum);
+        if (object instanceof PdfStream) {
+            writeEncryptedStream(key, (PdfStream) object);
+        } else if (object instanceof PdfDictionary) {
+            PdfDictionary copy = encryptDictionaryStrings((PdfDictionary) object, objNum, genNum);
             ByteArrayOutputStream buf = new ByteArrayOutputStream();
             copy.writeTo(buf);
             writeBytes(buf.toByteArray());
-        } else if (object instanceof COSArray) {
-            COSArray copy = encryptArrayStrings((COSArray) object, objNum, genNum);
+        } else if (object instanceof PdfArray) {
+            PdfArray copy = encryptArrayStrings((PdfArray) object, objNum, genNum);
             ByteArrayOutputStream buf = new ByteArrayOutputStream();
             copy.writeTo(buf);
             writeBytes(buf.toByteArray());
-        } else if (object instanceof COSString) {
-            byte[] encrypted = encryptor.encrypt(((COSString) object).getBytes(), objNum, genNum);
-            COSString encStr = new COSString(encrypted);
+        } else if (object instanceof PdfString) {
+            byte[] encrypted = encryptor.encrypt(((PdfString) object).getBytes(), objNum, genNum);
+            PdfString encStr = new PdfString(encrypted);
             encStr.setForceHex(true);
             ByteArrayOutputStream buf = new ByteArrayOutputStream();
             encStr.writeTo(buf);
@@ -456,22 +456,22 @@ public final class PDFWriter {
     }
 
     /**
-     * Writes an encrypted COSStream: compresses → encrypts → writes dict + encrypted data.
+     * Writes an encrypted PdfStream: compresses → encrypts → writes dict + encrypted data.
      * Per ISO 32000-1:2008 §7.6.2: stream data is encrypted AFTER filter encoding.
      * <p>
      * <b>Pass-through optimization for re-saved encrypted documents.</b> When a
      * stream was loaded from an encrypted source and has not been modified
-     * ({@link COSStream#hasActiveDecryptor()} is true and
-     * {@link COSStream#hasPendingDecodedData()} is false), its
+     * ({@link PdfStream#hasActiveDecryptor()} is true and
+     * {@link PdfStream#hasPendingDecodedData()} is false), its
      * {@code encodedData} is still the original ciphertext on disk. Re-encrypting
      * it would corrupt the bytes (RC4 is symmetric, so a second pass decrypts;
      * AES would yield different ciphertext that no longer matches the recorded
      * key). In that case we write the bytes as-is. Streams with pending decoded
-     * data — i.e. content the caller modified through {@link COSStream#setDecodedData(byte[])}
+     * data — i.e. content the caller modified through {@link PdfStream#setDecodedData(byte[])}
      * — are re-encoded through filters and then encrypted, as before.
      * </p>
      */
-    private void writeEncryptedStream(COSObjectKey key, COSStream stream) throws IOException {
+    private void writeEncryptedStream(PdfObjectKey key, PdfStream stream) throws IOException {
         int objNum = key.getObjectNumber();
         int genNum = key.getGenerationNumber();
 
@@ -493,8 +493,8 @@ public final class PDFWriter {
         }
 
         // Step 3: Build a plain dict copy with encrypted strings and updated /Length
-        COSDictionary dictCopy = encryptDictionaryStrings(stream, objNum, genNum);
-        dictCopy.set(COSName.LENGTH, COSInteger.valueOf(outputData.length));
+        PdfDictionary dictCopy = encryptDictionaryStrings(stream, objNum, genNum);
+        dictCopy.set(PdfName.LENGTH, PdfInteger.valueOf(outputData.length));
 
         // Step 4: Write dict
         ByteArrayOutputStream dictBuf = new ByteArrayOutputStream();
@@ -508,22 +508,22 @@ public final class PDFWriter {
     }
 
     /**
-     * Creates a shallow copy of a COSDictionary with all COSString values encrypted.
+     * Creates a shallow copy of a PdfDictionary with all PdfString values encrypted.
      * Recurses into inline (non-indirect) sub-dictionaries and arrays.
      */
-    private COSDictionary encryptDictionaryStrings(COSDictionary dict, int objNum, int genNum) {
-        COSDictionary copy = new COSDictionary();
-        for (Map.Entry<COSName, COSBase> entry : dict) {
+    private PdfDictionary encryptDictionaryStrings(PdfDictionary dict, int objNum, int genNum) {
+        PdfDictionary copy = new PdfDictionary();
+        for (Map.Entry<PdfName, PdfBase> entry : dict) {
             copy.set(entry.getKey(), encryptValue(entry.getValue(), objNum, genNum));
         }
         return copy;
     }
 
     /**
-     * Creates a shallow copy of a COSArray with all COSString values encrypted.
+     * Creates a shallow copy of a PdfArray with all PdfString values encrypted.
      */
-    private COSArray encryptArrayStrings(COSArray array, int objNum, int genNum) {
-        COSArray copy = new COSArray(array.size());
+    private PdfArray encryptArrayStrings(PdfArray array, int objNum, int genNum) {
+        PdfArray copy = new PdfArray(array.size());
         for (int i = 0; i < array.size(); i++) {
             copy.add(encryptValue(array.get(i), objNum, genNum));
         }
@@ -531,29 +531,29 @@ public final class PDFWriter {
     }
 
     /**
-     * Encrypts a single COS value if it's a string, or recurses into inline dicts/arrays.
+     * Encrypts a single PDF value if it's a string, or recurses into inline dicts/arrays.
      * Indirect references are returned as-is (their target objects are encrypted separately).
      */
-    private COSBase encryptValue(COSBase value, int objNum, int genNum) {
+    private PdfBase encryptValue(PdfBase value, int objNum, int genNum) {
         if (value == null) return null;
 
         // Indirect references: skip — the referenced object is encrypted when written separately
-        if (value instanceof COSObjectReference) return value;
+        if (value instanceof PdfObjectReference) return value;
         if (value.getObjectKey() != null && value.getObjectKey().getObjectNumber() > 0) return value;
 
-        if (value instanceof COSString) {
-            byte[] encrypted = encryptor.encrypt(((COSString) value).getBytes(), objNum, genNum);
-            COSString encStr = new COSString(encrypted);
+        if (value instanceof PdfString) {
+            byte[] encrypted = encryptor.encrypt(((PdfString) value).getBytes(), objNum, genNum);
+            PdfString encStr = new PdfString(encrypted);
             encStr.setForceHex(true);
             return encStr;
         }
-        if (value instanceof COSDictionary && !(value instanceof COSStream)) {
-            return encryptDictionaryStrings((COSDictionary) value, objNum, genNum);
+        if (value instanceof PdfDictionary && !(value instanceof PdfStream)) {
+            return encryptDictionaryStrings((PdfDictionary) value, objNum, genNum);
         }
-        if (value instanceof COSArray) {
-            return encryptArrayStrings((COSArray) value, objNum, genNum);
+        if (value instanceof PdfArray) {
+            return encryptArrayStrings((PdfArray) value, objNum, genNum);
         }
-        // All other types (COSName, COSInteger, COSReal, COSBoolean, COSNull) — pass through
+        // All other types (PdfName, PdfInteger, PdfReal, PdfBoolean, PdfNull) — pass through
         return value;
     }
 
@@ -565,7 +565,7 @@ public final class PDFWriter {
      * that index xref by absolute byte offset (Ghostscript, Adobe Reader,
      * mupdf).
      */
-    private void writeXRefTable(Map<COSObjectKey, COSBase> objects) throws IOException {
+    private void writeXRefTable(Map<PdfObjectKey, PdfBase> objects) throws IOException {
         // Determine the range of object numbers
         int maxObjNum = getMaxObjectNumber(objects);
         int totalEntries = maxObjNum + 1; // includes entry 0
@@ -582,7 +582,7 @@ public final class PDFWriter {
 
         // Build lookup map: objectNumber → (offset, generation)
         Map<Integer, Map.Entry<Long, Integer>> objNumToInfo = new java.util.HashMap<>();
-        for (Map.Entry<COSObjectKey, Long> entry : objectOffsets.entrySet()) {
+        for (Map.Entry<PdfObjectKey, Long> entry : objectOffsets.entrySet()) {
             objNumToInfo.put(entry.getKey().getObjectNumber(),
                     new java.util.AbstractMap.SimpleEntry<>(entry.getValue(), entry.getKey().getGenerationNumber()));
         }
@@ -612,19 +612,19 @@ public final class PDFWriter {
         writeBytes("xref\n".getBytes(StandardCharsets.US_ASCII));
 
         // Sort by object number to form contiguous subsections
-        List<COSObjectKey> sortedKeys = new ArrayList<>(objectOffsets.keySet());
-        sortedKeys.sort(Comparator.comparingInt(COSObjectKey::getObjectNumber));
+        List<PdfObjectKey> sortedKeys = new ArrayList<>(objectOffsets.keySet());
+        sortedKeys.sort(Comparator.comparingInt(PdfObjectKey::getObjectNumber));
 
         if (sortedKeys.isEmpty()) return;
 
         // Group into contiguous subsections
-        List<List<COSObjectKey>> subsections = new ArrayList<>();
-        List<COSObjectKey> currentSubsection = new ArrayList<>();
+        List<List<PdfObjectKey>> subsections = new ArrayList<>();
+        List<PdfObjectKey> currentSubsection = new ArrayList<>();
         currentSubsection.add(sortedKeys.get(0));
 
         for (int i = 1; i < sortedKeys.size(); i++) {
-            COSObjectKey prev = sortedKeys.get(i - 1);
-            COSObjectKey curr = sortedKeys.get(i);
+            PdfObjectKey prev = sortedKeys.get(i - 1);
+            PdfObjectKey curr = sortedKeys.get(i);
             if (curr.getObjectNumber() == prev.getObjectNumber() + 1) {
                 currentSubsection.add(curr);
             } else {
@@ -636,13 +636,13 @@ public final class PDFWriter {
         subsections.add(currentSubsection);
 
         // Write each subsection
-        for (List<COSObjectKey> sub : subsections) {
+        for (List<PdfObjectKey> sub : subsections) {
             int startNum = sub.get(0).getObjectNumber();
             int count = sub.size();
             String subHeader = startNum + " " + count + "\n";
             writeBytes(subHeader.getBytes(StandardCharsets.US_ASCII));
 
-            for (COSObjectKey key : sub) {
+            for (PdfObjectKey key : sub) {
                 Long offset = objectOffsets.get(key);
                 if (offset != null) {
                     // 20-byte entry — see comment on writeXRefTable for the
@@ -658,10 +658,10 @@ public final class PDFWriter {
     /**
      * Writes the trailer section: trailer dictionary, startxref, and %%EOF.
      */
-    private void writeTrailer(COSDictionary trailer, int size, long xrefOffset) throws IOException {
+    private void writeTrailer(PdfDictionary trailer, int size, long xrefOffset) throws IOException {
         // Set /Size in trailer
-        COSDictionary trailerCopy = copyDictionary(trailer);
-        trailerCopy.set(COSName.of("Size"), COSInteger.valueOf(size));
+        PdfDictionary trailerCopy = copyDictionary(trailer);
+        trailerCopy.set(PdfName.of("Size"), PdfInteger.valueOf(size));
         writeBytes("trailer\n".getBytes(StandardCharsets.US_ASCII));
 
         // Write trailer dictionary
@@ -691,11 +691,11 @@ public final class PDFWriter {
     }
 
     /**
-     * Creates a shallow copy of a COSDictionary.
+     * Creates a shallow copy of a PdfDictionary.
      */
-    private COSDictionary copyDictionary(COSDictionary source) {
-        COSDictionary copy = new COSDictionary();
-        for (java.util.Map.Entry<COSName, COSBase> entry : source) {
+    private PdfDictionary copyDictionary(PdfDictionary source) {
+        PdfDictionary copy = new PdfDictionary();
+        for (java.util.Map.Entry<PdfName, PdfBase> entry : source) {
             copy.set(entry.getKey(), entry.getValue());
         }
         return copy;
@@ -704,9 +704,9 @@ public final class PDFWriter {
     /**
      * Finds the maximum object number in the given objects map.
      */
-    private int getMaxObjectNumber(Map<COSObjectKey, COSBase> objects) {
+    private int getMaxObjectNumber(Map<PdfObjectKey, PdfBase> objects) {
         int max = 0;
-        for (COSObjectKey key : objects.keySet()) {
+        for (PdfObjectKey key : objects.keySet()) {
             if (key.getObjectNumber() > max) {
                 max = key.getObjectNumber();
             }
@@ -740,8 +740,8 @@ public final class PDFWriter {
      * @param maxPerStream max objects per object stream
      * @throws IOException if writing fails
      */
-    public void writeCompressed(COSDictionary trailer,
-                                 Map<COSObjectKey, COSBase> objects,
+    public void writeCompressed(PdfDictionary trailer,
+                                 Map<PdfObjectKey, PdfBase> objects,
                                  int maxPerStream) throws IOException {
         LOGGER.log(Level.FINE, "Writing compressed PDF 1.5+ with {0} objects", objects.size());
 
@@ -757,10 +757,10 @@ public final class PDFWriter {
         ObjectStreamResult osResult = buildObjectStreams(objects, maxPerStream);
 
         // 3. Write non-compressed objects (streams, high-gen objects)
-        List<Map.Entry<COSObjectKey, COSBase>> sorted = new ArrayList<>(
+        List<Map.Entry<PdfObjectKey, PdfBase>> sorted = new ArrayList<>(
                 osResult.nonCompressedObjects.entrySet());
         sorted.sort(Comparator.comparingInt(e -> e.getKey().getObjectNumber()));
-        for (Map.Entry<COSObjectKey, COSBase> entry : sorted) {
+        for (Map.Entry<PdfObjectKey, PdfBase> entry : sorted) {
             writeObject(entry.getKey(), entry.getValue());
         }
 
@@ -792,8 +792,8 @@ public final class PDFWriter {
      * @throws IOException if writing fails
      */
     public void writeIncrementalWithXRefStream(RandomAccessReader original,
-                                                COSDictionary trailer,
-                                                Map<COSObjectKey, COSBase> modifiedObjects) throws IOException {
+                                                PdfDictionary trailer,
+                                                Map<PdfObjectKey, PdfBase> modifiedObjects) throws IOException {
         LOGGER.log(Level.FINE, "Writing incremental update (xref stream) with {0} modified objects",
                 modifiedObjects.size());
 
@@ -813,19 +813,19 @@ public final class PDFWriter {
         long oldXrefOffset = findOldXrefOffset(original);
 
         // Write modified objects
-        for (Map.Entry<COSObjectKey, COSBase> entry : modifiedObjects.entrySet()) {
+        for (Map.Entry<PdfObjectKey, PdfBase> entry : modifiedObjects.entrySet()) {
             writeObject(entry.getKey(), entry.getValue());
         }
 
         // Compute /Size across all revisions
-        COSBase origSize = trailer.get("Size");
-        int originalSize = (origSize instanceof COSInteger) ? ((COSInteger) origSize).intValue() : 0;
+        PdfBase origSize = trailer.get("Size");
+        int originalSize = (origSize instanceof PdfInteger) ? ((PdfInteger) origSize).intValue() : 0;
         int newMaxObj = getMaxObjectNumber(modifiedObjects);
         int newSize = Math.max(originalSize, newMaxObj + 1);
 
         // Build new trailer with /Prev
-        COSDictionary newTrailer = copyDictionary(trailer);
-        newTrailer.set(COSName.of("Prev"), COSInteger.valueOf(oldXrefOffset));
+        PdfDictionary newTrailer = copyDictionary(trailer);
+        newTrailer.set(PdfName.of("Prev"), PdfInteger.valueOf(oldXrefOffset));
 
         writeXRefStream(newTrailer, newSize, null);
 
@@ -848,15 +848,15 @@ public final class PDFWriter {
      * @throws IOException if serialization fails
      */
     private ObjectStreamResult buildObjectStreams(
-            Map<COSObjectKey, COSBase> objects, int maxPerStream) throws IOException {
+            Map<PdfObjectKey, PdfBase> objects, int maxPerStream) throws IOException {
 
-        List<Map.Entry<COSObjectKey, COSBase>> eligible = new ArrayList<>();
-        Map<COSObjectKey, COSBase> nonEligible = new LinkedHashMap<>();
+        List<Map.Entry<PdfObjectKey, PdfBase>> eligible = new ArrayList<>();
+        Map<PdfObjectKey, PdfBase> nonEligible = new LinkedHashMap<>();
 
-        for (Map.Entry<COSObjectKey, COSBase> entry : objects.entrySet()) {
-            COSObjectKey key = entry.getKey();
-            COSBase obj = entry.getValue();
-            if (obj instanceof COSStream || key.getGenerationNumber() > 0) {
+        for (Map.Entry<PdfObjectKey, PdfBase> entry : objects.entrySet()) {
+            PdfObjectKey key = entry.getKey();
+            PdfBase obj = entry.getValue();
+            if (obj instanceof PdfStream || key.getGenerationNumber() > 0) {
                 nonEligible.put(key, obj);
             } else {
                 eligible.add(entry);
@@ -864,12 +864,12 @@ public final class PDFWriter {
         }
 
         List<ObjectStreamInfo> objStreams = new ArrayList<>();
-        Map<COSObjectKey, int[]> compressedLocations = new LinkedHashMap<>();
+        Map<PdfObjectKey, int[]> compressedLocations = new LinkedHashMap<>();
         int nextObjStreamNum = getMaxObjectNumber(objects) + 1;
 
         for (int i = 0; i < eligible.size(); i += maxPerStream) {
             int end = Math.min(i + maxPerStream, eligible.size());
-            List<Map.Entry<COSObjectKey, COSBase>> batch = eligible.subList(i, end);
+            List<Map.Entry<PdfObjectKey, PdfBase>> batch = eligible.subList(i, end);
 
             int objStreamObjNum = nextObjStreamNum++;
 
@@ -879,7 +879,7 @@ public final class PDFWriter {
             int[] offsets = new int[batch.size()];
 
             for (int j = 0; j < batch.size(); j++) {
-                Map.Entry<COSObjectKey, COSBase> entry = batch.get(j);
+                Map.Entry<PdfObjectKey, PdfBase> entry = batch.get(j);
                 objNums[j] = entry.getKey().getObjectNumber();
                 offsets[j] = bodyBuf.size();
 
@@ -907,14 +907,14 @@ public final class PDFWriter {
             System.arraycopy(bodyBytes, 0, rawData, headerBytes.length, bodyBytes.length);
 
             // Create the object stream
-            COSStream objStmStream = new COSStream();
-            objStmStream.set(COSName.of("Type"), COSName.of("ObjStm"));
+            PdfStream objStmStream = new PdfStream();
+            objStmStream.set(PdfName.of("Type"), PdfName.of("ObjStm"));
             objStmStream.setInt("N", batch.size());
             objStmStream.setInt("First", headerBytes.length);
-            objStmStream.set(COSName.FILTER, COSName.of("FlateDecode"));
+            objStmStream.set(PdfName.FILTER, PdfName.of("FlateDecode"));
             objStmStream.setDecodedData(rawData);
 
-            COSObjectKey objStmKey = new COSObjectKey(objStreamObjNum, 0);
+            PdfObjectKey objStmKey = new PdfObjectKey(objStreamObjNum, 0);
             objStreams.add(new ObjectStreamInfo(objStmKey, objStmStream));
         }
 
@@ -931,8 +931,8 @@ public final class PDFWriter {
      * @param compressedLocations map of compressed objects: key → [objStmNum, indexInStream], or null
      * @throws IOException if writing fails
      */
-    private void writeXRefStream(COSDictionary trailer, int size,
-                                  Map<COSObjectKey, int[]> compressedLocations) throws IOException {
+    private void writeXRefStream(PdfDictionary trailer, int size,
+                                  Map<PdfObjectKey, int[]> compressedLocations) throws IOException {
 
         // Assign an object number for the xref stream itself
         int xrefObjNum = size;
@@ -954,7 +954,7 @@ public final class PDFWriter {
         writeXRefEntry(xrefData, 0, w1, w2, w3, 0, 0, 65535);
 
         // In-use entries (type 1) — objects written directly
-        for (Map.Entry<COSObjectKey, Long> entry : objectOffsets.entrySet()) {
+        for (Map.Entry<PdfObjectKey, Long> entry : objectOffsets.entrySet()) {
             int objNum = entry.getKey().getObjectNumber();
             long offset = entry.getValue();
             int gen = entry.getKey().getGenerationNumber();
@@ -966,7 +966,7 @@ public final class PDFWriter {
 
         // Compressed entries (type 2) — objects inside object streams
         if (compressedLocations != null) {
-            for (Map.Entry<COSObjectKey, int[]> entry : compressedLocations.entrySet()) {
+            for (Map.Entry<PdfObjectKey, int[]> entry : compressedLocations.entrySet()) {
                 int objNum = entry.getKey().getObjectNumber();
                 int objStmNum = entry.getValue()[0];
                 int index = entry.getValue()[1];
@@ -987,20 +987,20 @@ public final class PDFWriter {
         byte[] compressedData = flate.encode(xrefData, null);
 
         // Build the xref stream dictionary (replaces both xref table and trailer)
-        COSDictionary xrefDict = copyDictionary(trailer);
-        xrefDict.set(COSName.of("Type"), COSName.of("XRef"));
-        xrefDict.set(COSName.of("Size"), COSInteger.valueOf(totalSize));
-        xrefDict.set(COSName.PREV, null);
-        xrefDict.set(COSName.of("XRefStm"), null);
+        PdfDictionary xrefDict = copyDictionary(trailer);
+        xrefDict.set(PdfName.of("Type"), PdfName.of("XRef"));
+        xrefDict.set(PdfName.of("Size"), PdfInteger.valueOf(totalSize));
+        xrefDict.set(PdfName.PREV, null);
+        xrefDict.set(PdfName.of("XRefStm"), null);
 
-        COSArray wArray = new COSArray();
-        wArray.add(COSInteger.valueOf(w1));
-        wArray.add(COSInteger.valueOf(w2));
-        wArray.add(COSInteger.valueOf(w3));
-        xrefDict.set(COSName.of("W"), wArray);
+        PdfArray wArray = new PdfArray();
+        wArray.add(PdfInteger.valueOf(w1));
+        wArray.add(PdfInteger.valueOf(w2));
+        wArray.add(PdfInteger.valueOf(w3));
+        xrefDict.set(PdfName.of("W"), wArray);
 
-        xrefDict.set(COSName.FILTER, COSName.of("FlateDecode"));
-        xrefDict.set(COSName.LENGTH, COSInteger.valueOf(compressedData.length));
+        xrefDict.set(PdfName.FILTER, PdfName.of("FlateDecode"));
+        xrefDict.set(PdfName.LENGTH, PdfInteger.valueOf(compressedData.length));
 
         // Write the xref stream as an indirect object
         String objHeader = xrefObjNum + " 0 obj\n";
@@ -1061,14 +1061,14 @@ public final class PDFWriter {
 
     /** Holds the result of building object streams. */
     private static final class ObjectStreamResult {
-        final Map<COSObjectKey, COSBase> nonCompressedObjects;
+        final Map<PdfObjectKey, PdfBase> nonCompressedObjects;
         final List<ObjectStreamInfo> objectStreams;
-        final Map<COSObjectKey, int[]> compressedLocations;
+        final Map<PdfObjectKey, int[]> compressedLocations;
         final int nextObjectNumber;
 
-        ObjectStreamResult(Map<COSObjectKey, COSBase> nonCompressed,
+        ObjectStreamResult(Map<PdfObjectKey, PdfBase> nonCompressed,
                            List<ObjectStreamInfo> streams,
-                           Map<COSObjectKey, int[]> locations, int nextObj) {
+                           Map<PdfObjectKey, int[]> locations, int nextObj) {
             this.nonCompressedObjects = nonCompressed;
             this.objectStreams = streams;
             this.compressedLocations = locations;
@@ -1078,10 +1078,10 @@ public final class PDFWriter {
 
     /** Information about a generated object stream. */
     private static final class ObjectStreamInfo {
-        final COSObjectKey key;
-        final COSStream stream;
+        final PdfObjectKey key;
+        final PdfStream stream;
 
-        ObjectStreamInfo(COSObjectKey key, COSStream stream) {
+        ObjectStreamInfo(PdfObjectKey key, PdfStream stream) {
             this.key = key;
             this.stream = stream;
         }

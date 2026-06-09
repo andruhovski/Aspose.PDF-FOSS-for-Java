@@ -1,4 +1,4 @@
-package org.aspose.pdf.engine.cos;
+package org.aspose.pdf.engine.pdfobjects;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -12,20 +12,20 @@ import java.util.logging.Logger;
  * PDF rules: no exponential notation, trailing zeros removed, maximum 5 decimal places.
  * </p>
  */
-public final class COSFloat extends COSBase {
+public final class PdfFloat extends PdfBase {
 
-    private static final Logger LOG = Logger.getLogger(COSFloat.class.getName());
+    private static final Logger LOG = Logger.getLogger(PdfFloat.class.getName());
 
     private final double value;
     private transient byte[] serialized;
 
     /**
-     * Creates a COSFloat from a double value.
+     * Creates a PdfFloat from a double value.
      *
      * @param value the numeric value
      * @throws IllegalArgumentException if the value is NaN or infinite
      */
-    public COSFloat(double value) {
+    public PdfFloat(double value) {
         if (Double.isNaN(value)) {
             throw new IllegalArgumentException("NaN is not a valid PDF number");
         }
@@ -36,12 +36,12 @@ public final class COSFloat extends COSBase {
     }
 
     /**
-     * Creates a COSFloat by parsing a PDF numeric token.
+     * Creates a PdfFloat by parsing a PDF numeric token.
      *
      * @param textValue the string representation
      * @throws IllegalArgumentException if the string cannot be parsed or represents NaN/Infinity
      */
-    public COSFloat(String textValue) {
+    public PdfFloat(String textValue) {
         if (textValue == null || textValue.isEmpty()) {
             throw new IllegalArgumentException("Cannot parse empty string as float");
         }
@@ -117,15 +117,15 @@ public final class COSFloat extends COSBase {
     }
 
     @Override
-    public <T> T accept(ICOSVisitor<T> visitor) {
+    public <T> T accept(IPdfVisitor<T> visitor) {
         return visitor.visitFloat(this);
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof COSFloat)) return false;
-        return Double.compare(this.value, ((COSFloat) o).value) == 0;
+        if (!(o instanceof PdfFloat)) return false;
+        return Double.compare(this.value, ((PdfFloat) o).value) == 0;
     }
 
     @Override
@@ -135,6 +135,6 @@ public final class COSFloat extends COSBase {
 
     @Override
     public String toString() {
-        return "COSFloat{" + value + "}";
+        return "PdfFloat{" + value + "}";
     }
 }

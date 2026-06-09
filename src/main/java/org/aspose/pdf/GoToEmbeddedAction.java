@@ -1,7 +1,7 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
 
 /**
  * GoToE (Go-To-Embedded) action — navigates to a destination in an embedded PDF
@@ -14,7 +14,7 @@ public class GoToEmbeddedAction extends PdfAction {
      *
      * @param dict the action dictionary
      */
-    public GoToEmbeddedAction(COSDictionary dict) {
+    public GoToEmbeddedAction(PdfDictionary dict) {
         this.actionDict = dict;
     }
 
@@ -23,7 +23,7 @@ public class GoToEmbeddedAction extends PdfAction {
      *
      * @return the destination object
      */
-    public COSBase getDestination() {
+    public PdfBase getDestination() {
         return resolve(actionDict.get("D"));
     }
 
@@ -32,9 +32,9 @@ public class GoToEmbeddedAction extends PdfAction {
      *
      * @return the target dictionary, or {@code null}
      */
-    public COSDictionary getTarget() {
-        COSBase t = resolve(actionDict.get("T"));
-        return (t instanceof COSDictionary) ? (COSDictionary) t : null;
+    public PdfDictionary getTarget() {
+        PdfBase t = resolve(actionDict.get("T"));
+        return (t instanceof PdfDictionary) ? (PdfDictionary) t : null;
     }
 
     /**

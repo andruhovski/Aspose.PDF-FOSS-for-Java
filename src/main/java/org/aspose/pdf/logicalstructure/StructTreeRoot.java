@@ -1,11 +1,11 @@
 package org.aspose.pdf.logicalstructure;
 
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.NumberTree;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.NumberTree;
 import org.aspose.pdf.engine.parser.PDFParser;
 
 import java.io.IOException;
@@ -18,7 +18,7 @@ import java.util.List;
  */
 public class StructTreeRoot {
 
-    private final COSDictionary dict;
+    private final PdfDictionary dict;
     private final PDFParser parser;
 
     /**
@@ -27,13 +27,13 @@ public class StructTreeRoot {
      * @param dict   the /StructTreeRoot dictionary
      * @param parser the PDF parser (may be null)
      */
-    public StructTreeRoot(COSDictionary dict, PDFParser parser) {
-        this.dict = dict != null ? dict : new COSDictionary();
+    public StructTreeRoot(PdfDictionary dict, PDFParser parser) {
+        this.dict = dict != null ? dict : new PdfDictionary();
         this.parser = parser;
     }
 
-    /** Returns the underlying COS dictionary. */
-    public COSDictionary getCOSDictionary() { return dict; }
+    /** Returns the underlying PDF dictionary. */
+    public PdfDictionary getPdfDictionary() { return dict; }
 
     /**
      * Returns the root structure element (typically the /Document element).
@@ -42,14 +42,14 @@ public class StructTreeRoot {
      * @return the root element, or {@code null}
      */
     public StructureElement getRootElement() {
-        COSBase k = resolve(dict.get("K"));
-        if (k instanceof COSDictionary) {
-            return new StructureElement((COSDictionary) k, parser);
+        PdfBase k = resolve(dict.get("K"));
+        if (k instanceof PdfDictionary) {
+            return new StructureElement((PdfDictionary) k, parser);
         }
-        if (k instanceof COSArray && ((COSArray) k).size() > 0) {
-            COSBase first = resolve(((COSArray) k).get(0));
-            if (first instanceof COSDictionary) {
-                return new StructureElement((COSDictionary) first, parser);
+        if (k instanceof PdfArray && ((PdfArray) k).size() > 0) {
+            PdfBase first = resolve(((PdfArray) k).get(0));
+            if (first instanceof PdfDictionary) {
+                return new StructureElement((PdfDictionary) first, parser);
             }
         }
         return null;
@@ -62,15 +62,15 @@ public class StructTreeRoot {
      */
     public ElementList getChildren() {
         List<StructureElement> children = new ArrayList<>();
-        COSBase k = resolve(dict.get("K"));
-        if (k instanceof COSDictionary) {
-            children.add(new StructureElement((COSDictionary) k, parser));
-        } else if (k instanceof COSArray) {
-            COSArray arr = (COSArray) k;
+        PdfBase k = resolve(dict.get("K"));
+        if (k instanceof PdfDictionary) {
+            children.add(new StructureElement((PdfDictionary) k, parser));
+        } else if (k instanceof PdfArray) {
+            PdfArray arr = (PdfArray) k;
             for (int i = 0; i < arr.size(); i++) {
-                COSBase item = resolve(arr.get(i));
-                if (item instanceof COSDictionary) {
-                    children.add(new StructureElement((COSDictionary) item, parser));
+                PdfBase item = resolve(arr.get(i));
+                if (item instanceof PdfDictionary) {
+                    children.add(new StructureElement((PdfDictionary) item, parser));
                 }
             }
         }
@@ -83,8 +83,8 @@ public class StructTreeRoot {
      * @return the role map (empty if not present)
      */
     public RoleMap getRoleMap() {
-        COSBase rm = resolve(dict.get("RoleMap"));
-        return RoleMap.parse((rm instanceof COSDictionary) ? (COSDictionary) rm : null);
+        PdfBase rm = resolve(dict.get("RoleMap"));
+        return RoleMap.parse((rm instanceof PdfDictionary) ? (PdfDictionary) rm : null);
     }
 
     /**
@@ -113,8 +113,8 @@ public class StructTreeRoot {
      * @return the parent number tree, or {@code null} if absent
      */
     public NumberTree getParentTree() {
-        COSBase pt = resolve(dict.get("ParentTree"));
-        return (pt instanceof COSDictionary) ? new NumberTree((COSDictionary) pt) : null;
+        PdfBase pt = resolve(dict.get("ParentTree"));
+        return (pt instanceof PdfDictionary) ? new NumberTree((PdfDictionary) pt) : null;
     }
 
     /**
@@ -125,10 +125,10 @@ public class StructTreeRoot {
      *
      * @param key the parent-tree key (either a {@code /StructParents} on a
      *            page or {@code /StructParent} on an annotation/object)
-     * @return the raw COS value, or {@code null} if no /ParentTree exists
+     * @return the raw PDF value, or {@code null} if no /ParentTree exists
      *         or the key is absent
      */
-    public COSBase lookupParentTreeEntry(int key) {
+    public PdfBase lookupParentTreeEntry(int key) {
         NumberTree tree = getParentTree();
         return tree == null ? null : tree.get(key);
     }
@@ -142,12 +142,12 @@ public class StructTreeRoot {
      * @return the StructureElement, or {@code null} if not found
      */
     public StructureElement findElementByMcid(int structParentsKey, int mcid) {
-        COSBase entry = lookupParentTreeEntry(structParentsKey);
-        if (!(entry instanceof COSArray)) return null;
-        COSArray arr = (COSArray) entry;
+        PdfBase entry = lookupParentTreeEntry(structParentsKey);
+        if (!(entry instanceof PdfArray)) return null;
+        PdfArray arr = (PdfArray) entry;
         if (mcid < 0 || mcid >= arr.size()) return null;
-        COSBase target = resolve(arr.get(mcid));
-        return (target instanceof COSDictionary) ? new StructureElement((COSDictionary) target, parser) : null;
+        PdfBase target = resolve(arr.get(mcid));
+        return (target instanceof PdfDictionary) ? new StructureElement((PdfDictionary) target, parser) : null;
     }
 
     /**
@@ -186,7 +186,7 @@ public class StructTreeRoot {
      * Removes all child elements from the structure tree.
      */
     public void clearChilds() {
-        dict.remove(COSName.of("K"));
+        dict.remove(PdfName.of("K"));
     }
 
     private void collectElements(StructureElement elem, List<StructureElement> result) {
@@ -203,23 +203,23 @@ public class StructTreeRoot {
      * @return the new structure tree root
      */
     public static StructTreeRoot createNew() {
-        COSDictionary root = new COSDictionary();
-        root.set(COSName.of("Type"), COSName.of("StructTreeRoot"));
+        PdfDictionary root = new PdfDictionary();
+        root.set(PdfName.of("Type"), PdfName.of("StructTreeRoot"));
 
-        COSDictionary docElem = new COSDictionary();
-        docElem.set(COSName.of("Type"), COSName.of("StructElem"));
-        docElem.set(COSName.of("S"), COSName.of("Document"));
-        docElem.set(COSName.of("P"), root);
+        PdfDictionary docElem = new PdfDictionary();
+        docElem.set(PdfName.of("Type"), PdfName.of("StructElem"));
+        docElem.set(PdfName.of("S"), PdfName.of("Document"));
+        docElem.set(PdfName.of("P"), root);
 
-        root.set(COSName.of("K"), docElem);
+        root.set(PdfName.of("K"), docElem);
         root.setInt("ParentTreeNextKey", 0);
 
         return new StructTreeRoot(root, null);
     }
 
-    private static COSBase resolve(COSBase obj) {
-        if (obj instanceof COSObjectReference) {
-            try { return ((COSObjectReference) obj).dereference(); }
+    private static PdfBase resolve(PdfBase obj) {
+        if (obj instanceof PdfObjectReference) {
+            try { return ((PdfObjectReference) obj).dereference(); }
             catch (IOException e) { return null; }
         }
         return obj;

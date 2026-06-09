@@ -1,6 +1,6 @@
 package org.aspose.pdf.engine.pattern;
 
-import org.aspose.pdf.engine.cos.COSDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
 import org.aspose.pdf.engine.parser.PDFParser;
 
 import java.io.IOException;
@@ -20,7 +20,7 @@ public final class FreeFormGouraudShading extends Shading {
      * @param parser the PDF parser
      * @throws IOException if parsing fails
      */
-    public FreeFormGouraudShading(COSDictionary dict, PDFParser parser) throws IOException {
+    public FreeFormGouraudShading(PdfDictionary dict, PDFParser parser) throws IOException {
         super(dict, parser);
     }
 

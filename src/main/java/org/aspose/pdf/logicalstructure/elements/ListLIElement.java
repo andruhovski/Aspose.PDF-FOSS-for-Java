@@ -31,8 +31,8 @@ public class ListLIElement extends Element {
             throw new IllegalArgumentException("Reference target must not be null");
         }
         LOG.fine(() -> "Adding Ref from LI to " + target.getStructureElement().getStructureType());
-        structureElement.getCOSDictionary().set(
-            org.aspose.pdf.engine.cos.COSName.of("Ref"),
-            target.getStructureElement().getCOSDictionary());
+        structureElement.getPdfDictionary().set(
+            org.aspose.pdf.engine.pdfobjects.PdfName.of("Ref"),
+            target.getStructureElement().getPdfDictionary());
     }
 }

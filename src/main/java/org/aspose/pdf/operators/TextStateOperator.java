@@ -1,6 +1,6 @@
 package org.aspose.pdf.operators;
 
-import org.aspose.pdf.engine.cos.COSBase;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
 
 import java.util.List;
 
@@ -30,7 +30,7 @@ public abstract class TextStateOperator extends TextOperator {
      * @param name     the operator keyword
      * @param operands the operands preceding this operator in the content stream
      */
-    protected TextStateOperator(String name, List<COSBase> operands) {
+    protected TextStateOperator(String name, List<PdfBase> operands) {
         super(name, operands);
     }
 }

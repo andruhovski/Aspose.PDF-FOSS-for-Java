@@ -1,7 +1,7 @@
 package org.aspose.pdf.forms;
 
 import org.aspose.pdf.*;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 /**
  * Combo box / dropdown field (/FT /Ch, combo flag) (ISO 32000-1:2008, §12.7.4.4).
@@ -13,13 +13,13 @@ import org.aspose.pdf.engine.cos.*;
 public class ComboBoxField extends Field {
 
     /**
-     * Constructs a combo box field from an existing COS dictionary.
+     * Constructs a combo box field from an existing PDF dictionary.
      *
-     * @param dict     the COS dictionary backing this field
+     * @param dict     the PDF dictionary backing this field
      * @param page     the page this field belongs to (may be null)
      * @param fullName the fully-qualified dotted name
      */
-    public ComboBoxField(COSDictionary dict, Page page, String fullName) {
+    public ComboBoxField(PdfDictionary dict, Page page, String fullName) {
         super(dict, page, fullName);
     }
 
@@ -27,11 +27,11 @@ public class ComboBoxField extends Field {
      * Constructs a new empty combo box field.
      */
     public ComboBoxField() {
-        super(new COSDictionary(), null, "");
-        dict.set(COSName.of("Type"), COSName.of("Annot"));
-        dict.set(COSName.of("Subtype"), COSName.of("Widget"));
-        dict.set(COSName.of("FT"), COSName.of("Ch"));
-        dict.set(COSName.of("Ff"), COSInteger.valueOf(1 << 17));
+        super(new PdfDictionary(), null, "");
+        dict.set(PdfName.of("Type"), PdfName.of("Annot"));
+        dict.set(PdfName.of("Subtype"), PdfName.of("Widget"));
+        dict.set(PdfName.of("FT"), PdfName.of("Ch"));
+        dict.set(PdfName.of("Ff"), PdfInteger.valueOf(1 << 17));
     }
 
     /**
@@ -50,12 +50,12 @@ public class ComboBoxField extends Field {
      * @param rect the field rectangle
      */
     public ComboBoxField(Page page, Rectangle rect) {
-        super(new COSDictionary(), page, "");
-        dict.set(COSName.of("Type"), COSName.of("Annot"));
-        dict.set(COSName.of("Subtype"), COSName.of("Widget"));
-        dict.set(COSName.of("FT"), COSName.of("Ch"));
+        super(new PdfDictionary(), page, "");
+        dict.set(PdfName.of("Type"), PdfName.of("Annot"));
+        dict.set(PdfName.of("Subtype"), PdfName.of("Widget"));
+        dict.set(PdfName.of("FT"), PdfName.of("Ch"));
         // Set combo flag (bit 18)
-        dict.set(COSName.of("Ff"), COSInteger.valueOf(1 << 17));
+        dict.set(PdfName.of("Ff"), PdfInteger.valueOf(1 << 17));
         setRectLenient(rect);
         if (getDefaultAppearance() == null) {
             setDefaultAppearance("/Helv 12 Tf 0 g");
@@ -116,43 +116,43 @@ public class ComboBoxField extends Field {
         cs.append("Q\n");
         cs.append("EMC\n");
 
-        COSStream apStream = new COSStream();
-        apStream.set(COSName.TYPE, COSName.of("XObject"));
-        apStream.set(COSName.SUBTYPE, COSName.of("Form"));
-        apStream.set(COSName.of("FormType"), COSInteger.valueOf(1));
-        COSArray bbox = new COSArray();
-        bbox.add(new COSFloat(0));
-        bbox.add(new COSFloat(0));
-        bbox.add(new COSFloat(w));
-        bbox.add(new COSFloat(h));
-        apStream.set(COSName.BBOX, bbox);
-        apStream.set(COSName.RESOURCES, buildAppearanceResources(fontName));
+        PdfStream apStream = new PdfStream();
+        apStream.set(PdfName.TYPE, PdfName.of("XObject"));
+        apStream.set(PdfName.SUBTYPE, PdfName.of("Form"));
+        apStream.set(PdfName.of("FormType"), PdfInteger.valueOf(1));
+        PdfArray bbox = new PdfArray();
+        bbox.add(new PdfFloat(0));
+        bbox.add(new PdfFloat(0));
+        bbox.add(new PdfFloat(w));
+        bbox.add(new PdfFloat(h));
+        apStream.set(PdfName.BBOX, bbox);
+        apStream.set(PdfName.RESOURCES, buildAppearanceResources(fontName));
         apStream.setDecodedData(cs.toString().getBytes(java.nio.charset.StandardCharsets.ISO_8859_1));
 
-        COSBase apVal = dict.get(COSName.of("AP"));
-        if (apVal instanceof COSObjectReference) {
-            try { apVal = ((COSObjectReference) apVal).dereference(); }
+        PdfBase apVal = dict.get(PdfName.of("AP"));
+        if (apVal instanceof PdfObjectReference) {
+            try { apVal = ((PdfObjectReference) apVal).dereference(); }
             catch (Exception e) { apVal = null; }
         }
-        COSDictionary ap;
-        if (apVal instanceof COSDictionary) {
-            ap = (COSDictionary) apVal;
+        PdfDictionary ap;
+        if (apVal instanceof PdfDictionary) {
+            ap = (PdfDictionary) apVal;
         } else {
-            ap = new COSDictionary();
-            dict.set(COSName.of("AP"), ap);
+            ap = new PdfDictionary();
+            dict.set(PdfName.of("AP"), ap);
         }
-        ap.set(COSName.N, apStream);
+        ap.set(PdfName.N, apStream);
     }
 
-    private static COSDictionary buildAppearanceResources(String fontName) {
-        COSDictionary font = new COSDictionary();
-        font.set(COSName.TYPE, COSName.of("Font"));
-        font.set(COSName.SUBTYPE, COSName.of("Type1"));
-        font.set(COSName.of("BaseFont"), COSName.of("Helvetica"));
-        COSDictionary fonts = new COSDictionary();
-        fonts.set(COSName.of(fontName), font);
-        COSDictionary res = new COSDictionary();
-        res.set(COSName.of("Font"), fonts);
+    private static PdfDictionary buildAppearanceResources(String fontName) {
+        PdfDictionary font = new PdfDictionary();
+        font.set(PdfName.TYPE, PdfName.of("Font"));
+        font.set(PdfName.SUBTYPE, PdfName.of("Type1"));
+        font.set(PdfName.of("BaseFont"), PdfName.of("Helvetica"));
+        PdfDictionary fonts = new PdfDictionary();
+        fonts.set(PdfName.of(fontName), font);
+        PdfDictionary res = new PdfDictionary();
+        res.set(PdfName.of("Font"), fonts);
         return res;
     }
 
@@ -179,15 +179,15 @@ public class ComboBoxField extends Field {
      * @return the option collection (never null)
      */
     public OptionCollection getOptions() {
-        COSBase opt = dict.get("Opt");
-        if (opt instanceof COSObjectReference) {
+        PdfBase opt = dict.get("Opt");
+        if (opt instanceof PdfObjectReference) {
             try {
-                opt = ((COSObjectReference) opt).dereference();
+                opt = ((PdfObjectReference) opt).dereference();
             } catch (Exception ignored) {
                 opt = null;
             }
         }
-        return new OptionCollection(opt instanceof COSArray ? (COSArray) opt : new COSArray());
+        return new OptionCollection(opt instanceof PdfArray ? (PdfArray) opt : new PdfArray());
     }
 
     /**
@@ -228,15 +228,15 @@ public class ComboBoxField extends Field {
      * @param value the option value to add
      */
     public void addOption(String value) {
-        COSBase opt = dict.get("Opt");
-        COSArray arr;
-        if (opt instanceof COSArray) {
-            arr = (COSArray) opt;
+        PdfBase opt = dict.get("Opt");
+        PdfArray arr;
+        if (opt instanceof PdfArray) {
+            arr = (PdfArray) opt;
         } else {
-            arr = new COSArray();
-            dict.set(COSName.of("Opt"), arr);
+            arr = new PdfArray();
+            dict.set(PdfName.of("Opt"), arr);
         }
-        arr.add(new COSString(value.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+        arr.add(new PdfString(value.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
     }
 
     /**

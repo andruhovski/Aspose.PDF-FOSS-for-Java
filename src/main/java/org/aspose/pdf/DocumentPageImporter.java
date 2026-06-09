@@ -1,23 +1,23 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSCloner;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectCloner;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 
 import java.io.IOException;
 import java.util.logging.Logger;
 
 /**
  * Imports pages from one {@link Document} into another by performing a full
- * deep copy of the source page's COS subgraph into fresh indirect objects
+ * deep copy of the source page's PDF object subgraph into fresh indirect objects
  * belonging to the target document. Cross-document {@code /Parent},
  * {@code /Dest} and {@code /StructParent[s]} references are dropped; shared
  * resources (fonts, images, extended graphics states) appearing on multiple
- * imported pages are cloned exactly once via {@link COSCloner}.
+ * imported pages are cloned exactly once via {@link PdfObjectCloner}.
  * <p>
  * Instances of this class are cheap; reuse one instance per source→target
  * pair so shared resources are deduplicated across multiple imported pages.
@@ -34,7 +34,7 @@ public final class DocumentPageImporter {
      * images shared across imported pages). NOT used for the page-root
      * dictionary itself — see {@link #importPage(Page)} for why.
      */
-    private final COSCloner cloner;
+    private final PdfObjectCloner cloner;
 
     /**
      * @param target target document, receives cloned pages
@@ -47,7 +47,7 @@ public final class DocumentPageImporter {
         if (source == null) throw new IllegalArgumentException("source must not be null");
         this.target = target;
         this.source = source;
-        this.cloner = new COSCloner(target::registerImportedObject);
+        this.cloner = new PdfObjectCloner(target::registerImportedObject);
         if (source.isEncrypted()) {
             // Documents opened with the correct password resolve refs through a
             // decryptor installed on the parser. If no decryptor is set, strings
@@ -67,8 +67,8 @@ public final class DocumentPageImporter {
      */
     public Page importPage(Page sourcePage) throws IOException {
         if (sourcePage == null) throw new IllegalArgumentException("sourcePage must not be null");
-        COSDictionary srcDict = sourcePage.getCOSDictionary();
-        // The shared cloner caches every visited source COSBase so that fonts/
+        PdfDictionary srcDict = sourcePage.getPdfDictionary();
+        // The shared cloner caches every visited source PdfBase so that fonts/
         // images/etc. shared across pages dedupe nicely on import. But that
         // cache must NOT span the page-root: importing the same source page
         // twice (Pages.add(src.Pages[1]); Pages.insert(35, src.Pages[1]); …)
@@ -80,9 +80,9 @@ public final class DocumentPageImporter {
         // each clone so the next clonePageDict produces a fresh top-level
         // copy; sub-resources still share their cached clones.
         cloner.forgetSource(srcDict);
-        COSDictionary clonedDict = cloner.clonePageDict(srcDict);
+        PdfDictionary clonedDict = cloner.clonePageDict(srcDict);
         materializeInheritedPageProperties(sourcePage, clonedDict);
-        COSObjectReference pageRef = target.registerImportedObject(clonedDict);
+        PdfObjectReference pageRef = target.registerImportedObject(clonedDict);
         remapAnnotations(srcDict, clonedDict, pageRef);
         promoteContentsToIndirect(clonedDict);
         Page newPage = new Page(clonedDict, target.getParser());
@@ -97,74 +97,74 @@ public final class DocumentPageImporter {
      * or {@code /Resources} can silently pick up different values from the
      * target document's {@code /Pages} root after reparenting.
      */
-    private void materializeInheritedPageProperties(Page sourcePage, COSDictionary clonedPage) throws IOException {
+    private void materializeInheritedPageProperties(Page sourcePage, PdfDictionary clonedPage) throws IOException {
         Rectangle mediaBox = sourcePage.getMediaBox();
         if (mediaBox != null) {
-            clonedPage.set(COSName.MEDIABOX, mediaBox.toCOSArray());
+            clonedPage.set(PdfName.MEDIABOX, mediaBox.toPdfArray());
         }
 
         Rectangle cropBox = sourcePage.getCropBox();
         if (cropBox != null) {
-            clonedPage.set(COSName.CROPBOX, cropBox.toCOSArray());
+            clonedPage.set(PdfName.CROPBOX, cropBox.toPdfArray());
         }
 
         int rotate = sourcePage.getRotate();
         if (rotate != 0) {
-            clonedPage.set(COSName.ROTATE, org.aspose.pdf.engine.cos.COSInteger.valueOf(rotate));
+            clonedPage.set(PdfName.ROTATE, org.aspose.pdf.engine.pdfobjects.PdfInteger.valueOf(rotate));
         } else {
-            clonedPage.remove(COSName.ROTATE);
+            clonedPage.remove(PdfName.ROTATE);
         }
 
         Resources resources = sourcePage.getResources();
-        if (resources != null && resources.getCOSDictionary() != null) {
-            COSBase clonedResources = cloner.cloneAny(resources.getCOSDictionary());
+        if (resources != null && resources.getPdfDictionary() != null) {
+            PdfBase clonedResources = cloner.cloneAny(resources.getPdfDictionary());
             if (clonedResources != null) {
-                clonedPage.set(COSName.RESOURCES, clonedResources);
+                clonedPage.set(PdfName.RESOURCES, clonedResources);
             }
         }
     }
 
     /**
      * Walks the cloned /Annots array: for each annotation dictionary, applies
-     * {@link COSCloner#cloneAnnotationDict(COSDictionary)} so /P and /Dest are
+     * {@link PdfObjectCloner#cloneAnnotationDict(PdfDictionary)} so /P and /Dest are
      * dropped, then sets /P to a reference to the new page.
      */
-    private void remapAnnotations(COSDictionary srcPage, COSDictionary newPage,
-                                  COSObjectReference newPageRef) throws IOException {
+    private void remapAnnotations(PdfDictionary srcPage, PdfDictionary newPage,
+                                  PdfObjectReference newPageRef) throws IOException {
         // Work off the source /Annots to control the cloning; the original
         // clonePageDict copied /Annots array refs blindly via cloneAny, which is
         // correct structurally but did not apply ANNOT_STOP_KEYS. Replace now.
-        COSBase srcAnnotsVal = srcPage.get(COSName.ANNOTS);
-        if (srcAnnotsVal instanceof COSObjectReference) {
+        PdfBase srcAnnotsVal = srcPage.get(PdfName.ANNOTS);
+        if (srcAnnotsVal instanceof PdfObjectReference) {
             try {
-                srcAnnotsVal = ((COSObjectReference) srcAnnotsVal).dereference();
+                srcAnnotsVal = ((PdfObjectReference) srcAnnotsVal).dereference();
             } catch (IOException e) {
                 LOG.warning("Failed to dereference source /Annots: " + e.getMessage());
-                newPage.remove(COSName.ANNOTS);
+                newPage.remove(PdfName.ANNOTS);
                 return;
             }
         }
-        if (!(srcAnnotsVal instanceof COSArray)) {
+        if (!(srcAnnotsVal instanceof PdfArray)) {
             return;
         }
-        COSArray srcAnnots = (COSArray) srcAnnotsVal;
-        COSArray newAnnots = new COSArray(srcAnnots.size());
+        PdfArray srcAnnots = (PdfArray) srcAnnotsVal;
+        PdfArray newAnnots = new PdfArray(srcAnnots.size());
         for (int i = 0; i < srcAnnots.size(); i++) {
-            COSBase item = srcAnnots.get(i);
-            COSDictionary srcAnnot = resolveDict(item);
+            PdfBase item = srcAnnots.get(i);
+            PdfDictionary srcAnnot = resolveDict(item);
             if (srcAnnot == null) continue;
-            COSDictionary clonedAnnot = cloner.cloneAnnotationDict(srcAnnot);
-            clonedAnnot.set(COSName.of("P"), newPageRef);
+            PdfDictionary clonedAnnot = cloner.cloneAnnotationDict(srcAnnot);
+            clonedAnnot.set(PdfName.of("P"), newPageRef);
             newAnnots.add(target.registerImportedObject(clonedAnnot));
         }
-        newPage.set(COSName.ANNOTS, newAnnots);
+        newPage.set(PdfName.ANNOTS, newAnnots);
     }
 
-    private COSDictionary resolveDict(COSBase v) throws IOException {
-        if (v instanceof COSObjectReference) {
-            COSBase r;
+    private PdfDictionary resolveDict(PdfBase v) throws IOException {
+        if (v instanceof PdfObjectReference) {
+            PdfBase r;
             try {
-                r = ((COSObjectReference) v).dereference();
+                r = ((PdfObjectReference) v).dereference();
             } catch (RuntimeException e) {
                 if (isMalformedReferenceFailure(e)) {
                     LOG.warning("Skipping malformed indirect dictionary reference during page import: " + e.getMessage());
@@ -172,9 +172,9 @@ public final class DocumentPageImporter {
                 }
                 throw e;
             }
-            return r instanceof COSDictionary ? (COSDictionary) r : null;
+            return r instanceof PdfDictionary ? (PdfDictionary) r : null;
         }
-        return v instanceof COSDictionary ? (COSDictionary) v : null;
+        return v instanceof PdfDictionary ? (PdfDictionary) v : null;
     }
 
     private boolean isMalformedReferenceFailure(RuntimeException e) {
@@ -187,27 +187,27 @@ public final class DocumentPageImporter {
     }
 
     /**
-     * If /Contents was cloned as an inline COSStream (or array of inline streams),
+     * If /Contents was cloned as an inline PdfStream (or array of inline streams),
      * promote it/them to indirect objects registered in the target. Writers expect
      * page content streams to be indirect.
      */
-    private void promoteContentsToIndirect(COSDictionary newPage) {
-        COSBase contents = newPage.get(COSName.CONTENTS);
-        if (contents instanceof COSStream && ((COSStream) contents).getObjectKey() == null) {
-            COSObjectReference ref = target.registerImportedObject(contents);
-            newPage.set(COSName.CONTENTS, ref);
-        } else if (contents instanceof COSArray) {
-            COSArray arr = (COSArray) contents;
-            COSArray promoted = new COSArray(arr.size());
+    private void promoteContentsToIndirect(PdfDictionary newPage) {
+        PdfBase contents = newPage.get(PdfName.CONTENTS);
+        if (contents instanceof PdfStream && ((PdfStream) contents).getObjectKey() == null) {
+            PdfObjectReference ref = target.registerImportedObject(contents);
+            newPage.set(PdfName.CONTENTS, ref);
+        } else if (contents instanceof PdfArray) {
+            PdfArray arr = (PdfArray) contents;
+            PdfArray promoted = new PdfArray(arr.size());
             for (int i = 0; i < arr.size(); i++) {
-                COSBase c = arr.get(i);
-                if (c instanceof COSStream && ((COSStream) c).getObjectKey() == null) {
+                PdfBase c = arr.get(i);
+                if (c instanceof PdfStream && ((PdfStream) c).getObjectKey() == null) {
                     promoted.add(target.registerImportedObject(c));
                 } else {
                     promoted.add(c);
                 }
             }
-            newPage.set(COSName.CONTENTS, promoted);
+            newPage.set(PdfName.CONTENTS, promoted);
         }
     }
 

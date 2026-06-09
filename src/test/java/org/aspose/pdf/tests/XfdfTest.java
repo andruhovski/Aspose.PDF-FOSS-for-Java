@@ -2,7 +2,7 @@ package org.aspose.pdf.tests;
 
 import org.aspose.pdf.*;
 import org.aspose.pdf.annotations.*;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 import org.aspose.pdf.facades.PdfAnnotationEditor;
 
 import org.junit.jupiter.api.Test;
@@ -122,14 +122,14 @@ public class XfdfTest {
         InkAnnotation ink = new InkAnnotation(page, new Rectangle(0, 0, 300, 300));
         ink.setColor(Color.fromRgb(0, 0, 0));
         // Set ink list via COS
-        COSArray outerArray = new COSArray();
-        COSArray stroke1 = new COSArray();
-        stroke1.add(new COSFloat(100));
-        stroke1.add(new COSFloat(200));
-        stroke1.add(new COSFloat(150));
-        stroke1.add(new COSFloat(250));
+        PdfArray outerArray = new PdfArray();
+        PdfArray stroke1 = new PdfArray();
+        stroke1.add(new PdfFloat(100));
+        stroke1.add(new PdfFloat(200));
+        stroke1.add(new PdfFloat(150));
+        stroke1.add(new PdfFloat(250));
         outerArray.add(stroke1);
-        ink.getCOSDictionary().set(COSName.of("InkList"), outerArray);
+        ink.getPdfDictionary().set(PdfName.of("InkList"), outerArray);
         page.getAnnotations().add(ink);
 
         String xfdf = exportToString(doc);
@@ -475,7 +475,7 @@ public class XfdfTest {
         assertEquals("Line", imported.getSubtype());
 
         // Check line coordinates were imported via COS
-        COSArray l = (COSArray) imported.getCOSDictionary().get("L");
+        PdfArray l = (PdfArray) imported.getPdfDictionary().get("L");
         assertNotNull(l, "Line coordinates should be imported");
         assertEquals(100, l.getFloat(0, 0), 0.01);
         assertEquals(200, l.getFloat(1, 0), 0.01);

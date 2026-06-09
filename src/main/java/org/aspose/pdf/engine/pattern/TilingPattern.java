@@ -3,10 +3,10 @@ package org.aspose.pdf.engine.pattern;
 import org.aspose.pdf.OperatorCollection;
 import org.aspose.pdf.Rectangle;
 import org.aspose.pdf.Resources;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 import org.aspose.pdf.engine.parser.ContentStreamParser;
 import org.aspose.pdf.engine.parser.PDFParser;
 
@@ -48,10 +48,10 @@ public final class TilingPattern extends PdfPattern {
     /**
      * Creates a TilingPattern from its dictionary/stream.
      *
-     * @param dict   the pattern dictionary (usually a COSStream)
+     * @param dict   the pattern dictionary (usually a PdfStream)
      * @param parser the PDF parser
      */
-    public TilingPattern(COSDictionary dict, PDFParser parser) {
+    public TilingPattern(PdfDictionary dict, PDFParser parser) {
         super(dict);
         this.parser = parser;
     }
@@ -68,9 +68,9 @@ public final class TilingPattern extends PdfPattern {
      * @return the bounding box
      */
     public Rectangle getBBox() {
-        COSBase bbox = resolveRef(dict.get("BBox"));
-        if (bbox instanceof COSArray && ((COSArray) bbox).size() == 4) {
-            return Rectangle.fromCOSArray((COSArray) bbox);
+        PdfBase bbox = resolveRef(dict.get("BBox"));
+        if (bbox instanceof PdfArray && ((PdfArray) bbox).size() == 4) {
+            return Rectangle.fromPdfArray((PdfArray) bbox);
         }
         return new Rectangle(0, 0, 1, 1);
     }
@@ -87,9 +87,9 @@ public final class TilingPattern extends PdfPattern {
      * @return the resources, or {@code null}
      */
     public Resources getResources() {
-        COSBase res = resolveRef(dict.get("Resources"));
-        if (res instanceof COSDictionary) {
-            return new Resources((COSDictionary) res, parser);
+        PdfBase res = resolveRef(dict.get("Resources"));
+        if (res instanceof PdfDictionary) {
+            return new Resources((PdfDictionary) res, parser);
         }
         return null;
     }
@@ -101,8 +101,8 @@ public final class TilingPattern extends PdfPattern {
      * @throws IOException if parsing fails
      */
     public OperatorCollection getContents() throws IOException {
-        if (dict instanceof COSStream) {
-            return ContentStreamParser.parseToCollection((COSStream) dict);
+        if (dict instanceof PdfStream) {
+            return ContentStreamParser.parseToCollection((PdfStream) dict);
         }
         return new OperatorCollection(java.util.Collections.emptyList());
     }

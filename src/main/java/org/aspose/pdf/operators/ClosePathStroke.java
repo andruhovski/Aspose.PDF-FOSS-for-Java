@@ -1,7 +1,7 @@
 package org.aspose.pdf.operators;
 
 import org.aspose.pdf.Operator;
-import org.aspose.pdf.engine.cos.COSBase;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
 
 import java.util.List;
 
@@ -22,7 +22,7 @@ public class ClosePathStroke extends Operator {
     }
 
     /** Creates a ClosePathStroke operator from parsed operands. */
-    public ClosePathStroke(List<COSBase> operands) {
+    public ClosePathStroke(List<PdfBase> operands) {
         super("s", operands);
     }
 }

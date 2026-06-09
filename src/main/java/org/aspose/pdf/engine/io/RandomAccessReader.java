@@ -109,6 +109,24 @@ public final class RandomAccessReader implements Closeable {
     }
 
     /**
+     * Creates a reader over the given array WITHOUT a defensive copy. For
+     * internal callers that own the buffer (e.g. a freshly decoded content
+     * stream) — cloning a multi-hundred-MB decode doubles peak memory and was
+     * observed as OutOfMemoryError under mass-testing (corpus 33809.pdf).
+     * The caller must not mutate {@code data} afterwards.
+     *
+     * @param data the byte data (taken as-is)
+     * @return a new reader over the caller's array
+     * @throws IllegalArgumentException if data is null
+     */
+    public static RandomAccessReader fromBytesNoCopy(byte[] data) {
+        if (data == null) {
+            throw new IllegalArgumentException("data must not be null");
+        }
+        return new RandomAccessReader(data);
+    }
+
+    /**
      * Creates a reader by reading the entire input stream into memory.
      *
      * @param is the input stream to read (will NOT be closed)
@@ -267,6 +285,15 @@ public final class RandomAccessReader implements Closeable {
         if (len < 0) {
             throw new IllegalArgumentException("length must not be negative: " + len);
         }
+        // Check BEFORE allocating: a corrupt stream /Length (e.g. 2 000 000 000
+        // in a 60 KB file) would otherwise allocate gigabytes just to fail with
+        // EOFException after the read loop — under a mass-testing run several
+        // such allocations in parallel poison the whole heap with OOMEs.
+        long remaining = length - position;
+        if (len > remaining) {
+            throw new EOFException("Expected " + len + " bytes but only " + remaining
+                    + " remain (corrupt /Length?)");
+        }
         byte[] result = new byte[len];
         int offset = 0;
         while (offset < len) {
@@ -424,6 +451,11 @@ public final class RandomAccessReader implements Closeable {
         long pos = startFrom;
 
         while (pos < length) {
+            // Pattern scans can cover multi-GB files (stream-length recovery);
+            // honour cancellation per block so timed-out workers unwind.
+            if (Thread.currentThread().isInterrupted()) {
+                throw new IOException("findForward interrupted");
+            }
             int readLen = (int) Math.min(blockSize, length - pos);
             seek(pos);
             byte[] block = readFully(readLen);

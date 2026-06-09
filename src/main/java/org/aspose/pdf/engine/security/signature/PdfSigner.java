@@ -1,7 +1,7 @@
 package org.aspose.pdf.engine.security.signature;
 
 import org.aspose.pdf.*;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 import org.aspose.pdf.engine.parser.PDFParser;
 import org.aspose.pdf.engine.security.pkcs7.PKCS7SignedData;
 import org.aspose.pdf.engine.writer.PDFWriter;
@@ -59,7 +59,7 @@ public class PdfSigner {
                      String location, OutputStream output) throws Exception {
 
         // Step 1: Build signature dictionary
-        COSDictionary sigDict = buildSignatureDictionary(
+        PdfDictionary sigDict = buildSignatureDictionary(
                 certificate, reason, contact, location, "adbe.pkcs7.detached");
 
         // Step 2: Attach to signature field
@@ -139,54 +139,54 @@ public class PdfSigner {
 
     // ── Private helpers ──
 
-    private COSDictionary buildSignatureDictionary(X509Certificate certificate,
+    private PdfDictionary buildSignatureDictionary(X509Certificate certificate,
                                                     String reason, String contact,
                                                     String location, String subFilter) {
-        COSDictionary sigDict = new COSDictionary();
-        sigDict.set(COSName.of("Type"), COSName.of("Sig"));
-        sigDict.set(COSName.of("Filter"), COSName.of("Adobe.PPKLite"));
-        sigDict.set(COSName.of("SubFilter"), COSName.of(subFilter));
+        PdfDictionary sigDict = new PdfDictionary();
+        sigDict.set(PdfName.of("Type"), PdfName.of("Sig"));
+        sigDict.set(PdfName.of("Filter"), PdfName.of("Adobe.PPKLite"));
+        sigDict.set(PdfName.of("SubFilter"), PdfName.of(subFilter));
 
         if (reason != null) {
-            sigDict.set(COSName.of("Reason"),
-                    new COSString(reason.getBytes(StandardCharsets.UTF_8)));
+            sigDict.set(PdfName.of("Reason"),
+                    new PdfString(reason.getBytes(StandardCharsets.UTF_8)));
         }
         if (contact != null) {
-            sigDict.set(COSName.of("ContactInfo"),
-                    new COSString(contact.getBytes(StandardCharsets.UTF_8)));
+            sigDict.set(PdfName.of("ContactInfo"),
+                    new PdfString(contact.getBytes(StandardCharsets.UTF_8)));
         }
         if (location != null) {
-            sigDict.set(COSName.of("Location"),
-                    new COSString(location.getBytes(StandardCharsets.UTF_8)));
+            sigDict.set(PdfName.of("Location"),
+                    new PdfString(location.getBytes(StandardCharsets.UTF_8)));
         }
         String signerName = certificate.getSubjectX500Principal().getName();
-        sigDict.set(COSName.of("Name"),
-                new COSString(signerName.getBytes(StandardCharsets.UTF_8)));
+        sigDict.set(PdfName.of("Name"),
+                new PdfString(signerName.getBytes(StandardCharsets.UTF_8)));
 
         SimpleDateFormat sdf = new SimpleDateFormat("'D:'yyyyMMddHHmmssZ");
-        sigDict.set(COSName.of("M"),
-                new COSString(sdf.format(new Date()).getBytes(StandardCharsets.UTF_8)));
+        sigDict.set(PdfName.of("M"),
+                new PdfString(sdf.format(new Date()).getBytes(StandardCharsets.UTF_8)));
 
         // ByteRange placeholder — will be overwritten after serialization
         // Use large placeholder values to ensure enough space for actual offsets
-        COSArray byteRange = new COSArray();
-        byteRange.add(COSInteger.valueOf(0));
-        byteRange.add(COSInteger.valueOf(9999999999L));
-        byteRange.add(COSInteger.valueOf(9999999999L));
-        byteRange.add(COSInteger.valueOf(9999999999L));
-        sigDict.set(COSName.of("ByteRange"), byteRange);
+        PdfArray byteRange = new PdfArray();
+        byteRange.add(PdfInteger.valueOf(0));
+        byteRange.add(PdfInteger.valueOf(9999999999L));
+        byteRange.add(PdfInteger.valueOf(9999999999L));
+        byteRange.add(PdfInteger.valueOf(9999999999L));
+        sigDict.set(PdfName.of("ByteRange"), byteRange);
 
         // Contents placeholder (hex string of zeros)
         byte[] placeholder = new byte[SIGNATURE_SIZE];
-        COSString contentsStr = new COSString(placeholder);
+        PdfString contentsStr = new PdfString(placeholder);
         contentsStr.setForceHex(true);
-        sigDict.set(COSName.of("Contents"), contentsStr);
+        sigDict.set(PdfName.of("Contents"), contentsStr);
 
         return sigDict;
     }
 
     private void attachSignatureToField(Document document, String sigFieldName,
-                                         COSDictionary sigDict) throws IOException {
+                                         PdfDictionary sigDict) throws IOException {
         Form form = document.getForm();
         SignatureField sigField = null;
 
@@ -204,17 +204,17 @@ public class PdfSigner {
         if (sigField == null) {
             // Create new signature field
             String name = sigFieldName != null ? sigFieldName : "Signature1";
-            COSDictionary fieldDict = new COSDictionary();
-            fieldDict.set(COSName.of("FT"), COSName.of("Sig"));
-            fieldDict.set(COSName.of("T"),
-                    new COSString(name.getBytes(StandardCharsets.UTF_8)));
+            PdfDictionary fieldDict = new PdfDictionary();
+            fieldDict.set(PdfName.of("FT"), PdfName.of("Sig"));
+            fieldDict.set(PdfName.of("T"),
+                    new PdfString(name.getBytes(StandardCharsets.UTF_8)));
             // Invisible annotation rect
-            COSArray rect = new COSArray();
-            rect.add(COSInteger.valueOf(0)); rect.add(COSInteger.valueOf(0));
-            rect.add(COSInteger.valueOf(0)); rect.add(COSInteger.valueOf(0));
-            fieldDict.set(COSName.of("Rect"), rect);
-            fieldDict.set(COSName.of("Type"), COSName.of("Annot"));
-            fieldDict.set(COSName.of("Subtype"), COSName.of("Widget"));
+            PdfArray rect = new PdfArray();
+            rect.add(PdfInteger.valueOf(0)); rect.add(PdfInteger.valueOf(0));
+            rect.add(PdfInteger.valueOf(0)); rect.add(PdfInteger.valueOf(0));
+            fieldDict.set(PdfName.of("Rect"), rect);
+            fieldDict.set(PdfName.of("Type"), PdfName.of("Annot"));
+            fieldDict.set(PdfName.of("Subtype"), PdfName.of("Widget"));
 
             sigField = new SignatureField(fieldDict, null, name);
             form.add(sigField);
@@ -279,59 +279,59 @@ public class PdfSigner {
         }
 
         // Collect all existing objects from parser
-        Map<COSObjectKey, COSBase> objects = new LinkedHashMap<>();
+        Map<PdfObjectKey, PdfBase> objects = new LinkedHashMap<>();
         int maxObjNum = 0;
-        for (COSObjectKey key : parser.getAllObjectKeys()) {
-            COSBase obj = parser.getObject(key);
-            if (obj != null && !(obj instanceof COSNull)) {
+        for (PdfObjectKey key : parser.getAllObjectKeys()) {
+            PdfBase obj = parser.getObject(key);
+            if (obj != null && !(obj instanceof PdfNull)) {
                 objects.put(key, obj);
                 maxObjNum = Math.max(maxObjNum, key.getObjectNumber());
             }
         }
 
         // Get AcroForm — create if needed
-        COSDictionary catalog = parser.getCatalog();
-        COSBase acroFormRef = catalog.get(COSName.of("AcroForm"));
-        COSDictionary acroFormDict;
-        COSObjectKey acroFormKey = null;
+        PdfDictionary catalog = parser.getCatalog();
+        PdfBase acroFormRef = catalog.get(PdfName.of("AcroForm"));
+        PdfDictionary acroFormDict;
+        PdfObjectKey acroFormKey = null;
 
         if (acroFormRef != null) {
-            COSBase resolved = parser.resolveReference(acroFormRef);
-            acroFormDict = (COSDictionary) resolved;
+            PdfBase resolved = parser.resolveReference(acroFormRef);
+            acroFormDict = (PdfDictionary) resolved;
             // Find its key
-            if (acroFormRef instanceof COSObjectReference) {
-                acroFormKey = ((COSObjectReference) acroFormRef).getKey();
+            if (acroFormRef instanceof PdfObjectReference) {
+                acroFormKey = ((PdfObjectReference) acroFormRef).getKey();
             }
         } else {
             // Create new AcroForm dict
-            acroFormDict = new COSDictionary();
-            acroFormDict.set(COSName.of("Fields"), new COSArray());
-            acroFormKey = new COSObjectKey(++maxObjNum, 0);
+            acroFormDict = new PdfDictionary();
+            acroFormDict.set(PdfName.of("Fields"), new PdfArray());
+            acroFormKey = new PdfObjectKey(++maxObjNum, 0);
             objects.put(acroFormKey, acroFormDict);
-            catalog.set(COSName.of("AcroForm"),
-                    new COSObjectReference(acroFormKey, k -> objects.get(k)));
+            catalog.set(PdfName.of("AcroForm"),
+                    new PdfObjectReference(acroFormKey, k -> objects.get(k)));
         }
 
         // Add any form fields that don't have object keys yet
         Form form = document.getForm();
-        COSBase fieldsRef = acroFormDict.get("Fields");
-        COSArray fieldsArray;
-        if (fieldsRef instanceof COSArray) {
-            fieldsArray = (COSArray) fieldsRef;
+        PdfBase fieldsRef = acroFormDict.get("Fields");
+        PdfArray fieldsArray;
+        if (fieldsRef instanceof PdfArray) {
+            fieldsArray = (PdfArray) fieldsRef;
         } else {
-            fieldsArray = new COSArray();
-            acroFormDict.set(COSName.of("Fields"), fieldsArray);
+            fieldsArray = new PdfArray();
+            acroFormDict.set(PdfName.of("Fields"), fieldsArray);
         }
 
         for (Field field : form) {
-            COSDictionary fieldDict = field.getCOSDictionary();
-            COSObjectKey fieldKey = fieldDict.getObjectKey();
+            PdfDictionary fieldDict = field.getPdfDictionary();
+            PdfObjectKey fieldKey = fieldDict.getObjectKey();
             // Identity check: the field may carry a pre-assigned key from
             // Document.registerImportedObject that collides with a key we
             // just allocated for a new acroFormDict. Treat any mismatch as
             // unregistered and allocate a fresh key.
             if (fieldKey == null || objects.get(fieldKey) != fieldDict) {
-                fieldKey = new COSObjectKey(++maxObjNum, 0);
+                fieldKey = new PdfObjectKey(++maxObjNum, 0);
                 fieldDict.setObjectKey(fieldKey);
             }
             objects.put(fieldKey, fieldDict);
@@ -339,32 +339,32 @@ public class PdfSigner {
             // Ensure the field is referenced from the AcroForm /Fields array.
             boolean found = false;
             for (int i = 0; i < fieldsArray.size(); i++) {
-                COSBase item = fieldsArray.get(i);
+                PdfBase item = fieldsArray.get(i);
                 if (item == fieldDict) { found = true; break; }
-                if (item instanceof COSObjectReference) {
-                    COSObjectKey rk = ((COSObjectReference) item).getKey();
+                if (item instanceof PdfObjectReference) {
+                    PdfObjectKey rk = ((PdfObjectReference) item).getKey();
                     if (rk.equals(fieldKey)) { found = true; break; }
                 }
             }
             if (!found) {
-                final COSObjectKey refKey = fieldKey;
-                fieldsArray.add(new COSObjectReference(refKey, k -> objects.get(k)));
+                final PdfObjectKey refKey = fieldKey;
+                fieldsArray.add(new PdfObjectReference(refKey, k -> objects.get(k)));
             }
 
             // Also register /V (signature dict) if it's not tracked
-            COSBase vRef = fieldDict.get("V");
-            if (vRef instanceof COSDictionary) {
-                COSDictionary vDict = (COSDictionary) vRef;
-                COSObjectKey vKey = vDict.getObjectKey();
+            PdfBase vRef = fieldDict.get("V");
+            if (vRef instanceof PdfDictionary) {
+                PdfDictionary vDict = (PdfDictionary) vRef;
+                PdfObjectKey vKey = vDict.getObjectKey();
                 if (vKey == null || objects.get(vKey) != vDict) {
-                    vKey = new COSObjectKey(++maxObjNum, 0);
+                    vKey = new PdfObjectKey(++maxObjNum, 0);
                     vDict.setObjectKey(vKey);
                 }
                 objects.put(vKey, vDict);
                 // Replace inline dict with indirect reference
-                final COSObjectKey vRefKey = vKey;
-                fieldDict.set(COSName.of("V"),
-                        new COSObjectReference(vRefKey, k -> objects.get(k)));
+                final PdfObjectKey vRefKey = vKey;
+                fieldDict.set(PdfName.of("V"),
+                        new PdfObjectReference(vRefKey, k -> objects.get(k)));
             }
         }
 
@@ -374,8 +374,8 @@ public class PdfSigner {
         }
 
         // Write
-        COSDictionary trailer = parser.getTrailer();
-        trailer.set(COSName.of("Size"), COSInteger.valueOf(maxObjNum + 1));
+        PdfDictionary trailer = parser.getTrailer();
+        trailer.set(PdfName.of("Size"), PdfInteger.valueOf(maxObjNum + 1));
         PDFWriter writer = new PDFWriter(output, parser.getVersion());
         writer.write(trailer, objects);
     }

@@ -1,7 +1,7 @@
 package org.aspose.pdf.operators;
 
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -30,7 +30,7 @@ public class MoveToNextLineShowText extends TextShowOperator {
      */
     public MoveToNextLineShowText(String text) {
         super("'", Collections.singletonList(
-                new COSString(text.getBytes(StandardCharsets.ISO_8859_1))));
+                new PdfString(text.getBytes(StandardCharsets.ISO_8859_1))));
         if (text == null) {
             throw new IllegalArgumentException("Text must not be null");
         }
@@ -42,10 +42,10 @@ public class MoveToNextLineShowText extends TextShowOperator {
      *
      * @param operands the operands from the content stream parser
      */
-    public MoveToNextLineShowText(List<COSBase> operands) {
+    public MoveToNextLineShowText(List<PdfBase> operands) {
         super("'", operands);
-        if (operands != null && !operands.isEmpty() && operands.get(0) instanceof COSString) {
-            this.text = ((COSString) operands.get(0)).getString();
+        if (operands != null && !operands.isEmpty() && operands.get(0) instanceof PdfString) {
+            this.text = ((PdfString) operands.get(0)).getString();
         } else {
             this.text = "";
         }

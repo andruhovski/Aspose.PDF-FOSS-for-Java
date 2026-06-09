@@ -1,6 +1,6 @@
 package org.aspose.pdf.engine.pattern;
 
-import org.aspose.pdf.engine.cos.COSDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
 import org.aspose.pdf.engine.parser.PDFParser;
 
 import java.io.IOException;
@@ -12,7 +12,7 @@ import java.io.IOException;
  */
 public final class CoonsPatchShading extends Shading {
 
-    public CoonsPatchShading(COSDictionary dict, PDFParser parser) throws IOException {
+    public CoonsPatchShading(PdfDictionary dict, PDFParser parser) throws IOException {
         super(dict, parser);
     }
 

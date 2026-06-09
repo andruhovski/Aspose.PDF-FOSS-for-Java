@@ -1,7 +1,7 @@
 package org.aspose.pdf.annotations;
 
 import org.aspose.pdf.*;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 /**
  * File attachment annotation (ISO 32000-1:2008, Section 12.5.6.15, /Subtype /FileAttachment).
@@ -14,12 +14,12 @@ import org.aspose.pdf.engine.cos.*;
 public class FileAttachmentAnnotation extends MarkupAnnotation {
 
     /**
-     * Constructs a file attachment annotation from an existing COS dictionary.
+     * Constructs a file attachment annotation from an existing PDF dictionary.
      *
-     * @param dict the COS dictionary backing this annotation
+     * @param dict the PDF dictionary backing this annotation
      * @param page the page this annotation belongs to
      */
-    public FileAttachmentAnnotation(COSDictionary dict, Page page) {
+    public FileAttachmentAnnotation(PdfDictionary dict, Page page) {
         super(dict, page);
     }
 
@@ -31,7 +31,7 @@ public class FileAttachmentAnnotation extends MarkupAnnotation {
      */
     public FileAttachmentAnnotation(Page page, Rectangle rect) {
         super(page, rect);
-        dict.set(COSName.of("Subtype"), COSName.of("FileAttachment"));
+        dict.set(PdfName.of("Subtype"), PdfName.of("FileAttachment"));
     }
 
     /**
@@ -58,9 +58,9 @@ public class FileAttachmentAnnotation extends MarkupAnnotation {
      */
     public void setIcon(String icon) {
         if (icon == null) {
-            dict.set(COSName.of("Name"), (COSBase) null);
+            dict.set(PdfName.of("Name"), (PdfBase) null);
         } else {
-            dict.set(COSName.of("Name"), COSName.of(icon));
+            dict.set(PdfName.of("Name"), PdfName.of(icon));
         }
     }
 }

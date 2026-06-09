@@ -1,11 +1,11 @@
 package org.aspose.pdf.tests;
 
 import org.aspose.pdf.Resources;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectKey;
-import org.aspose.pdf.engine.cos.COSObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectKey;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -22,30 +22,30 @@ public class ResourcesTest {
 
     @Test
     public void getFontsReturnsFontDictionary() {
-        COSDictionary fontDict = new COSDictionary();
-        fontDict.set("F1", COSName.of("Helvetica"));
+        PdfDictionary fontDict = new PdfDictionary();
+        fontDict.set("F1", PdfName.of("Helvetica"));
 
-        COSDictionary resourceDict = new COSDictionary();
+        PdfDictionary resourceDict = new PdfDictionary();
         resourceDict.set("Font", fontDict);
 
         Resources resources = new Resources(resourceDict);
-        COSDictionary result = resources.getFonts();
+        PdfDictionary result = resources.getFonts();
         assertNotNull(result);
         assertSame(fontDict, result);
     }
 
     @Test
     public void getFontsReturnsNullWhenAbsent() {
-        Resources resources = new Resources(new COSDictionary());
+        Resources resources = new Resources(new PdfDictionary());
         assertNull(resources.getFonts());
     }
 
     @Test
     public void getXObjectsReturnsXObjectDictionary() {
-        COSDictionary xobjDict = new COSDictionary();
-        xobjDict.set("Im1", COSName.of("Image"));
+        PdfDictionary xobjDict = new PdfDictionary();
+        xobjDict.set("Im1", PdfName.of("Image"));
 
-        COSDictionary resourceDict = new COSDictionary();
+        PdfDictionary resourceDict = new PdfDictionary();
         resourceDict.set("XObject", xobjDict);
 
         Resources resources = new Resources(resourceDict);
@@ -54,8 +54,8 @@ public class ResourcesTest {
 
     @Test
     public void getExtGStateReturnsDictionary() {
-        COSDictionary gsDict = new COSDictionary();
-        COSDictionary resourceDict = new COSDictionary();
+        PdfDictionary gsDict = new PdfDictionary();
+        PdfDictionary resourceDict = new PdfDictionary();
         resourceDict.set("ExtGState", gsDict);
 
         Resources resources = new Resources(resourceDict);
@@ -64,8 +64,8 @@ public class ResourcesTest {
 
     @Test
     public void getColorSpacesReturnsDictionary() {
-        COSDictionary csDict = new COSDictionary();
-        COSDictionary resourceDict = new COSDictionary();
+        PdfDictionary csDict = new PdfDictionary();
+        PdfDictionary resourceDict = new PdfDictionary();
         resourceDict.set("ColorSpace", csDict);
 
         Resources resources = new Resources(resourceDict);
@@ -74,8 +74,8 @@ public class ResourcesTest {
 
     @Test
     public void getPatternsReturnsDictionary() {
-        COSDictionary patDict = new COSDictionary();
-        COSDictionary resourceDict = new COSDictionary();
+        PdfDictionary patDict = new PdfDictionary();
+        PdfDictionary resourceDict = new PdfDictionary();
         resourceDict.set("Pattern", patDict);
 
         Resources resources = new Resources(resourceDict);
@@ -84,8 +84,8 @@ public class ResourcesTest {
 
     @Test
     public void getShadingsReturnsDictionary() {
-        COSDictionary shadDict = new COSDictionary();
-        COSDictionary resourceDict = new COSDictionary();
+        PdfDictionary shadDict = new PdfDictionary();
+        PdfDictionary resourceDict = new PdfDictionary();
         resourceDict.set("Shading", shadDict);
 
         Resources resources = new Resources(resourceDict);
@@ -94,8 +94,8 @@ public class ResourcesTest {
 
     @Test
     public void getPropertiesReturnsDictionary() {
-        COSDictionary propDict = new COSDictionary();
-        COSDictionary resourceDict = new COSDictionary();
+        PdfDictionary propDict = new PdfDictionary();
+        PdfDictionary resourceDict = new PdfDictionary();
         resourceDict.set("Properties", propDict);
 
         Resources resources = new Resources(resourceDict);
@@ -103,33 +103,33 @@ public class ResourcesTest {
     }
 
     @Test
-    public void getCOSDictionaryReturnsUnderlying() {
-        COSDictionary resourceDict = new COSDictionary();
+    public void getPdfDictionaryReturnsUnderlying() {
+        PdfDictionary resourceDict = new PdfDictionary();
         Resources resources = new Resources(resourceDict);
-        assertSame(resourceDict, resources.getCOSDictionary());
+        assertSame(resourceDict, resources.getPdfDictionary());
     }
 
     @Test
     public void dereferencesIndirectReference() {
-        COSDictionary fontDict = new COSDictionary();
-        fontDict.set("F1", COSName.of("Times"));
+        PdfDictionary fontDict = new PdfDictionary();
+        fontDict.set("F1", PdfName.of("Times"));
 
-        COSObjectKey key = new COSObjectKey(5, 0);
-        COSObjectReference ref = new COSObjectReference(key, k -> fontDict);
+        PdfObjectKey key = new PdfObjectKey(5, 0);
+        PdfObjectReference ref = new PdfObjectReference(key, k -> fontDict);
 
-        COSDictionary resourceDict = new COSDictionary();
-        resourceDict.set(COSName.of("Font"), ref);
+        PdfDictionary resourceDict = new PdfDictionary();
+        resourceDict.set(PdfName.of("Font"), ref);
 
         Resources resources = new Resources(resourceDict);
-        COSDictionary result = resources.getFonts();
+        PdfDictionary result = resources.getFonts();
         assertNotNull(result);
         assertSame(fontDict, result);
     }
 
     @Test
     public void returnsNullForNonDictionaryValue() {
-        COSDictionary resourceDict = new COSDictionary();
-        resourceDict.set("Font", COSName.of("NotADict"));
+        PdfDictionary resourceDict = new PdfDictionary();
+        resourceDict.set("Font", PdfName.of("NotADict"));
 
         Resources resources = new Resources(resourceDict);
         assertNull(resources.getFonts());
@@ -137,7 +137,7 @@ public class ResourcesTest {
 
     @Test
     public void allGettersReturnNullForEmptyDict() {
-        Resources resources = new Resources(new COSDictionary());
+        Resources resources = new Resources(new PdfDictionary());
         assertNull(resources.getFonts());
         assertNull(resources.getXObjects());
         assertNull(resources.getExtGState());

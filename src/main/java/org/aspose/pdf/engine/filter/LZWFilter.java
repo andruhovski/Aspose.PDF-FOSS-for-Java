@@ -1,7 +1,7 @@
 package org.aspose.pdf.engine.filter;
 
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -18,7 +18,7 @@ import java.util.logging.Logger;
  * Encoding is not supported — modern PDFs should use FlateDecode instead.
  * </p>
  */
-public final class LZWFilter implements COSFilter {
+public final class LZWFilter implements PdfFilter {
 
     private static final Logger LOG = Logger.getLogger(LZWFilter.class.getName());
 
@@ -42,7 +42,7 @@ public final class LZWFilter implements COSFilter {
      * </p>
      */
     @Override
-    public byte[] decode(byte[] encoded, COSDictionary params) throws IOException {
+    public byte[] decode(byte[] encoded, PdfDictionary params) throws IOException {
         if (encoded == null || encoded.length == 0) {
             return new byte[0];
         }
@@ -50,10 +50,14 @@ public final class LZWFilter implements COSFilter {
         // Determine early change behavior (default true for PDF)
         boolean earlyChange = true;
         if (params != null) {
-            earlyChange = params.getInt(COSName.of("EarlyChange"), 1) != 0;
+            earlyChange = params.getInt(PdfName.of("EarlyChange"), 1) != 0;
         }
 
-        ByteArrayOutputStream out = new ByteArrayOutputStream(encoded.length * 3);
+        // encoded.length * 3 overflows int for raw streams over ~715 MB and
+        // pre-allocates large buffers for big-but-legal streams; clamp the
+        // initial capacity — BAOS doubles on demand anyway.
+        ByteArrayOutputStream out = new ByteArrayOutputStream(
+                (int) Math.min(Math.max(encoded.length * 3L, 64), 1L << 20));
         BitReader bits = new BitReader(encoded);
 
         // Initialize table
@@ -89,8 +93,10 @@ public final class LZWFilter implements COSFilter {
         }
 
         int oldCode = code;
+        long limit = DecodeLimits.maxDecodedBytes();
 
         while (true) {
+            DecodeLimits.check(out.size(), limit, "LZWDecode");
             code = bits.readBits(codeSize);
             if (code < 0 || code == EOD) {
                 break;
@@ -110,6 +116,18 @@ public final class LZWFilter implements COSFilter {
                 }
                 oldCode = code;
                 continue;
+            }
+
+            // Defend against corrupt LZW streams: a bad code can reference an
+            // uninitialised table slot (e.g. oldCode pointing at the reserved
+            // CLEAR/EOD positions). Return what we have decoded so far instead of
+            // throwing NPE — mirrors FlateFilter's partial-recovery behaviour.
+            if (oldCode < 0 || oldCode >= MAX_TABLE_SIZE || table[oldCode] == null
+                    || (code < tableSize && table[code] == null)) {
+                LOG.warning("LZWDecode: corrupt stream (invalid back-reference oldCode="
+                        + oldCode + ", code=" + code + "); returning "
+                        + out.size() + " bytes decoded so far");
+                return applyPredictor(out.toByteArray(), params);
             }
 
             byte[] entry;
@@ -162,7 +180,7 @@ public final class LZWFilter implements COSFilter {
      * @throws UnsupportedOperationException always
      */
     @Override
-    public byte[] encode(byte[] decoded, COSDictionary params) throws IOException {
+    public byte[] encode(byte[] decoded, PdfDictionary params) throws IOException {
         throw new IOException("LZW encoding not supported. Use FlateDecode.");
     }
 
@@ -170,21 +188,21 @@ public final class LZWFilter implements COSFilter {
      * {@inheritDoc}
      */
     @Override
-    public COSName getName() {
-        return COSName.LZW_DECODE;
+    public PdfName getName() {
+        return PdfName.LZW_DECODE;
     }
 
-    private static byte[] applyPredictor(byte[] data, COSDictionary params) {
+    private static byte[] applyPredictor(byte[] data, PdfDictionary params) {
         if (params == null) {
             return data;
         }
-        int predictor = params.getInt(COSName.of("Predictor"), 1);
+        int predictor = params.getInt(PdfName.of("Predictor"), 1);
         if (predictor <= 1) {
             return data;
         }
-        int columns = params.getInt(COSName.of("Columns"), 1);
-        int colors = params.getInt(COSName.of("Colors"), 1);
-        int bpc = params.getInt(COSName.of("BitsPerComponent"), 8);
+        int columns = params.getInt(PdfName.of("Columns"), 1);
+        int colors = params.getInt(PdfName.of("Colors"), 1);
+        int bpc = params.getInt(PdfName.of("BitsPerComponent"), 8);
         return PredictorDecoder.decode(data, predictor, columns, colors, bpc);
     }
 

@@ -1,9 +1,9 @@
 package org.aspose.pdf.engine.font;
 
 import org.aspose.pdf.Resources;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
 import org.aspose.pdf.engine.parser.PDFParser;
 
 import java.io.IOException;
@@ -36,7 +36,7 @@ public final class FontRepository {
      * @return the resolved PdfFont
      * @throws IOException if font creation fails
      */
-    public PdfFont getFont(COSDictionary fontsDict, String fontName, PDFParser parser)
+    public PdfFont getFont(PdfDictionary fontsDict, String fontName, PDFParser parser)
             throws IOException {
         if (fontsDict == null || fontName == null) {
             return null;
@@ -49,22 +49,22 @@ public final class FontRepository {
         }
 
         // Resolve font dictionary
-        COSBase fontVal = fontsDict.get(fontName);
-        if (fontVal instanceof COSObjectReference) {
+        PdfBase fontVal = fontsDict.get(fontName);
+        if (fontVal instanceof PdfObjectReference) {
             try {
-                fontVal = ((COSObjectReference) fontVal).dereference();
+                fontVal = ((PdfObjectReference) fontVal).dereference();
             } catch (IOException e) {
                 LOG.warning(() -> "Failed to dereference font " + fontName + ": " + e.getMessage());
                 return null;
             }
         }
 
-        if (!(fontVal instanceof COSDictionary)) {
+        if (!(fontVal instanceof PdfDictionary)) {
             LOG.warning(() -> "Font " + fontName + " is not a dictionary");
             return null;
         }
 
-        PdfFont font = PdfFont.fromDictionary((COSDictionary) fontVal, parser);
+        PdfFont font = PdfFont.fromDictionary((PdfDictionary) fontVal, parser);
         cache.put(fontName, font);
         return font;
     }
@@ -81,7 +81,7 @@ public final class FontRepository {
     public static PdfFont fromResources(Resources resources, String fontName, PDFParser parser)
             throws IOException {
         if (resources == null) return null;
-        COSDictionary fonts = resources.getFonts();
+        PdfDictionary fonts = resources.getFonts();
         if (fonts == null) return null;
         FontRepository repo = new FontRepository();
         return repo.getFont(fonts, fontName, parser);

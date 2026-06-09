@@ -1,10 +1,10 @@
 package org.aspose.pdf.engine.font;
 
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 import org.aspose.pdf.engine.font.ttf.TrueTypeReader;
 import org.aspose.pdf.engine.parser.PDFParser;
 
@@ -37,7 +37,7 @@ public class TrueTypeFont extends PdfFont {
      * @param parser   the PDF parser (may be null)
      * @throws IOException if reading the font data fails
      */
-    public TrueTypeFont(COSDictionary fontDict, PDFParser parser) throws IOException {
+    public TrueTypeFont(PdfDictionary fontDict, PDFParser parser) throws IOException {
         super(fontDict, parser);
         initEncoding();
         initWidths();
@@ -154,6 +154,69 @@ public class TrueTypeFont extends PdfFont {
     }
 
     /**
+     * Maps a character code to a glyph id in the embedded program, following the
+     * TrueType glyph-selection rules of ISO 32000-1:2008 §9.6.6.4:
+     * <ol>
+     *   <li>symbolic font with no explicit /Encoding → embedded (3,0)/(1,0) cmap
+     *       keyed by the raw code (and the {@code 0xF000+code} fallback);</li>
+     *   <li>otherwise → /Encoding code→Unicode, then the embedded Unicode cmap;</li>
+     *   <li>last resort → the raw code (and {@code 0xF000+code}) through the cmap.</li>
+     * </ol>
+     *
+     * @param code the 1-byte character code from the content stream
+     * @return the glyph id, or 0 when it cannot be resolved
+     */
+    public int resolveGlyphId(int code) {
+        if (ttReader == null) return 0;
+        boolean symbolic = fontDescriptor != null && fontDescriptor.isSymbolic();
+        if (symbolic && !hasExplicitEncoding) {
+            int g = ttReader.getGlyphId(code);
+            if (g == 0) g = ttReader.getGlyphId(0xF000 | code);
+            if (g != 0) return g;
+        }
+        if (encoding != null) {
+            int uni = encoding.getUnicode(code);
+            if (uni > 0) {
+                int g = ttReader.getGlyphId(uni);
+                if (g != 0) return g;
+            }
+        }
+        int g = ttReader.getGlyphId(code);
+        if (g == 0) g = ttReader.getGlyphId(0xF000 | code);
+        return g;
+    }
+
+    /**
+     * Returns the em-normalised, Y-up outline of the glyph selected by
+     * {@link #resolveGlyphId(int)} for the given character code, or {@code null}
+     * when no embedded program is present or the glyph cannot be resolved.
+     * Drawing this outline avoids {@code java.awt.Font}, which renders the
+     * default ".notdef" box for subset programs whose cmap is missing or partial
+     * even when {@code canDisplay} reports the character as available (corpus
+     * 46679: the dotted-leader colon of an embedded TimesNewRoman subset).
+     *
+     * @param code the 1-byte character code
+     * @return the glyph outline, or {@code null}
+     */
+    public java.awt.geom.GeneralPath glyphOutlineForCode(int code) {
+        if (ttReader == null) return null;
+        int gid = resolveGlyphId(code);
+        return gid > 0 ? ttReader.getGlyphPath(gid) : null;
+    }
+
+    /**
+     * Returns true if the font dictionary carries an explicit /Encoding
+     * (a base-encoding name or an encoding dictionary). Symbolic fonts
+     * without one map character codes through the embedded font program's
+     * own cmap (ISO 32000-1:2008, §9.6.6.4).
+     *
+     * @return true if /Encoding was present
+     */
+    public boolean hasExplicitEncoding() {
+        return hasExplicitEncoding;
+    }
+
+    /**
      * Resolves a PostScript glyph name (e.g. {@code "C"}, {@code "germandbls"},
      * {@code "uni0041"}, {@code "u00041"}) to a Unicode codepoint via the
      * Adobe Glyph List, with the standard {@code uniXXXX} / {@code uXXXXX}
@@ -187,15 +250,15 @@ public class TrueTypeFont extends PdfFont {
     }
 
     private void initEncoding() {
-        COSBase encValue = resolve(fontDict.get("Encoding"));
-        if (encValue instanceof COSName) {
-            FontEncoding named = FontEncoding.getInstance(((COSName) encValue).getName());
+        PdfBase encValue = resolve(fontDict.get("Encoding"));
+        if (encValue instanceof PdfName) {
+            FontEncoding named = FontEncoding.getInstance(((PdfName) encValue).getName());
             if (named != null) {
                 this.encoding = named;
                 this.hasExplicitEncoding = true;
             }
-        } else if (encValue instanceof COSDictionary) {
-            this.encoding = FontEncoding.fromDictionary((COSDictionary) encValue);
+        } else if (encValue instanceof PdfDictionary) {
+            this.encoding = FontEncoding.fromDictionary((PdfDictionary) encValue);
             this.hasExplicitEncoding = true;
         }
         if (this.encoding == null) {
@@ -204,11 +267,11 @@ public class TrueTypeFont extends PdfFont {
     }
 
     private void initWidths() {
-        COSBase widthsVal = resolve(fontDict.get("Widths"));
-        if (widthsVal instanceof COSArray) {
+        PdfBase widthsVal = resolve(fontDict.get("Widths"));
+        if (widthsVal instanceof PdfArray) {
             this.firstChar = fontDict.getInt("FirstChar", 0);
             this.lastChar = fontDict.getInt("LastChar", 255);
-            COSArray arr = (COSArray) widthsVal;
+            PdfArray arr = (PdfArray) widthsVal;
             this.customWidths = new double[arr.size()];
             for (int i = 0; i < arr.size(); i++) {
                 customWidths[i] = getNumber(arr.get(i));
@@ -218,7 +281,7 @@ public class TrueTypeFont extends PdfFont {
 
     private void initTrueTypeReader() {
         if (fontDescriptor == null) return;
-        COSStream fontFile = fontDescriptor.getFontFile2();
+        PdfStream fontFile = fontDescriptor.getFontFile2();
         if (fontFile == null) return;
         try {
             byte[] ttfData = fontFile.getDecodedData();

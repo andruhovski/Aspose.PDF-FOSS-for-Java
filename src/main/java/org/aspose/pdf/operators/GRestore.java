@@ -1,7 +1,7 @@
 package org.aspose.pdf.operators;
 
 import org.aspose.pdf.Operator;
-import org.aspose.pdf.engine.cos.COSBase;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
 
 import java.util.List;
 
@@ -21,7 +21,7 @@ public class GRestore extends Operator {
     }
 
     /** Creates a GRestore operator from parsed operands. */
-    public GRestore(List<COSBase> operands) {
+    public GRestore(List<PdfBase> operands) {
         super("Q", operands);
     }
 }

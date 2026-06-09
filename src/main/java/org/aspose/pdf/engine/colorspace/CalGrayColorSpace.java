@@ -1,8 +1,8 @@
 package org.aspose.pdf.engine.colorspace;
 
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
 
 /**
  * CalGray color space (ISO 32000-1:2008, §8.6.5.2).
@@ -27,7 +27,7 @@ public final class CalGrayColorSpace extends ColorSpaceBase {
      *
      * @param params the CalGray parameter dictionary
      */
-    public CalGrayColorSpace(COSDictionary params) {
+    public CalGrayColorSpace(PdfDictionary params) {
         this.whitePoint = getTriple(params, "WhitePoint", new double[]{0.9505, 1.0, 1.089});
         this.blackPoint = getTriple(params, "BlackPoint", new double[]{0, 0, 0});
         this.gamma = params.getFloat("Gamma", 1.0f);
@@ -52,6 +52,14 @@ public final class CalGrayColorSpace extends ColorSpaceBase {
 
     @Override
     public int getNumberOfComponents() { return 1; }
+
+    /** CalGray -> sRGB via gamma + white point. */
+    @Override
+    public int toRGBInt(double[] comps) {
+        if (comps == null || comps.length == 0) return 0xFF000000;
+        double[] rgb = toRGB(comps[0]);
+        return DeviceRGB.INSTANCE.toRGBInt(rgb[0], rgb[1], rgb[2]);
+    }
 
     /** Returns the gamma exponent. */
     public double getGamma() { return gamma; }

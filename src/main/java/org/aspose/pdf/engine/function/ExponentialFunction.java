@@ -1,6 +1,6 @@
 package org.aspose.pdf.engine.function;
 
-import org.aspose.pdf.engine.cos.COSDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
 
 /**
  * Type 2 (Exponential Interpolation) function (ISO 32000-1:2008, §7.10.3).
@@ -21,13 +21,13 @@ public final class ExponentialFunction extends PdfFunction {
     private final double exponent;
 
     /**
-     * Creates an exponential function from a COS dictionary.
+     * Creates an exponential function from a PDF dictionary.
      *
      * @param dict   the function dictionary
      * @param domain the input domain
      * @param range  the output range (may be null)
      */
-    public ExponentialFunction(COSDictionary dict, double[] domain, double[] range) {
+    public ExponentialFunction(PdfDictionary dict, double[] domain, double[] range) {
         super(domain, range);
         this.exponent = dict.getFloat("N", 1.0f);
         double[] c0Raw = getNumberArray(dict, "C0");

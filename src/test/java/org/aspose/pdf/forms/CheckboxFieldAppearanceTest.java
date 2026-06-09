@@ -4,11 +4,11 @@ import org.aspose.pdf.Document;
 import org.aspose.pdf.Page;
 import org.aspose.pdf.Rectangle;
 import org.aspose.pdf.XForm;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSNull;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfNull;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 import org.junit.jupiter.api.Test;
 
 import java.util.Set;
@@ -17,9 +17,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * F-10 regression tests — {@link CheckboxField} must NOT leave
- * {@link COSNull} placeholders in {@code /AP/N} after construction.
+ * {@link PdfNull} placeholders in {@code /AP/N} after construction.
  * Previously {@code new CheckboxField(page, rect)} stored
- * {@code apN.set("Yes", COSNull.INSTANCE)} so {@code getAppearance().get("Yes")}
+ * {@code apN.set("Yes", PdfNull.INSTANCE)} so {@code getAppearance().get("Yes")}
  * returned null and PDF viewers depended on {@code /NeedAppearances true}.
  */
 class CheckboxFieldAppearanceTest {
@@ -42,18 +42,18 @@ class CheckboxFieldAppearanceTest {
     }
 
     @Test
-    void newCheckbox_withRect_noCOSNullInAPN() throws Exception {
+    void newCheckbox_withRect_noPdfNullInAPN() throws Exception {
         try (Document doc = new Document()) {
             Page page = doc.getPages().add();
             CheckboxField cb = new CheckboxField(page, new Rectangle(50, 100, 70, 120));
 
-            COSDictionary apDict = (COSDictionary) cb.getCOSDictionary().get(COSName.of("AP"));
-            COSDictionary apN = (COSDictionary) apDict.get(COSName.N);
-            for (COSName key : apN.keySet()) {
-                COSBase v = apN.get(key);
-                assertFalse(v instanceof COSNull,
-                        "F-10 regression: COSNull placeholder for state " + key.getName());
-                assertTrue(v instanceof COSStream,
+            PdfDictionary apDict = (PdfDictionary) cb.getPdfDictionary().get(PdfName.of("AP"));
+            PdfDictionary apN = (PdfDictionary) apDict.get(PdfName.N);
+            for (PdfName key : apN.keySet()) {
+                PdfBase v = apN.get(key);
+                assertFalse(v instanceof PdfNull,
+                        "F-10 regression: PdfNull placeholder for state " + key.getName());
+                assertTrue(v instanceof PdfStream,
                         "state " + key.getName() + " must be a stream, was " + v.getClass().getSimpleName());
             }
         }
@@ -67,7 +67,7 @@ class CheckboxFieldAppearanceTest {
 
             XForm onState = cb.getAppearance().get("Yes");
             assertNotNull(onState);
-            byte[] data = onState.getCOSStream().getDecodedData();
+            byte[] data = onState.getPdfStream().getDecodedData();
             String body = new String(data, java.nio.charset.StandardCharsets.ISO_8859_1);
             assertTrue(body.contains("/ZaDb"), "on-state should use ZapfDingbats font");
             assertTrue(body.contains("Tj"), "on-state should show text");
@@ -75,14 +75,14 @@ class CheckboxFieldAppearanceTest {
     }
 
     @Test
-    void offState_isEmptyStream_notCOSNull() throws Exception {
+    void offState_isEmptyStream_notPdfNull() throws Exception {
         try (Document doc = new Document()) {
             Page page = doc.getPages().add();
             CheckboxField cb = new CheckboxField(page, new Rectangle(50, 100, 70, 120));
 
             XForm offState = cb.getAppearance().get("Off");
             assertNotNull(offState);
-            byte[] data = offState.getCOSStream().getDecodedData();
+            byte[] data = offState.getPdfStream().getDecodedData();
             String body = new String(data, java.nio.charset.StandardCharsets.ISO_8859_1);
             // Off state still has q/Q wrapper but no Tj
             assertTrue(body.contains("q"));
@@ -98,13 +98,13 @@ class CheckboxFieldAppearanceTest {
             CheckboxField cb = new CheckboxField(page, new Rectangle(50, 100, 70, 120));
 
             String checkBody = new String(
-                    cb.getAppearance().get("Yes").getCOSStream().getDecodedData(),
+                    cb.getAppearance().get("Yes").getPdfStream().getDecodedData(),
                     java.nio.charset.StandardCharsets.ISO_8859_1);
             assertTrue(checkBody.contains("(4)"), "default Check glyph = '4'");
 
             cb.setStyle(BoxStyle.Cross);
             String crossBody = new String(
-                    cb.getAppearance().get("Yes").getCOSStream().getDecodedData(),
+                    cb.getAppearance().get("Yes").getPdfStream().getDecodedData(),
                     java.nio.charset.StandardCharsets.ISO_8859_1);
             assertTrue(crossBody.contains("(8)"), "Cross glyph = '8'");
         }
@@ -141,15 +141,15 @@ class CheckboxFieldAppearanceTest {
     }
 
     @Test
-    void appearanceIsIncomplete_detectsCOSNullPlaceholders() {
-        COSDictionary widget = new COSDictionary();
-        COSDictionary ap = new COSDictionary();
-        COSDictionary apN = new COSDictionary();
-        apN.set(COSName.of("Yes"), COSNull.INSTANCE);
-        apN.set(COSName.of("Off"), COSNull.INSTANCE);
-        ap.set(COSName.N, apN);
-        widget.set(COSName.of("AP"), ap);
+    void appearanceIsIncomplete_detectsPdfNullPlaceholders() {
+        PdfDictionary widget = new PdfDictionary();
+        PdfDictionary ap = new PdfDictionary();
+        PdfDictionary apN = new PdfDictionary();
+        apN.set(PdfName.of("Yes"), PdfNull.INSTANCE);
+        apN.set(PdfName.of("Off"), PdfNull.INSTANCE);
+        ap.set(PdfName.N, apN);
+        widget.set(PdfName.of("AP"), ap);
         assertTrue(FieldAppearanceBuilder.isAppearanceIncomplete(widget),
-                "COSNull placeholders should trigger incomplete = true");
+                "PdfNull placeholders should trigger incomplete = true");
     }
 }

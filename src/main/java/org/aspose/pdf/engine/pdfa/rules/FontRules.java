@@ -1,11 +1,11 @@
 package org.aspose.pdf.engine.pdfa.rules;
 
 import org.aspose.pdf.PdfFormat;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
 import org.aspose.pdf.engine.pdfa.PdfARule;
 import org.aspose.pdf.engine.pdfa.PdfAValidationResult;
 import org.aspose.pdf.engine.parser.PDFParser;
@@ -53,7 +53,7 @@ public final class FontRules implements PdfARule {
      * Iterates all pages and checks each page's font resources.
      */
     private void checkPages(PDFParser parser, PdfFormat format, PdfAValidationResult result) {
-        COSDictionary catalog;
+        PdfDictionary catalog;
         try {
             catalog = parser.getCatalog();
         } catch (IOException e) {
@@ -61,22 +61,22 @@ public final class FontRules implements PdfARule {
             return;
         }
 
-        COSDictionary pages = resolveDict(catalog.get("Pages"));
+        PdfDictionary pages = resolveDict(catalog.get("Pages"));
         if (pages == null) {
             return;
         }
-        COSArray kids = pages.getArray("Kids");
+        PdfArray kids = pages.getArray("Kids");
         if (kids == null) {
             return;
         }
 
         for (int i = 0; i < kids.size(); i++) {
-            COSDictionary page = resolveDict(kids.get(i));
+            PdfDictionary page = resolveDict(kids.get(i));
             if (page == null) {
                 continue;
             }
             String pagePath = "page[" + i + "]";
-            COSDictionary resources = resolveDict(page.get("Resources"));
+            PdfDictionary resources = resolveDict(page.get("Resources"));
             if (resources == null) {
                 continue;
             }
@@ -87,12 +87,12 @@ public final class FontRules implements PdfARule {
     /**
      * Checks all fonts in a resources dictionary, including fonts in Form XObjects.
      */
-    private void checkFonts(COSDictionary resources, String pagePath,
+    private void checkFonts(PdfDictionary resources, String pagePath,
                              PdfFormat format, PdfAValidationResult result) {
-        COSDictionary fonts = resolveDict(resources.get("Font"));
+        PdfDictionary fonts = resolveDict(resources.get("Font"));
         if (fonts != null) {
-            for (COSName key : fonts.keySet()) {
-                COSDictionary font = resolveDict(fonts.get(key.getName()));
+            for (PdfName key : fonts.keySet()) {
+                PdfDictionary font = resolveDict(fonts.get(key.getName()));
                 if (font == null) {
                     continue;
                 }
@@ -102,16 +102,16 @@ public final class FontRules implements PdfARule {
         }
 
         // Also check fonts in Form XObjects (they have their own Resources)
-        COSDictionary xobjects = resolveDict(resources.get("XObject"));
+        PdfDictionary xobjects = resolveDict(resources.get("XObject"));
         if (xobjects != null) {
-            for (COSName key : xobjects.keySet()) {
-                COSDictionary xobj = resolveDict(xobjects.get(key.getName()));
+            for (PdfName key : xobjects.keySet()) {
+                PdfDictionary xobj = resolveDict(xobjects.get(key.getName()));
                 if (xobj == null) {
                     continue;
                 }
                 String subtype = xobj.getNameAsString("Subtype");
                 if ("Form".equals(subtype)) {
-                    COSDictionary xobjResources = resolveDict(xobj.get("Resources"));
+                    PdfDictionary xobjResources = resolveDict(xobj.get("Resources"));
                     if (xobjResources != null) {
                         String xobjPath = pagePath + "/Resources/XObject/" + key.getName();
                         checkFonts(xobjResources, xobjPath, format, result);
@@ -124,7 +124,7 @@ public final class FontRules implements PdfARule {
     /**
      * Validates a single font dictionary.
      */
-    private void checkSingleFont(COSDictionary font, String fontPath,
+    private void checkSingleFont(PdfDictionary font, String fontPath,
                                   PdfFormat format, PdfAValidationResult result) {
         String subtype = font.getNameAsString("Subtype");
         String baseFont = font.getNameAsString("BaseFont");
@@ -136,7 +136,7 @@ public final class FontRules implements PdfARule {
             return;
         }
 
-        COSDictionary fontDescriptor = resolveDict(font.get("FontDescriptor"));
+        PdfDictionary fontDescriptor = resolveDict(font.get("FontDescriptor"));
 
         // 6.3.4: Font must be embedded (FontDescriptor must exist and have FontFile/2/3)
         if (fontDescriptor == null) {
@@ -182,12 +182,12 @@ public final class FontRules implements PdfARule {
     /**
      * Checks composite (Type0) fonts and their descendant CIDFonts.
      */
-    private void checkCompositeFont(COSDictionary font, String fontPath,
+    private void checkCompositeFont(PdfDictionary font, String fontPath,
                                      PdfFormat format, PdfAValidationResult result) {
         String baseFont = font.getNameAsString("BaseFont");
         boolean isSubset = baseFont != null && SUBSET_PREFIX.matcher(baseFont).matches();
 
-        COSArray descendants = resolveArray(font.get("DescendantFonts"));
+        PdfArray descendants = resolveArray(font.get("DescendantFonts"));
         if (descendants == null || descendants.size() == 0) {
             result.addError("6.3.4",
                     "Type0 font has no DescendantFonts: " + baseFont,
@@ -195,13 +195,13 @@ public final class FontRules implements PdfARule {
             return;
         }
 
-        COSDictionary cidFont = resolveDict(descendants.get(0));
+        PdfDictionary cidFont = resolveDict(descendants.get(0));
         if (cidFont == null) {
             return;
         }
 
         String cidSubtype = cidFont.getNameAsString("Subtype");
-        COSDictionary fontDescriptor = resolveDict(cidFont.get("FontDescriptor"));
+        PdfDictionary fontDescriptor = resolveDict(cidFont.get("FontDescriptor"));
 
         // 6.3.4: CIDFont must be embedded
         if (fontDescriptor != null) {
@@ -228,7 +228,7 @@ public final class FontRules implements PdfARule {
 
         // 6.3.3.2: CIDFontType2 must have /CIDToGIDMap
         if ("CIDFontType2".equals(cidSubtype)) {
-            COSBase cidToGid = cidFont.get("CIDToGIDMap");
+            PdfBase cidToGid = cidFont.get("CIDToGIDMap");
             if (cidToGid == null) {
                 result.addError("6.3.3.2",
                         "CIDFontType2 must have /CIDToGIDMap: " + baseFont,
@@ -245,7 +245,7 @@ public final class FontRules implements PdfARule {
     /**
      * 6.3.7: Non-symbolic TrueType font must use MacRomanEncoding or WinAnsiEncoding.
      */
-    private void checkTrueTypeEncoding(COSDictionary font, COSDictionary fontDescriptor,
+    private void checkTrueTypeEncoding(PdfDictionary font, PdfDictionary fontDescriptor,
                                         String fontPath, String baseFont,
                                         PdfAValidationResult result) {
         // Check if font is symbolic (bit 3 of /Flags = 0x04)
@@ -258,9 +258,9 @@ public final class FontRules implements PdfARule {
         String encoding = font.getNameAsString("Encoding");
         if (encoding == null) {
             // Check if /Encoding is a dictionary (difference encoding)
-            COSBase encRef = font.get("Encoding");
+            PdfBase encRef = font.get("Encoding");
             if (encRef != null) {
-                COSDictionary encDict = resolveDict(encRef);
+                PdfDictionary encDict = resolveDict(encRef);
                 if (encDict != null) {
                     encoding = encDict.getNameAsString("BaseEncoding");
                 }
@@ -279,7 +279,7 @@ public final class FontRules implements PdfARule {
     /**
      * 6.3.8: Level A/U: font must have /ToUnicode CMap (exceptions for standard encodings).
      */
-    private void checkToUnicode(COSDictionary font, String fontPath,
+    private void checkToUnicode(PdfDictionary font, String fontPath,
                                  String baseFont, PdfAValidationResult result) {
         // Exception: if encoding is a standard one, /ToUnicode is not required
         String encoding = font.getNameAsString("Encoding");
@@ -294,7 +294,7 @@ public final class FontRules implements PdfARule {
             return;
         }
 
-        COSBase toUnicode = font.get("ToUnicode");
+        PdfBase toUnicode = font.get("ToUnicode");
         if (toUnicode == null) {
             result.addError("6.3.8",
                     "Font must have /ToUnicode CMap for Level A/U compliance: " + baseFont,
@@ -303,30 +303,30 @@ public final class FontRules implements PdfARule {
     }
 
     /**
-     * Resolves a COSBase to a COSDictionary, dereferencing indirect references.
+     * Resolves a PdfBase to a PdfDictionary, dereferencing indirect references.
      */
-    private static COSDictionary resolveDict(COSBase val) {
-        if (val instanceof COSObjectReference) {
+    private static PdfDictionary resolveDict(PdfBase val) {
+        if (val instanceof PdfObjectReference) {
             try {
-                val = ((COSObjectReference) val).dereference();
+                val = ((PdfObjectReference) val).dereference();
             } catch (IOException e) {
                 return null;
             }
         }
-        return (val instanceof COSDictionary) ? (COSDictionary) val : null;
+        return (val instanceof PdfDictionary) ? (PdfDictionary) val : null;
     }
 
     /**
-     * Resolves a COSBase to a COSArray, dereferencing indirect references.
+     * Resolves a PdfBase to a PdfArray, dereferencing indirect references.
      */
-    private static COSArray resolveArray(COSBase val) {
-        if (val instanceof COSObjectReference) {
+    private static PdfArray resolveArray(PdfBase val) {
+        if (val instanceof PdfObjectReference) {
             try {
-                val = ((COSObjectReference) val).dereference();
+                val = ((PdfObjectReference) val).dereference();
             } catch (IOException e) {
                 return null;
             }
         }
-        return (val instanceof COSArray) ? (COSArray) val : null;
+        return (val instanceof PdfArray) ? (PdfArray) val : null;
     }
 }

@@ -3,8 +3,8 @@ package org.aspose.pdf.text;
 import org.aspose.pdf.Color;
 import org.aspose.pdf.Page;
 import org.aspose.pdf.Resources;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 import org.aspose.pdf.engine.font.ttf.FontDiskLookup;
 import org.aspose.pdf.engine.font.ttf.TrueTypeReader;
 import org.aspose.pdf.engine.font.ttf.Type0FontBuilder;
@@ -348,10 +348,10 @@ public class TextBuilder {
         }
 
         Resources resources = page.ensureResources();
-        COSDictionary fontsDict = resources.getFonts();
+        PdfDictionary fontsDict = resources.getFonts();
         if (fontsDict == null) {
-            fontsDict = new COSDictionary();
-            resources.getCOSDictionary().set(COSName.FONT, fontsDict);
+            fontsDict = new PdfDictionary();
+            resources.getPdfDictionary().set(PdfName.FONT, fontsDict);
         }
         int index = 1;
         String candidateName;
@@ -360,7 +360,7 @@ public class TextBuilder {
             index++;
         } while (fontsDict.containsKey(candidateName));
 
-        fontsDict.set(COSName.of(candidateName), effectiveResult.type0Font);
+        fontsDict.set(PdfName.of(candidateName), effectiveResult.type0Font);
         type0FontResources.put(effectiveName, candidateName);
         type0Readers.put(candidateName, effectiveResult.reader);
         final String finalName = candidateName;
@@ -550,20 +550,20 @@ public class TextBuilder {
      */
     private String registerFont(String fontName) {
         Resources resources = page.ensureResources();
-        COSDictionary resDict = resources.getCOSDictionary();
+        PdfDictionary resDict = resources.getPdfDictionary();
 
         // Get or create the /Font sub-dictionary
-        COSDictionary fontsDict = resources.getFonts();
+        PdfDictionary fontsDict = resources.getFonts();
         if (fontsDict == null) {
-            fontsDict = new COSDictionary();
-            resDict.set(COSName.FONT, fontsDict);
+            fontsDict = new PdfDictionary();
+            resDict.set(PdfName.FONT, fontsDict);
         }
 
         // Check if this base font is already registered
-        for (COSName key : fontsDict.keySet()) {
-            org.aspose.pdf.engine.cos.COSBase val = fontsDict.get(key);
-            if (val instanceof COSDictionary) {
-                COSDictionary fontDict = (COSDictionary) val;
+        for (PdfName key : fontsDict.keySet()) {
+            org.aspose.pdf.engine.pdfobjects.PdfBase val = fontsDict.get(key);
+            if (val instanceof PdfDictionary) {
+                PdfDictionary fontDict = (PdfDictionary) val;
                 String existingBase = fontDict.getNameAsString("BaseFont");
                 if (fontName.equals(existingBase)) {
                     // If this dict was attached by another code path that
@@ -573,7 +573,7 @@ public class TextBuilder {
                     if (fontDict.get("Encoding") == null
                             && !"ZapfDingbats".equals(existingBase)
                             && !"Symbol".equals(existingBase)) {
-                        fontDict.set(COSName.ENCODING, COSName.of("WinAnsiEncoding"));
+                        fontDict.set(PdfName.ENCODING, PdfName.of("WinAnsiEncoding"));
                     }
                     return key.getName();
                 }
@@ -589,14 +589,14 @@ public class TextBuilder {
         } while (fontsDict.containsKey(candidateName));
 
         // Create font dictionary: /Type /Font /Subtype /Type1 /BaseFont /<fontName> /Encoding /WinAnsiEncoding
-        COSDictionary fontDict = new COSDictionary();
-        fontDict.set(COSName.TYPE, COSName.FONT);
-        fontDict.set(COSName.of("Subtype"), COSName.of("Type1"));
-        fontDict.set(COSName.BASE_FONT, COSName.of(fontName));
-        fontDict.set(COSName.ENCODING, COSName.of("WinAnsiEncoding"));
+        PdfDictionary fontDict = new PdfDictionary();
+        fontDict.set(PdfName.TYPE, PdfName.FONT);
+        fontDict.set(PdfName.of("Subtype"), PdfName.of("Type1"));
+        fontDict.set(PdfName.BASE_FONT, PdfName.of(fontName));
+        fontDict.set(PdfName.ENCODING, PdfName.of("WinAnsiEncoding"));
 
         String resourceName = candidateName;
-        fontsDict.set(COSName.of(resourceName), fontDict);
+        fontsDict.set(PdfName.of(resourceName), fontDict);
 
         LOG.fine(() -> "Registered font " + fontName + " as /" + resourceName);
         return resourceName;

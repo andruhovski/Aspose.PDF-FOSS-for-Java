@@ -1,8 +1,8 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -16,14 +16,14 @@ import java.util.logging.Logger;
  * <p>
  * Provides access to metadata fields such as Title, Author, Subject, Keywords,
  * Creator, Producer, CreationDate, and ModDate. Date fields are stored as
- * PDF date strings and converted to {@link Date} via {@link COSString#getAsDate()}.
+ * PDF date strings and converted to {@link Date} via {@link PdfString#getAsDate()}.
  * </p>
  */
 public class DocumentInfo {
 
     private static final Logger LOG = Logger.getLogger(DocumentInfo.class.getName());
 
-    private final COSDictionary dict;
+    private final PdfDictionary dict;
 
     /**
      * Creates a DocumentInfo wrapper around the given /Info dictionary.
@@ -31,7 +31,7 @@ public class DocumentInfo {
      * @param infoDict the /Info dictionary from the trailer
      * @throws IllegalArgumentException if infoDict is null
      */
-    public DocumentInfo(COSDictionary infoDict) {
+    public DocumentInfo(PdfDictionary infoDict) {
         if (infoDict == null) {
             throw new IllegalArgumentException("Info dictionary must not be null");
         }
@@ -193,20 +193,20 @@ public class DocumentInfo {
      * @return the timezone from the creation date, or the system default if not parseable
      */
     public TimeZone getCreationTimeZone() {
-        COSBase obj = dict.get("CreationDate");
-        if (!(obj instanceof COSString)) {
+        PdfBase obj = dict.get("CreationDate");
+        if (!(obj instanceof PdfString)) {
             return TimeZone.getDefault();
         }
-        String dateStr = ((COSString) obj).getString();
+        String dateStr = ((PdfString) obj).getString();
         return parseTimeZone(dateStr);
     }
 
     /**
-     * Returns the underlying COS dictionary.
+     * Returns the underlying PDF dictionary.
      *
      * @return the raw /Info dictionary
      */
-    public COSDictionary getCOSDictionary() {
+    public PdfDictionary getPdfDictionary() {
         return dict;
     }
 
@@ -232,17 +232,17 @@ public class DocumentInfo {
 
     /**
      * Retrieves a date value from the dictionary.
-     * The value is expected to be a COSString containing a PDF date string.
+     * The value is expected to be a PdfString containing a PDF date string.
      *
      * @param key the dictionary key
      * @return the parsed date, or null
      */
     private Date getDateValue(String key) {
-        COSBase obj = dict.get(key);
-        if (!(obj instanceof COSString)) {
+        PdfBase obj = dict.get(key);
+        if (!(obj instanceof PdfString)) {
             return null;
         }
-        LocalDateTime ldt = ((COSString) obj).getAsDate();
+        LocalDateTime ldt = ((PdfString) obj).getAsDate();
         if (ldt == null) {
             return null;
         }

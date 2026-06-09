@@ -1,8 +1,8 @@
 package org.aspose.pdf.operators;
 
 import org.aspose.pdf.Operator;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 
 import java.util.Collections;
 import java.util.List;
@@ -27,7 +27,7 @@ public class MP extends Operator {
      * @throws IllegalArgumentException if tag is null or empty
      */
     public MP(String tag) {
-        super("MP", Collections.singletonList(COSName.of(tag)));
+        super("MP", Collections.singletonList(PdfName.of(tag)));
         if (tag == null || tag.isEmpty()) {
             throw new IllegalArgumentException("Tag must not be null or empty");
         }
@@ -37,15 +37,15 @@ public class MP extends Operator {
     /**
      * Creates an MP operator from parsed operands.
      * <p>
-     * Expects one operand: a {@link COSName} for the tag.
+     * Expects one operand: a {@link PdfName} for the tag.
      * </p>
      *
      * @param operands the operands from the content stream parser
      */
-    public MP(List<COSBase> operands) {
+    public MP(List<PdfBase> operands) {
         super("MP", operands);
-        this.tag = (operands != null && operands.size() > 0 && operands.get(0) instanceof COSName)
-                ? ((COSName) operands.get(0)).getName()
+        this.tag = (operands != null && operands.size() > 0 && operands.get(0) instanceof PdfName)
+                ? ((PdfName) operands.get(0)).getName()
                 : "";
     }
 

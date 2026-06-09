@@ -3,10 +3,10 @@ package org.aspose.pdf.tests.generation;
 import org.aspose.pdf.Document;
 import org.aspose.pdf.Page;
 import org.aspose.pdf.Rectangle;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
 import org.aspose.pdf.forms.ComboBoxField;
 import org.aspose.pdf.forms.Field;
 import org.aspose.pdf.forms.ListBoxField;
@@ -29,9 +29,9 @@ class AcroFormDefaultAppearanceTest {
 
     @TempDir Path tempDir;
 
-    private static COSDictionary resolveDict(COSBase v) throws IOException {
-        if (v instanceof COSObjectReference) v = ((COSObjectReference) v).dereference();
-        return v instanceof COSDictionary ? (COSDictionary) v : null;
+    private static PdfDictionary resolveDict(PdfBase v) throws IOException {
+        if (v instanceof PdfObjectReference) v = ((PdfObjectReference) v).dereference();
+        return v instanceof PdfDictionary ? (PdfDictionary) v : null;
     }
 
     @Test
@@ -84,12 +84,12 @@ class AcroFormDefaultAppearanceTest {
             doc.save(out.toString());
         }
         try (Document r = new Document(out.toString())) {
-            COSDictionary acroForm = r.getForm().getCOSDictionary();
-            COSDictionary dr = resolveDict(acroForm.get("DR"));
+            PdfDictionary acroForm = r.getForm().getPdfDictionary();
+            PdfDictionary dr = resolveDict(acroForm.get("DR"));
             assertNotNull(dr, "/DR must be present on AcroForm root");
-            COSDictionary fonts = resolveDict(dr.get("Font"));
+            PdfDictionary fonts = resolveDict(dr.get("Font"));
             assertNotNull(fonts, "/DR /Font must be present");
-            COSDictionary helv = resolveDict(fonts.get("Helv"));
+            PdfDictionary helv = resolveDict(fonts.get("Helv"));
             assertNotNull(helv, "/DR /Font /Helv must be present");
             assertEquals("Helvetica", helv.getNameAsString("BaseFont"));
             assertEquals("WinAnsiEncoding", helv.getNameAsString("Encoding"));
@@ -108,10 +108,10 @@ class AcroFormDefaultAppearanceTest {
             doc.save(out.toString());
         }
         try (Document r = new Document(out.toString())) {
-            COSDictionary acroForm = r.getForm().getCOSDictionary();
-            COSDictionary dr = resolveDict(acroForm.get("DR"));
-            COSDictionary fonts = resolveDict(dr.get("Font"));
-            COSDictionary zadb = resolveDict(fonts.get("ZaDb"));
+            PdfDictionary acroForm = r.getForm().getPdfDictionary();
+            PdfDictionary dr = resolveDict(acroForm.get("DR"));
+            PdfDictionary fonts = resolveDict(dr.get("Font"));
+            PdfDictionary zadb = resolveDict(fonts.get("ZaDb"));
             assertNotNull(zadb, "/DR /Font /ZaDb must be present");
             assertEquals("ZapfDingbats", zadb.getNameAsString("BaseFont"));
         }
@@ -167,8 +167,8 @@ class AcroFormDefaultAppearanceTest {
             doc.save(out.toString());
         }
         try (Document r = new Document(out.toString())) {
-            COSDictionary fonts = resolveDict(resolveDict(
-                    r.getForm().getCOSDictionary().get("DR")).get("Font"));
+            PdfDictionary fonts = resolveDict(resolveDict(
+                    r.getForm().getPdfDictionary().get("DR")).get("Font"));
             // Only the two standard entries should exist.
             assertEquals(2, fonts.keySet().size(),
                     "DR/Font must contain exactly /Helv and /ZaDb");

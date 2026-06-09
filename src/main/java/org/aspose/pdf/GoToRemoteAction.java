@@ -1,12 +1,12 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSBoolean;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfBoolean;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 
 import java.nio.charset.StandardCharsets;
 
@@ -20,7 +20,7 @@ public class GoToRemoteAction extends PdfAction {
      *
      * @param dict the action dictionary
      */
-    public GoToRemoteAction(COSDictionary dict) {
+    public GoToRemoteAction(PdfDictionary dict) {
         this.actionDict = dict;
     }
 
@@ -31,15 +31,15 @@ public class GoToRemoteAction extends PdfAction {
      * @param pageNumber the 1-based destination page number
      */
     public GoToRemoteAction(String file, int pageNumber) {
-        this.actionDict = new COSDictionary();
-        actionDict.set(COSName.of("S"), COSName.of("GoToR"));
+        this.actionDict = new PdfDictionary();
+        actionDict.set(PdfName.of("S"), PdfName.of("GoToR"));
         // File spec as a simple string
-        actionDict.set(COSName.of("F"), new COSString(file.getBytes(StandardCharsets.UTF_8)));
+        actionDict.set(PdfName.of("F"), new PdfString(file.getBytes(StandardCharsets.UTF_8)));
         // Destination: [pageIndex /Fit] — pageNumber is 1-based, PDF array is 0-based
-        COSArray dest = new COSArray();
-        dest.add(COSInteger.valueOf(pageNumber - 1));
-        dest.add(COSName.of("Fit"));
-        actionDict.set(COSName.of("D"), dest);
+        PdfArray dest = new PdfArray();
+        dest.add(PdfInteger.valueOf(pageNumber - 1));
+        dest.add(PdfName.of("Fit"));
+        actionDict.set(PdfName.of("D"), dest);
     }
 
     /**
@@ -49,11 +49,11 @@ public class GoToRemoteAction extends PdfAction {
      * @param destination the explicit destination
      */
     public GoToRemoteAction(String file, ExplicitDestination destination) {
-        this.actionDict = new COSDictionary();
-        actionDict.set(COSName.of("S"), COSName.of("GoToR"));
-        actionDict.set(COSName.of("F"), new COSString(file.getBytes(StandardCharsets.UTF_8)));
+        this.actionDict = new PdfDictionary();
+        actionDict.set(PdfName.of("S"), PdfName.of("GoToR"));
+        actionDict.set(PdfName.of("F"), new PdfString(file.getBytes(StandardCharsets.UTF_8)));
         if (destination != null) {
-            actionDict.set(COSName.of("D"), destination.toCOSArray());
+            actionDict.set(PdfName.of("D"), destination.toPdfArray());
         }
     }
 
@@ -63,13 +63,13 @@ public class GoToRemoteAction extends PdfAction {
      * @return the file path or specification, or null
      */
     public String getFile() {
-        COSBase f = resolve(actionDict.get("F"));
-        if (f instanceof COSString) return ((COSString) f).getString();
-        if (f instanceof COSDictionary) {
-            COSBase uf = ((COSDictionary) f).get("UF");
-            if (uf instanceof COSString) return ((COSString) uf).getString();
-            COSBase fVal = ((COSDictionary) f).get("F");
-            if (fVal instanceof COSString) return ((COSString) fVal).getString();
+        PdfBase f = resolve(actionDict.get("F"));
+        if (f instanceof PdfString) return ((PdfString) f).getString();
+        if (f instanceof PdfDictionary) {
+            PdfBase uf = ((PdfDictionary) f).get("UF");
+            if (uf instanceof PdfString) return ((PdfString) uf).getString();
+            PdfBase fVal = ((PdfDictionary) f).get("F");
+            if (fVal instanceof PdfString) return ((PdfString) fVal).getString();
         }
         return null;
     }
@@ -80,7 +80,7 @@ public class GoToRemoteAction extends PdfAction {
      * @param file the file path
      */
     public void setFile(String file) {
-        actionDict.set(COSName.of("F"), new COSString(file.getBytes(StandardCharsets.UTF_8)));
+        actionDict.set(PdfName.of("F"), new PdfString(file.getBytes(StandardCharsets.UTF_8)));
     }
 
     /**
@@ -89,8 +89,8 @@ public class GoToRemoteAction extends PdfAction {
      * @return true if new window, false otherwise (default false)
      */
     public boolean isNewWindow() {
-        COSBase nw = actionDict.get("NewWindow");
-        if (nw instanceof COSBoolean) return ((COSBoolean) nw).getValue();
+        PdfBase nw = actionDict.get("NewWindow");
+        if (nw instanceof PdfBoolean) return ((PdfBoolean) nw).getValue();
         return false;
     }
 
@@ -100,6 +100,6 @@ public class GoToRemoteAction extends PdfAction {
      * @param newWindow true to open in new window
      */
     public void setNewWindow(boolean newWindow) {
-        actionDict.set(COSName.of("NewWindow"), newWindow ? COSBoolean.TRUE : COSBoolean.FALSE);
+        actionDict.set(PdfName.of("NewWindow"), newWindow ? PdfBoolean.TRUE : PdfBoolean.FALSE);
     }
 }

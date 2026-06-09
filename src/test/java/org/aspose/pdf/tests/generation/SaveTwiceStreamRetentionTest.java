@@ -5,12 +5,12 @@ import org.aspose.pdf.Document;
 import org.aspose.pdf.Page;
 import org.aspose.pdf.Rectangle;
 import org.aspose.pdf.annotations.Annotation;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 import org.aspose.pdf.forms.TextBoxField;
 import org.aspose.pdf.text.Position;
 import org.aspose.pdf.text.TextBuilder;
@@ -33,14 +33,14 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Bug O2 — {@code PDFWriter.collectOrphanStreams} must follow
- * {@link COSObjectReference} nodes to recover and re-register orphan
- * {@code COSStream} targets on the second save of the same {@code Document}.
+ * {@link PdfObjectReference} nodes to recover and re-register orphan
+ * {@code PdfStream} targets on the second save of the same {@code Document}.
  *
  * <p>On the first save, every appearance Form XObject and content stream is
  * promoted to indirect form, replacing the inline slot with a
- * {@code COSObjectReference} bound to the just-built objects map. The
- * previous orphan walker only descended into {@code COSDictionary} and
- * {@code COSArray} nodes, so on the second save those references were never
+ * {@code PdfObjectReference} bound to the just-built objects map. The
+ * previous orphan walker only descended into {@code PdfDictionary} and
+ * {@code PdfArray} nodes, so on the second save those references were never
  * followed — and the underlying streams were never copied into the new
  * objects map. The output PDF then contained {@code N G R} references to
  * objects that the writer never emitted.</p>
@@ -160,15 +160,15 @@ class SaveTwiceStreamRetentionTest {
             Page page = r.getPages().get(1);
             // Find the widget annotation (the TextBoxField); resolve /AP/N.
             Annotation widget = page.getAnnotations().get(1);
-            COSBase ap = widget.getCOSDictionary().get(COSName.of("AP"));
-            COSBase apResolved = r.getParser().resolveReference(ap);
-            assertTrue(apResolved instanceof COSDictionary, "/AP must resolve to a dict");
-            COSBase n = ((COSDictionary) apResolved).get(COSName.of("N"));
-            COSBase nResolved = r.getParser().resolveReference(n);
-            assertTrue(nResolved instanceof COSStream,
-                    "/AP/N must resolve to a COSStream after save→encrypt→save, got "
+            PdfBase ap = widget.getPdfDictionary().get(PdfName.of("AP"));
+            PdfBase apResolved = r.getParser().resolveReference(ap);
+            assertTrue(apResolved instanceof PdfDictionary, "/AP must resolve to a dict");
+            PdfBase n = ((PdfDictionary) apResolved).get(PdfName.of("N"));
+            PdfBase nResolved = r.getParser().resolveReference(n);
+            assertTrue(nResolved instanceof PdfStream,
+                    "/AP/N must resolve to a PdfStream after save→encrypt→save, got "
                             + (nResolved == null ? "null" : nResolved.getClass().getSimpleName()));
-            byte[] body = ((COSStream) nResolved).getDecodedData();
+            byte[] body = ((PdfStream) nResolved).getDecodedData();
             assertTrue(body.length > 0, "/AP/N stream must have non-empty body");
         }
     }
@@ -189,20 +189,20 @@ class SaveTwiceStreamRetentionTest {
         }
         try (Document r = new Document(enc.toString(), "pw")) {
             Page page = r.getPages().get(1);
-            COSBase contents = page.getCOSDictionary().get(COSName.CONTENTS);
-            COSBase resolved = r.getParser().resolveReference(contents);
+            PdfBase contents = page.getPdfDictionary().get(PdfName.CONTENTS);
+            PdfBase resolved = r.getParser().resolveReference(contents);
             // /Contents may be a stream or an array of stream refs.
             StringBuilder all = new StringBuilder();
-            if (resolved instanceof COSStream) {
-                all.append(new String(((COSStream) resolved).getDecodedData(),
+            if (resolved instanceof PdfStream) {
+                all.append(new String(((PdfStream) resolved).getDecodedData(),
                         StandardCharsets.US_ASCII));
-            } else if (resolved instanceof COSArray) {
-                COSArray arr = (COSArray) resolved;
+            } else if (resolved instanceof PdfArray) {
+                PdfArray arr = (PdfArray) resolved;
                 for (int i = 0; i < arr.size(); i++) {
-                    COSBase elem = r.getParser().resolveReference(arr.get(i));
-                    assertTrue(elem instanceof COSStream,
+                    PdfBase elem = r.getParser().resolveReference(arr.get(i));
+                    assertTrue(elem instanceof PdfStream,
                             "/Contents[" + i + "] must resolve to a stream");
-                    all.append(new String(((COSStream) elem).getDecodedData(),
+                    all.append(new String(((PdfStream) elem).getDecodedData(),
                             StandardCharsets.US_ASCII));
                 }
             } else {

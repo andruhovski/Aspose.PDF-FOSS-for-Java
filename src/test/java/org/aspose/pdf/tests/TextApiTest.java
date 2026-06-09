@@ -3,8 +3,8 @@ package org.aspose.pdf.tests;
 import org.aspose.pdf.Color;
 import org.aspose.pdf.Page;
 import org.aspose.pdf.Rectangle;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 import org.aspose.pdf.text.*;
 import org.junit.jupiter.api.Test;
 
@@ -120,8 +120,8 @@ public class TextApiTest {
     public void testTextFragmentPage() {
         TextFragment frag = new TextFragment("test");
         assertNull(frag.getPage());
-        COSDictionary pageDict = new COSDictionary();
-        pageDict.set(COSName.TYPE, COSName.PAGE);
+        PdfDictionary pageDict = new PdfDictionary();
+        pageDict.set(PdfName.TYPE, PdfName.PAGE);
         Page page = new Page(pageDict, null);
         frag.setPage(page);
         assertSame(page, frag.getPage());

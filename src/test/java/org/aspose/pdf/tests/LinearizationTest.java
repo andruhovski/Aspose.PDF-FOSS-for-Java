@@ -2,15 +2,15 @@ package org.aspose.pdf.tests;
 
 import org.aspose.pdf.Document;
 import org.aspose.pdf.PdfSaveOptions;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectKey;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSStream;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectKey;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 import org.aspose.pdf.engine.io.RandomAccessReader;
 import org.aspose.pdf.engine.linearization.HintTableGenerator;
 import org.aspose.pdf.engine.linearization.LinearizationDetector;
@@ -281,7 +281,7 @@ public class LinearizationTest {
         params.setHintStreamOffset(500);
         params.setHintStreamLength(200);
 
-        COSDictionary dict = params.toDictionary();
+        PdfDictionary dict = params.toDictionary();
         LinearizationParams parsed = LinearizationParams.parse(dict);
 
         assertNotNull(parsed);
@@ -296,8 +296,8 @@ public class LinearizationTest {
 
     @Test
     public void linearizationParamsParseNonLinDict() {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("Type"), COSName.of("Catalog"));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("Type"), PdfName.of("Catalog"));
         assertNull(LinearizationParams.parse(dict));
     }
 
@@ -361,24 +361,24 @@ public class LinearizationTest {
     private byte[] createMinimalPDF() throws IOException {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         PDFWriter writer = new PDFWriter(bos, 1.7f);
-        Map<COSObjectKey, COSBase> objects = new LinkedHashMap<>();
-        COSObjectKey catKey = new COSObjectKey(1, 0);
-        COSObjectKey pagesKey = new COSObjectKey(2, 0);
+        Map<PdfObjectKey, PdfBase> objects = new LinkedHashMap<>();
+        PdfObjectKey catKey = new PdfObjectKey(1, 0);
+        PdfObjectKey pagesKey = new PdfObjectKey(2, 0);
 
-        COSDictionary catalog = new COSDictionary();
-        catalog.set(COSName.of("Type"), COSName.of("Catalog"));
-        catalog.set(COSName.PAGES, new COSObjectReference(pagesKey, k -> objects.get(k)));
+        PdfDictionary catalog = new PdfDictionary();
+        catalog.set(PdfName.of("Type"), PdfName.of("Catalog"));
+        catalog.set(PdfName.PAGES, new PdfObjectReference(pagesKey, k -> objects.get(k)));
         objects.put(catKey, catalog);
 
-        COSDictionary pages = new COSDictionary();
-        pages.set(COSName.of("Type"), COSName.PAGES);
-        pages.set(COSName.of("Count"), COSInteger.valueOf(0));
-        pages.set(COSName.KIDS, new COSArray());
+        PdfDictionary pages = new PdfDictionary();
+        pages.set(PdfName.of("Type"), PdfName.PAGES);
+        pages.set(PdfName.of("Count"), PdfInteger.valueOf(0));
+        pages.set(PdfName.KIDS, new PdfArray());
         objects.put(pagesKey, pages);
 
-        COSDictionary trailer = new COSDictionary();
-        trailer.set(COSName.ROOT, new COSObjectReference(catKey, k -> objects.get(k)));
-        trailer.set(COSName.of("Size"), COSInteger.valueOf(3));
+        PdfDictionary trailer = new PdfDictionary();
+        trailer.set(PdfName.ROOT, new PdfObjectReference(catKey, k -> objects.get(k)));
+        trailer.set(PdfName.of("Size"), PdfInteger.valueOf(3));
         writer.write(trailer, objects);
         return bos.toByteArray();
     }
@@ -389,39 +389,39 @@ public class LinearizationTest {
     private byte[] createMinimalPDFWithPage() throws IOException {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         PDFWriter writer = new PDFWriter(bos, 1.7f);
-        Map<COSObjectKey, COSBase> objects = new LinkedHashMap<>();
-        COSObjectKey catKey = new COSObjectKey(1, 0);
-        COSObjectKey pagesKey = new COSObjectKey(2, 0);
-        COSObjectKey pageKey = new COSObjectKey(3, 0);
+        Map<PdfObjectKey, PdfBase> objects = new LinkedHashMap<>();
+        PdfObjectKey catKey = new PdfObjectKey(1, 0);
+        PdfObjectKey pagesKey = new PdfObjectKey(2, 0);
+        PdfObjectKey pageKey = new PdfObjectKey(3, 0);
 
         // Page
-        COSDictionary page = new COSDictionary();
-        page.set(COSName.of("Type"), COSName.of("Page"));
-        page.set(COSName.PARENT, new COSObjectReference(pagesKey, k -> objects.get(k)));
-        COSArray mediaBox = new COSArray();
-        mediaBox.add(COSInteger.valueOf(0)); mediaBox.add(COSInteger.valueOf(0));
-        mediaBox.add(COSInteger.valueOf(612)); mediaBox.add(COSInteger.valueOf(792));
-        page.set(COSName.of("MediaBox"), mediaBox);
+        PdfDictionary page = new PdfDictionary();
+        page.set(PdfName.of("Type"), PdfName.of("Page"));
+        page.set(PdfName.PARENT, new PdfObjectReference(pagesKey, k -> objects.get(k)));
+        PdfArray mediaBox = new PdfArray();
+        mediaBox.add(PdfInteger.valueOf(0)); mediaBox.add(PdfInteger.valueOf(0));
+        mediaBox.add(PdfInteger.valueOf(612)); mediaBox.add(PdfInteger.valueOf(792));
+        page.set(PdfName.of("MediaBox"), mediaBox);
         objects.put(pageKey, page);
 
         // Pages
-        COSArray kids = new COSArray();
-        kids.add(new COSObjectReference(pageKey, k -> objects.get(k)));
-        COSDictionary pages = new COSDictionary();
-        pages.set(COSName.of("Type"), COSName.PAGES);
-        pages.set(COSName.of("Count"), COSInteger.valueOf(1));
-        pages.set(COSName.KIDS, kids);
+        PdfArray kids = new PdfArray();
+        kids.add(new PdfObjectReference(pageKey, k -> objects.get(k)));
+        PdfDictionary pages = new PdfDictionary();
+        pages.set(PdfName.of("Type"), PdfName.PAGES);
+        pages.set(PdfName.of("Count"), PdfInteger.valueOf(1));
+        pages.set(PdfName.KIDS, kids);
         objects.put(pagesKey, pages);
 
         // Catalog
-        COSDictionary catalog = new COSDictionary();
-        catalog.set(COSName.of("Type"), COSName.of("Catalog"));
-        catalog.set(COSName.PAGES, new COSObjectReference(pagesKey, k -> objects.get(k)));
+        PdfDictionary catalog = new PdfDictionary();
+        catalog.set(PdfName.of("Type"), PdfName.of("Catalog"));
+        catalog.set(PdfName.PAGES, new PdfObjectReference(pagesKey, k -> objects.get(k)));
         objects.put(catKey, catalog);
 
-        COSDictionary trailer = new COSDictionary();
-        trailer.set(COSName.ROOT, new COSObjectReference(catKey, k -> objects.get(k)));
-        trailer.set(COSName.of("Size"), COSInteger.valueOf(4));
+        PdfDictionary trailer = new PdfDictionary();
+        trailer.set(PdfName.ROOT, new PdfObjectReference(catKey, k -> objects.get(k)));
+        trailer.set(PdfName.of("Size"), PdfInteger.valueOf(4));
         writer.write(trailer, objects);
         return bos.toByteArray();
     }
@@ -456,17 +456,17 @@ public class LinearizationTest {
      * Creates a test LinearizationPlan for hint table tests.
      */
     private LinearizationPlan createTestPlan(int numPages) {
-        List<COSObjectKey> pageKeys = new ArrayList<>();
+        List<PdfObjectKey> pageKeys = new ArrayList<>();
         for (int i = 0; i < numPages; i++) {
-            pageKeys.add(new COSObjectKey(i + 10, 0));
+            pageKeys.add(new PdfObjectKey(i + 10, 0));
         }
         return new LinearizationPlan(
                 pageKeys, 0,
-                List.of(new COSObjectKey(10, 0)),  // first page private
-                List.of(new COSObjectKey(20, 0)),  // first page shared
+                List.of(new PdfObjectKey(10, 0)),  // first page private
+                List.of(new PdfObjectKey(20, 0)),  // first page shared
                 new LinkedHashMap<>(),              // other page private
-                List.of(new COSObjectKey(20, 0)),  // shared
-                List.of(new COSObjectKey(1, 0)),    // document level
+                List.of(new PdfObjectKey(20, 0)),  // shared
+                List.of(new PdfObjectKey(1, 0)),    // document level
                 numPages);
     }
 }

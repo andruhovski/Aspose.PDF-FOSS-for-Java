@@ -1,7 +1,7 @@
 package org.aspose.pdf.engine.filter;
 
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -15,7 +15,7 @@ import java.util.logging.Logger;
  * marker is {@code ~>}.
  * </p>
  */
-public final class ASCII85Filter implements COSFilter {
+public final class ASCII85Filter implements PdfFilter {
 
     private static final Logger LOG = Logger.getLogger(ASCII85Filter.class.getName());
 
@@ -32,7 +32,7 @@ public final class ASCII85Filter implements COSFilter {
      * {@inheritDoc}
      */
     @Override
-    public byte[] decode(byte[] encoded, COSDictionary params) throws IOException {
+    public byte[] decode(byte[] encoded, PdfDictionary params) throws IOException {
         if (encoded == null || encoded.length == 0) {
             return new byte[0];
         }
@@ -43,8 +43,13 @@ public final class ASCII85Filter implements COSFilter {
             byte b = encoded[i];
             char ch = (char) (b & 0xFF);
 
-            // Check for EOD marker ~>
-            if (ch == '~' && i + 1 < encoded.length && (encoded[i + 1] & 0xFF) == '>') {
+            // Check for EOD marker. The canonical marker is "~>", but the byte
+            // '~' (0x7E = 126) can never be a valid ASCII85 data character (data
+            // is in the range '!'..'u' = 33..117, plus 'z'). So the first '~' is
+            // unambiguously end-of-data, whether or not the '>' immediately
+            // follows (some encoders insert whitespace, or the trailing '>' is
+            // lost). Breaking here also stops cleanly at any post-EOD junk.
+            if (ch == '~') {
                 break;
             }
 
@@ -127,7 +132,7 @@ public final class ASCII85Filter implements COSFilter {
      * {@inheritDoc}
      */
     @Override
-    public byte[] encode(byte[] decoded, COSDictionary params) throws IOException {
+    public byte[] encode(byte[] decoded, PdfDictionary params) throws IOException {
         if (decoded == null || decoded.length == 0) {
             return "~>".getBytes();
         }
@@ -175,7 +180,7 @@ public final class ASCII85Filter implements COSFilter {
      * {@inheritDoc}
      */
     @Override
-    public COSName getName() {
-        return COSName.ASCII85_DECODE;
+    public PdfName getName() {
+        return PdfName.ASCII85_DECODE;
     }
 }

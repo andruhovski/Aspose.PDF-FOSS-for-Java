@@ -2,11 +2,11 @@ package org.aspose.pdf.engine.pdfa.fixes;
 
 import org.aspose.pdf.ConvertErrorAction;
 import org.aspose.pdf.PdfFormat;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectKey;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectKey;
 import org.aspose.pdf.engine.pdfa.PdfAValidationResult;
 import org.aspose.pdf.engine.parser.PDFParser;
 
@@ -59,7 +59,7 @@ public final class ActionFixes {
      */
     public void removeCatalogAA(PDFParser parser, PdfFormat format,
                                 ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
-        COSDictionary catalog = parser.getCatalog();
+        PdfDictionary catalog = parser.getCatalog();
         if (catalog.get("AA") != null) {
             LOG.info("Removing /AA from catalog");
             catalog.set("AA", null);
@@ -79,16 +79,16 @@ public final class ActionFixes {
      */
     public void removePageAA(PDFParser parser, PdfFormat format,
                              ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
-        COSDictionary catalog = parser.getCatalog();
-        COSBase pagesRef = catalog.get("Pages");
+        PdfDictionary catalog = parser.getCatalog();
+        PdfBase pagesRef = catalog.get("Pages");
         if (pagesRef == null) {
             return;
         }
-        COSBase pagesObj = parser.resolveReference(pagesRef);
-        if (!(pagesObj instanceof COSDictionary)) {
+        PdfBase pagesObj = parser.resolveReference(pagesRef);
+        if (!(pagesObj instanceof PdfDictionary)) {
             return;
         }
-        removeAAFromPageTree(parser, (COSDictionary) pagesObj, result);
+        removeAAFromPageTree(parser, (PdfDictionary) pagesObj, result);
     }
 
     /**
@@ -103,16 +103,16 @@ public final class ActionFixes {
      */
     public void removeWidgetAA(PDFParser parser, PdfFormat format,
                                ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
-        COSDictionary catalog = parser.getCatalog();
-        COSBase pagesRef = catalog.get("Pages");
+        PdfDictionary catalog = parser.getCatalog();
+        PdfBase pagesRef = catalog.get("Pages");
         if (pagesRef == null) {
             return;
         }
-        COSBase pagesObj = parser.resolveReference(pagesRef);
-        if (!(pagesObj instanceof COSDictionary)) {
+        PdfBase pagesObj = parser.resolveReference(pagesRef);
+        if (!(pagesObj instanceof PdfDictionary)) {
             return;
         }
-        removeAAFromAnnotations(parser, (COSDictionary) pagesObj, result);
+        removeAAFromAnnotations(parser, (PdfDictionary) pagesObj, result);
     }
 
     /**
@@ -127,17 +127,17 @@ public final class ActionFixes {
      */
     public void removeForbiddenActions(PDFParser parser, PdfFormat format,
                                        ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
-        for (COSObjectKey key : parser.getAllObjectKeys()) {
-            COSBase obj;
+        for (PdfObjectKey key : parser.getAllObjectKeys()) {
+            PdfBase obj;
             try {
                 obj = parser.getObject(key);
             } catch (IOException e) {
                 continue;
             }
-            if (!(obj instanceof COSDictionary)) {
+            if (!(obj instanceof PdfDictionary)) {
                 continue;
             }
-            COSDictionary dict = (COSDictionary) obj;
+            PdfDictionary dict = (PdfDictionary) obj;
             removeForbiddenActionEntry(parser, dict, key, errorAction, result);
         }
     }
@@ -149,24 +149,24 @@ public final class ActionFixes {
     /**
      * Recursively walks the page tree removing /AA from page dictionaries.
      */
-    private void removeAAFromPageTree(PDFParser parser, COSDictionary node,
+    private void removeAAFromPageTree(PDFParser parser, PdfDictionary node,
                                       PdfAValidationResult result) throws IOException {
         String type = node.getNameAsString("Type");
         if ("Pages".equals(type)) {
-            COSBase kidsRef = node.get("Kids");
+            PdfBase kidsRef = node.get("Kids");
             if (kidsRef == null) {
                 return;
             }
-            COSBase kidsObj = parser.resolveReference(kidsRef);
-            if (!(kidsObj instanceof COSArray)) {
+            PdfBase kidsObj = parser.resolveReference(kidsRef);
+            if (!(kidsObj instanceof PdfArray)) {
                 return;
             }
-            COSArray kids = (COSArray) kidsObj;
+            PdfArray kids = (PdfArray) kidsObj;
             for (int i = 0; i < kids.size(); i++) {
-                COSBase childRef = kids.get(i);
-                COSBase childObj = parser.resolveReference(childRef);
-                if (childObj instanceof COSDictionary) {
-                    removeAAFromPageTree(parser, (COSDictionary) childObj, result);
+                PdfBase childRef = kids.get(i);
+                PdfBase childObj = parser.resolveReference(childRef);
+                if (childObj instanceof PdfDictionary) {
+                    removeAAFromPageTree(parser, (PdfDictionary) childObj, result);
                 }
             }
         } else if ("Page".equals(type) || type == null) {
@@ -181,41 +181,41 @@ public final class ActionFixes {
     /**
      * Recursively walks the page tree removing /AA from annotations.
      */
-    private void removeAAFromAnnotations(PDFParser parser, COSDictionary node,
+    private void removeAAFromAnnotations(PDFParser parser, PdfDictionary node,
                                          PdfAValidationResult result) throws IOException {
         String type = node.getNameAsString("Type");
         if ("Pages".equals(type)) {
-            COSBase kidsRef = node.get("Kids");
+            PdfBase kidsRef = node.get("Kids");
             if (kidsRef == null) {
                 return;
             }
-            COSBase kidsObj = parser.resolveReference(kidsRef);
-            if (!(kidsObj instanceof COSArray)) {
+            PdfBase kidsObj = parser.resolveReference(kidsRef);
+            if (!(kidsObj instanceof PdfArray)) {
                 return;
             }
-            COSArray kids = (COSArray) kidsObj;
+            PdfArray kids = (PdfArray) kidsObj;
             for (int i = 0; i < kids.size(); i++) {
-                COSBase childRef = kids.get(i);
-                COSBase childObj = parser.resolveReference(childRef);
-                if (childObj instanceof COSDictionary) {
-                    removeAAFromAnnotations(parser, (COSDictionary) childObj, result);
+                PdfBase childRef = kids.get(i);
+                PdfBase childObj = parser.resolveReference(childRef);
+                if (childObj instanceof PdfDictionary) {
+                    removeAAFromAnnotations(parser, (PdfDictionary) childObj, result);
                 }
             }
         } else if ("Page".equals(type) || type == null) {
-            COSBase annotsRef = node.get("Annots");
+            PdfBase annotsRef = node.get("Annots");
             if (annotsRef == null) {
                 return;
             }
-            COSBase annotsObj = parser.resolveReference(annotsRef);
-            if (!(annotsObj instanceof COSArray)) {
+            PdfBase annotsObj = parser.resolveReference(annotsRef);
+            if (!(annotsObj instanceof PdfArray)) {
                 return;
             }
-            COSArray annots = (COSArray) annotsObj;
+            PdfArray annots = (PdfArray) annotsObj;
             for (int i = 0; i < annots.size(); i++) {
-                COSBase annotRef = annots.get(i);
-                COSBase annotObj = parser.resolveReference(annotRef);
-                if (annotObj instanceof COSDictionary) {
-                    COSDictionary annotDict = (COSDictionary) annotObj;
+                PdfBase annotRef = annots.get(i);
+                PdfBase annotObj = parser.resolveReference(annotRef);
+                if (annotObj instanceof PdfDictionary) {
+                    PdfDictionary annotDict = (PdfDictionary) annotObj;
                     if (annotDict.get("AA") != null) {
                         annotDict.set("AA", null);
                         result.addWarning("action.3", "Removed /AA from annotation",
@@ -229,18 +229,18 @@ public final class ActionFixes {
     /**
      * Removes the /A entry from a dictionary if it references a forbidden action type.
      */
-    private void removeForbiddenActionEntry(PDFParser parser, COSDictionary dict,
-                                            COSObjectKey key, ConvertErrorAction errorAction,
+    private void removeForbiddenActionEntry(PDFParser parser, PdfDictionary dict,
+                                            PdfObjectKey key, ConvertErrorAction errorAction,
                                             PdfAValidationResult result) throws IOException {
-        COSBase actionRef = dict.get("A");
+        PdfBase actionRef = dict.get("A");
         if (actionRef == null) {
             return;
         }
-        COSBase actionObj = parser.resolveReference(actionRef);
-        if (!(actionObj instanceof COSDictionary)) {
+        PdfBase actionObj = parser.resolveReference(actionRef);
+        if (!(actionObj instanceof PdfDictionary)) {
             return;
         }
-        COSDictionary actionDict = (COSDictionary) actionObj;
+        PdfDictionary actionDict = (PdfDictionary) actionObj;
         String actionType = actionDict.getNameAsString("S");
         if (actionType != null && FORBIDDEN_ACTION_TYPES.contains(actionType)) {
             if (errorAction == ConvertErrorAction.Delete) {

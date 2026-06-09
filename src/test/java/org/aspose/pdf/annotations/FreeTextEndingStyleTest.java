@@ -37,15 +37,15 @@ class FreeTextEndingStyleTest {
             Page p = doc.getPages().add();
             FreeTextAnnotation ft = new FreeTextAnnotation(p, new Rectangle(0, 0, 100, 50));
             ft.setEndingStyle(LineEnding.Square);
-            assertNotNull(ft.getCOSDictionary().get("LE"));
+            assertNotNull(ft.getPdfDictionary().get("LE"));
 
             ft.setEndingStyle(null);
-            assertNull(ft.getCOSDictionary().get("LE"));
+            assertNull(ft.getPdfDictionary().get("LE"));
 
             ft.setEndingStyle(LineEnding.Butt);
-            assertNotNull(ft.getCOSDictionary().get("LE"));
+            assertNotNull(ft.getPdfDictionary().get("LE"));
             ft.setEndingStyle(LineEnding.None);
-            assertNull(ft.getCOSDictionary().get("LE"));
+            assertNull(ft.getPdfDictionary().get("LE"));
         }
     }
 }

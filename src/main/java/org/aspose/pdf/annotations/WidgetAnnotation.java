@@ -1,7 +1,7 @@
 package org.aspose.pdf.annotations;
 
 import org.aspose.pdf.*;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.io.IOException;
 
@@ -19,12 +19,12 @@ public class WidgetAnnotation extends Annotation {
     private org.aspose.pdf.forms.AppearanceCharacteristics cachedCharacteristics;
 
     /**
-     * Constructs a widget annotation from an existing COS dictionary.
+     * Constructs a widget annotation from an existing PDF dictionary.
      *
-     * @param dict the COS dictionary
+     * @param dict the PDF dictionary
      * @param page the page this annotation belongs to
      */
-    public WidgetAnnotation(COSDictionary dict, Page page) {
+    public WidgetAnnotation(PdfDictionary dict, Page page) {
         super(dict, page);
     }
 
@@ -36,7 +36,7 @@ public class WidgetAnnotation extends Annotation {
      */
     public WidgetAnnotation(Page page, Rectangle rect) {
         super(page, rect);
-        dict.set(COSName.of("Subtype"), COSName.of("Widget"));
+        dict.set(PdfName.of("Subtype"), PdfName.of("Widget"));
     }
 
     /**
@@ -51,9 +51,9 @@ public class WidgetAnnotation extends Annotation {
     /**
      * Returns the raw field value (/V).
      *
-     * @return the value COS object, or null
+     * @return the value PDF object, or null
      */
-    public COSBase getFieldValue() {
+    public PdfBase getFieldValue() {
         return dict.get("V");
     }
 
@@ -63,8 +63,8 @@ public class WidgetAnnotation extends Annotation {
      * @return the field name, or null
      */
     public String getFieldName() {
-        COSBase t = dict.get("T");
-        return (t instanceof COSString) ? ((COSString) t).getString() : null;
+        PdfBase t = dict.get("T");
+        return (t instanceof PdfString) ? ((PdfString) t).getString() : null;
     }
 
     /**
@@ -82,15 +82,15 @@ public class WidgetAnnotation extends Annotation {
      *
      * @return the MK dictionary, or null
      */
-    public COSDictionary getAppearanceCharacteristics() {
-        COSBase mk = dict.get("MK");
-        return (mk instanceof COSDictionary) ? (COSDictionary) mk : null;
+    public PdfDictionary getAppearanceCharacteristics() {
+        PdfBase mk = dict.get("MK");
+        return (mk instanceof PdfDictionary) ? (PdfDictionary) mk : null;
     }
 
     /**
      * Returns typed access to this widget's appearance characteristics
      * (the {@code /MK} sub-dictionary). The wrapper reads and writes through
-     * to the underlying COS dictionary and creates {@code /MK} on demand.
+     * to the underlying PDF dictionary and creates {@code /MK} on demand.
      *
      * @return the characteristics wrapper (never null)
      */
@@ -108,10 +108,10 @@ public class WidgetAnnotation extends Annotation {
      * @throws IOException if parsing fails
      */
     public PdfAction getWidgetAction() throws IOException {
-        COSBase a = dict.get("A");
-        if (a instanceof COSObjectReference) {
-            try { a = ((COSObjectReference) a).dereference(); } catch (Exception e) { return null; }
+        PdfBase a = dict.get("A");
+        if (a instanceof PdfObjectReference) {
+            try { a = ((PdfObjectReference) a).dereference(); } catch (Exception e) { return null; }
         }
-        return (a instanceof COSDictionary) ? PdfAction.fromDictionary((COSDictionary) a, null) : null;
+        return (a instanceof PdfDictionary) ? PdfAction.fromDictionary((PdfDictionary) a, null) : null;
     }
 }

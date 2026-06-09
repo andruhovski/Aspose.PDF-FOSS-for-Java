@@ -3,10 +3,10 @@ package org.aspose.pdf.tests.devices;
 import org.aspose.pdf.devices.*;
 
 import org.aspose.pdf.Page;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSFloat;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfFloat;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 import org.junit.jupiter.api.Test;
 
 import javax.imageio.ImageIO;
@@ -22,14 +22,14 @@ import static org.junit.jupiter.api.Assertions.*;
 public class DeviceOutputTest {
 
     private Page createEmptyPage() {
-        COSDictionary pageDict = new COSDictionary();
-        pageDict.set(COSName.of("Type"), COSName.of("Page"));
-        COSArray mediaBox = new COSArray(4);
-        mediaBox.add(new COSFloat(0));
-        mediaBox.add(new COSFloat(0));
-        mediaBox.add(new COSFloat(200));
-        mediaBox.add(new COSFloat(100));
-        pageDict.set(COSName.of("MediaBox"), mediaBox);
+        PdfDictionary pageDict = new PdfDictionary();
+        pageDict.set(PdfName.of("Type"), PdfName.of("Page"));
+        PdfArray mediaBox = new PdfArray(4);
+        mediaBox.add(new PdfFloat(0));
+        mediaBox.add(new PdfFloat(0));
+        mediaBox.add(new PdfFloat(200));
+        mediaBox.add(new PdfFloat(100));
+        pageDict.set(PdfName.of("MediaBox"), mediaBox);
         return new Page(pageDict, null);
     }
 

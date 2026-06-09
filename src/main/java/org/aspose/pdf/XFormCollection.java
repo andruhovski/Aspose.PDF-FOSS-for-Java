@@ -1,10 +1,10 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 import org.aspose.pdf.engine.parser.PDFParser;
 
 import java.io.IOException;
@@ -28,7 +28,7 @@ public class XFormCollection implements Iterable<XForm> {
 
     private static final Logger LOG = Logger.getLogger(XFormCollection.class.getName());
 
-    private final COSDictionary xobjectDict;
+    private final PdfDictionary xobjectDict;
     private final PDFParser parser;
 
     /**
@@ -38,7 +38,7 @@ public class XFormCollection implements Iterable<XForm> {
      * @param parser      the PDF parser for indirect-reference resolution (may be null)
      * @throws IllegalArgumentException if {@code xobjectDict} is null
      */
-    public XFormCollection(COSDictionary xobjectDict, PDFParser parser) {
+    public XFormCollection(PdfDictionary xobjectDict, PDFParser parser) {
         if (xobjectDict == null) {
             throw new IllegalArgumentException("XObject dictionary must not be null");
         }
@@ -53,7 +53,7 @@ public class XFormCollection implements Iterable<XForm> {
      */
     public int size() {
         int count = 0;
-        for (COSName key : xobjectDict.keySet()) {
+        for (PdfName key : xobjectDict.keySet()) {
             if (isForm(resolve(xobjectDict.get(key)))) {
                 count++;
             }
@@ -97,11 +97,11 @@ public class XFormCollection implements Iterable<XForm> {
         if (name == null) {
             return null;
         }
-        COSBase resolved = resolve(xobjectDict.get(name));
+        PdfBase resolved = resolve(xobjectDict.get(name));
         if (!isForm(resolved)) {
             return null;
         }
-        return new XForm((COSStream) resolved, name, parser);
+        return new XForm((PdfStream) resolved, name, parser);
     }
 
     /**
@@ -111,7 +111,7 @@ public class XFormCollection implements Iterable<XForm> {
      */
     public List<String> getNames() {
         List<String> result = new ArrayList<>();
-        for (COSName key : xobjectDict.keySet()) {
+        for (PdfName key : xobjectDict.keySet()) {
             if (isForm(resolve(xobjectDict.get(key)))) {
                 result.add(key.getName());
             }
@@ -134,19 +134,19 @@ public class XFormCollection implements Iterable<XForm> {
 
     private List<XForm> collectForms() {
         List<XForm> out = new ArrayList<>();
-        for (COSName key : xobjectDict.keySet()) {
-            COSBase resolved = resolve(xobjectDict.get(key));
+        for (PdfName key : xobjectDict.keySet()) {
+            PdfBase resolved = resolve(xobjectDict.get(key));
             if (isForm(resolved)) {
-                out.add(new XForm((COSStream) resolved, key.getName(), parser));
+                out.add(new XForm((PdfStream) resolved, key.getName(), parser));
             }
         }
         return out;
     }
 
-    private COSBase resolve(COSBase value) {
-        if (value instanceof COSObjectReference) {
+    private PdfBase resolve(PdfBase value) {
+        if (value instanceof PdfObjectReference) {
             try {
-                return ((COSObjectReference) value).dereference();
+                return ((PdfObjectReference) value).dereference();
             } catch (IOException e) {
                 LOG.warning(() -> "Failed to dereference XObject entry: " + e.getMessage());
                 return null;
@@ -155,11 +155,11 @@ public class XFormCollection implements Iterable<XForm> {
         return value;
     }
 
-    private static boolean isForm(COSBase value) {
-        if (!(value instanceof COSStream)) {
+    private static boolean isForm(PdfBase value) {
+        if (!(value instanceof PdfStream)) {
             return false;
         }
-        COSBase subtype = ((COSStream) value).get(COSName.SUBTYPE);
-        return subtype instanceof COSName && "Form".equals(((COSName) subtype).getName());
+        PdfBase subtype = ((PdfStream) value).get(PdfName.SUBTYPE);
+        return subtype instanceof PdfName && "Form".equals(((PdfName) subtype).getName());
     }
 }

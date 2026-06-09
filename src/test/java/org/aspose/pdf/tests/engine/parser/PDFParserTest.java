@@ -1,9 +1,9 @@
 package org.aspose.pdf.tests.engine.parser;
 import org.aspose.pdf.engine.parser.*;
 
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 import org.aspose.pdf.engine.io.RandomAccessReader;
 import org.junit.jupiter.api.Test;
 
@@ -100,12 +100,12 @@ public class PDFParserTest {
         PDFParser parser = new PDFParser(reader);
         parser.parse();
 
-        COSDictionary catalog = parser.getCatalog();
+        PdfDictionary catalog = parser.getCatalog();
         assertNotNull(catalog);
-        COSBase type = catalog.get(COSName.of("Type"));
+        PdfBase type = catalog.get(PdfName.of("Type"));
         assertNotNull(type);
-        assertTrue(type instanceof COSName);
-        assertEquals("Catalog", ((COSName) type).getValue());
+        assertTrue(type instanceof PdfName);
+        assertEquals("Catalog", ((PdfName) type).getValue());
     }
 
     /**
@@ -118,12 +118,12 @@ public class PDFParserTest {
         PDFParser parser = new PDFParser(reader);
         parser.parse();
 
-        COSBase pageObj = parser.getObject(3);
-        assertTrue(pageObj instanceof COSDictionary);
-        COSDictionary page = (COSDictionary) pageObj;
-        COSBase type = page.get(COSName.of("Type"));
-        assertTrue(type instanceof COSName);
-        assertEquals("Page", ((COSName) type).getValue());
+        PdfBase pageObj = parser.getObject(3);
+        assertTrue(pageObj instanceof PdfDictionary);
+        PdfDictionary page = (PdfDictionary) pageObj;
+        PdfBase type = page.get(PdfName.of("Type"));
+        assertTrue(type instanceof PdfName);
+        assertEquals("Page", ((PdfName) type).getValue());
     }
 
     /**
@@ -136,8 +136,8 @@ public class PDFParserTest {
         PDFParser parser = new PDFParser(reader);
         parser.parse();
 
-        COSBase first = parser.getObject(1);
-        COSBase second = parser.getObject(1);
+        PdfBase first = parser.getObject(1);
+        PdfBase second = parser.getObject(1);
         assertSame(first, second, "Should return cached instance");
     }
 
@@ -154,7 +154,7 @@ public class PDFParserTest {
     }
 
     /**
-     * Test 9: Missing object returns COSNull.
+     * Test 9: Missing object returns PdfNull.
      */
     @Test
     public void testMissingObjectReturnsNull() throws IOException {
@@ -163,8 +163,8 @@ public class PDFParserTest {
         PDFParser parser = new PDFParser(reader);
         parser.parse();
 
-        COSBase missing = parser.getObject(999);
-        assertNotNull(missing); // Returns COSNull, not Java null
+        PdfBase missing = parser.getObject(999);
+        assertNotNull(missing); // Returns PdfNull, not Java null
     }
 
     /**

@@ -1,9 +1,9 @@
 package org.aspose.pdf.tests;
 
 import org.aspose.pdf.Rectangle;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSFloat;
-import org.aspose.pdf.engine.cos.COSInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfFloat;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -30,13 +30,13 @@ public class RectangleTest {
     }
 
     @Test
-    public void fromCOSArrayWithFloats() {
-        COSArray arr = new COSArray(4);
-        arr.add(new COSFloat(0));
-        arr.add(new COSFloat(0));
-        arr.add(new COSFloat(595.276));
-        arr.add(new COSFloat(841.89));
-        Rectangle r = Rectangle.fromCOSArray(arr);
+    public void fromPdfArrayWithFloats() {
+        PdfArray arr = new PdfArray(4);
+        arr.add(new PdfFloat(0));
+        arr.add(new PdfFloat(0));
+        arr.add(new PdfFloat(595.276));
+        arr.add(new PdfFloat(841.89));
+        Rectangle r = Rectangle.fromPdfArray(arr);
         assertEquals(0, r.getLLX(), 1e-3);
         assertEquals(0, r.getLLY(), 1e-3);
         assertEquals(595.276, r.getURX(), 1e-3);
@@ -44,13 +44,13 @@ public class RectangleTest {
     }
 
     @Test
-    public void fromCOSArrayWithIntegers() {
-        COSArray arr = new COSArray(4);
-        arr.add(COSInteger.valueOf(0));
-        arr.add(COSInteger.valueOf(0));
-        arr.add(COSInteger.valueOf(612));
-        arr.add(COSInteger.valueOf(792));
-        Rectangle r = Rectangle.fromCOSArray(arr);
+    public void fromPdfArrayWithIntegers() {
+        PdfArray arr = new PdfArray(4);
+        arr.add(PdfInteger.valueOf(0));
+        arr.add(PdfInteger.valueOf(0));
+        arr.add(PdfInteger.valueOf(612));
+        arr.add(PdfInteger.valueOf(792));
+        Rectangle r = Rectangle.fromPdfArray(arr);
         assertEquals(0, r.getLLX());
         assertEquals(0, r.getLLY());
         assertEquals(612, r.getURX());
@@ -58,21 +58,21 @@ public class RectangleTest {
     }
 
     @Test
-    public void fromCOSArrayNullThrows() {
-        assertThrows(IllegalArgumentException.class, () -> Rectangle.fromCOSArray(null));
+    public void fromPdfArrayNullThrows() {
+        assertThrows(IllegalArgumentException.class, () -> Rectangle.fromPdfArray(null));
     }
 
     @Test
-    public void fromCOSArrayWrongSizeThrows() {
-        COSArray arr = new COSArray();
-        arr.add(new COSFloat(1));
-        assertThrows(IllegalArgumentException.class, () -> Rectangle.fromCOSArray(arr));
+    public void fromPdfArrayWrongSizeThrows() {
+        PdfArray arr = new PdfArray();
+        arr.add(new PdfFloat(1));
+        assertThrows(IllegalArgumentException.class, () -> Rectangle.fromPdfArray(arr));
     }
 
     @Test
-    public void toCOSArray() {
+    public void toPdfArray() {
         Rectangle r = new Rectangle(10, 20, 110, 220);
-        COSArray arr = r.toCOSArray();
+        PdfArray arr = r.toPdfArray();
         assertEquals(4, arr.size());
         assertEquals(10f, arr.getFloat(0, 0f), 1e-10);
         assertEquals(20f, arr.getFloat(1, 0f), 1e-10);
@@ -83,8 +83,8 @@ public class RectangleTest {
     @Test
     public void roundTrip() {
         Rectangle original = new Rectangle(1.5, 2.5, 100.25, 200.75);
-        COSArray arr = original.toCOSArray();
-        Rectangle restored = Rectangle.fromCOSArray(arr);
+        PdfArray arr = original.toPdfArray();
+        Rectangle restored = Rectangle.fromPdfArray(arr);
         assertEquals(original, restored);
     }
 

@@ -1,9 +1,9 @@
 package org.aspose.pdf.engine.font;
 
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 import org.aspose.pdf.engine.parser.PDFParser;
 
 import java.io.IOException;
@@ -33,7 +33,7 @@ public class Type1Font extends PdfFont {
      * @param parser   the PDF parser (may be null for Standard 14 fonts)
      * @throws IOException if reading the font data fails
      */
-    public Type1Font(COSDictionary fontDict, PDFParser parser) throws IOException {
+    public Type1Font(PdfDictionary fontDict, PDFParser parser) throws IOException {
         super(fontDict, parser);
 
         // 1. Check if Standard 14
@@ -79,14 +79,14 @@ public class Type1Font extends PdfFont {
     }
 
     private void initEncoding() {
-        COSBase encValue = resolve(fontDict.get("Encoding"));
-        if (encValue instanceof COSName) {
-            FontEncoding named = FontEncoding.getInstance(((COSName) encValue).getName());
+        PdfBase encValue = resolve(fontDict.get("Encoding"));
+        if (encValue instanceof PdfName) {
+            FontEncoding named = FontEncoding.getInstance(((PdfName) encValue).getName());
             if (named != null) {
                 this.encoding = named;
             }
-        } else if (encValue instanceof COSDictionary) {
-            this.encoding = FontEncoding.fromDictionary((COSDictionary) encValue);
+        } else if (encValue instanceof PdfDictionary) {
+            this.encoding = FontEncoding.fromDictionary((PdfDictionary) encValue);
         }
         // If still null and not Standard 14, use StandardEncoding
         if (this.encoding == null) {
@@ -95,10 +95,10 @@ public class Type1Font extends PdfFont {
     }
 
     private void initWidths() {
-        COSBase widthsVal = resolve(fontDict.get("Widths"));
-        if (widthsVal instanceof COSArray) {
+        PdfBase widthsVal = resolve(fontDict.get("Widths"));
+        if (widthsVal instanceof PdfArray) {
             this.firstChar = fontDict.getInt("FirstChar", 0);
-            COSArray arr = (COSArray) widthsVal;
+            PdfArray arr = (PdfArray) widthsVal;
             this.customWidths = new double[arr.size()];
             for (int i = 0; i < arr.size(); i++) {
                 customWidths[i] = getNumber(arr.get(i));

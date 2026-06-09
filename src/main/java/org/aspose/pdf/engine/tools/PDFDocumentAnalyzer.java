@@ -1,6 +1,6 @@
 package org.aspose.pdf.engine.tools;
 
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 import org.aspose.pdf.engine.io.RandomAccessReader;
 import org.aspose.pdf.engine.parser.PDFParser;
 
@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 
 /**
  * Programmatic analyzer for PDF documents.
- * Opens a PDF file, parses it, and provides structured access to all COS objects,
+ * Opens a PDF file, parses it, and provides structured access to all PDF objects,
  * page tree, trailer, catalog, etc.
  *
  * <p>This class contains NO console/CLI logic — it is purely a data layer.
@@ -121,7 +121,7 @@ public class PDFDocumentAnalyzer implements Closeable {
     public int getObjectCount() { return parser.getAllObjectKeys().size(); }
 
     /** Trailer dictionary. */
-    public COSDictionary getTrailer() { return parser.getTrailer(); }
+    public PdfDictionary getTrailer() { return parser.getTrailer(); }
 
     /** Source name (file path or descriptive label). */
     public String getSourceName() { return sourceName; }
@@ -138,27 +138,27 @@ public class PDFDocumentAnalyzer implements Closeable {
      * Load a single object by number (generation = 0).
      *
      * @param objectNumber the object number
-     * @return the COS object, or null if not found
+     * @return the PDF object, or null if not found
      * @throws IOException if the object cannot be read
      */
-    public COSBase getObject(int objectNumber) throws IOException {
-        return parser.getObject(new COSObjectKey(objectNumber, 0));
+    public PdfBase getObject(int objectNumber) throws IOException {
+        return parser.getObject(new PdfObjectKey(objectNumber, 0));
     }
 
     /**
      * Resolve an indirect reference to its target object.
      *
-     * @param obj a COS object (possibly a COSObjectReference)
+     * @param obj a PDF object (possibly a PdfObjectReference)
      * @return the resolved object
      * @throws IOException if resolution fails
      */
-    public COSBase resolve(COSBase obj) throws IOException {
+    public PdfBase resolve(PdfBase obj) throws IOException {
         return parser.resolveReference(obj);
     }
 
     /** All object keys, sorted by object number. */
-    public List<COSObjectKey> getSortedKeys() {
-        List<COSObjectKey> keys = new ArrayList<>(parser.getAllObjectKeys());
+    public List<PdfObjectKey> getSortedKeys() {
+        List<PdfObjectKey> keys = new ArrayList<>(parser.getAllObjectKeys());
         Collections.sort(keys);
         return keys;
     }
@@ -166,14 +166,14 @@ public class PDFDocumentAnalyzer implements Closeable {
     /**
      * Load all objects into a map. Errors are collected, not thrown.
      *
-     * @return map of object key to loaded COS object
+     * @return map of object key to loaded PDF object
      */
-    public Map<COSObjectKey, COSBase> loadAllObjects() {
-        Map<COSObjectKey, COSBase> result = new LinkedHashMap<>();
-        for (COSObjectKey key : getSortedKeys()) {
+    public Map<PdfObjectKey, PdfBase> loadAllObjects() {
+        Map<PdfObjectKey, PdfBase> result = new LinkedHashMap<>();
+        for (PdfObjectKey key : getSortedKeys()) {
             try {
-                COSBase obj = parser.getObject(key);
-                if (obj != null && !(obj instanceof COSNull)) {
+                PdfBase obj = parser.getObject(key);
+                if (obj != null && !(obj instanceof PdfNull)) {
                     result.put(key, obj);
                 }
             } catch (Exception e) {
@@ -192,14 +192,14 @@ public class PDFDocumentAnalyzer implements Closeable {
      */
     public List<ObjectInfo> getObjects() {
         List<ObjectInfo> result = new ArrayList<>();
-        for (COSObjectKey key : getSortedKeys()) {
+        for (PdfObjectKey key : getSortedKeys()) {
             try {
-                COSBase obj = parser.getObject(key);
-                if (obj != null && !(obj instanceof COSNull)) {
+                PdfBase obj = parser.getObject(key);
+                if (obj != null && !(obj instanceof PdfNull)) {
                     result.add(new ObjectInfo(key, obj, getCosTypeName(obj)));
                 }
             } catch (Exception e) {
-                result.add(new ObjectInfo(key, COSNull.INSTANCE, "ERROR:" + e.getMessage()));
+                result.add(new ObjectInfo(key, PdfNull.INSTANCE, "ERROR:" + e.getMessage()));
             }
         }
         return result;
@@ -225,12 +225,12 @@ public class PDFDocumentAnalyzer implements Closeable {
         return getObjects().stream().filter(o -> o.isStream).collect(Collectors.toList());
     }
 
-    /** Count objects by COS type name. */
+    /** Count objects by PDF object type name. */
     public Map<String, Integer> getTypeCounts() {
         Map<String, Integer> counts = new TreeMap<>();
-        for (COSObjectKey key : parser.getAllObjectKeys()) {
+        for (PdfObjectKey key : parser.getAllObjectKeys()) {
             try {
-                COSBase obj = parser.getObject(key);
+                PdfBase obj = parser.getObject(key);
                 String type = getCosTypeName(obj);
                 counts.merge(type, 1, Integer::sum);
             } catch (Exception e) {
@@ -248,30 +248,30 @@ public class PDFDocumentAnalyzer implements Closeable {
      */
     public List<ObjectInfo> getPages() throws IOException {
         List<ObjectInfo> pages = new ArrayList<>();
-        COSDictionary catalog = parser.getCatalog();
-        COSBase pagesRef = catalog.get("Pages");
-        COSBase pagesObj = parser.resolveReference(pagesRef);
-        if (pagesObj instanceof COSDictionary) {
-            collectPages((COSDictionary) pagesObj, pages);
+        PdfDictionary catalog = parser.getCatalog();
+        PdfBase pagesRef = catalog.get("Pages");
+        PdfBase pagesObj = parser.resolveReference(pagesRef);
+        if (pagesObj instanceof PdfDictionary) {
+            collectPages((PdfDictionary) pagesObj, pages);
         }
         return pages;
     }
 
-    private void collectPages(COSDictionary node, List<ObjectInfo> pages) throws IOException {
+    private void collectPages(PdfDictionary node, List<ObjectInfo> pages) throws IOException {
         String type = node.getNameAsString("Type");
         if ("Page".equals(type)) {
-            COSObjectKey key = node.getObjectKey();
-            if (key == null) key = new COSObjectKey(0, 0);
+            PdfObjectKey key = node.getObjectKey();
+            if (key == null) key = new PdfObjectKey(0, 0);
             pages.add(new ObjectInfo(key, node, "Dictionary"));
         } else if ("Pages".equals(type)) {
-            COSBase kidsObj = node.get("Kids");
-            COSBase kids = parser.resolveReference(kidsObj);
-            if (kids instanceof COSArray) {
-                for (int i = 0; i < ((COSArray) kids).size(); i++) {
-                    COSBase childRef = ((COSArray) kids).get(i);
-                    COSBase child = parser.resolveReference(childRef);
-                    if (child instanceof COSDictionary) {
-                        collectPages((COSDictionary) child, pages);
+            PdfBase kidsObj = node.get("Kids");
+            PdfBase kids = parser.resolveReference(kidsObj);
+            if (kids instanceof PdfArray) {
+                for (int i = 0; i < ((PdfArray) kids).size(); i++) {
+                    PdfBase childRef = ((PdfArray) kids).get(i);
+                    PdfBase child = parser.resolveReference(childRef);
+                    if (child instanceof PdfDictionary) {
+                        collectPages((PdfDictionary) child, pages);
                     }
                 }
             }
@@ -279,27 +279,27 @@ public class PDFDocumentAnalyzer implements Closeable {
     }
 
     /**
-     * Check whether a COS object tree contains a reference to a given object number.
+     * Check whether a PDF object tree contains a reference to a given object number.
      *
      * @param obj          the root of the subtree to search
      * @param targetObjNum the target object number
      * @return true if a reference to targetObjNum is found
      */
-    public boolean containsReference(COSBase obj, int targetObjNum) {
+    public boolean containsReference(PdfBase obj, int targetObjNum) {
         return containsReference(obj, targetObjNum, new HashSet<>());
     }
 
-    private boolean containsReference(COSBase obj, int targetObjNum, Set<Integer> visited) {
-        if (obj instanceof COSObjectReference) {
-            return ((COSObjectReference) obj).getKey().getObjectNumber() == targetObjNum;
+    private boolean containsReference(PdfBase obj, int targetObjNum, Set<Integer> visited) {
+        if (obj instanceof PdfObjectReference) {
+            return ((PdfObjectReference) obj).getKey().getObjectNumber() == targetObjNum;
         }
-        if (obj instanceof COSDictionary) {
-            for (var entry : (COSDictionary) obj) {
+        if (obj instanceof PdfDictionary) {
+            for (var entry : (PdfDictionary) obj) {
                 if (containsReference(entry.getValue(), targetObjNum, visited)) return true;
             }
         }
-        if (obj instanceof COSArray) {
-            COSArray arr = (COSArray) obj;
+        if (obj instanceof PdfArray) {
+            PdfArray arr = (PdfArray) obj;
             for (int i = 0; i < arr.size(); i++) {
                 if (containsReference(arr.get(i), targetObjNum, visited)) return true;
             }
@@ -307,37 +307,37 @@ public class PDFDocumentAnalyzer implements Closeable {
         return false;
     }
 
-    // ─── COS type utilities ─────────────────────────────────────
+    // ─── PDF object type utilities ─────────────────────────────────────
 
     /**
-     * Get a human-readable COS type name for an object.
+     * Get a human-readable PDF object type name for an object.
      *
-     * @param obj a COS object
+     * @param obj a PDF object
      * @return type name such as "Dictionary", "Stream", "Array", "Integer", etc.
      */
-    public static String getCosTypeName(COSBase obj) {
-        if (obj instanceof COSStream) return "Stream";
-        if (obj instanceof COSDictionary) return "Dictionary";
-        if (obj instanceof COSArray) return "Array";
-        if (obj instanceof COSInteger) return "Integer";
-        if (obj instanceof COSFloat) return "Float";
-        if (obj instanceof COSString) return "String";
-        if (obj instanceof COSName) return "Name";
-        if (obj instanceof COSBoolean) return "Boolean";
-        if (obj instanceof COSNull) return "Null";
-        if (obj instanceof COSObjectReference) return "Reference";
+    public static String getCosTypeName(PdfBase obj) {
+        if (obj instanceof PdfStream) return "Stream";
+        if (obj instanceof PdfDictionary) return "Dictionary";
+        if (obj instanceof PdfArray) return "Array";
+        if (obj instanceof PdfInteger) return "Integer";
+        if (obj instanceof PdfFloat) return "Float";
+        if (obj instanceof PdfString) return "String";
+        if (obj instanceof PdfName) return "Name";
+        if (obj instanceof PdfBoolean) return "Boolean";
+        if (obj instanceof PdfNull) return "Null";
+        if (obj instanceof PdfObjectReference) return "Reference";
         return obj.getClass().getSimpleName();
     }
 
     /**
      * Get the /Type value from a dictionary object, or empty string.
      *
-     * @param obj a COS object
+     * @param obj a PDF object
      * @return the /Type value, or "" if not a dictionary or no /Type key
      */
-    public static String getPdfType(COSBase obj) {
-        if (obj instanceof COSDictionary) {
-            String type = ((COSDictionary) obj).getNameAsString("Type");
+    public static String getPdfType(PdfBase obj) {
+        if (obj instanceof PdfDictionary) {
+            String type = ((PdfDictionary) obj).getNameAsString("Type");
             return type != null ? type : "";
         }
         return "";
@@ -354,16 +354,16 @@ public class PDFDocumentAnalyzer implements Closeable {
         /** Generation number. */
         public final int generationNumber;
         /** Object key (number + generation). */
-        public final COSObjectKey key;
-        /** The COS object itself. */
-        public final COSBase object;
-        /** COS type name: "Dictionary", "Stream", "Array", "Integer", etc. */
+        public final PdfObjectKey key;
+        /** The PDF object itself. */
+        public final PdfBase object;
+        /** PDF object type name: "Dictionary", "Stream", "Array", "Integer", etc. */
         public final String cosType;
         /** /Type value from dictionary: "Catalog", "Pages", "Page", "Font", etc. Empty if none. */
         public final String pdfType;
         /** /Subtype (or /S) value from dictionary. Empty if none. */
         public final String pdfSubtype;
-        /** True if this is a COSStream. */
+        /** True if this is a PdfStream. */
         public final boolean isStream;
         /** Number of dictionary keys (-1 if not a dictionary). */
         public final int dictSize;
@@ -372,16 +372,16 @@ public class PDFDocumentAnalyzer implements Closeable {
         /** Dictionary key names (empty list if not a dictionary). */
         public final List<String> dictKeys;
 
-        ObjectInfo(COSObjectKey key, COSBase obj, String cosType) {
+        ObjectInfo(PdfObjectKey key, PdfBase obj, String cosType) {
             this.key = key;
             this.objectNumber = key.getObjectNumber();
             this.generationNumber = key.getGenerationNumber();
             this.object = obj;
             this.cosType = cosType;
-            this.isStream = obj instanceof COSStream;
+            this.isStream = obj instanceof PdfStream;
 
-            if (obj instanceof COSDictionary) {
-                COSDictionary dict = (COSDictionary) obj;
+            if (obj instanceof PdfDictionary) {
+                PdfDictionary dict = (PdfDictionary) obj;
                 String t = dict.getNameAsString("Type");
                 this.pdfType = t != null ? t : "";
                 String st = dict.getNameAsString("Subtype");
@@ -398,8 +398,8 @@ public class PDFDocumentAnalyzer implements Closeable {
                 this.dictKeys = Collections.emptyList();
             }
 
-            if (obj instanceof COSStream) {
-                this.streamLength = ((COSStream) obj).getLength();
+            if (obj instanceof PdfStream) {
+                this.streamLength = ((PdfStream) obj).getLength();
             } else {
                 this.streamLength = -1;
             }
@@ -411,19 +411,19 @@ public class PDFDocumentAnalyzer implements Closeable {
         /** Check if the dictionary contains the given key. */
         public boolean hasKey(String key) { return dictKeys.contains(key); }
 
-        /** Cast to COSDictionary, or null. */
-        public COSDictionary asDict() {
-            return (object instanceof COSDictionary) ? (COSDictionary) object : null;
+        /** Cast to PdfDictionary, or null. */
+        public PdfDictionary asDict() {
+            return (object instanceof PdfDictionary) ? (PdfDictionary) object : null;
         }
 
-        /** Cast to COSStream, or null. */
-        public COSStream asStream() {
-            return (object instanceof COSStream) ? (COSStream) object : null;
+        /** Cast to PdfStream, or null. */
+        public PdfStream asStream() {
+            return (object instanceof PdfStream) ? (PdfStream) object : null;
         }
 
-        /** Cast to COSArray, or null. */
-        public COSArray asArray() {
-            return (object instanceof COSArray) ? (COSArray) object : null;
+        /** Cast to PdfArray, or null. */
+        public PdfArray asArray() {
+            return (object instanceof PdfArray) ? (PdfArray) object : null;
         }
 
         @Override

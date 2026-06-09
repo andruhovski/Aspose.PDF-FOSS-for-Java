@@ -42,17 +42,17 @@ public class TiffDeviceTest {
     @Test
     public void nullOutputThrowsForPage() {
         TiffDevice device = new TiffDevice(new Resolution(72));
-        org.aspose.pdf.engine.cos.COSDictionary pageDict =
-                new org.aspose.pdf.engine.cos.COSDictionary();
-        pageDict.set(org.aspose.pdf.engine.cos.COSName.of("Type"),
-                org.aspose.pdf.engine.cos.COSName.of("Page"));
-        org.aspose.pdf.engine.cos.COSArray mediaBox =
-                new org.aspose.pdf.engine.cos.COSArray(4);
-        mediaBox.add(new org.aspose.pdf.engine.cos.COSFloat(0));
-        mediaBox.add(new org.aspose.pdf.engine.cos.COSFloat(0));
-        mediaBox.add(new org.aspose.pdf.engine.cos.COSFloat(100));
-        mediaBox.add(new org.aspose.pdf.engine.cos.COSFloat(100));
-        pageDict.set(org.aspose.pdf.engine.cos.COSName.of("MediaBox"), mediaBox);
+        org.aspose.pdf.engine.pdfobjects.PdfDictionary pageDict =
+                new org.aspose.pdf.engine.pdfobjects.PdfDictionary();
+        pageDict.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("Type"),
+                org.aspose.pdf.engine.pdfobjects.PdfName.of("Page"));
+        org.aspose.pdf.engine.pdfobjects.PdfArray mediaBox =
+                new org.aspose.pdf.engine.pdfobjects.PdfArray(4);
+        mediaBox.add(new org.aspose.pdf.engine.pdfobjects.PdfFloat(0));
+        mediaBox.add(new org.aspose.pdf.engine.pdfobjects.PdfFloat(0));
+        mediaBox.add(new org.aspose.pdf.engine.pdfobjects.PdfFloat(100));
+        mediaBox.add(new org.aspose.pdf.engine.pdfobjects.PdfFloat(100));
+        pageDict.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("MediaBox"), mediaBox);
 
         org.aspose.pdf.Page page = new org.aspose.pdf.Page(pageDict, null);
         assertThrows(IllegalArgumentException.class,

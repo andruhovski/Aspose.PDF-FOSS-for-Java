@@ -31,10 +31,20 @@ public class TextAbsorber {
             java.util.regex.Pattern.compile("[\\s\\n]+$");
     private static final java.util.regex.Pattern ALL_WHITESPACE =
             java.util.regex.Pattern.compile("\\s+");
+    // Upper bound on the group repetition in the letter-spacing heuristics.
+    // The JDK regex engine implements an unbounded group quantifier ({2,}, {1,})
+    // with ONE recursive Matcher frame per repetition, so an open-ended bound
+    // overflows the stack on pages that emit thousands of single-character,
+    // whitespace-separated spans (Sprint 63 pattern H, 35951_5000_styles.pdf).
+    // A genuine letter-spaced word/heading ("C O N F I D E N T I A L") is short,
+    // so capping the repetition keeps recursion shallow with no practical loss.
+    private static final int MAX_SPACED_TOKENS = 64;
     private static final java.util.regex.Pattern LETTER_SPACED_WORDS =
-            java.util.regex.Pattern.compile("(?<!\\S)([\\p{L}\\p{N}](?:\\s+[\\p{L}\\p{N}]){2,})(?!\\S)");
+            java.util.regex.Pattern.compile(
+                    "(?<!\\S)([\\p{L}\\p{N}](?:\\s+[\\p{L}\\p{N}]){2," + MAX_SPACED_TOKENS + "})(?!\\S)");
     private static final java.util.regex.Pattern UPPERCASE_CHUNKS =
-            java.util.regex.Pattern.compile("(?<!\\S)([\\p{Lu}\\p{N}]{1,3}(?:\\s+[\\p{Lu}\\p{N}]{1,3}){1,})(?!\\S)");
+            java.util.regex.Pattern.compile(
+                    "(?<!\\S)([\\p{Lu}\\p{N}]{1,3}(?:\\s+[\\p{Lu}\\p{N}]{1,3}){1," + MAX_SPACED_TOKENS + "})(?!\\S)");
     private static final java.util.regex.Pattern DUPLICATED_GLYPH_TOKEN =
             java.util.regex.Pattern.compile("(?<!\\S)[\\p{L}\\p{N}\\p{Punct}&&[^\\s]]{4,}(?!\\S)");
 

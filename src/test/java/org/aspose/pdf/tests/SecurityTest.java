@@ -1,6 +1,6 @@
 package org.aspose.pdf.tests;
 
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 import org.aspose.pdf.engine.security.*;
 import org.junit.jupiter.api.Test;
 
@@ -144,17 +144,17 @@ public class SecurityTest {
 
     @Test
     public void testEncryptionDictProperties() {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("Filter"), COSName.of("Standard"));
-        dict.set(COSName.of("V"), COSInteger.valueOf(2));
-        dict.set(COSName.of("R"), COSInteger.valueOf(3));
-        dict.set(COSName.of("Length"), COSInteger.valueOf(128));
-        dict.set(COSName.of("P"), COSInteger.valueOf(-3904));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("Filter"), PdfName.of("Standard"));
+        dict.set(PdfName.of("V"), PdfInteger.valueOf(2));
+        dict.set(PdfName.of("R"), PdfInteger.valueOf(3));
+        dict.set(PdfName.of("Length"), PdfInteger.valueOf(128));
+        dict.set(PdfName.of("P"), PdfInteger.valueOf(-3904));
 
         byte[] oHash = new byte[32];
         byte[] uHash = new byte[32];
-        dict.set(COSName.of("O"), new COSString(oHash));
-        dict.set(COSName.of("U"), new COSString(uHash));
+        dict.set(PdfName.of("O"), new PdfString(oHash));
+        dict.set(PdfName.of("U"), new PdfString(uHash));
 
         PDFEncryptionDict encDict = new PDFEncryptionDict(dict);
         assertEquals("Standard", encDict.getFilter());
@@ -169,37 +169,45 @@ public class SecurityTest {
     @Test
     public void testCipherTypeDetection() {
         // V=1 → RC4
-        COSDictionary d1 = new COSDictionary();
-        d1.set(COSName.of("V"), COSInteger.valueOf(1));
+        PdfDictionary d1 = new PdfDictionary();
+        d1.set(PdfName.of("V"), PdfInteger.valueOf(1));
         assertEquals(PDFEncryptionDict.CipherType.RC4, new PDFEncryptionDict(d1).getCipherType());
 
         // V=2 → RC4
-        COSDictionary d2 = new COSDictionary();
-        d2.set(COSName.of("V"), COSInteger.valueOf(2));
+        PdfDictionary d2 = new PdfDictionary();
+        d2.set(PdfName.of("V"), PdfInteger.valueOf(2));
         assertEquals(PDFEncryptionDict.CipherType.RC4, new PDFEncryptionDict(d2).getCipherType());
 
-        // V=5 → AES_256
-        COSDictionary d5 = new COSDictionary();
-        d5.set(COSName.of("V"), COSInteger.valueOf(5));
+        // V=5 with /StmF /StdCF → AES_256 (the form every real AES-256 file uses).
+        PdfDictionary d5 = new PdfDictionary();
+        d5.set(PdfName.of("V"), PdfInteger.valueOf(5));
+        d5.set(PdfName.of("StmF"), PdfName.of("StdCF"));
         assertEquals(PDFEncryptionDict.CipherType.AES_256, new PDFEncryptionDict(d5).getCipherType());
 
+        // V=5 WITHOUT /StmF → IDENTITY: per ISO 32000-1 Table 20 the /StmF default
+        // is /Identity, i.e. streams are not encrypted (matches Adobe / pdf.js).
+        PdfDictionary d5bare = new PdfDictionary();
+        d5bare.set(PdfName.of("V"), PdfInteger.valueOf(5));
+        assertEquals(PDFEncryptionDict.CipherType.IDENTITY,
+                new PDFEncryptionDict(d5bare).getCipherType());
+
         // V=4 with AESV2 → AES_128
-        COSDictionary d4 = new COSDictionary();
-        d4.set(COSName.of("V"), COSInteger.valueOf(4));
-        d4.set(COSName.of("StmF"), COSName.of("StdCF"));
-        COSDictionary cf = new COSDictionary();
-        COSDictionary stdCF = new COSDictionary();
-        stdCF.set(COSName.of("CFM"), COSName.of("AESV2"));
-        cf.set(COSName.of("StdCF"), stdCF);
-        d4.set(COSName.of("CF"), cf);
+        PdfDictionary d4 = new PdfDictionary();
+        d4.set(PdfName.of("V"), PdfInteger.valueOf(4));
+        d4.set(PdfName.of("StmF"), PdfName.of("StdCF"));
+        PdfDictionary cf = new PdfDictionary();
+        PdfDictionary stdCF = new PdfDictionary();
+        stdCF.set(PdfName.of("CFM"), PdfName.of("AESV2"));
+        cf.set(PdfName.of("StdCF"), stdCF);
+        d4.set(PdfName.of("CF"), cf);
         assertEquals(PDFEncryptionDict.CipherType.AES_128, new PDFEncryptionDict(d4).getCipherType());
     }
 
     @Test
     public void testV1AlwaysLength40() {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("V"), COSInteger.valueOf(1));
-        dict.set(COSName.of("Length"), COSInteger.valueOf(128)); // should be overridden
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("V"), PdfInteger.valueOf(1));
+        dict.set(PdfName.of("Length"), PdfInteger.valueOf(128)); // should be overridden
         PDFEncryptionDict encDict = new PDFEncryptionDict(dict);
         assertEquals(40, encDict.getLength());
         assertEquals(5, encDict.getKeyLength());
@@ -209,9 +217,9 @@ public class SecurityTest {
 
     @Test
     public void testDecryptorActive() {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("V"), COSInteger.valueOf(2));
-        dict.set(COSName.of("R"), COSInteger.valueOf(3));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("V"), PdfInteger.valueOf(2));
+        dict.set(PdfName.of("R"), PdfInteger.valueOf(3));
         PDFEncryptionDict encDict = new PDFEncryptionDict(dict);
 
         byte[] key = new byte[16];
@@ -221,9 +229,9 @@ public class SecurityTest {
 
     @Test
     public void testDecryptorNullData() {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("V"), COSInteger.valueOf(2));
-        dict.set(COSName.of("R"), COSInteger.valueOf(3));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("V"), PdfInteger.valueOf(2));
+        dict.set(PdfName.of("R"), PdfInteger.valueOf(3));
         PDFEncryptionDict encDict = new PDFEncryptionDict(dict);
 
         PDFDecryptor decryptor = new PDFDecryptor(new byte[16], encDict);
@@ -237,19 +245,19 @@ public class SecurityTest {
     public void testHandlerWithEmptyPassword() {
         // Build a minimal R=2 V=1 encryption dict with empty password
         // This is a known test case: empty password with specific O/U values
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("Filter"), COSName.of("Standard"));
-        dict.set(COSName.of("V"), COSInteger.valueOf(1));
-        dict.set(COSName.of("R"), COSInteger.valueOf(2));
-        dict.set(COSName.of("P"), COSInteger.valueOf(-3904));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("Filter"), PdfName.of("Standard"));
+        dict.set(PdfName.of("V"), PdfInteger.valueOf(1));
+        dict.set(PdfName.of("R"), PdfInteger.valueOf(2));
+        dict.set(PdfName.of("P"), PdfInteger.valueOf(-3904));
 
         // For R=2 with empty password: O and U are computed from the PADDING constant
         // We can't easily create known-good test values without a full reference impl,
         // but we can verify the handler doesn't crash
         byte[] oHash = new byte[32];
         byte[] uHash = new byte[32];
-        dict.set(COSName.of("O"), new COSString(oHash));
-        dict.set(COSName.of("U"), new COSString(uHash));
+        dict.set(PdfName.of("O"), new PdfString(oHash));
+        dict.set(PdfName.of("U"), new PdfString(uHash));
 
         PDFEncryptionDict encDict = new PDFEncryptionDict(dict);
         StandardSecurityHandler handler = new StandardSecurityHandler(encDict, new byte[16]);
@@ -260,13 +268,13 @@ public class SecurityTest {
 
     @Test
     public void testHandlerR6WithInvalidData() {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("V"), COSInteger.valueOf(5));
-        dict.set(COSName.of("R"), COSInteger.valueOf(6));
-        dict.set(COSName.of("O"), new COSString(new byte[48]));
-        dict.set(COSName.of("U"), new COSString(new byte[48]));
-        dict.set(COSName.of("OE"), new COSString(new byte[32]));
-        dict.set(COSName.of("UE"), new COSString(new byte[32]));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("V"), PdfInteger.valueOf(5));
+        dict.set(PdfName.of("R"), PdfInteger.valueOf(6));
+        dict.set(PdfName.of("O"), new PdfString(new byte[48]));
+        dict.set(PdfName.of("U"), new PdfString(new byte[48]));
+        dict.set(PdfName.of("OE"), new PdfString(new byte[32]));
+        dict.set(PdfName.of("UE"), new PdfString(new byte[32]));
 
         PDFEncryptionDict encDict = new PDFEncryptionDict(dict);
         StandardSecurityHandler handler = new StandardSecurityHandler(encDict, null);

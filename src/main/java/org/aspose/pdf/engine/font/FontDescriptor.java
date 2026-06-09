@@ -1,13 +1,14 @@
 package org.aspose.pdf.engine.font;
 
 import org.aspose.pdf.Rectangle;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSFloat;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfFloat;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 
 import java.io.IOException;
 import java.util.logging.Logger;
@@ -24,7 +25,7 @@ public class FontDescriptor {
 
     private static final Logger LOG = Logger.getLogger(FontDescriptor.class.getName());
 
-    private final COSDictionary dict;
+    private final PdfDictionary dict;
 
     /**
      * Creates a FontDescriptor from a /FontDescriptor dictionary.
@@ -32,7 +33,7 @@ public class FontDescriptor {
      * @param dict the font descriptor dictionary
      * @throws IllegalArgumentException if dict is null
      */
-    public FontDescriptor(COSDictionary dict) {
+    public FontDescriptor(PdfDictionary dict) {
         if (dict == null) {
             throw new IllegalArgumentException("FontDescriptor dictionary must not be null");
         }
@@ -45,7 +46,23 @@ public class FontDescriptor {
      * @return the font name, or null if absent
      */
     public String getFontName() {
-        return dict.getNameAsString("FontName");
+        String name = dict.getNameAsString("FontName");
+        if (name == null) {
+            // /FontName may be an indirect reference to a name object
+            // (rare but legal — any object may be indirect, §7.3.10).
+            PdfBase fn = dict.get("FontName");
+            if (fn instanceof PdfObjectReference) {
+                try {
+                    fn = ((PdfObjectReference) fn).dereference();
+                } catch (IOException e) {
+                    return null;
+                }
+            }
+            if (fn instanceof PdfName) {
+                name = ((PdfName) fn).getName();
+            }
+        }
+        return name;
     }
 
     /**
@@ -108,11 +125,11 @@ public class FontDescriptor {
      * @return the bounding box rectangle, or null if absent
      */
     public Rectangle getFontBBox() {
-        COSBase val = dict.get("FontBBox");
-        if (val instanceof COSArray) {
-            COSArray arr = (COSArray) val;
+        PdfBase val = dict.get("FontBBox");
+        if (val instanceof PdfArray) {
+            PdfArray arr = (PdfArray) val;
             if (arr.size() == 4) {
-                return Rectangle.fromCOSArray(arr);
+                return Rectangle.fromPdfArray(arr);
             }
         }
         return null;
@@ -132,7 +149,7 @@ public class FontDescriptor {
      *
      * @return the font file stream, or null
      */
-    public COSStream getFontFile() {
+    public PdfStream getFontFile() {
         return getStream("FontFile");
     }
 
@@ -141,7 +158,7 @@ public class FontDescriptor {
      *
      * @return the font file stream, or null
      */
-    public COSStream getFontFile2() {
+    public PdfStream getFontFile2() {
         return getStream("FontFile2");
     }
 
@@ -150,7 +167,7 @@ public class FontDescriptor {
      *
      * @return the font file stream, or null
      */
-    public COSStream getFontFile3() {
+    public PdfStream getFontFile3() {
         return getStream("FontFile3");
     }
 
@@ -191,37 +208,37 @@ public class FontDescriptor {
     }
 
     /**
-     * Returns the underlying COS dictionary.
+     * Returns the underlying PDF dictionary.
      *
      * @return the font descriptor dictionary
      */
-    public COSDictionary getCOSDictionary() {
+    public PdfDictionary getPdfDictionary() {
         return dict;
     }
 
     private double getDouble(String key, double defaultValue) {
-        COSBase val = dict.get(key);
-        if (val instanceof COSInteger) {
-            return ((COSInteger) val).intValue();
+        PdfBase val = dict.get(key);
+        if (val instanceof PdfInteger) {
+            return ((PdfInteger) val).intValue();
         }
-        if (val instanceof COSFloat) {
-            return ((COSFloat) val).doubleValue();
+        if (val instanceof PdfFloat) {
+            return ((PdfFloat) val).doubleValue();
         }
         return defaultValue;
     }
 
-    private COSStream getStream(String key) {
-        COSBase val = dict.get(key);
-        if (val instanceof COSObjectReference) {
+    private PdfStream getStream(String key) {
+        PdfBase val = dict.get(key);
+        if (val instanceof PdfObjectReference) {
             try {
-                val = ((COSObjectReference) val).dereference();
+                val = ((PdfObjectReference) val).dereference();
             } catch (IOException e) {
                 LOG.fine(() -> "Failed to dereference " + key + ": " + e.getMessage());
                 return null;
             }
         }
-        if (val instanceof COSStream) {
-            return (COSStream) val;
+        if (val instanceof PdfStream) {
+            return (PdfStream) val;
         }
         return null;
     }

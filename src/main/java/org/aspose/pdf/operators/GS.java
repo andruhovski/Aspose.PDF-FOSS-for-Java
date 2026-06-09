@@ -1,8 +1,8 @@
 package org.aspose.pdf.operators;
 
 import org.aspose.pdf.Operator;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 
 import java.util.Collections;
 import java.util.List;
@@ -25,7 +25,7 @@ public class GS extends Operator {
      * @throws IllegalArgumentException if dictName is null or empty
      */
     public GS(String dictName) {
-        super("gs", Collections.singletonList(COSName.of(dictName)));
+        super("gs", Collections.singletonList(PdfName.of(dictName)));
         if (dictName == null || dictName.isEmpty()) {
             throw new IllegalArgumentException("Dictionary name must not be null or empty");
         }
@@ -35,15 +35,15 @@ public class GS extends Operator {
     /**
      * Creates a GS (gs) operator from parsed operands.
      * <p>
-     * Expects one operand: a {@link COSName} identifying the ExtGState resource.
+     * Expects one operand: a {@link PdfName} identifying the ExtGState resource.
      * </p>
      *
      * @param operands the operands from the content stream parser
      */
-    public GS(List<COSBase> operands) {
+    public GS(List<PdfBase> operands) {
         super("gs", operands);
-        this.dictName = (operands != null && operands.size() > 0 && operands.get(0) instanceof COSName)
-                ? ((COSName) operands.get(0)).getName()
+        this.dictName = (operands != null && operands.size() > 0 && operands.get(0) instanceof PdfName)
+                ? ((PdfName) operands.get(0)).getName()
                 : "";
     }
 

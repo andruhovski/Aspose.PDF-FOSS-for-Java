@@ -7,11 +7,11 @@ import org.aspose.pdf.Page;
 import org.aspose.pdf.Rectangle;
 import org.aspose.pdf.engine.layout.TextLayoutHelper;
 import org.aspose.pdf.engine.text.TextExtractor;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSStream;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 import org.aspose.pdf.operators.BT;
 import org.aspose.pdf.operators.ET;
 import org.aspose.pdf.operators.MoveToNextLineShowText;
@@ -73,7 +73,7 @@ public class TextFragment extends BaseParagraph {
     private int sourceTextStart = 0;
     private int sourceTextLength = -1;
     private OperatorCollection sourceOperators;
-    private COSStream sourceContentStream;
+    private PdfStream sourceContentStream;
     private TextReplaceOptions textReplaceOptions;
 
     /**
@@ -377,7 +377,7 @@ public class TextFragment extends BaseParagraph {
 
     private static byte[] serializeOperators(OperatorCollection ops) {
         // Byte-level serialization (Sprint 30): op.toString()→US-ASCII would corrupt
-        // COSString operands with bytes >= 0x80 (CID/Identity-H, non-Latin literals).
+        // PdfString operands with bytes >= 0x80 (CID/Identity-H, non-Latin literals).
         // ByteArrayOutputStream never actually throws IOException.
         java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
         try {
@@ -444,25 +444,25 @@ public class TextFragment extends BaseParagraph {
             return ((ShowText) op).getText();
         }
         String name = op.getName();
-        List<COSBase> operands = op.getOperands();
+        List<PdfBase> operands = op.getOperands();
         if ("TJ".equals(name)) {
             if (operands != null && !operands.isEmpty()
-                    && operands.get(0) instanceof COSArray) {
+                    && operands.get(0) instanceof PdfArray) {
                 StringBuilder sb = new StringBuilder();
-                COSArray arr = (COSArray) operands.get(0);
+                PdfArray arr = (PdfArray) operands.get(0);
                 for (int i = 0; i < arr.size(); i++) {
-                    COSBase item = arr.get(i);
-                    if (item instanceof COSString) {
-                        sb.append(((COSString) item).getString());
+                    PdfBase item = arr.get(i);
+                    if (item instanceof PdfString) {
+                        sb.append(((PdfString) item).getString());
                     }
                 }
                 return sb.toString();
             }
         } else if (("'".equals(name) || "\"".equals(name))
                 && operands != null && !operands.isEmpty()) {
-            COSBase textOperand = operands.get(operands.size() - 1);
-            if (textOperand instanceof COSString) {
-                return ((COSString) textOperand).getString();
+            PdfBase textOperand = operands.get(operands.size() - 1);
+            if (textOperand instanceof PdfString) {
+                return ((PdfString) textOperand).getString();
             }
         }
         return null;
@@ -478,14 +478,14 @@ public class TextFragment extends BaseParagraph {
         String name = op.getName();
         if ("TJ".equals(name)) {
             // Collapse the whole TJ array to a single string. A partial
-            // replacement (first COSString only) would leave kerning-split
+            // replacement (first PdfString only) would leave kerning-split
             // leftovers that re-assemble to the original phrase on reload.
-            List<COSBase> operands = op.getOperands();
+            List<PdfBase> operands = op.getOperands();
             if (operands != null && !operands.isEmpty()
-                    && operands.get(0) instanceof COSArray) {
-                COSArray newArr = new COSArray();
-                newArr.add(new COSString(newText.getBytes(StandardCharsets.ISO_8859_1)));
-                List<COSBase> newOperands = new ArrayList<>(operands);
+                    && operands.get(0) instanceof PdfArray) {
+                PdfArray newArr = new PdfArray();
+                newArr.add(new PdfString(newText.getBytes(StandardCharsets.ISO_8859_1)));
+                List<PdfBase> newOperands = new ArrayList<>(operands);
                 newOperands.set(0, newArr);
                 // Sprint 35: preserve TextShowOperator subclass so downstream
                 // `instanceof TextShowOperator` checks (used by extractor and
@@ -495,13 +495,13 @@ public class TextFragment extends BaseParagraph {
             }
         } else if ("'".equals(name) || "\"".equals(name)) {
             // ' and " carry a text string as their final operand.
-            List<COSBase> operands = op.getOperands();
+            List<PdfBase> operands = op.getOperands();
             if (operands != null && !operands.isEmpty()) {
-                List<COSBase> newOperands = new ArrayList<>(operands);
+                List<PdfBase> newOperands = new ArrayList<>(operands);
                 int textPos = newOperands.size() - 1;
-                if (newOperands.get(textPos) instanceof COSString) {
+                if (newOperands.get(textPos) instanceof PdfString) {
                     newOperands.set(textPos,
-                            new COSString(newText.getBytes(StandardCharsets.ISO_8859_1)));
+                            new PdfString(newText.getBytes(StandardCharsets.ISO_8859_1)));
                     Operator replacement = "'".equals(name)
                             ? new MoveToNextLineShowText(newOperands)
                             : new SetSpacingMoveToNextLineShowText(newOperands);
@@ -522,24 +522,24 @@ public class TextFragment extends BaseParagraph {
         }
         String name = op.getName();
         if ("TJ".equals(name)) {
-            List<COSBase> operands = op.getOperands();
+            List<PdfBase> operands = op.getOperands();
             if (operands != null && !operands.isEmpty()
-                    && operands.get(0) instanceof COSArray) {
-                COSArray newArr = new COSArray();
-                newArr.add(new COSString(new byte[0]));
-                List<COSBase> newOperands = new ArrayList<>(operands);
+                    && operands.get(0) instanceof PdfArray) {
+                PdfArray newArr = new PdfArray();
+                newArr.add(new PdfString(new byte[0]));
+                List<PdfBase> newOperands = new ArrayList<>(operands);
                 newOperands.set(0, newArr);
                 // Sprint 35: preserve TextShowOperator subclass (see replaceTextOp).
                 ops.setAt(idx, new SetGlyphsPositionShowText(newOperands));
                 return true;
             }
         } else if ("'".equals(name) || "\"".equals(name)) {
-            List<COSBase> operands = op.getOperands();
+            List<PdfBase> operands = op.getOperands();
             if (operands != null && !operands.isEmpty()) {
-                List<COSBase> newOperands = new ArrayList<>(operands);
+                List<PdfBase> newOperands = new ArrayList<>(operands);
                 int textPos = newOperands.size() - 1;
-                if (newOperands.get(textPos) instanceof COSString) {
-                    newOperands.set(textPos, new COSString(new byte[0]));
+                if (newOperands.get(textPos) instanceof PdfString) {
+                    newOperands.set(textPos, new PdfString(new byte[0]));
                     Operator replacement = "'".equals(name)
                             ? new MoveToNextLineShowText(newOperands)
                             : new SetSpacingMoveToNextLineShowText(newOperands);
@@ -601,7 +601,24 @@ public class TextFragment extends BaseParagraph {
      * @return the rectangle, or null
      */
     public Rectangle getRectangle() {
-        return rectangle;
+        if (rectangle != null) {
+            return rectangle;
+        }
+        // Unplaced fragment (constructed via `new TextFragment(...)` and not yet
+        // absorbed or laid out on a page): synthesize a measured bounding box from
+        // the text and the TextState font metrics so geometric callers (e.g.
+        // width-based stamp positioning) work instead of hitting an NPE on a null
+        // rectangle. Aspose likewise returns a measured rectangle here. Origin is
+        // (0,0) since the fragment has no page position yet.
+        TextState ts = getTextState();
+        double fontSize = (ts != null) ? ts.getFontSize() : 0;
+        if (fontSize <= 0) {
+            fontSize = 12;
+        }
+        String fontName = (ts != null && ts.getFont() != null) ? ts.getFont().getName() : null;
+        String text = getText();
+        double width = TextLayoutHelper.measureTextWidth(text == null ? "" : text, fontName, fontSize);
+        return new Rectangle(0, 0, width, fontSize);
     }
 
     /**
@@ -828,7 +845,7 @@ public class TextFragment extends BaseParagraph {
      *
      * @return the source content stream, or null for page-level cached content
      */
-    public COSStream getSourceContentStream() {
+    public PdfStream getSourceContentStream() {
         return sourceContentStream;
     }
 
@@ -837,7 +854,7 @@ public class TextFragment extends BaseParagraph {
      *
      * @param sourceContentStream the source content stream
      */
-    public void setSourceContentStream(COSStream sourceContentStream) {
+    public void setSourceContentStream(PdfStream sourceContentStream) {
         this.sourceContentStream = sourceContentStream;
     }
 

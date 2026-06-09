@@ -1,8 +1,8 @@
 package org.aspose.pdf.engine.filter;
 
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -23,12 +23,12 @@ import java.util.logging.Logger;
  * For a 3-component RGB image of width W and height H, the output is
  * W*H*3 bytes: R,G,B,R,G,B,... row by row.</p>
  */
-public final class DCTDecodeFilter implements COSFilter {
+public final class DCTDecodeFilter implements PdfFilter {
 
     private static final Logger LOG = Logger.getLogger(DCTDecodeFilter.class.getName());
 
     @Override
-    public byte[] decode(byte[] encoded, COSDictionary params) throws IOException {
+    public byte[] decode(byte[] encoded, PdfDictionary params) throws IOException {
         if (encoded == null || encoded.length == 0) return new byte[0];
 
         BufferedImage image = ImageIO.read(new ByteArrayInputStream(encoded));
@@ -61,23 +61,31 @@ public final class DCTDecodeFilter implements COSFilter {
             int[] pixel = new int[4];
             int off = 0;
             for (int y = 0; y < h; y++) {
+                // Per-pixel CMYK conversion of a large scan runs for minutes;
+                // honour cancellation per row so a timed-out worker unwinds
+                // instead of spinning as a zombie thread.
+                if (Thread.currentThread().isInterrupted()) {
+                    throw new IOException("DCTDecode: interrupted");
+                }
                 for (int x = 0; x < w; x++) {
                     raster.getPixel(x, y, pixel);
                     int c = pixel[0] & 0xFF, m = pixel[1] & 0xFF;
                     int yv = pixel[2] & 0xFF, k = pixel[3] & 0xFF;
-                    int r, g, b;
+                    // Actual ink coverage (Adobe APP14 CMYK is stored inverted),
+                    // then the press-characterized display conversion - keeps
+                    // JPEG photos consistent with vector CMYK fills.
+                    double ic, im, iy, ik;
                     if (inverted) {
-                        r = c * k / 255;
-                        g = m * k / 255;
-                        b = yv * k / 255;
+                        ic = (255 - c) / 255.0; im = (255 - m) / 255.0;
+                        iy = (255 - yv) / 255.0; ik = (255 - k) / 255.0;
                     } else {
-                        r = (255 - c) * (255 - k) / 255;
-                        g = (255 - m) * (255 - k) / 255;
-                        b = (255 - yv) * (255 - k) / 255;
+                        ic = c / 255.0; im = m / 255.0;
+                        iy = yv / 255.0; ik = k / 255.0;
                     }
-                    decoded[off++] = (byte) r;
-                    decoded[off++] = (byte) g;
-                    decoded[off++] = (byte) b;
+                    int rgb = org.aspose.pdf.engine.colorspace.CmykDisplay.toRGBInt(ic, im, iy, ik);
+                    decoded[off++] = (byte) ((rgb >> 16) & 0xFF);
+                    decoded[off++] = (byte) ((rgb >> 8) & 0xFF);
+                    decoded[off++] = (byte) (rgb & 0xFF);
                 }
             }
             final boolean fInv = inverted;
@@ -103,7 +111,7 @@ public final class DCTDecodeFilter implements COSFilter {
     }
 
     @Override
-    public byte[] encode(byte[] decoded, COSDictionary params) throws IOException {
+    public byte[] encode(byte[] decoded, PdfDictionary params) throws IOException {
         if (decoded == null || decoded.length == 0) return new byte[0];
 
         int width = getInt(params, "Width", 0);
@@ -129,15 +137,15 @@ public final class DCTDecodeFilter implements COSFilter {
     }
 
     @Override
-    public COSName getName() {
-        return COSName.of("DCTDecode");
+    public PdfName getName() {
+        return PdfName.of("DCTDecode");
     }
 
-    private static int getInt(COSDictionary params, String key, int defaultValue) {
+    private static int getInt(PdfDictionary params, String key, int defaultValue) {
         return params != null ? params.getInt(key, defaultValue) : defaultValue;
     }
 
-    private static int getComponentCount(COSDictionary params) {
+    private static int getComponentCount(PdfDictionary params) {
         if (params == null) {
             return 3;
         }
@@ -146,14 +154,14 @@ public final class DCTDecodeFilter implements COSFilter {
         if ("DeviceRGB".equals(colorSpace)) return 3;
         if ("DeviceCMYK".equals(colorSpace)) return 4;
 
-        if (params.get("ColorSpace") instanceof COSArray) {
-            COSArray array = (COSArray) params.get("ColorSpace");
+        if (params.get("ColorSpace") instanceof PdfArray) {
+            PdfArray array = (PdfArray) params.get("ColorSpace");
             String family = array.getName(0);
             if ("DeviceGray".equals(family)) return 1;
             if ("DeviceRGB".equals(family)) return 3;
             if ("DeviceCMYK".equals(family)) return 4;
-            if ("ICCBased".equals(family) && array.size() > 1 && array.get(1) instanceof COSDictionary) {
-                return ((COSDictionary) array.get(1)).getInt("N", 3);
+            if ("ICCBased".equals(family) && array.size() > 1 && array.get(1) instanceof PdfDictionary) {
+                return ((PdfDictionary) array.get(1)).getInt("N", 3);
             }
         }
         return Math.max(1, getInt(params, "Colors", 3));

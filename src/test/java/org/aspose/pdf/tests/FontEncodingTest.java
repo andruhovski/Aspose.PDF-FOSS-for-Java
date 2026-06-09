@@ -1,9 +1,9 @@
 package org.aspose.pdf.tests;
 
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 import org.aspose.pdf.engine.font.FontEncoding;
 import org.junit.jupiter.api.Test;
 
@@ -41,10 +41,10 @@ public class FontEncodingTest {
 
     @Test
     public void testDifferences() {
-        COSArray diff = new COSArray();
-        diff.add(COSInteger.valueOf(128));
-        diff.add(COSName.of("Euro"));
-        diff.add(COSName.of("trademark"));
+        PdfArray diff = new PdfArray();
+        diff.add(PdfInteger.valueOf(128));
+        diff.add(PdfName.of("Euro"));
+        diff.add(PdfName.of("trademark"));
 
         FontEncoding custom = FontEncoding.WIN_ANSI.withDifferences(diff);
         assertEquals("Euro", custom.getGlyphName(128));
@@ -83,12 +83,12 @@ public class FontEncodingTest {
 
     @Test
     public void testFromDictionary() {
-        COSDictionary encDict = new COSDictionary();
-        encDict.set(COSName.of("BaseEncoding"), COSName.of("WinAnsiEncoding"));
-        COSArray diff = new COSArray();
-        diff.add(COSInteger.valueOf(200));
-        diff.add(COSName.of("Euro"));
-        encDict.set(COSName.of("Differences"), diff);
+        PdfDictionary encDict = new PdfDictionary();
+        encDict.set(PdfName.of("BaseEncoding"), PdfName.of("WinAnsiEncoding"));
+        PdfArray diff = new PdfArray();
+        diff.add(PdfInteger.valueOf(200));
+        diff.add(PdfName.of("Euro"));
+        encDict.set(PdfName.of("Differences"), diff);
 
         FontEncoding enc = FontEncoding.fromDictionary(encDict);
         assertNotNull(enc);
@@ -98,7 +98,7 @@ public class FontEncodingTest {
 
     @Test
     public void testFromDictionaryNoBase() {
-        COSDictionary encDict = new COSDictionary();
+        PdfDictionary encDict = new PdfDictionary();
         // No /BaseEncoding → defaults to StandardEncoding
         FontEncoding enc = FontEncoding.fromDictionary(encDict);
         assertNotNull(enc);

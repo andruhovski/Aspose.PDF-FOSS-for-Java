@@ -1,15 +1,15 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSFloat;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSStream;
-import org.aspose.pdf.engine.cos.COSString;
-import org.aspose.pdf.engine.cos.COSCloner;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfFloat;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectCloner;
 import org.aspose.pdf.engine.layout.ContentStreamBuilder;
 import org.aspose.pdf.engine.parser.ContentStreamParser;
 import org.aspose.pdf.engine.parser.PDFParser;
@@ -44,7 +44,7 @@ public class Page {
 
     private static final Logger LOG = Logger.getLogger(Page.class.getName());
 
-    private final COSDictionary pageDict;
+    private final PdfDictionary pageDict;
     private final PDFParser parser;
     private Document owningDocument;
     private int number;
@@ -65,7 +65,13 @@ public class Page {
     // before the next save.
     private OperatorCollection contentsCache;
     private boolean contentsDirty;
-    private static final COSName OPENPDF_STAMP_INFO = COSName.of("OpenPdfStampInfo");
+    // Set when getContents() had to degrade — i.e. a content stream (or one
+    // segment of a /Contents array) could not be decoded/parsed and was
+    // dropped so extraction can continue best-effort. A degraded cache does NOT
+    // faithfully represent /Contents, so it must never be serialised back over
+    // the original bytes (see flushContentsIfDirty / setDecodedData guards).
+    private boolean contentsDegraded;
+    private static final PdfName OPENPDF_STAMP_INFO = PdfName.of("OpenPdfStampInfo");
     private static final String OPENPDF_STAMP_BEGIN = "%OPENPDF_STAMP_BEGIN:";
     private static final String OPENPDF_STAMP_END = "%OPENPDF_STAMP_END:";
 
@@ -76,7 +82,7 @@ public class Page {
      * @param parser   the PDF parser for resolving indirect references, may be null
      * @throws IllegalArgumentException if pageDict is null
      */
-    public Page(COSDictionary pageDict, PDFParser parser) {
+    public Page(PdfDictionary pageDict, PDFParser parser) {
         if (pageDict == null) {
             throw new IllegalArgumentException("Page dictionary must not be null");
         }
@@ -102,7 +108,7 @@ public class Page {
      * @return the media box rectangle, or null if not found in the page tree
      */
     public Rectangle getMediaBox() {
-        COSBase value = getInheritable(COSName.MEDIABOX);
+        PdfBase value = getInheritable(PdfName.MEDIABOX);
         return toRectangle(value);
     }
 
@@ -112,7 +118,7 @@ public class Page {
      * @return the crop box rectangle
      */
     public Rectangle getCropBox() {
-        COSBase value = getInheritable(COSName.CROPBOX);
+        PdfBase value = getInheritable(PdfName.CROPBOX);
         if (value != null) {
             Rectangle r = toRectangle(value);
             if (r != null) return r;
@@ -126,9 +132,9 @@ public class Page {
      * @return the art box rectangle
      */
     public Rectangle getArtBox() {
-        COSBase value = resolveRef(pageDict.get(COSName.ARTBOX));
-        if (value instanceof COSArray) {
-            return Rectangle.fromCOSArray((COSArray) value);
+        PdfBase value = resolveRef(pageDict.get(PdfName.ARTBOX));
+        if (value instanceof PdfArray) {
+            return Rectangle.fromPdfArray((PdfArray) value);
         }
         return getCropBox();
     }
@@ -139,9 +145,9 @@ public class Page {
      * @return the bleed box rectangle
      */
     public Rectangle getBleedBox() {
-        COSBase value = resolveRef(pageDict.get(COSName.BLEEDBOX));
-        if (value instanceof COSArray) {
-            return Rectangle.fromCOSArray((COSArray) value);
+        PdfBase value = resolveRef(pageDict.get(PdfName.BLEEDBOX));
+        if (value instanceof PdfArray) {
+            return Rectangle.fromPdfArray((PdfArray) value);
         }
         return getCropBox();
     }
@@ -152,9 +158,9 @@ public class Page {
      * @return the trim box rectangle
      */
     public Rectangle getTrimBox() {
-        COSBase value = resolveRef(pageDict.get(COSName.TRIMBOX));
-        if (value instanceof COSArray) {
-            return Rectangle.fromCOSArray((COSArray) value);
+        PdfBase value = resolveRef(pageDict.get(PdfName.TRIMBOX));
+        if (value instanceof PdfArray) {
+            return Rectangle.fromPdfArray((PdfArray) value);
         }
         return getCropBox();
     }
@@ -330,9 +336,9 @@ public class Page {
      * @return the rotation angle
      */
     public int getRotate() {
-        COSBase value = getInheritable(COSName.ROTATE);
-        if (value instanceof org.aspose.pdf.engine.cos.COSInteger) {
-            return ((org.aspose.pdf.engine.cos.COSInteger) value).intValue();
+        PdfBase value = getInheritable(PdfName.ROTATE);
+        if (value instanceof org.aspose.pdf.engine.pdfobjects.PdfInteger) {
+            return ((org.aspose.pdf.engine.pdfobjects.PdfInteger) value).intValue();
         }
         return 0;
     }
@@ -370,27 +376,27 @@ public class Page {
      * @return the Resources object, or null if not found
      */
     public Resources getResources() {
-        COSBase value = getInheritable(COSName.RESOURCES);
-        if (value instanceof COSDictionary) {
-            return new Resources((COSDictionary) value);
+        PdfBase value = getInheritable(PdfName.RESOURCES);
+        if (value instanceof PdfDictionary) {
+            return new Resources((PdfDictionary) value);
         }
         // Lazy-create resources dictionary for new pages
-        COSDictionary resDict = new COSDictionary();
-        pageDict.set(COSName.RESOURCES, resDict);
+        PdfDictionary resDict = new PdfDictionary();
+        pageDict.set(PdfName.RESOURCES, resDict);
         return new Resources(resDict);
     }
 
     /**
-     * Returns the raw page content stream COS object, or null if absent.
+     * Returns the raw page content stream PDF object, or null if absent.
      * <p>
      * If the cached operator collection has been mutated since the last flush,
      * serialises it back into {@code /Contents} first so the returned COS
      * reflects the current in-memory state.
      * </p>
      *
-     * @return the raw content stream (COSStream or COSArray), or null
+     * @return the raw content stream (PdfStream or PdfArray), or null
      */
-    public COSBase getRawContents() {
+    public PdfBase getRawContents() {
         if (contentsDirty) {
             try {
                 flushContentsIfDirty();
@@ -398,7 +404,7 @@ public class Page {
                 LOG.warning(() -> "Failed to flush cached contents: " + e.getMessage());
             }
         }
-        return resolveRef(pageDict.get(COSName.CONTENTS));
+        return resolveRef(pageDict.get(PdfName.CONTENTS));
     }
 
     /**
@@ -418,19 +424,39 @@ public class Page {
         if (contentsCache != null) {
             return contentsCache;
         }
-        COSBase raw = resolveRef(pageDict.get(COSName.CONTENTS));
+        PdfBase raw = resolveRef(pageDict.get(PdfName.CONTENTS));
         OperatorCollection parsed;
-        if (raw instanceof COSStream) {
-            parsed = ContentStreamParser.parseToCollection((COSStream) raw);
-        } else if (raw instanceof COSArray) {
-            COSArray arr = (COSArray) raw;
+        contentsDegraded = false;
+        if (raw instanceof PdfStream) {
+            // Guarded degradation (Sprint 63 B.6): a stream whose filter chain
+            // cannot be decoded (corrupt FlateDecode/ASCII85 data) must not
+            // abort the whole page — extraction continues with empty content.
+            try {
+                parsed = ContentStreamParser.parseToCollection((PdfStream) raw);
+            } catch (IOException e) {
+                LOG.warning(() -> "getContents: undecodable content stream, "
+                        + "degrading to empty: " + e.getMessage());
+                contentsDegraded = true;
+                parsed = new OperatorCollection();
+            }
+        } else if (raw instanceof PdfArray) {
+            PdfArray arr = (PdfArray) raw;
             java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
             for (int i = 0; i < arr.size(); i++) {
-                COSBase item = resolveRef(arr.get(i));
-                if (item instanceof COSStream) {
-                    byte[] data = ((COSStream) item).getDecodedData();
-                    baos.write(data);
-                    baos.write('\n');
+                PdfBase item = resolveRef(arr.get(i));
+                if (item instanceof PdfStream) {
+                    // Skip individual undecodable segments rather than failing
+                    // the entire page; the surviving segments still parse.
+                    try {
+                        byte[] data = ((PdfStream) item).getDecodedData();
+                        baos.write(data);
+                        baos.write('\n');
+                    } catch (IOException e) {
+                        final int idx = i;
+                        LOG.warning(() -> "getContents: skipping undecodable "
+                                + "/Contents segment " + idx + ": " + e.getMessage());
+                        contentsDegraded = true;
+                    }
                 }
             }
             parsed = ContentStreamParser.parseToCollection(baos.toByteArray());
@@ -496,8 +522,17 @@ public class Page {
 
     public void flushContentsIfDirty() throws IOException {
         if (!contentsDirty || contentsCache == null) return;
+        // Safety net (Sprint 63 B.6): never serialise a degraded cache back over
+        // the original /Contents — the cache dropped undecodable streams and
+        // would silently destroy the raw bytes. Leave /Contents untouched.
+        if (contentsDegraded) {
+            LOG.warning("flushContentsIfDirty: refusing to overwrite /Contents "
+                    + "with a degraded operator cache; original bytes preserved");
+            contentsDirty = false;
+            return;
+        }
         // Byte-level serialization (Sprint 30): op.toString() routes operands through
-        // US-ASCII and would corrupt any COSString carrying bytes >= 0x80 (CID/Identity-H
+        // US-ASCII and would corrupt any PdfString carrying bytes >= 0x80 (CID/Identity-H
         // glyph codes, non-Latin literals). writeTo preserves the exact bytes.
         java.io.ByteArrayOutputStream contentBytes = new java.io.ByteArrayOutputStream();
         for (Operator op : contentsCache) {
@@ -506,8 +541,8 @@ public class Page {
         }
         byte[] data = contentBytes.toByteArray();
 
-        COSBase raw = resolveRef(pageDict.get(COSName.CONTENTS));
-        if (raw instanceof COSStream) {
+        PdfBase raw = resolveRef(pageDict.get(PdfName.CONTENTS));
+        if (raw instanceof PdfStream) {
             // Mutate the existing stream in place so its indirect reference is
             // preserved — incremental save tracks modifications via object key
             // and would otherwise miss a wholesale replacement.
@@ -517,37 +552,37 @@ public class Page {
             // chain (typically FlateDecode). Stripping the filter would emit
             // the modified content stream uncompressed, inflating the saved
             // PDF by ≈25% on text-heavy fixtures (BUG-046).
-            COSStream existing = (COSStream) raw;
+            PdfStream existing = (PdfStream) raw;
             existing.setDecodedData(data);
-        } else if (raw instanceof COSArray) {
+        } else if (raw instanceof PdfArray) {
             // /Contents was a sequence of streams. Collapse the rewritten
             // operator-collection bytes into the first stream and clear the
             // remaining ones so re-parsing returns the same operator order.
-            COSArray arr = (COSArray) raw;
-            COSStream first = null;
+            PdfArray arr = (PdfArray) raw;
+            PdfStream first = null;
             for (int i = 0; i < arr.size(); i++) {
-                COSBase item = resolveRef(arr.get(i));
-                if (item instanceof COSStream) {
+                PdfBase item = resolveRef(arr.get(i));
+                if (item instanceof PdfStream) {
                     if (first == null) {
-                        first = (COSStream) item;
+                        first = (PdfStream) item;
                         first.setDecodedData(data);
                     } else {
                         // Empty out tail streams; their /Filter (if any) re-encodes
                         // an empty payload to a few bytes — far cheaper than
                         // duplicating the rewritten content N times.
-                        ((COSStream) item).setDecodedData(new byte[0]);
+                        ((PdfStream) item).setDecodedData(new byte[0]);
                     }
                 }
             }
             if (first == null) {
-                COSStream stream = new COSStream();
+                PdfStream stream = new PdfStream();
                 stream.setDecodedData(data);
-                pageDict.set(COSName.CONTENTS, stream);
+                pageDict.set(PdfName.CONTENTS, stream);
             }
         } else {
-            COSStream stream = new COSStream();
+            PdfStream stream = new PdfStream();
             stream.setDecodedData(data);
-            pageDict.set(COSName.CONTENTS, stream);
+            pageDict.set(PdfName.CONTENTS, stream);
         }
         contentsDirty = false;
     }
@@ -560,6 +595,7 @@ public class Page {
     public void clearContentsCache() {
         this.contentsCache = null;
         this.contentsDirty = false;
+        this.contentsDegraded = false;
     }
 
     /**
@@ -592,23 +628,23 @@ public class Page {
      * @return the annotation collection
      */
     public AnnotationCollection getAnnotations() {
-        COSBase value = resolveRef(pageDict.get(COSName.ANNOTS));
-        COSArray annotsArray;
-        if (value instanceof COSArray) {
-            annotsArray = (COSArray) value;
+        PdfBase value = resolveRef(pageDict.get(PdfName.ANNOTS));
+        PdfArray annotsArray;
+        if (value instanceof PdfArray) {
+            annotsArray = (PdfArray) value;
         } else {
-            annotsArray = new COSArray();
-            pageDict.set(COSName.ANNOTS, annotsArray);
+            annotsArray = new PdfArray();
+            pageDict.set(PdfName.ANNOTS, annotsArray);
         }
         return new AnnotationCollection(annotsArray, this, parser);
     }
 
     /**
-     * Returns the underlying COS dictionary for this page.
+     * Returns the underlying PDF dictionary for this page.
      *
      * @return the raw page dictionary
      */
-    public COSDictionary getCOSDictionary() {
+    public PdfDictionary getPdfDictionary() {
         return pageDict;
     }
 
@@ -661,28 +697,28 @@ public class Page {
      * inserted previously. Idempotent.
      */
     private void removeBackgroundContent() throws java.io.IOException {
-        org.aspose.pdf.engine.cos.COSBase contents = pageDict.get("Contents");
-        if (contents instanceof org.aspose.pdf.engine.cos.COSObjectReference) {
-            contents = ((org.aspose.pdf.engine.cos.COSObjectReference) contents).dereference();
+        org.aspose.pdf.engine.pdfobjects.PdfBase contents = pageDict.get("Contents");
+        if (contents instanceof org.aspose.pdf.engine.pdfobjects.PdfObjectReference) {
+            contents = ((org.aspose.pdf.engine.pdfobjects.PdfObjectReference) contents).dereference();
         }
-        if (contents instanceof org.aspose.pdf.engine.cos.COSStream) {
-            stripBackgroundFromStream((org.aspose.pdf.engine.cos.COSStream) contents);
-        } else if (contents instanceof org.aspose.pdf.engine.cos.COSArray) {
-            org.aspose.pdf.engine.cos.COSArray arr =
-                    (org.aspose.pdf.engine.cos.COSArray) contents;
+        if (contents instanceof org.aspose.pdf.engine.pdfobjects.PdfStream) {
+            stripBackgroundFromStream((org.aspose.pdf.engine.pdfobjects.PdfStream) contents);
+        } else if (contents instanceof org.aspose.pdf.engine.pdfobjects.PdfArray) {
+            org.aspose.pdf.engine.pdfobjects.PdfArray arr =
+                    (org.aspose.pdf.engine.pdfobjects.PdfArray) contents;
             for (int i = 0; i < arr.size(); i++) {
-                org.aspose.pdf.engine.cos.COSBase item = arr.get(i);
-                if (item instanceof org.aspose.pdf.engine.cos.COSObjectReference) {
-                    item = ((org.aspose.pdf.engine.cos.COSObjectReference) item).dereference();
+                org.aspose.pdf.engine.pdfobjects.PdfBase item = arr.get(i);
+                if (item instanceof org.aspose.pdf.engine.pdfobjects.PdfObjectReference) {
+                    item = ((org.aspose.pdf.engine.pdfobjects.PdfObjectReference) item).dereference();
                 }
-                if (item instanceof org.aspose.pdf.engine.cos.COSStream) {
-                    stripBackgroundFromStream((org.aspose.pdf.engine.cos.COSStream) item);
+                if (item instanceof org.aspose.pdf.engine.pdfobjects.PdfStream) {
+                    stripBackgroundFromStream((org.aspose.pdf.engine.pdfobjects.PdfStream) item);
                 }
             }
         }
     }
 
-    private static void stripBackgroundFromStream(org.aspose.pdf.engine.cos.COSStream stream)
+    private static void stripBackgroundFromStream(org.aspose.pdf.engine.pdfobjects.PdfStream stream)
             throws java.io.IOException {
         byte[] data = stream.getDecodedData();
         if (data == null || data.length == 0) return;
@@ -729,30 +765,30 @@ public class Page {
 
         // Prepend to the first content stream (creating one if /Contents was
         // absent or non-stream).
-        org.aspose.pdf.engine.cos.COSBase contents = pageDict.get("Contents");
-        if (contents instanceof org.aspose.pdf.engine.cos.COSObjectReference) {
-            contents = ((org.aspose.pdf.engine.cos.COSObjectReference) contents).dereference();
+        org.aspose.pdf.engine.pdfobjects.PdfBase contents = pageDict.get("Contents");
+        if (contents instanceof org.aspose.pdf.engine.pdfobjects.PdfObjectReference) {
+            contents = ((org.aspose.pdf.engine.pdfobjects.PdfObjectReference) contents).dereference();
         }
-        org.aspose.pdf.engine.cos.COSStream firstStream = null;
-        if (contents instanceof org.aspose.pdf.engine.cos.COSStream) {
-            firstStream = (org.aspose.pdf.engine.cos.COSStream) contents;
-        } else if (contents instanceof org.aspose.pdf.engine.cos.COSArray) {
-            org.aspose.pdf.engine.cos.COSArray arr =
-                    (org.aspose.pdf.engine.cos.COSArray) contents;
+        org.aspose.pdf.engine.pdfobjects.PdfStream firstStream = null;
+        if (contents instanceof org.aspose.pdf.engine.pdfobjects.PdfStream) {
+            firstStream = (org.aspose.pdf.engine.pdfobjects.PdfStream) contents;
+        } else if (contents instanceof org.aspose.pdf.engine.pdfobjects.PdfArray) {
+            org.aspose.pdf.engine.pdfobjects.PdfArray arr =
+                    (org.aspose.pdf.engine.pdfobjects.PdfArray) contents;
             for (int i = 0; i < arr.size(); i++) {
-                org.aspose.pdf.engine.cos.COSBase item = arr.get(i);
-                if (item instanceof org.aspose.pdf.engine.cos.COSObjectReference) {
-                    item = ((org.aspose.pdf.engine.cos.COSObjectReference) item).dereference();
+                org.aspose.pdf.engine.pdfobjects.PdfBase item = arr.get(i);
+                if (item instanceof org.aspose.pdf.engine.pdfobjects.PdfObjectReference) {
+                    item = ((org.aspose.pdf.engine.pdfobjects.PdfObjectReference) item).dereference();
                 }
-                if (item instanceof org.aspose.pdf.engine.cos.COSStream) {
-                    firstStream = (org.aspose.pdf.engine.cos.COSStream) item;
+                if (item instanceof org.aspose.pdf.engine.pdfobjects.PdfStream) {
+                    firstStream = (org.aspose.pdf.engine.pdfobjects.PdfStream) item;
                     break;
                 }
             }
         }
         if (firstStream == null) {
-            firstStream = new org.aspose.pdf.engine.cos.COSStream();
-            pageDict.set(COSName.of("Contents"), firstStream);
+            firstStream = new org.aspose.pdf.engine.pdfobjects.PdfStream();
+            pageDict.set(PdfName.of("Contents"), firstStream);
         }
         byte[] existing = firstStream.getDecodedData();
         byte[] combined = new byte[header.length + existing.length];
@@ -814,7 +850,7 @@ public class Page {
         if (rect == null) {
             throw new IllegalArgumentException("Rectangle must not be null");
         }
-        pageDict.set(COSName.MEDIABOX, rect.toCOSArray());
+        pageDict.set(PdfName.MEDIABOX, rect.toPdfArray());
     }
 
     /**
@@ -827,7 +863,7 @@ public class Page {
         if (rect == null) {
             throw new IllegalArgumentException("Rectangle must not be null");
         }
-        pageDict.set(COSName.CROPBOX, rect.toCOSArray());
+        pageDict.set(PdfName.CROPBOX, rect.toPdfArray());
     }
 
     /**
@@ -840,7 +876,7 @@ public class Page {
         if (rect == null) {
             throw new IllegalArgumentException("Rectangle must not be null");
         }
-        pageDict.set(COSName.ARTBOX, rect.toCOSArray());
+        pageDict.set(PdfName.ARTBOX, rect.toPdfArray());
     }
 
     /**
@@ -853,7 +889,7 @@ public class Page {
         if (rect == null) {
             throw new IllegalArgumentException("Rectangle must not be null");
         }
-        pageDict.set(COSName.BLEEDBOX, rect.toCOSArray());
+        pageDict.set(PdfName.BLEEDBOX, rect.toPdfArray());
     }
 
     /**
@@ -866,7 +902,7 @@ public class Page {
         if (rect == null) {
             throw new IllegalArgumentException("Rectangle must not be null");
         }
-        pageDict.set(COSName.TRIMBOX, rect.toCOSArray());
+        pageDict.set(PdfName.TRIMBOX, rect.toPdfArray());
     }
 
     /**
@@ -880,7 +916,7 @@ public class Page {
         if (degrees != 0 && degrees != 90 && degrees != 180 && degrees != 270) {
             throw new IllegalArgumentException("Rotation must be 0, 90, 180, or 270, got: " + degrees);
         }
-        pageDict.set(COSName.ROTATE, org.aspose.pdf.engine.cos.COSInteger.valueOf(degrees));
+        pageDict.set(PdfName.ROTATE, org.aspose.pdf.engine.pdfobjects.PdfInteger.valueOf(degrees));
     }
 
     /**
@@ -1016,7 +1052,7 @@ public class Page {
                     // Create artifact from properties (BDC) or plain (BMC)
                     Artifact artifact;
                     if (isBDCArtifact) {
-                        COSDictionary props = resolveArtifactProperties(((BDC) op).getProperties(), resources);
+                        PdfDictionary props = resolveArtifactProperties(((BDC) op).getProperties(), resources);
                         artifact = createArtifact(props);
                     } else {
                         artifact = new Artifact();
@@ -1105,24 +1141,24 @@ public class Page {
         }
     }
 
-    private COSDictionary resolveArtifactProperties(COSBase properties, Resources resources) {
-        COSBase resolved = resolveRef(properties);
-        if (resolved instanceof COSDictionary) {
-            return (COSDictionary) resolved;
+    private PdfDictionary resolveArtifactProperties(PdfBase properties, Resources resources) {
+        PdfBase resolved = resolveRef(properties);
+        if (resolved instanceof PdfDictionary) {
+            return (PdfDictionary) resolved;
         }
-        if (resolved instanceof COSName && resources != null) {
-            COSDictionary propertiesDict = resources.getProperties();
+        if (resolved instanceof PdfName && resources != null) {
+            PdfDictionary propertiesDict = resources.getProperties();
             if (propertiesDict != null) {
-                COSBase named = resolveRef(propertiesDict.get((COSName) resolved));
-                if (named instanceof COSDictionary) {
-                    return (COSDictionary) named;
+                PdfBase named = resolveRef(propertiesDict.get((PdfName) resolved));
+                if (named instanceof PdfDictionary) {
+                    return (PdfDictionary) named;
                 }
             }
         }
         return null;
     }
 
-    private Artifact createArtifact(COSDictionary properties) {
+    private Artifact createArtifact(PdfDictionary properties) {
         Artifact parsed = properties != null ? new Artifact(properties) : new Artifact();
         Artifact result = parsed.getSubtype() == Artifact.ArtifactSubtype.Watermark
                 ? new WatermarkArtifact()
@@ -1282,27 +1318,27 @@ public class Page {
         // Wrap the rendered header/footer as a Form XObject. The overlay content
         // is authored in page user space, so no placement matrix is needed and
         // BBox is the full media box (clip only).
-        org.aspose.pdf.engine.cos.COSStream form = new org.aspose.pdf.engine.cos.COSStream();
-        form.set("Type", COSName.of("XObject"));
-        form.set("Subtype", COSName.of("Form"));
-        form.set("BBox", box.toCOSArray());
+        org.aspose.pdf.engine.pdfobjects.PdfStream form = new org.aspose.pdf.engine.pdfobjects.PdfStream();
+        form.set("Type", PdfName.of("XObject"));
+        form.set("Subtype", PdfName.of("Form"));
+        form.set("BBox", box.toPdfArray());
         form.set("Resources", overlay.resources);
         form.setDecodedData(overlay.content);
 
         // Register as an indirect object so the form stream serializes correctly
         // (streams must be indirect; this also routes save() through full rewrite).
-        org.aspose.pdf.engine.cos.COSObjectReference formRef = owningDocument != null
+        org.aspose.pdf.engine.pdfobjects.PdfObjectReference formRef = owningDocument != null
                 ? owningDocument.registerImportedObject(form)
                 : null;
 
         Resources resources = ensureResources();
-        COSDictionary xObjects = resources.getXObjects();
+        PdfDictionary xObjects = resources.getXObjects();
         if (xObjects == null) {
-            xObjects = new COSDictionary();
-            resources.getCOSDictionary().set(COSName.of("XObject"), xObjects);
+            xObjects = new PdfDictionary();
+            resources.getPdfDictionary().set(PdfName.of("XObject"), xObjects);
         }
         String resName = createUniqueXObjectName(xObjects, "FmHF", 0);
-        xObjects.set(COSName.of(resName), formRef != null ? formRef : form);
+        xObjects.set(PdfName.of(resName), formRef != null ? formRef : form);
 
         String ops = "\nq\n/" + resName + " Do\nQ\n";
         appendToContentStream(ops.getBytes(java.nio.charset.StandardCharsets.US_ASCII));
@@ -1335,41 +1371,41 @@ public class Page {
      * @throws IOException if reading appearance streams or appending content fails
      */
     public void flattenAnnotations() throws IOException {
-        COSBase annotsVal = resolveRef(pageDict.get(COSName.ANNOTS));
-        if (!(annotsVal instanceof COSArray)) return;
-        COSArray annotsArray = (COSArray) annotsVal;
+        PdfBase annotsVal = resolveRef(pageDict.get(PdfName.ANNOTS));
+        if (!(annotsVal instanceof PdfArray)) return;
+        PdfArray annotsArray = (PdfArray) annotsVal;
 
         for (int i = 0; i < annotsArray.size(); i++) {
-            COSBase item = resolveRef(annotsArray.get(i));
-            if (!(item instanceof COSDictionary)) continue;
-            COSDictionary annotDict = (COSDictionary) item;
+            PdfBase item = resolveRef(annotsArray.get(i));
+            if (!(item instanceof PdfDictionary)) continue;
+            PdfDictionary annotDict = (PdfDictionary) item;
 
             // Skip hidden annotations (bit 2 of /F)
             int flags = 0;
-            COSBase fVal = annotDict.get("F");
-            if (fVal instanceof org.aspose.pdf.engine.cos.COSInteger) {
-                flags = ((org.aspose.pdf.engine.cos.COSInteger) fVal).intValue();
+            PdfBase fVal = annotDict.get("F");
+            if (fVal instanceof org.aspose.pdf.engine.pdfobjects.PdfInteger) {
+                flags = ((org.aspose.pdf.engine.pdfobjects.PdfInteger) fVal).intValue();
             }
             if ((flags & 0x02) != 0) continue;
 
             // Get /AP/N appearance stream
-            COSBase ap = resolveRef(annotDict.get("AP"));
-            if (!(ap instanceof COSDictionary)) continue;
-            COSBase n = resolveRef(((COSDictionary) ap).get("N"));
-            if (!(n instanceof COSStream)) continue;
-            COSStream apStream = (COSStream) n;
+            PdfBase ap = resolveRef(annotDict.get("AP"));
+            if (!(ap instanceof PdfDictionary)) continue;
+            PdfBase n = resolveRef(((PdfDictionary) ap).get("N"));
+            if (!(n instanceof PdfStream)) continue;
+            PdfStream apStream = (PdfStream) n;
 
             // Get annotation Rect
-            COSBase rectVal = resolveRef(annotDict.get("Rect"));
-            if (!(rectVal instanceof COSArray) || ((COSArray) rectVal).size() != 4) continue;
-            Rectangle annotRect = Rectangle.fromCOSArray((COSArray) rectVal);
+            PdfBase rectVal = resolveRef(annotDict.get("Rect"));
+            if (!(rectVal instanceof PdfArray) || ((PdfArray) rectVal).size() != 4) continue;
+            Rectangle annotRect = Rectangle.fromPdfArray((PdfArray) rectVal);
             if (annotRect == null) continue;
 
             // Get appearance BBox (defaults to Rect if absent)
-            COSBase bboxVal = resolveRef(apStream.get("BBox"));
+            PdfBase bboxVal = resolveRef(apStream.get("BBox"));
             Rectangle bbox;
-            if (bboxVal instanceof COSArray && ((COSArray) bboxVal).size() == 4) {
-                bbox = Rectangle.fromCOSArray((COSArray) bboxVal);
+            if (bboxVal instanceof PdfArray && ((PdfArray) bboxVal).size() == 4) {
+                bbox = Rectangle.fromPdfArray((PdfArray) bboxVal);
             } else {
                 bbox = annotRect;
             }
@@ -1394,15 +1430,15 @@ public class Page {
             // internal cm operators into the page content. Verified zero
             // regressions vs the inline path across flatten-using regression
             // classes (text extraction + rendering both recurse into Do forms).
-            apStream.set("Type", COSName.of("XObject"));
-            apStream.set("Subtype", COSName.of("Form"));
-            COSDictionary xObjects = getResources().getXObjects();
+            apStream.set("Type", PdfName.of("XObject"));
+            apStream.set("Subtype", PdfName.of("Form"));
+            PdfDictionary xObjects = getResources().getXObjects();
             if (xObjects == null) {
-                xObjects = new COSDictionary();
-                getResources().getCOSDictionary().set(COSName.of("XObject"), xObjects);
+                xObjects = new PdfDictionary();
+                getResources().getPdfDictionary().set(PdfName.of("XObject"), xObjects);
             }
             String resName = createUniqueXObjectName(xObjects, "FmFlat", 0);
-            xObjects.set(COSName.of(resName), apStream);
+            xObjects.set(PdfName.of(resName), apStream);
 
             StringBuilder sb = new StringBuilder();
             sb.append("\nq\n");
@@ -1418,7 +1454,7 @@ public class Page {
         }
 
         // Remove /Annots from page dictionary
-        pageDict.remove(COSName.ANNOTS);
+        pageDict.remove(PdfName.ANNOTS);
     }
 
     /**
@@ -1428,38 +1464,38 @@ public class Page {
      *
      * @param apStream the appearance stream whose resources should be merged
      */
-    private void mergeAppearanceResources(COSStream apStream) {
-        COSBase apResVal = resolveRef(apStream.get("Resources"));
-        if (!(apResVal instanceof COSDictionary)) return;
-        COSDictionary apRes = (COSDictionary) apResVal;
+    private void mergeAppearanceResources(PdfStream apStream) {
+        PdfBase apResVal = resolveRef(apStream.get("Resources"));
+        if (!(apResVal instanceof PdfDictionary)) return;
+        PdfDictionary apRes = (PdfDictionary) apResVal;
 
         // Ensure page has a Resources dictionary
-        COSBase pageResVal = getInheritable(COSName.RESOURCES);
-        COSDictionary pageRes;
-        if (pageResVal instanceof COSDictionary) {
-            pageRes = (COSDictionary) pageResVal;
+        PdfBase pageResVal = getInheritable(PdfName.RESOURCES);
+        PdfDictionary pageRes;
+        if (pageResVal instanceof PdfDictionary) {
+            pageRes = (PdfDictionary) pageResVal;
         } else {
-            pageRes = new COSDictionary();
-            pageDict.set(COSName.RESOURCES, pageRes);
+            pageRes = new PdfDictionary();
+            pageDict.set(PdfName.RESOURCES, pageRes);
         }
 
         // Merge each sub-dictionary (Font, XObject, ExtGState, etc.)
         String[] categories = {"Font", "XObject", "ExtGState", "ColorSpace", "Pattern", "Shading"};
         for (String cat : categories) {
-            COSBase apCatVal = resolveRef(apRes.get(cat));
-            if (!(apCatVal instanceof COSDictionary)) continue;
-            COSDictionary apCat = (COSDictionary) apCatVal;
+            PdfBase apCatVal = resolveRef(apRes.get(cat));
+            if (!(apCatVal instanceof PdfDictionary)) continue;
+            PdfDictionary apCat = (PdfDictionary) apCatVal;
 
-            COSBase pageCatVal = resolveRef(pageRes.get(cat));
-            COSDictionary pageCat;
-            if (pageCatVal instanceof COSDictionary) {
-                pageCat = (COSDictionary) pageCatVal;
+            PdfBase pageCatVal = resolveRef(pageRes.get(cat));
+            PdfDictionary pageCat;
+            if (pageCatVal instanceof PdfDictionary) {
+                pageCat = (PdfDictionary) pageCatVal;
             } else {
-                pageCat = new COSDictionary();
-                pageRes.set(COSName.of(cat), pageCat);
+                pageCat = new PdfDictionary();
+                pageRes.set(PdfName.of(cat), pageCat);
             }
 
-            for (COSName key : apCat.keySet()) {
+            for (PdfName key : apCat.keySet()) {
                 if (pageCat.get(key) == null) {
                     pageCat.set(key, apCat.get(key));
                 }
@@ -1518,21 +1554,21 @@ public class Page {
         double y = resolveStampY(stamp.getVerticalAlignment(), yIndent, recordedHeight, box);
 
         Document targetDocument = owningDocument;
-        COSObjectReference formRef = stamp.getCachedFormReference();
+        PdfObjectReference formRef = stamp.getCachedFormReference();
         if (formRef == null || stamp.getCachedTargetDocument() != targetDocument) {
-            COSStream formStream = createTextStampFormXObject(stamp, recordedWidth, recordedHeight);
+            PdfStream formStream = createTextStampFormXObject(stamp, recordedWidth, recordedHeight);
             formRef = targetDocument.registerImportedObject(formStream);
             stamp.cacheFormReference(targetDocument, formRef);
         }
 
         Resources resources = ensureResources();
-        COSDictionary xObjects = resources.getXObjects();
+        PdfDictionary xObjects = resources.getXObjects();
         if (xObjects == null) {
-            xObjects = new COSDictionary();
-            resources.getCOSDictionary().set(COSName.of("XObject"), xObjects);
+            xObjects = new PdfDictionary();
+            resources.getPdfDictionary().set(PdfName.of("XObject"), xObjects);
         }
         String resourceName = createUniqueXObjectName(xObjects, "Fm", stamp.getStampId());
-        xObjects.set(COSName.of(resourceName), formRef);
+        xObjects.set(PdfName.of(resourceName), formRef);
 
         ContentStreamBuilder builder = new ContentStreamBuilder();
         builder.saveState();
@@ -1579,18 +1615,18 @@ public class Page {
                     "ImageStamp must carry image data (set file or imageStream)");
         }
 
-        // Build the Image XObject COSStream up-front so we can register it
+        // Build the Image XObject PdfStream up-front so we can register it
         // under a unique resource name before emitting the Do operator.
-        COSStream imageXObject = XImage.createImageStream(imageBytes);
+        PdfStream imageXObject = XImage.createImageStream(imageBytes);
 
         Resources resources = ensureResources();
-        COSDictionary xObjects = resources.getXObjects();
+        PdfDictionary xObjects = resources.getXObjects();
         if (xObjects == null) {
-            xObjects = new COSDictionary();
-            resources.getCOSDictionary().set(COSName.of("XObject"), xObjects);
+            xObjects = new PdfDictionary();
+            resources.getPdfDictionary().set(PdfName.of("XObject"), xObjects);
         }
         String imageRes = createUniqueXObjectName(xObjects, "Im", stamp.getStampId());
-        xObjects.set(COSName.of(imageRes), imageXObject);
+        xObjects.set(PdfName.of(imageRes), imageXObject);
 
         Rectangle box = getMediaBox();
         if (box == null) box = new Rectangle(0, 0, 612, 792);
@@ -1664,25 +1700,25 @@ public class Page {
             throw new IOException("Page is not attached to a document");
         }
 
-        COSObjectReference formRef = stamp.getCachedFormReference();
+        PdfObjectReference formRef = stamp.getCachedFormReference();
         if (formRef == null || stamp.getCachedTargetDocument() != targetDocument) {
             Rectangle sourceRect = source.getRect();
             if (sourceRect == null) {
                 sourceRect = new Rectangle(0, 0, 612, 792);
             }
-            COSStream formStream = createStampFormXObject(targetDocument, source, sourceRect);
+            PdfStream formStream = createStampFormXObject(targetDocument, source, sourceRect);
             formRef = targetDocument.registerImportedObject(formStream);
             stamp.cacheFormReference(targetDocument, formRef);
         }
 
         Resources resources = ensureResources();
-        COSDictionary xObjects = resources.getXObjects();
+        PdfDictionary xObjects = resources.getXObjects();
         if (xObjects == null) {
-            xObjects = new COSDictionary();
-            resources.getCOSDictionary().set(COSName.of("XObject"), xObjects);
+            xObjects = new PdfDictionary();
+            resources.getPdfDictionary().set(PdfName.of("XObject"), xObjects);
         }
         String resourceName = createUniqueXObjectName(xObjects, "FmStamp", stamp.getStampId());
-        xObjects.set(COSName.of(resourceName), formRef);
+        xObjects.set(PdfName.of(resourceName), formRef);
 
         ContentStreamBuilder builder = new ContentStreamBuilder();
         builder.saveState();
@@ -1705,32 +1741,32 @@ public class Page {
      *
      * @return a mutable array of metadata dictionaries
      */
-    public COSArray getStampInfoRecords() {
-        COSBase existing = resolveRef(pageDict.get(OPENPDF_STAMP_INFO));
-        if (existing instanceof COSArray) {
-            return (COSArray) existing;
+    public PdfArray getStampInfoRecords() {
+        PdfBase existing = resolveRef(pageDict.get(OPENPDF_STAMP_INFO));
+        if (existing instanceof PdfArray) {
+            return (PdfArray) existing;
         }
-        COSArray records = new COSArray();
+        PdfArray records = new PdfArray();
         pageDict.set(OPENPDF_STAMP_INFO, records);
         return records;
     }
 
     public boolean removeStampById(int stampId) throws IOException {
         boolean removed = false;
-        COSArray records = getStampInfoRecords();
+        PdfArray records = getStampInfoRecords();
         java.util.List<String> resourceNames = new java.util.ArrayList<>();
         for (int i = records.size() - 1; i >= 0; i--) {
-            COSBase item = records.get(i);
-            if (!(item instanceof COSDictionary)) {
+            PdfBase item = records.get(i);
+            if (!(item instanceof PdfDictionary)) {
                 continue;
             }
-            COSDictionary dict = (COSDictionary) item;
+            PdfDictionary dict = (PdfDictionary) item;
             if (dict.getInt("StampId", Integer.MIN_VALUE) != stampId) {
                 continue;
             }
-            COSBase resourceBase = dict.get("ResourceName");
-            if (resourceBase instanceof COSString) {
-                resourceNames.add(((COSString) resourceBase).getString());
+            PdfBase resourceBase = dict.get("ResourceName");
+            if (resourceBase instanceof PdfString) {
+                resourceNames.add(((PdfString) resourceBase).getString());
             }
             records.remove(i);
             removed = true;
@@ -1750,18 +1786,18 @@ public class Page {
     private void recordStampInfo(String type, int stampId, String text,
                                  double x, double y, double width, double height,
                                  String resourceName) {
-        COSDictionary info = new COSDictionary();
-        info.set("Type", new COSString(type));
-        info.set("StampId", COSInteger.valueOf(stampId));
+        PdfDictionary info = new PdfDictionary();
+        info.set("Type", new PdfString(type));
+        info.set("StampId", PdfInteger.valueOf(stampId));
         if (text != null) {
-            info.set("Text", new COSString(text));
+            info.set("Text", new PdfString(text));
         }
-        info.set("X", new COSFloat(x));
-        info.set("Y", new COSFloat(y));
-        info.set("Width", new COSFloat(width));
-        info.set("Height", new COSFloat(height));
+        info.set("X", new PdfFloat(x));
+        info.set("Y", new PdfFloat(y));
+        info.set("Width", new PdfFloat(width));
+        info.set("Height", new PdfFloat(height));
         if (resourceName != null && !resourceName.isEmpty()) {
-            info.set("ResourceName", new COSString(resourceName));
+            info.set("ResourceName", new PdfString(resourceName));
         }
         getStampInfoRecords().add(info);
     }
@@ -1783,11 +1819,11 @@ public class Page {
         return fontSize > 0 ? fontSize * 1.2 : 14.4;
     }
 
-    private COSStream createTextStampFormXObject(TextStamp stamp, double width, double height) {
-        COSStream formStream = new COSStream();
-        formStream.set("Type", COSName.of("XObject"));
-        formStream.set("Subtype", COSName.of("Form"));
-        formStream.set("BBox", new Rectangle(0, 0, Math.max(width, 1.0), Math.max(height, 1.0)).toCOSArray());
+    private PdfStream createTextStampFormXObject(TextStamp stamp, double width, double height) {
+        PdfStream formStream = new PdfStream();
+        formStream.set("Type", PdfName.of("XObject"));
+        formStream.set("Subtype", PdfName.of("Form"));
+        formStream.set("BBox", new Rectangle(0, 0, Math.max(width, 1.0), Math.max(height, 1.0)).toPdfArray());
 
         ContentStreamBuilder builder = new ContentStreamBuilder();
         builder.beginText();
@@ -1812,7 +1848,7 @@ public class Page {
         builder.endText();
 
         formStream.setDecodedData(builder.toByteArray());
-        COSDictionary resources = new COSDictionary();
+        PdfDictionary resources = new PdfDictionary();
         mergeFontResources(resources, builder);
         formStream.set("Resources", resources);
         return formStream;
@@ -1887,28 +1923,28 @@ public class Page {
      */
     private void mergeFontResources(ContentStreamBuilder builder) {
         Resources res = ensureResources();
-        mergeFontResources(res.getCOSDictionary(), builder);
+        mergeFontResources(res.getPdfDictionary(), builder);
     }
 
-    private void mergeFontResources(COSDictionary resDict, ContentStreamBuilder builder) {
-        COSBase fontsBase = resDict.get("Font");
-        COSDictionary fontsDict;
-        if (fontsBase instanceof COSDictionary) {
-            fontsDict = (COSDictionary) fontsBase;
+    private void mergeFontResources(PdfDictionary resDict, ContentStreamBuilder builder) {
+        PdfBase fontsBase = resDict.get("Font");
+        PdfDictionary fontsDict;
+        if (fontsBase instanceof PdfDictionary) {
+            fontsDict = (PdfDictionary) fontsBase;
         } else {
-            fontsDict = new COSDictionary();
-            resDict.set(COSName.of("Font"), fontsDict);
+            fontsDict = new PdfDictionary();
+            resDict.set(PdfName.of("Font"), fontsDict);
         }
 
         for (java.util.Map.Entry<String, String> entry : builder.getFontResources().entrySet()) {
             String baseFont = entry.getKey();
             String resName = entry.getValue();
             if (fontsDict.get(resName) == null) {
-                COSDictionary fontDict = new COSDictionary();
-                fontDict.set(COSName.of("Type"), COSName.of("Font"));
-                fontDict.set(COSName.of("Subtype"), COSName.of("Type1"));
-                fontDict.set(COSName.of("BaseFont"), COSName.of(baseFont));
-                fontsDict.set(COSName.of(resName), fontDict);
+                PdfDictionary fontDict = new PdfDictionary();
+                fontDict.set(PdfName.of("Type"), PdfName.of("Font"));
+                fontDict.set(PdfName.of("Subtype"), PdfName.of("Type1"));
+                fontDict.set(PdfName.of("BaseFont"), PdfName.of(baseFont));
+                fontsDict.set(PdfName.of(resName), fontDict);
             }
         }
     }
@@ -1916,7 +1952,7 @@ public class Page {
     /**
      * Prepends raw content stream data before this page's existing /Contents.
      * <p>
-     * If /Contents is absent, creates a new COSStream. If /Contents exists,
+     * If /Contents is absent, creates a new PdfStream. If /Contents exists,
      * inserts the new stream before the existing content.
      * </p>
      *
@@ -1929,35 +1965,35 @@ public class Page {
         // content stream including the freshly prepended bytes.
         try { flushContentsIfDirty(); } catch (IOException ignored) {}
         clearContentsCache();
-        COSStream newStream = new COSStream();
+        PdfStream newStream = new PdfStream();
         newStream.setDecodedData(data);
 
-        COSBase existing = resolveRef(pageDict.get(COSName.CONTENTS));
+        PdfBase existing = resolveRef(pageDict.get(PdfName.CONTENTS));
         if (existing == null) {
-            pageDict.set(COSName.CONTENTS, newStream);
-        } else if (existing instanceof COSStream) {
-            COSArray arr = new COSArray();
+            pageDict.set(PdfName.CONTENTS, newStream);
+        } else if (existing instanceof PdfStream) {
+            PdfArray arr = new PdfArray();
             arr.add(newStream);
             arr.add(existing);
-            pageDict.set(COSName.CONTENTS, arr);
-        } else if (existing instanceof COSArray) {
-            COSArray arr = (COSArray) existing;
+            pageDict.set(PdfName.CONTENTS, arr);
+        } else if (existing instanceof PdfArray) {
+            PdfArray arr = (PdfArray) existing;
             // Insert at beginning
-            COSArray newArr = new COSArray();
+            PdfArray newArr = new PdfArray();
             newArr.add(newStream);
             for (int i = 0; i < arr.size(); i++) {
                 newArr.add(arr.get(i));
             }
-            pageDict.set(COSName.CONTENTS, newArr);
+            pageDict.set(PdfName.CONTENTS, newArr);
         }
     }
 
     /**
      * Appends raw content stream data to this page's /Contents.
      * <p>
-     * If /Contents is absent, creates a new COSStream. If /Contents is a COSStream,
-     * wraps the existing stream and the new stream in a COSArray. If /Contents is
-     * already a COSArray, appends a new COSStream to it.
+     * If /Contents is absent, creates a new PdfStream. If /Contents is a PdfStream,
+     * wraps the existing stream and the new stream in a PdfArray. If /Contents is
+     * already a PdfArray, appends a new PdfStream to it.
      * </p>
      *
      * @param data the content stream bytes to append
@@ -1972,46 +2008,46 @@ public class Page {
         // content stream including the freshly appended bytes.
         try { flushContentsIfDirty(); } catch (IOException ignored) {}
         clearContentsCache();
-        COSStream newStream = new COSStream();
+        PdfStream newStream = new PdfStream();
         newStream.setDecodedData(data);
 
-        COSBase existing = resolveRef(pageDict.get(COSName.CONTENTS));
+        PdfBase existing = resolveRef(pageDict.get(PdfName.CONTENTS));
         if (existing == null) {
-            pageDict.set(COSName.CONTENTS, newStream);
-        } else if (existing instanceof COSStream) {
-            COSArray arr = new COSArray();
+            pageDict.set(PdfName.CONTENTS, newStream);
+        } else if (existing instanceof PdfStream) {
+            PdfArray arr = new PdfArray();
             arr.add(existing);
             arr.add(newStream);
-            pageDict.set(COSName.CONTENTS, arr);
-        } else if (existing instanceof COSArray) {
-            ((COSArray) existing).add(newStream);
+            pageDict.set(PdfName.CONTENTS, arr);
+        } else if (existing instanceof PdfArray) {
+            ((PdfArray) existing).add(newStream);
         }
     }
 
     private boolean removeStampedContentStreams(int stampId) throws IOException {
         String marker = OPENPDF_STAMP_BEGIN + stampId + ":";
-        COSBase existing = resolveRef(pageDict.get(COSName.CONTENTS));
+        PdfBase existing = resolveRef(pageDict.get(PdfName.CONTENTS));
         if (existing == null) {
             return false;
         }
-        if (existing instanceof COSStream) {
-            byte[] data = ((COSStream) existing).getDecodedData();
+        if (existing instanceof PdfStream) {
+            byte[] data = ((PdfStream) existing).getDecodedData();
             if (containsStampMarker(data, marker)) {
-                ((COSStream) existing).setDecodedData(new byte[0]);
+                ((PdfStream) existing).setDecodedData(new byte[0]);
                 clearContentsCache();
                 return true;
             }
             return false;
         }
-        if (existing instanceof COSArray) {
-            COSArray array = (COSArray) existing;
-            COSArray kept = new COSArray();
+        if (existing instanceof PdfArray) {
+            PdfArray array = (PdfArray) existing;
+            PdfArray kept = new PdfArray();
             boolean removed = false;
             for (int i = 0; i < array.size(); i++) {
-                COSBase item = array.get(i);
-                COSBase resolved = resolveRef(item);
-                if (resolved instanceof COSStream
-                        && containsStampMarker(((COSStream) resolved).getDecodedData(), marker)) {
+                PdfBase item = array.get(i);
+                PdfBase resolved = resolveRef(item);
+                if (resolved instanceof PdfStream
+                        && containsStampMarker(((PdfStream) resolved).getDecodedData(), marker)) {
                     removed = true;
                     continue;
                 }
@@ -2019,11 +2055,11 @@ public class Page {
             }
             if (removed) {
                 if (kept.size() == 0) {
-                    pageDict.remove(COSName.CONTENTS);
+                    pageDict.remove(PdfName.CONTENTS);
                 } else if (kept.size() == 1) {
-                    pageDict.set(COSName.CONTENTS, kept.get(0));
+                    pageDict.set(PdfName.CONTENTS, kept.get(0));
                 } else {
-                    pageDict.set(COSName.CONTENTS, kept);
+                    pageDict.set(PdfName.CONTENTS, kept);
                 }
                 clearContentsCache();
             }
@@ -2047,21 +2083,21 @@ public class Page {
         if (resources == null) {
             return;
         }
-        COSDictionary xObjects = resources.getXObjects();
+        PdfDictionary xObjects = resources.getXObjects();
         if (xObjects == null) {
             return;
         }
-        xObjects.remove(COSName.of(resourceName));
+        xObjects.remove(PdfName.of(resourceName));
         if (xObjects.isEmpty()) {
-            resources.getCOSDictionary().remove(COSName.of("XObject"));
+            resources.getPdfDictionary().remove(PdfName.of("XObject"));
         }
     }
 
-    private String createUniqueXObjectName(COSDictionary xObjects, String prefix, int stampId) {
+    private String createUniqueXObjectName(PdfDictionary xObjects, String prefix, int stampId) {
         String base = prefix + (stampId > 0 ? stampId : Integer.toUnsignedString(System.identityHashCode(this)));
         String candidate = base;
         int counter = 1;
-        while (xObjects.get(COSName.of(candidate)) != null) {
+        while (xObjects.get(PdfName.of(candidate)) != null) {
             counter++;
             candidate = base + "_" + counter;
         }
@@ -2084,19 +2120,19 @@ public class Page {
         return wrapped;
     }
 
-    private COSStream createStampFormXObject(Document targetDocument, Page sourcePage, Rectangle sourceRect) throws IOException {
-        COSStream formStream = new COSStream();
-        formStream.set("Type", COSName.of("XObject"));
-        formStream.set("Subtype", COSName.of("Form"));
-        formStream.set("BBox", sourceRect.toCOSArray());
+    private PdfStream createStampFormXObject(Document targetDocument, Page sourcePage, Rectangle sourceRect) throws IOException {
+        PdfStream formStream = new PdfStream();
+        formStream.set("Type", PdfName.of("XObject"));
+        formStream.set("Subtype", PdfName.of("Form"));
+        formStream.set("BBox", sourceRect.toPdfArray());
 
-        COSDictionary sourceResources = sourcePage.getResources() != null
-                ? sourcePage.getResources().getCOSDictionary()
+        PdfDictionary sourceResources = sourcePage.getResources() != null
+                ? sourcePage.getResources().getPdfDictionary()
                 : null;
         if (sourceResources != null) {
-            COSCloner cloner = new COSCloner(targetDocument::registerImportedObject);
-            COSBase clonedResources = cloner.cloneAny(sourceResources);
-            if (clonedResources instanceof COSDictionary) {
+            PdfObjectCloner cloner = new PdfObjectCloner(targetDocument::registerImportedObject);
+            PdfBase clonedResources = cloner.cloneAny(sourceResources);
+            if (clonedResources instanceof PdfDictionary) {
                 formStream.set("Resources", clonedResources);
             }
         }
@@ -2107,26 +2143,26 @@ public class Page {
     }
 
     private byte[] readPageContentBytes(Page sourcePage) throws IOException {
-        COSBase sourceContents = sourcePage.getRawContents();
-        if (sourceContents instanceof COSObjectReference) {
-            sourceContents = ((COSObjectReference) sourceContents).dereference();
+        PdfBase sourceContents = sourcePage.getRawContents();
+        if (sourceContents instanceof PdfObjectReference) {
+            sourceContents = ((PdfObjectReference) sourceContents).dereference();
         }
-        if (sourceContents instanceof COSStream) {
-            return ((COSStream) sourceContents).getDecodedData();
+        if (sourceContents instanceof PdfStream) {
+            return ((PdfStream) sourceContents).getDecodedData();
         }
-        if (sourceContents instanceof COSArray) {
+        if (sourceContents instanceof PdfArray) {
             java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
-            COSArray arr = (COSArray) sourceContents;
+            PdfArray arr = (PdfArray) sourceContents;
             for (int i = 0; i < arr.size(); i++) {
-                COSBase item = arr.get(i);
-                if (item instanceof COSObjectReference) {
+                PdfBase item = arr.get(i);
+                if (item instanceof PdfObjectReference) {
                     try {
-                        item = ((COSObjectReference) item).dereference();
+                        item = ((PdfObjectReference) item).dereference();
                     } catch (Exception ignored) {
                     }
                 }
-                if (item instanceof COSStream) {
-                    byte[] decoded = ((COSStream) item).getDecodedData();
+                if (item instanceof PdfStream) {
+                    byte[] decoded = ((PdfStream) item).getDecodedData();
                     if (decoded != null) {
                         baos.write(decoded);
                     }
@@ -2145,8 +2181,8 @@ public class Page {
     public Resources ensureResources() {
         Resources res = getResources();
         if (res == null) {
-            COSDictionary resDict = new COSDictionary();
-            pageDict.set(COSName.RESOURCES, resDict);
+            PdfDictionary resDict = new PdfDictionary();
+            pageDict.set(PdfName.RESOURCES, resDict);
             res = new Resources(resDict);
         }
         return res;
@@ -2156,7 +2192,7 @@ public class Page {
      * Replaces the page content stream with the given operator collection.
      * <p>
      * Serializes the operators to content stream syntax and stores them
-     * as a new COSStream in the page dictionary's /Contents entry.
+     * as a new PdfStream in the page dictionary's /Contents entry.
      * </p>
      *
      * @param operators the operator collection to set as the page content
@@ -2171,13 +2207,16 @@ public class Page {
             sb.append(op.toString()).append('\n');
         }
         byte[] data = sb.toString().getBytes(java.nio.charset.StandardCharsets.US_ASCII);
-        COSStream stream = new COSStream();
+        PdfStream stream = new PdfStream();
         stream.setDecodedData(data);
-        pageDict.set(COSName.CONTENTS, stream);
+        pageDict.set(PdfName.CONTENTS, stream);
         // Replace the cache: the caller-supplied collection becomes the new
         // authoritative view; nothing is dirty because we just wrote it.
         this.contentsCache = operators;
         this.contentsDirty = false;
+        // We just wrote authoritative bytes from the caller's collection, so the
+        // page is no longer in a degraded (undecodable-source) state.
+        this.contentsDegraded = false;
     }
 
     /**
@@ -2187,34 +2226,34 @@ public class Page {
      * @param key the property name
      * @return the resolved value, or null if not found in the tree
      */
-    private COSBase getInheritable(COSName key) {
-        COSDictionary current = pageDict;
+    private PdfBase getInheritable(PdfName key) {
+        PdfDictionary current = pageDict;
         while (current != null) {
-            COSBase value = current.get(key);
+            PdfBase value = current.get(key);
             if (value != null) {
                 return resolveRef(value);
             }
-            COSBase parent = current.get(COSName.PARENT);
+            PdfBase parent = current.get(PdfName.PARENT);
             parent = resolveRef(parent);
-            current = (parent instanceof COSDictionary) ? (COSDictionary) parent : null;
+            current = (parent instanceof PdfDictionary) ? (PdfDictionary) parent : null;
         }
         return null;
     }
 
     /**
-     * Resolves an indirect object reference. If the value is a COSObjectReference,
+     * Resolves an indirect object reference. If the value is a PdfObjectReference,
      * dereferences it. Otherwise returns the value as-is.
      *
-     * @param value the COS value to resolve
+     * @param value the PDF value to resolve
      * @return the resolved value, or null
      */
-    private COSBase resolveRef(COSBase value) {
+    private PdfBase resolveRef(PdfBase value) {
         if (value == null) {
             return null;
         }
-        if (value instanceof COSObjectReference) {
+        if (value instanceof PdfObjectReference) {
             try {
-                return ((COSObjectReference) value).dereference();
+                return ((PdfObjectReference) value).dereference();
             } catch (IOException e) {
                 LOG.warning(() -> "Failed to dereference: " + e.getMessage());
                 return null;
@@ -2224,16 +2263,16 @@ public class Page {
     }
 
     /**
-     * Converts a COS value to a Rectangle if it is a COSArray of 4 elements.
+     * Converts a PDF value to a Rectangle if it is a PdfArray of 4 elements.
      *
-     * @param value the COS value
+     * @param value the PDF value
      * @return the Rectangle, or null
      */
-    private Rectangle toRectangle(COSBase value) {
-        if (value instanceof COSArray) {
-            COSArray array = (COSArray) value;
+    private Rectangle toRectangle(PdfBase value) {
+        if (value instanceof PdfArray) {
+            PdfArray array = (PdfArray) value;
             if (array.size() == 4) {
-                return Rectangle.fromCOSArray(array);
+                return Rectangle.fromPdfArray(array);
             }
         }
         return null;
@@ -2250,7 +2289,7 @@ public class Page {
      * @throws IOException if content stream parsing fails
      */
     public boolean isBlank() throws IOException {
-        COSBase contents = pageDict.get(COSName.CONTENTS);
+        PdfBase contents = pageDict.get(PdfName.CONTENTS);
         if (contents == null) return true;
         OperatorCollection ops = getContents();
         for (Operator op : ops) {

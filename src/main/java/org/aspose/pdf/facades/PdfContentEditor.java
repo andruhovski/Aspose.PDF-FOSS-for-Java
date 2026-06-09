@@ -4,10 +4,10 @@ import org.aspose.pdf.Document;
 import org.aspose.pdf.Page;
 import org.aspose.pdf.PageCollection;
 import org.aspose.pdf.Rectangle;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 import org.aspose.pdf.text.TextFragment;
 import org.aspose.pdf.text.TextFragmentAbsorber;
 import org.aspose.pdf.text.TextFragmentCollection;
@@ -237,23 +237,23 @@ public class PdfContentEditor implements AutoCloseable {
             if (pageNumber < 1 || pageNumber > pages.getCount()) {
                 return new StampInfo[0];
             }
-            COSArray records = pages.get(pageNumber).getStampInfoRecords();
+            PdfArray records = pages.get(pageNumber).getStampInfoRecords();
             java.util.List<StampInfo> infos = new java.util.ArrayList<>();
             for (int i = 0; i < records.size(); i++) {
-                COSBase item = records.get(i);
-                if (!(item instanceof COSDictionary)) {
+                PdfBase item = records.get(i);
+                if (!(item instanceof PdfDictionary)) {
                     continue;
                 }
-                COSDictionary dict = (COSDictionary) item;
+                PdfDictionary dict = (PdfDictionary) item;
                 String type = null;
-                COSBase typeBase = dict.get("Type");
-                if (typeBase instanceof COSString) {
-                    type = ((COSString) typeBase).getString();
+                PdfBase typeBase = dict.get("Type");
+                if (typeBase instanceof PdfString) {
+                    type = ((PdfString) typeBase).getString();
                 }
                 String text = null;
-                COSBase textBase = dict.get("Text");
-                if (textBase instanceof COSString) {
-                    text = ((COSString) textBase).getString();
+                PdfBase textBase = dict.get("Text");
+                if (textBase instanceof PdfString) {
+                    text = ((PdfString) textBase).getString();
                 }
                 int stampId = dict.getInt("StampId", 0);
                 double x = dict.getFloat("X", 0);

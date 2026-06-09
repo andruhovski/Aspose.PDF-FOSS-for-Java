@@ -1,7 +1,7 @@
 package org.aspose.pdf.annotations;
 
 import org.aspose.pdf.*;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 /**
  * Polygon annotation (ISO 32000-1:2008, Section 12.5.6.9, /Subtype /Polygon).
@@ -15,12 +15,12 @@ public class PolygonAnnotation extends MarkupAnnotation {
     private Color interiorColor;
 
     /**
-     * Constructs a polygon annotation from an existing COS dictionary.
+     * Constructs a polygon annotation from an existing PDF dictionary.
      *
-     * @param dict the COS dictionary backing this annotation
+     * @param dict the PDF dictionary backing this annotation
      * @param page the page this annotation belongs to
      */
-    public PolygonAnnotation(COSDictionary dict, Page page) {
+    public PolygonAnnotation(PdfDictionary dict, Page page) {
         super(dict, page);
     }
 
@@ -32,7 +32,7 @@ public class PolygonAnnotation extends MarkupAnnotation {
      */
     public PolygonAnnotation(Page page, Rectangle rect) {
         super(page, rect);
-        dict.set(COSName.of("Subtype"), COSName.of("Polygon"));
+        dict.set(PdfName.of("Subtype"), PdfName.of("Polygon"));
     }
 
     /**
@@ -44,7 +44,7 @@ public class PolygonAnnotation extends MarkupAnnotation {
      */
     public PolygonAnnotation(Page page, Rectangle rect, Point[] vertices) {
         super(page, rect);
-        dict.set(COSName.of("Subtype"), COSName.of("Polygon"));
+        dict.set(PdfName.of("Subtype"), PdfName.of("Polygon"));
         setVertexPoints(vertices);
     }
 
@@ -54,9 +54,9 @@ public class PolygonAnnotation extends MarkupAnnotation {
      * @return the vertices array, or null if not set
      */
     public double[] getVertices() {
-        COSBase v = dict.get("Vertices");
-        if (v instanceof COSArray) {
-            COSArray arr = (COSArray) v;
+        PdfBase v = dict.get("Vertices");
+        if (v instanceof PdfArray) {
+            PdfArray arr = (PdfArray) v;
             double[] result = new double[arr.size()];
             for (int i = 0; i < arr.size(); i++) {
                 result[i] = arr.getFloat(i, 0);
@@ -89,15 +89,15 @@ public class PolygonAnnotation extends MarkupAnnotation {
      */
     public void setVertexPoints(Point[] vertices) {
         if (vertices == null) {
-            dict.remove(COSName.of("Vertices"));
+            dict.remove(PdfName.of("Vertices"));
             return;
         }
-        COSArray arr = new COSArray();
+        PdfArray arr = new PdfArray();
         for (Point p : vertices) {
-            arr.add(new COSFloat(p.getX()));
-            arr.add(new COSFloat(p.getY()));
+            arr.add(new PdfFloat(p.getX()));
+            arr.add(new PdfFloat(p.getY()));
         }
-        dict.set(COSName.of("Vertices"), arr);
+        dict.set(PdfName.of("Vertices"), arr);
     }
 
     /**
@@ -107,9 +107,9 @@ public class PolygonAnnotation extends MarkupAnnotation {
      */
     public Color getInteriorColor() {
         if (interiorColor != null) return interiorColor;
-        COSBase ic = dict.get("IC");
-        if (ic instanceof COSArray) {
-            COSArray arr = (COSArray) ic;
+        PdfBase ic = dict.get("IC");
+        if (ic instanceof PdfArray) {
+            PdfArray arr = (PdfArray) ic;
             if (arr.size() == 3) return Color.fromRgb(arr.getFloat(0, 0), arr.getFloat(1, 0), arr.getFloat(2, 0));
         }
         return null;
@@ -123,13 +123,13 @@ public class PolygonAnnotation extends MarkupAnnotation {
     public void setInteriorColor(Color color) {
         this.interiorColor = color;
         if (color == null) {
-            dict.remove(COSName.of("IC"));
+            dict.remove(PdfName.of("IC"));
             return;
         }
-        COSArray ic = new COSArray();
-        ic.add(new COSFloat(color.getR()));
-        ic.add(new COSFloat(color.getG()));
-        ic.add(new COSFloat(color.getB()));
-        dict.set(COSName.of("IC"), ic);
+        PdfArray ic = new PdfArray();
+        ic.add(new PdfFloat(color.getR()));
+        ic.add(new PdfFloat(color.getG()));
+        ic.add(new PdfFloat(color.getB()));
+        dict.set(PdfName.of("IC"), ic);
     }
 }

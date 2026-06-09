@@ -1,7 +1,7 @@
 package org.aspose.pdf.engine.filter;
 
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -12,7 +12,7 @@ import java.util.logging.Logger;
 /**
  * Registry of PDF stream filters (§7.4, ISO 32000-1:2008).
  * <p>
- * Maps filter names (both standard and abbreviated) to {@link COSFilter} implementations.
+ * Maps filter names (both standard and abbreviated) to {@link PdfFilter} implementations.
  * Provides chain-decoding and chain-encoding: when a stream has multiple filters
  * (e.g. {@code /Filter [/ASCII85Decode /FlateDecode]}), decoding applies them left-to-right
  * and encoding applies them right-to-left, per §7.4.1.
@@ -22,7 +22,7 @@ public final class FilterFactory {
 
     private static final Logger LOG = Logger.getLogger(FilterFactory.class.getName());
 
-    private static final Map<String, COSFilter> FILTERS = new HashMap<>();
+    private static final Map<String, PdfFilter> FILTERS = new HashMap<>();
 
     static {
         register(new FlateFilter());
@@ -51,11 +51,11 @@ public final class FilterFactory {
      *
      * @param filter the filter to register
      */
-    public static void register(COSFilter filter) {
+    public static void register(PdfFilter filter) {
         if (filter == null) {
             throw new IllegalArgumentException("filter must not be null");
         }
-        COSName name = filter.getName();
+        PdfName name = filter.getName();
         FILTERS.put(name.getName(), filter);
 
         // Also register abbreviated name
@@ -74,11 +74,11 @@ public final class FilterFactory {
      * @return the filter
      * @throws IOException if no filter is registered for the name
      */
-    public static COSFilter getFilter(COSName name) throws IOException {
+    public static PdfFilter getFilter(PdfName name) throws IOException {
         if (name == null) {
             throw new IllegalArgumentException("name must not be null");
         }
-        COSFilter filter = FILTERS.get(name.getName());
+        PdfFilter filter = FILTERS.get(name.getName());
         if (filter == null) {
             throw new IOException("Unknown filter: " + name.getName());
         }
@@ -95,15 +95,15 @@ public final class FilterFactory {
      * @return the fully decoded data
      * @throws IOException if any filter fails
      */
-    public static byte[] decodeChain(byte[] data, List<COSName> filters, List<COSDictionary> params)
+    public static byte[] decodeChain(byte[] data, List<PdfName> filters, List<PdfDictionary> params)
             throws IOException {
         if (filters == null || filters.isEmpty()) {
             return data;
         }
         byte[] result = data;
         for (int i = 0; i < filters.size(); i++) {
-            COSFilter filter = getFilter(filters.get(i));
-            COSDictionary param = (params != null && i < params.size()) ? params.get(i) : null;
+            PdfFilter filter = getFilter(filters.get(i));
+            PdfDictionary param = (params != null && i < params.size()) ? params.get(i) : null;
             result = filter.decode(result, param);
         }
         return result;
@@ -119,15 +119,15 @@ public final class FilterFactory {
      * @return the fully encoded data
      * @throws IOException if any filter fails
      */
-    public static byte[] encodeChain(byte[] data, List<COSName> filters, List<COSDictionary> params)
+    public static byte[] encodeChain(byte[] data, List<PdfName> filters, List<PdfDictionary> params)
             throws IOException {
         if (filters == null || filters.isEmpty()) {
             return data;
         }
         byte[] result = data;
         for (int i = filters.size() - 1; i >= 0; i--) {
-            COSFilter filter = getFilter(filters.get(i));
-            COSDictionary param = (params != null && i < params.size()) ? params.get(i) : null;
+            PdfFilter filter = getFilter(filters.get(i));
+            PdfDictionary param = (params != null && i < params.size()) ? params.get(i) : null;
             result = filter.encode(result, param);
         }
         return result;

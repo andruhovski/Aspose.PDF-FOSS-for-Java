@@ -2,11 +2,11 @@ package org.aspose.pdf.tagged;
 
 import org.aspose.pdf.Document;
 import org.aspose.pdf.DocumentInfo;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 import org.aspose.pdf.engine.parser.PDFParser;
 import org.aspose.pdf.logicalstructure.StructTreeRoot;
 import org.aspose.pdf.logicalstructure.StructureElement;
@@ -43,7 +43,7 @@ public class TaggedContent implements ITaggedContent {
     private static final Logger LOG = Logger.getLogger(TaggedContent.class.getName());
 
     private final Document document;
-    private final COSDictionary catalog;
+    private final PdfDictionary catalog;
     private final PDFParser parser;
     private StructTreeRoot structTreeRoot;
     private final List<TOCElement> tocElements = new ArrayList<>();
@@ -56,7 +56,7 @@ public class TaggedContent implements ITaggedContent {
      * @param catalog  the document catalog dictionary
      * @param parser   the PDF parser (may be null for new documents)
      */
-    public TaggedContent(Document document, COSDictionary catalog, PDFParser parser) {
+    public TaggedContent(Document document, PdfDictionary catalog, PDFParser parser) {
         this.document = document;
         this.catalog = catalog;
         this.parser = parser;
@@ -69,12 +69,12 @@ public class TaggedContent implements ITaggedContent {
      */
     public StructTreeRoot getStructTreeRoot() {
         if (structTreeRoot == null) {
-            COSBase strObj = resolve(catalog.get("StructTreeRoot"));
-            if (strObj instanceof COSDictionary) {
-                structTreeRoot = new StructTreeRoot((COSDictionary) strObj, parser);
+            PdfBase strObj = resolve(catalog.get("StructTreeRoot"));
+            if (strObj instanceof PdfDictionary) {
+                structTreeRoot = new StructTreeRoot((PdfDictionary) strObj, parser);
             } else {
                 structTreeRoot = StructTreeRoot.createNew();
-                catalog.set(COSName.of("StructTreeRoot"), structTreeRoot.getCOSDictionary());
+                catalog.set(PdfName.of("StructTreeRoot"), structTreeRoot.getPdfDictionary());
                 ensureMarkInfo();
             }
         }
@@ -128,7 +128,7 @@ public class TaggedContent implements ITaggedContent {
      */
     @Override
     public void setLanguage(String lang) {
-        catalog.set(COSName.of("Lang"), new COSString(lang));
+        catalog.set(PdfName.of("Lang"), new PdfString(lang));
     }
 
     /**
@@ -136,8 +136,8 @@ public class TaggedContent implements ITaggedContent {
      */
     @Override
     public String getLanguage() {
-        COSBase lang = catalog.get("Lang");
-        if (lang instanceof COSString) return ((COSString) lang).getString();
+        PdfBase lang = catalog.get("Lang");
+        if (lang instanceof PdfString) return ((PdfString) lang).getString();
         return null;
     }
 
@@ -154,9 +154,9 @@ public class TaggedContent implements ITaggedContent {
      * @return the new element
      */
     public StructureElement createElement(StructureTypeStandard type) {
-        COSDictionary elemDict = new COSDictionary();
-        elemDict.set(COSName.of("Type"), COSName.of("StructElem"));
-        elemDict.set(COSName.of("S"), COSName.of(type.getName()));
+        PdfDictionary elemDict = new PdfDictionary();
+        elemDict.set(PdfName.of("Type"), PdfName.of("StructElem"));
+        elemDict.set(PdfName.of("S"), PdfName.of(type.getName()));
         return new StructureElement(elemDict, parser);
     }
 
@@ -389,20 +389,20 @@ public class TaggedContent implements ITaggedContent {
      * Ensures /MarkInfo exists in the catalog with /Marked = true.
      */
     private void ensureMarkInfo() {
-        COSBase miObj = resolve(catalog.get("MarkInfo"));
-        COSDictionary markInfo;
-        if (miObj instanceof COSDictionary) {
-            markInfo = (COSDictionary) miObj;
+        PdfBase miObj = resolve(catalog.get("MarkInfo"));
+        PdfDictionary markInfo;
+        if (miObj instanceof PdfDictionary) {
+            markInfo = (PdfDictionary) miObj;
         } else {
-            markInfo = new COSDictionary();
-            catalog.set(COSName.of("MarkInfo"), markInfo);
+            markInfo = new PdfDictionary();
+            catalog.set(PdfName.of("MarkInfo"), markInfo);
         }
         markInfo.setBoolean("Marked", true);
     }
 
-    private static COSBase resolve(COSBase obj) {
-        if (obj instanceof COSObjectReference) {
-            try { return ((COSObjectReference) obj).dereference(); }
+    private static PdfBase resolve(PdfBase obj) {
+        if (obj instanceof PdfObjectReference) {
+            try { return ((PdfObjectReference) obj).dereference(); }
             catch (IOException e) { return null; }
         }
         return obj;

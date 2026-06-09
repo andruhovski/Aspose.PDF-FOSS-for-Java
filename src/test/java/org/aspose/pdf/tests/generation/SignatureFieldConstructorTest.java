@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Bug C — {@code SignatureField} now exposes a public
  * {@code (Page, Rectangle)} constructor so callers can place a signature
- * placeholder on a fresh document without going through the COSDictionary
+ * placeholder on a fresh document without going through the PdfDictionary
  * back door.
  */
 class SignatureFieldConstructorTest {

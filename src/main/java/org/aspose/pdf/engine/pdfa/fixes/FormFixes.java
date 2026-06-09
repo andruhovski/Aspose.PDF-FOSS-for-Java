@@ -2,11 +2,11 @@ package org.aspose.pdf.engine.pdfa.fixes;
 
 import org.aspose.pdf.ConvertErrorAction;
 import org.aspose.pdf.PdfFormat;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSBoolean;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfBoolean;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 import org.aspose.pdf.engine.pdfa.PdfAValidationResult;
 import org.aspose.pdf.engine.parser.PDFParser;
 
@@ -54,15 +54,15 @@ public final class FormFixes {
      */
     public void fixNeedAppearances(PDFParser parser, PdfFormat format,
                                    ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
-        COSDictionary acroForm = getAcroForm(parser);
+        PdfDictionary acroForm = getAcroForm(parser);
         if (acroForm == null) {
             return;
         }
 
-        COSBase na = acroForm.get("NeedAppearances");
-        if (na instanceof COSBoolean && ((COSBoolean) na).getValue()) {
+        PdfBase na = acroForm.get("NeedAppearances");
+        if (na instanceof PdfBoolean && ((PdfBoolean) na).getValue()) {
             LOG.info("Setting /NeedAppearances to false in AcroForm");
-            acroForm.set("NeedAppearances", COSBoolean.FALSE);
+            acroForm.set("NeedAppearances", PdfBoolean.FALSE);
             result.addWarning("form.1", "Set /NeedAppearances to false in AcroForm",
                     "catalog/AcroForm/NeedAppearances", "ISO 19005-1:2005, 6.9");
         }
@@ -80,21 +80,21 @@ public final class FormFixes {
      */
     public void removeFieldAA(PDFParser parser, PdfFormat format,
                               ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
-        COSDictionary acroForm = getAcroForm(parser);
+        PdfDictionary acroForm = getAcroForm(parser);
         if (acroForm == null) {
             return;
         }
 
-        COSBase fieldsRef = acroForm.get("Fields");
+        PdfBase fieldsRef = acroForm.get("Fields");
         if (fieldsRef == null) {
             return;
         }
-        COSBase fieldsObj = parser.resolveReference(fieldsRef);
-        if (!(fieldsObj instanceof COSArray)) {
+        PdfBase fieldsObj = parser.resolveReference(fieldsRef);
+        if (!(fieldsObj instanceof PdfArray)) {
             return;
         }
 
-        removeAAFromFieldTree(parser, (COSArray) fieldsObj, result);
+        removeAAFromFieldTree(parser, (PdfArray) fieldsObj, result);
     }
 
     /**
@@ -112,7 +112,7 @@ public final class FormFixes {
      */
     public void removeXFA(PDFParser parser, PdfFormat format,
                           ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
-        COSDictionary acroForm = getAcroForm(parser);
+        PdfDictionary acroForm = getAcroForm(parser);
         if (acroForm == null) {
             return;
         }
@@ -134,15 +134,15 @@ public final class FormFixes {
      *
      * @return the AcroForm dictionary, or null if absent
      */
-    private COSDictionary getAcroForm(PDFParser parser) throws IOException {
-        COSDictionary catalog = parser.getCatalog();
-        COSBase acroRef = catalog.get("AcroForm");
+    private PdfDictionary getAcroForm(PDFParser parser) throws IOException {
+        PdfDictionary catalog = parser.getCatalog();
+        PdfBase acroRef = catalog.get("AcroForm");
         if (acroRef == null) {
             return null;
         }
-        COSBase acroObj = parser.resolveReference(acroRef);
-        if (acroObj instanceof COSDictionary) {
-            return (COSDictionary) acroObj;
+        PdfBase acroObj = parser.resolveReference(acroRef);
+        if (acroObj instanceof PdfDictionary) {
+            return (PdfDictionary) acroObj;
         }
         return null;
     }
@@ -150,15 +150,15 @@ public final class FormFixes {
     /**
      * Recursively walks the field tree removing /AA from field dictionaries.
      */
-    private void removeAAFromFieldTree(PDFParser parser, COSArray fields,
+    private void removeAAFromFieldTree(PDFParser parser, PdfArray fields,
                                        PdfAValidationResult result) throws IOException {
         for (int i = 0; i < fields.size(); i++) {
-            COSBase fieldRef = fields.get(i);
-            COSBase fieldObj = parser.resolveReference(fieldRef);
-            if (!(fieldObj instanceof COSDictionary)) {
+            PdfBase fieldRef = fields.get(i);
+            PdfBase fieldObj = parser.resolveReference(fieldRef);
+            if (!(fieldObj instanceof PdfDictionary)) {
                 continue;
             }
-            COSDictionary field = (COSDictionary) fieldObj;
+            PdfDictionary field = (PdfDictionary) fieldObj;
 
             if (field.get("AA") != null) {
                 field.set("AA", null);
@@ -167,11 +167,11 @@ public final class FormFixes {
             }
 
             // Recurse into child fields (/Kids)
-            COSBase kidsRef = field.get("Kids");
+            PdfBase kidsRef = field.get("Kids");
             if (kidsRef != null) {
-                COSBase kidsObj = parser.resolveReference(kidsRef);
-                if (kidsObj instanceof COSArray) {
-                    removeAAFromFieldTree(parser, (COSArray) kidsObj, result);
+                PdfBase kidsObj = parser.resolveReference(kidsRef);
+                if (kidsObj instanceof PdfArray) {
+                    removeAAFromFieldTree(parser, (PdfArray) kidsObj, result);
                 }
             }
         }

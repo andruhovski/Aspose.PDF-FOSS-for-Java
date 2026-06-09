@@ -1,6 +1,6 @@
 package org.aspose.pdf.operators;
 
-import org.aspose.pdf.engine.cos.COSBase;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
 
 import java.util.Collections;
 import java.util.List;
@@ -32,7 +32,7 @@ public class SetHorizontalTextScaling extends TextStateOperator {
      *
      * @param operands the operands from the content stream parser
      */
-    public SetHorizontalTextScaling(List<COSBase> operands) {
+    public SetHorizontalTextScaling(List<PdfBase> operands) {
         super("Tz", operands);
         this.scale = (operands != null && !operands.isEmpty())
                 ? getNumber(operands.get(0))

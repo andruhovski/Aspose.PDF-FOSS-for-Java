@@ -1,6 +1,6 @@
 package org.aspose.pdf.operators;
 
-import org.aspose.pdf.engine.cos.COSBase;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
 
 import java.util.List;
 
@@ -19,7 +19,7 @@ public class ET extends BlockTextOperator {
     }
 
     /** Creates an ET operator from parsed operands. */
-    public ET(List<COSBase> operands) {
+    public ET(List<PdfBase> operands) {
         super("ET", operands);
     }
 }

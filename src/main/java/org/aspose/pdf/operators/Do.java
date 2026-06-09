@@ -1,8 +1,8 @@
 package org.aspose.pdf.operators;
 
 import org.aspose.pdf.Operator;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 
 import java.util.Collections;
 import java.util.List;
@@ -25,7 +25,7 @@ public class Do extends Operator {
      * @throws IllegalArgumentException if xobjectName is null or empty
      */
     public Do(String xobjectName) {
-        super("Do", Collections.singletonList(COSName.of(xobjectName)));
+        super("Do", Collections.singletonList(PdfName.of(xobjectName)));
         if (xobjectName == null || xobjectName.isEmpty()) {
             throw new IllegalArgumentException("XObject name must not be null or empty");
         }
@@ -35,15 +35,15 @@ public class Do extends Operator {
     /**
      * Creates a Do operator from parsed operands.
      * <p>
-     * Expects one operand: a {@link COSName} identifying the XObject resource.
+     * Expects one operand: a {@link PdfName} identifying the XObject resource.
      * </p>
      *
      * @param operands the operands from the content stream parser
      */
-    public Do(List<COSBase> operands) {
+    public Do(List<PdfBase> operands) {
         super("Do", operands);
-        this.xobjectName = (operands != null && operands.size() > 0 && operands.get(0) instanceof COSName)
-                ? ((COSName) operands.get(0)).getName()
+        this.xobjectName = (operands != null && operands.size() > 0 && operands.get(0) instanceof PdfName)
+                ? ((PdfName) operands.get(0)).getName()
                 : "";
     }
 

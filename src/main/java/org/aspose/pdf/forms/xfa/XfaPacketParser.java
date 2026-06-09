@@ -1,11 +1,11 @@
 package org.aspose.pdf.forms.xfa;
 
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSStream;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -36,13 +36,13 @@ import org.xml.sax.SAXException;
  * Extracts and manages XML packets from the /XFA entry in a PDF AcroForm dictionary.
  * <p>
  * XFA (XML Forms Architecture) data in a PDF can be stored either as a single
- * COSStream containing a complete XDP document, or as a COSArray of interleaved
+ * PdfStream containing a complete XDP document, or as a PdfArray of interleaved
  * name/stream pairs representing individual packets (template, datasets, config, etc.).
  * </p>
  * <p>
  * This parser handles both representations, providing access to individual packets
  * as DOM {@link Document} objects and supporting write-back of modified packets
- * to the underlying COS structures.
+ * to the underlying PDF structures.
  * </p>
  *
  * @see <a href="https://www.iso.org/standard/51502.html">ISO 32000-1:2008, §12.7.8</a>
@@ -63,29 +63,29 @@ public class XfaPacketParser {
     /**
      * Parses the /XFA entry from an AcroForm dictionary.
      * <p>
-     * The entry may be either a {@link COSStream} containing a complete XDP document,
-     * or a {@link COSArray} of interleaved name/stream pairs.
+     * The entry may be either a {@link PdfStream} containing a complete XDP document,
+     * or a {@link PdfArray} of interleaved name/stream pairs.
      * </p>
      *
-     * @param xfaEntry the resolved /XFA value (COSArray or COSStream)
+     * @param xfaEntry the resolved /XFA value (PdfArray or PdfStream)
      * @throws IOException              if reading or parsing stream data fails
-     * @throws IllegalArgumentException if xfaEntry is null or not a COSArray/COSStream
+     * @throws IllegalArgumentException if xfaEntry is null or not a PdfArray/PdfStream
      */
-    public XfaPacketParser(COSBase xfaEntry) throws IOException {
+    public XfaPacketParser(PdfBase xfaEntry) throws IOException {
         if (xfaEntry == null) {
             throw new IllegalArgumentException("XFA entry must not be null");
         }
 
         this.packets = new LinkedHashMap<>();
-        COSBase resolved = resolveRef(xfaEntry);
+        PdfBase resolved = resolveRef(xfaEntry);
 
-        if (resolved instanceof COSStream) {
-            parseFromStream((COSStream) resolved);
-        } else if (resolved instanceof COSArray) {
-            parseFromArray((COSArray) resolved);
+        if (resolved instanceof PdfStream) {
+            parseFromStream((PdfStream) resolved);
+        } else if (resolved instanceof PdfArray) {
+            parseFromArray((PdfArray) resolved);
         } else {
             throw new IllegalArgumentException(
-                    "XFA entry must be a COSStream or COSArray, got: " + resolved.getClass().getSimpleName());
+                    "XFA entry must be a PdfStream or PdfArray, got: " + resolved.getClass().getSimpleName());
         }
     }
 
@@ -105,8 +105,8 @@ public class XfaPacketParser {
     /**
      * Returns the assembled XDP document containing all packets.
      * <p>
-     * When the source was a single COSStream, this is the parsed XDP document directly.
-     * When the source was a COSArray, this is a synthesized {@code <xdp:xdp>} document
+     * When the source was a single PdfStream, this is the parsed XDP document directly.
+     * When the source was a PdfArray, this is a synthesized {@code <xdp:xdp>} document
      * with all packet root elements imported as children.
      * </p>
      *
@@ -130,42 +130,42 @@ public class XfaPacketParser {
     }
 
     /**
-     * Writes modified packet DOMs back to the COS structures.
+     * Writes modified packet DOMs back to the PDF structures.
      * <p>
-     * For a COSArray source, each stream in the name/stream pairs is updated with the
-     * serialized content of the corresponding packet. For a COSStream source, the entire
+     * For a PdfArray source, each stream in the name/stream pairs is updated with the
+     * serialized content of the corresponding packet. For a PdfStream source, the entire
      * XDP document is serialized and written back.
      * </p>
      *
-     * @param xfaEntry the original /XFA COSBase (COSArray or COSStream)
+     * @param xfaEntry the original /XFA PdfBase (PdfArray or PdfStream)
      * @throws IOException if serialization or writing fails
      */
-    public void writeBack(COSBase xfaEntry) throws IOException {
+    public void writeBack(PdfBase xfaEntry) throws IOException {
         if (xfaEntry == null) {
             throw new IllegalArgumentException("XFA entry must not be null");
         }
 
-        COSBase resolved = resolveRef(xfaEntry);
+        PdfBase resolved = resolveRef(xfaEntry);
 
-        if (resolved instanceof COSStream) {
-            writeBackToStream((COSStream) resolved);
-        } else if (resolved instanceof COSArray) {
-            writeBackToArray((COSArray) resolved);
+        if (resolved instanceof PdfStream) {
+            writeBackToStream((PdfStream) resolved);
+        } else if (resolved instanceof PdfArray) {
+            writeBackToArray((PdfArray) resolved);
         } else {
             throw new IllegalArgumentException(
-                    "XFA entry must be a COSStream or COSArray, got: " + resolved.getClass().getSimpleName());
+                    "XFA entry must be a PdfStream or PdfArray, got: " + resolved.getClass().getSimpleName());
         }
     }
 
     // -----------------------------------------------------------------------
-    // Parsing from COSStream (single XDP document)
+    // Parsing from PdfStream (single XDP document)
     // -----------------------------------------------------------------------
 
     /**
-     * Parses a single COSStream containing a complete XDP document.
+     * Parses a single PdfStream containing a complete XDP document.
      * Walks child elements to extract individual packets by local name.
      */
-    private void parseFromStream(COSStream stream) throws IOException {
+    private void parseFromStream(PdfStream stream) throws IOException {
         byte[] data = stream.getDecodedData();
         if (data == null || data.length == 0) {
             LOG.warning("XFA stream contains no data");
@@ -209,43 +209,43 @@ public class XfaPacketParser {
     }
 
     // -----------------------------------------------------------------------
-    // Parsing from COSArray (interleaved name/stream pairs)
+    // Parsing from PdfArray (interleaved name/stream pairs)
     // -----------------------------------------------------------------------
 
     /**
-     * Parses a COSArray of interleaved name/stream pairs.
+     * Parses a PdfArray of interleaved name/stream pairs.
      * Format: [name0, stream0, name1, stream1, ...]
      * Builds a synthetic XDP document from the individual packets.
      */
-    private void parseFromArray(COSArray array) throws IOException {
+    private void parseFromArray(PdfArray array) throws IOException {
         if (array.size() < 2) {
             LOG.warning("XFA array has fewer than 2 elements, cannot form name/stream pairs");
             return;
         }
 
         for (int i = 0; i + 1 < array.size(); i += 2) {
-            COSBase nameObj = resolveRef(array.get(i));
-            COSBase streamObj = resolveRef(array.get(i + 1));
+            PdfBase nameObj = resolveRef(array.get(i));
+            PdfBase streamObj = resolveRef(array.get(i + 1));
 
             // Extract packet name
             String packetName;
-            if (nameObj instanceof COSString) {
-                packetName = ((COSString) nameObj).getString();
-            } else if (nameObj instanceof COSName) {
-                packetName = ((COSName) nameObj).getName();
+            if (nameObj instanceof PdfString) {
+                packetName = ((PdfString) nameObj).getString();
+            } else if (nameObj instanceof PdfName) {
+                packetName = ((PdfName) nameObj).getName();
             } else {
                 LOG.warning("XFA array element at index " + i
-                        + " is not a COSString or COSName, skipping pair");
+                        + " is not a PdfString or PdfName, skipping pair");
                 continue;
             }
 
             // Extract and parse stream data
-            if (!(streamObj instanceof COSStream)) {
-                LOG.warning("XFA array element at index " + (i + 1) + " is not a COSStream, skipping pair");
+            if (!(streamObj instanceof PdfStream)) {
+                LOG.warning("XFA array element at index " + (i + 1) + " is not a PdfStream, skipping pair");
                 continue;
             }
 
-            byte[] data = ((COSStream) streamObj).getDecodedData();
+            byte[] data = ((PdfStream) streamObj).getDecodedData();
             if (data == null || data.length == 0) {
                 LOG.fine("XFA packet '" + packetName + "' stream is empty");
                 continue;
@@ -359,9 +359,9 @@ public class XfaPacketParser {
     // -----------------------------------------------------------------------
 
     /**
-     * Serializes the entire XDP document and writes it back to a single COSStream.
+     * Serializes the entire XDP document and writes it back to a single PdfStream.
      */
-    private void writeBackToStream(COSStream stream) throws IOException {
+    private void writeBackToStream(PdfStream stream) throws IOException {
         if (xdpDocument == null) {
             LOG.warning("No XDP document to write back");
             return;
@@ -372,23 +372,23 @@ public class XfaPacketParser {
     }
 
     /**
-     * Iterates the COSArray name/stream pairs and writes each modified packet
-     * back to its corresponding COSStream.
+     * Iterates the PdfArray name/stream pairs and writes each modified packet
+     * back to its corresponding PdfStream.
      */
-    private void writeBackToArray(COSArray array) throws IOException {
+    private void writeBackToArray(PdfArray array) throws IOException {
         for (int i = 0; i + 1 < array.size(); i += 2) {
-            COSBase nameObj = resolveRef(array.get(i));
-            COSBase streamObj = resolveRef(array.get(i + 1));
+            PdfBase nameObj = resolveRef(array.get(i));
+            PdfBase streamObj = resolveRef(array.get(i + 1));
 
-            if (!(streamObj instanceof COSStream)) {
+            if (!(streamObj instanceof PdfStream)) {
                 continue;
             }
 
             String packetName;
-            if (nameObj instanceof COSString) {
-                packetName = ((COSString) nameObj).getString();
-            } else if (nameObj instanceof COSName) {
-                packetName = ((COSName) nameObj).getName();
+            if (nameObj instanceof PdfString) {
+                packetName = ((PdfString) nameObj).getString();
+            } else if (nameObj instanceof PdfName) {
+                packetName = ((PdfName) nameObj).getName();
             } else {
                 continue;
             }
@@ -398,7 +398,7 @@ public class XfaPacketParser {
             }
 
             byte[] serialized = serializeDocument(packetDoc);
-            ((COSStream) streamObj).setDecodedData(serialized);
+            ((PdfStream) streamObj).setDecodedData(serialized);
 
             LOG.fine("Wrote back XFA packet: " + packetName);
         }
@@ -477,16 +477,16 @@ public class XfaPacketParser {
     }
 
     /**
-     * Resolves COSObjectReference chains to obtain the underlying COS object.
+     * Resolves PdfObjectReference chains to obtain the underlying PDF object.
      * Follows references until a non-reference object is found.
      *
      * @param val the value to resolve
-     * @return the resolved value (never a COSObjectReference)
+     * @return the resolved value (never a PdfObjectReference)
      * @throws IOException if dereferencing fails
      */
-    private static COSBase resolveRef(COSBase val) throws IOException {
-        while (val instanceof COSObjectReference) {
-            val = ((COSObjectReference) val).dereference();
+    private static PdfBase resolveRef(PdfBase val) throws IOException {
+        while (val instanceof PdfObjectReference) {
+            val = ((PdfObjectReference) val).dereference();
         }
         return val;
     }

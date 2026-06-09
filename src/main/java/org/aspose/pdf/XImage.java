@@ -1,12 +1,12 @@
 package org.aspose.pdf;
 
 import org.aspose.pdf.engine.colorspace.*;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 import org.aspose.pdf.engine.parser.PDFParser;
 
 import java.awt.image.BufferedImage;
@@ -20,7 +20,7 @@ import java.util.logging.Logger;
 /**
  * Represents an image XObject in a PDF document (ISO 32000-1:2008, §8.9, Table 89).
  * <p>
- * Wraps a COSStream with {@code /Subtype /Image}. Provides access to image
+ * Wraps a PdfStream with {@code /Subtype /Image}. Provides access to image
  * properties (width, height, bits per component, color space) and decoded
  * pixel data. Supports saving to output streams and conversion to
  * {@link BufferedImage}.
@@ -30,20 +30,20 @@ public class XImage {
 
     private static final Logger LOG = Logger.getLogger(XImage.class.getName());
 
-    private final COSStream stream;
+    private final PdfStream stream;
     private String name;
     private final PDFParser parser;
-    private COSDictionary xobjectDict; // parent /XObject dictionary for renaming
+    private PdfDictionary xobjectDict; // parent /XObject dictionary for renaming
 
     /**
      * Creates an XImage from an image XObject stream.
      *
-     * @param stream the image XObject COSStream
+     * @param stream the image XObject PdfStream
      * @param name   the resource name (e.g., "Im1")
      * @param parser the PDF parser for resolving indirect refs (may be null)
      */
-    public XImage(COSStream stream, String name, PDFParser parser) {
-        this.stream = stream != null ? stream : new COSStream();
+    public XImage(PdfStream stream, String name, PDFParser parser) {
+        this.stream = stream != null ? stream : new PdfStream();
         this.name = name;
         this.parser = parser;
     }
@@ -96,10 +96,10 @@ public class XImage {
         this.name = newName;
         // Rename the key in the parent /XObject dictionary
         if (xobjectDict != null && oldName != null) {
-            COSBase val = xobjectDict.get(oldName);
+            PdfBase val = xobjectDict.get(oldName);
             if (val != null) {
-                xobjectDict.remove(COSName.of(oldName));
-                xobjectDict.set(COSName.of(newName), val);
+                xobjectDict.remove(PdfName.of(oldName));
+                xobjectDict.set(PdfName.of(newName), val);
             }
         }
     }
@@ -107,7 +107,7 @@ public class XImage {
     /**
      * Sets the parent /XObject dictionary reference (called by XImageCollection).
      */
-    void setXObjectDictionary(COSDictionary dict) {
+    void setXObjectDictionary(PdfDictionary dict) {
         this.xobjectDict = dict;
     }
 
@@ -118,7 +118,7 @@ public class XImage {
      * @throws IOException if resolution fails
      */
     public ColorSpaceBase getColorSpace() throws IOException {
-        COSBase cs = stream.get("ColorSpace");
+        PdfBase cs = stream.get("ColorSpace");
         if (cs != null) {
             cs = resolveRef(cs);
             return ColorSpaceBase.resolve(cs, null, parser);
@@ -242,7 +242,7 @@ public class XImage {
      */
     public void delete() {
         if (xobjectDict != null && name != null) {
-            xobjectDict.remove(COSName.of(name));
+            xobjectDict.remove(PdfName.of(name));
         }
     }
 
@@ -261,16 +261,16 @@ public class XImage {
     public void replace(InputStream newImageStream) throws IOException {
         if (xobjectDict == null || name == null) return;
         byte[] data = readAll(newImageStream);
-        COSStream newStream = createImageStream(data);
-        xobjectDict.set(COSName.of(name), newStream);
+        PdfStream newStream = createImageStream(data);
+        xobjectDict.set(PdfName.of(name), newStream);
     }
 
     /**
-     * Returns the underlying COS stream.
+     * Returns the underlying PDF stream.
      *
      * @return the image stream
      */
-    public COSStream getCOSStream() {
+    public PdfStream getPdfStream() {
         return stream;
     }
 
@@ -353,16 +353,16 @@ public class XImage {
      * the explicit array starts with {@code 1} (i.e. {@code /Decode [1 0]}).
      */
     private boolean isDecodeReversed1Bit() {
-        org.aspose.pdf.engine.cos.COSBase decode = stream.get("Decode");
-        if (!(decode instanceof org.aspose.pdf.engine.cos.COSArray)) return false;
-        org.aspose.pdf.engine.cos.COSArray a = (org.aspose.pdf.engine.cos.COSArray) decode;
+        org.aspose.pdf.engine.pdfobjects.PdfBase decode = stream.get("Decode");
+        if (!(decode instanceof org.aspose.pdf.engine.pdfobjects.PdfArray)) return false;
+        org.aspose.pdf.engine.pdfobjects.PdfArray a = (org.aspose.pdf.engine.pdfobjects.PdfArray) decode;
         if (a.size() < 1) return false;
         Object first = a.get(0);
-        if (first instanceof org.aspose.pdf.engine.cos.COSInteger) {
-            return ((org.aspose.pdf.engine.cos.COSInteger) first).intValue() == 1;
+        if (first instanceof org.aspose.pdf.engine.pdfobjects.PdfInteger) {
+            return ((org.aspose.pdf.engine.pdfobjects.PdfInteger) first).intValue() == 1;
         }
-        if (first instanceof org.aspose.pdf.engine.cos.COSFloat) {
-            return Math.round(((org.aspose.pdf.engine.cos.COSFloat) first).floatValue()) == 1;
+        if (first instanceof org.aspose.pdf.engine.pdfobjects.PdfFloat) {
+            return Math.round(((org.aspose.pdf.engine.pdfobjects.PdfFloat) first).floatValue()) == 1;
         }
         return false;
     }
@@ -377,7 +377,7 @@ public class XImage {
                     double m = (data[offset + 1] & 0xFF) / 255.0;
                     double yc = (data[offset + 2] & 0xFF) / 255.0;
                     double k = (data[offset + 3] & 0xFF) / 255.0;
-                    img.setRGB(x, y, DeviceCMYK.INSTANCE.toRGBInt(c, m, yc, k));
+                    img.setRGB(x, y, org.aspose.pdf.engine.colorspace.CmykDisplay.toRGBInt(c, m, yc, k));
                 }
             }
         }
@@ -398,7 +398,7 @@ public class XImage {
                 if (nc == 1) {
                     rgb = DeviceGray.INSTANCE.toRGBInt(components[0]);
                 } else if (nc == 4) {
-                    rgb = DeviceCMYK.INSTANCE.toRGBInt(
+                    rgb = org.aspose.pdf.engine.colorspace.CmykDisplay.toRGBInt(
                             components[0], components[1], components[2], components[3]);
                 } else {
                     rgb = DeviceRGB.INSTANCE.toRGBInt(
@@ -428,11 +428,11 @@ public class XImage {
     }
 
     private BufferedImage applySoftMaskIfPresent(BufferedImage baseImage) throws IOException {
-        COSBase smaskObj = resolveRef(stream.get("SMask"));
-        if (!(smaskObj instanceof COSStream)) {
+        PdfBase smaskObj = resolveRef(stream.get("SMask"));
+        if (!(smaskObj instanceof PdfStream)) {
             return baseImage;
         }
-        COSStream smaskStream = (COSStream) smaskObj;
+        PdfStream smaskStream = (PdfStream) smaskObj;
         XImage softMask = new XImage(smaskStream, name + "_SMask", parser);
         BufferedImage maskImage = softMask.toBufferedImage();
         if (maskImage == null) {
@@ -445,9 +445,9 @@ public class XImage {
         // misread bright (all-1) masks as fully opaque and end up overlaying
         // a 1×1 black "ink plate" on the entire page (PDFNEWNET_32411).
         boolean invert = false;
-        COSBase decodeObj = resolveRef(smaskStream.get("Decode"));
-        if (decodeObj instanceof COSArray) {
-            COSArray dec = (COSArray) decodeObj;
+        PdfBase decodeObj = resolveRef(smaskStream.get("Decode"));
+        if (decodeObj instanceof PdfArray) {
+            PdfArray dec = (PdfArray) decodeObj;
             if (dec.size() >= 2) {
                 double d0 = numAsDouble(dec.get(0), 0);
                 double d1 = numAsDouble(dec.get(1), 1);
@@ -457,11 +457,11 @@ public class XImage {
         return mergeSoftMask(baseImage, maskImage, invert);
     }
 
-    private static double numAsDouble(COSBase b, double def) {
-        if (b instanceof org.aspose.pdf.engine.cos.COSInteger)
-            return ((org.aspose.pdf.engine.cos.COSInteger) b).intValue();
-        if (b instanceof org.aspose.pdf.engine.cos.COSFloat)
-            return ((org.aspose.pdf.engine.cos.COSFloat) b).doubleValue();
+    private static double numAsDouble(PdfBase b, double def) {
+        if (b instanceof org.aspose.pdf.engine.pdfobjects.PdfInteger)
+            return ((org.aspose.pdf.engine.pdfobjects.PdfInteger) b).intValue();
+        if (b instanceof org.aspose.pdf.engine.pdfobjects.PdfFloat)
+            return ((org.aspose.pdf.engine.pdfobjects.PdfFloat) b).doubleValue();
         return def;
     }
 
@@ -606,7 +606,7 @@ public class XImage {
         if (nc == 1 && components.length >= 1) {
             return DeviceGray.INSTANCE.toRGBInt(components[0]);
         } else if (nc == 4 && components.length >= 4) {
-            return DeviceCMYK.INSTANCE.toRGBInt(
+            return org.aspose.pdf.engine.colorspace.CmykDisplay.toRGBInt(
                     components[0], components[1], components[2], components[3]);
         } else if (components.length >= 3) {
             return DeviceRGB.INSTANCE.toRGBInt(components[0], components[1], components[2]);
@@ -650,21 +650,21 @@ public class XImage {
     }
 
     private String getFilterName() {
-        COSBase filter = stream.get("Filter");
-        if (filter instanceof COSName) return ((COSName) filter).getName();
-        if (filter instanceof COSArray) {
-            COSArray arr = (COSArray) filter;
+        PdfBase filter = stream.get("Filter");
+        if (filter instanceof PdfName) return ((PdfName) filter).getName();
+        if (filter instanceof PdfArray) {
+            PdfArray arr = (PdfArray) filter;
             if (arr.size() > 0) {
-                COSBase last = arr.get(arr.size() - 1);
-                if (last instanceof COSName) return ((COSName) last).getName();
+                PdfBase last = arr.get(arr.size() - 1);
+                if (last instanceof PdfName) return ((PdfName) last).getName();
             }
         }
         return null;
     }
 
-    private COSBase resolveRef(COSBase val) throws IOException {
-        if (val instanceof COSObjectReference) {
-            return ((COSObjectReference) val).dereference();
+    private PdfBase resolveRef(PdfBase val) throws IOException {
+        if (val instanceof PdfObjectReference) {
+            return ((PdfObjectReference) val).dereference();
         }
         return val;
     }
@@ -683,7 +683,7 @@ public class XImage {
     }
 
     /**
-     * Build a spec-compliant {@code /XObject /Image} {@link COSStream} from raw
+     * Build a spec-compliant {@code /XObject /Image} {@link PdfStream} from raw
      * bytes in any of the formats supported by {@link javax.imageio.ImageIO}.
      * JPEG bytes (SOI {@code FF D8}) are stored verbatim with
      * {@code /Filter /DCTDecode}; everything else (PNG, BMP, GIF, …) is decoded
@@ -699,17 +699,17 @@ public class XImage {
      * path.</p>
      *
      * @param data raw image bytes; must not be null or empty
-     * @return a fully-specified Image XObject {@link COSStream}
+     * @return a fully-specified Image XObject {@link PdfStream}
      * @throws IOException if the bytes cannot be decoded as a recognised
      *         image format. The exception message contains "unsupported".
      */
-    static COSStream createImageStream(byte[] data) throws IOException {
+    static PdfStream createImageStream(byte[] data) throws IOException {
         if (data == null || data.length == 0) {
             throw new IOException("unsupported (empty) image data");
         }
-        COSStream newStream = new COSStream();
-        newStream.set(COSName.TYPE, COSName.of("XObject"));
-        newStream.set(COSName.SUBTYPE, COSName.of("Image"));
+        PdfStream newStream = new PdfStream();
+        newStream.set(PdfName.TYPE, PdfName.of("XObject"));
+        newStream.set(PdfName.SUBTYPE, PdfName.of("Image"));
 
         if (isJpeg(data)) {
             BufferedImage image = javax.imageio.ImageIO.read(new java.io.ByteArrayInputStream(data));
@@ -717,7 +717,7 @@ public class XImage {
                 throw new IOException("unsupported or unrecognised JPEG image data");
             }
             populateImageMetadata(newStream, image);
-            newStream.setFilter(COSName.of("DCTDecode"));
+            newStream.setFilter(PdfName.of("DCTDecode"));
             newStream.setEncodedData(data);
             return newStream;
         }
@@ -728,7 +728,7 @@ public class XImage {
                     + "(first bytes: " + hexHeader(data) + ")");
         }
         populateImageMetadata(newStream, image);
-        newStream.setFilter(COSName.of("FlateDecode"));
+        newStream.setFilter(PdfName.of("FlateDecode"));
         newStream.setDecodedData(extractPixelBytes(image, isGray(image)));
         return newStream;
     }
@@ -747,12 +747,12 @@ public class XImage {
         return data.length >= 2 && (data[0] & 0xFF) == 0xFF && (data[1] & 0xFF) == 0xD8;
     }
 
-    private static void populateImageMetadata(COSStream stream, BufferedImage image) {
+    private static void populateImageMetadata(PdfStream stream, BufferedImage image) {
         boolean gray = isGray(image);
-        stream.set(COSName.of("Width"), org.aspose.pdf.engine.cos.COSInteger.valueOf(image.getWidth()));
-        stream.set(COSName.of("Height"), org.aspose.pdf.engine.cos.COSInteger.valueOf(image.getHeight()));
-        stream.set(COSName.of("BitsPerComponent"), org.aspose.pdf.engine.cos.COSInteger.valueOf(8));
-        stream.set(COSName.of("ColorSpace"), COSName.of(gray ? "DeviceGray" : "DeviceRGB"));
+        stream.set(PdfName.of("Width"), org.aspose.pdf.engine.pdfobjects.PdfInteger.valueOf(image.getWidth()));
+        stream.set(PdfName.of("Height"), org.aspose.pdf.engine.pdfobjects.PdfInteger.valueOf(image.getHeight()));
+        stream.set(PdfName.of("BitsPerComponent"), org.aspose.pdf.engine.pdfobjects.PdfInteger.valueOf(8));
+        stream.set(PdfName.of("ColorSpace"), PdfName.of(gray ? "DeviceGray" : "DeviceRGB"));
     }
 
     private static boolean isGray(BufferedImage image) {

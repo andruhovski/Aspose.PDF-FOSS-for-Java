@@ -2,7 +2,7 @@ package org.aspose.pdf.tests;
 
 import org.aspose.pdf.Document;
 import org.aspose.pdf.Page;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 
 import org.junit.jupiter.api.Test;
 
@@ -68,7 +68,7 @@ public class ThreadSafetyTest {
     }
 
     @Test
-    public void testCOSNameConcurrentIntern() throws Exception {
+    public void testPdfNameConcurrentIntern() throws Exception {
         int threadCount = 8;
         int namesPerThread = 100;
         ExecutorService executor = Executors.newFixedThreadPool(threadCount);
@@ -84,9 +84,9 @@ public class ThreadSafetyTest {
                     for (int i = 0; i < namesPerThread; i++) {
                         // All threads create the same names — should get identical instances
                         String name = "ConcurrentName_" + i;
-                        COSName n1 = COSName.of(name);
-                        COSName n2 = COSName.of(name);
-                        assertSame(n1, n2, "COSName interning failed for: " + name);
+                        PdfName n1 = PdfName.of(name);
+                        PdfName n2 = PdfName.of(name);
+                        assertSame(n1, n2, "PdfName interning failed for: " + name);
                     }
                 } catch (Throwable e) {
                     errors.add(e);
@@ -102,7 +102,7 @@ public class ThreadSafetyTest {
         assertTrue(executor.awaitTermination(5, TimeUnit.SECONDS));
 
         if (!errors.isEmpty()) {
-            fail("Concurrent COSName.of() caused errors: " + errors.get(0).getMessage());
+            fail("Concurrent PdfName.of() caused errors: " + errors.get(0).getMessage());
         }
     }
 

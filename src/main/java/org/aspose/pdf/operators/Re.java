@@ -1,7 +1,7 @@
 package org.aspose.pdf.operators;
 
 import org.aspose.pdf.Operator;
-import org.aspose.pdf.engine.cos.COSBase;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
 
 import java.util.Arrays;
 import java.util.List;
@@ -44,7 +44,7 @@ public class Re extends Operator {
      *
      * @param operands the operands from the content stream parser
      */
-    public Re(List<COSBase> operands) {
+    public Re(List<PdfBase> operands) {
         super("re", operands);
         this.x = (operands != null && operands.size() > 0) ? getNumber(operands.get(0)) : 0;
         this.y = (operands != null && operands.size() > 1) ? getNumber(operands.get(1)) : 0;

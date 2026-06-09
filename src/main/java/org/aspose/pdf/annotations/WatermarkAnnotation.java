@@ -1,7 +1,7 @@
 package org.aspose.pdf.annotations;
 
 import org.aspose.pdf.*;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 /**
  * Watermark annotation (ISO 32000-1:2008, Section 12.5.6.22, /Subtype /Watermark).
@@ -15,12 +15,12 @@ import org.aspose.pdf.engine.cos.*;
 public class WatermarkAnnotation extends MarkupAnnotation {
 
     /**
-     * Constructs a watermark annotation from an existing COS dictionary.
+     * Constructs a watermark annotation from an existing PDF dictionary.
      *
-     * @param dict the COS dictionary backing this annotation
+     * @param dict the PDF dictionary backing this annotation
      * @param page the page this annotation belongs to
      */
-    public WatermarkAnnotation(COSDictionary dict, Page page) {
+    public WatermarkAnnotation(PdfDictionary dict, Page page) {
         super(dict, page);
     }
 
@@ -32,7 +32,7 @@ public class WatermarkAnnotation extends MarkupAnnotation {
      */
     public WatermarkAnnotation(Page page, Rectangle rect) {
         super(page, rect);
-        dict.set(COSName.of("Subtype"), COSName.of("Watermark"));
+        dict.set(PdfName.of("Subtype"), PdfName.of("Watermark"));
     }
 
     /**
@@ -62,9 +62,9 @@ public class WatermarkAnnotation extends MarkupAnnotation {
      * @return the constant-alpha value in [0, 1]
      */
     public double getOpacity() {
-        COSBase v = dict.get("CA");
-        if (v instanceof COSFloat) return ((COSFloat) v).doubleValue();
-        if (v instanceof COSInteger) return ((COSInteger) v).longValue();
+        PdfBase v = dict.get("CA");
+        if (v instanceof PdfFloat) return ((PdfFloat) v).doubleValue();
+        if (v instanceof PdfInteger) return ((PdfInteger) v).longValue();
         return 1.0;
     }
 
@@ -75,7 +75,7 @@ public class WatermarkAnnotation extends MarkupAnnotation {
      * @param opacity constant-alpha value (0.0–1.0 typical)
      */
     public void setOpacity(double opacity) {
-        dict.set(COSName.of("CA"), new COSFloat(opacity));
+        dict.set(PdfName.of("CA"), new PdfFloat(opacity));
     }
 
     /**
@@ -85,9 +85,9 @@ public class WatermarkAnnotation extends MarkupAnnotation {
      * @return the rotation in degrees
      */
     public double getAngle() {
-        COSBase v = dict.get("Rotate");
-        if (v instanceof COSFloat) return ((COSFloat) v).doubleValue();
-        if (v instanceof COSInteger) return ((COSInteger) v).longValue();
+        PdfBase v = dict.get("Rotate");
+        if (v instanceof PdfFloat) return ((PdfFloat) v).doubleValue();
+        if (v instanceof PdfInteger) return ((PdfInteger) v).longValue();
         return 0;
     }
 
@@ -97,6 +97,6 @@ public class WatermarkAnnotation extends MarkupAnnotation {
      * @param angle rotation in degrees
      */
     public void setAngle(double angle) {
-        dict.set(COSName.of("Rotate"), new COSFloat(angle));
+        dict.set(PdfName.of("Rotate"), new PdfFloat(angle));
     }
 }

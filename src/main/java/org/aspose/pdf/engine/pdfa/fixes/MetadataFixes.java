@@ -2,13 +2,13 @@ package org.aspose.pdf.engine.pdfa.fixes;
 
 import org.aspose.pdf.ConvertErrorAction;
 import org.aspose.pdf.PdfFormat;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectKey;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSStream;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectKey;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 import org.aspose.pdf.engine.pdfa.PdfAValidationResult;
 import org.aspose.pdf.engine.parser.PDFParser;
 
@@ -61,12 +61,12 @@ public final class MetadataFixes {
      */
     public void ensureXmpMetadata(PDFParser parser, PdfFormat format,
                                   ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
-        COSDictionary catalog = parser.getCatalog();
-        COSBase metaRef = catalog.get("Metadata");
+        PdfDictionary catalog = parser.getCatalog();
+        PdfBase metaRef = catalog.get("Metadata");
         if (metaRef != null) {
             // Already has metadata — resolve to verify it's a stream
-            COSBase metaObj = parser.resolveReference(metaRef);
-            if (metaObj instanceof COSStream) {
+            PdfBase metaObj = parser.resolveReference(metaRef);
+            if (metaObj instanceof PdfStream) {
                 LOG.fine("Catalog already has /Metadata stream");
                 return;
             }
@@ -84,12 +84,12 @@ public final class MetadataFixes {
         String createDate = "";
         String modDate = "";
 
-        COSDictionary trailer = parser.getTrailer();
-        COSBase infoRef = trailer.get("Info");
+        PdfDictionary trailer = parser.getTrailer();
+        PdfBase infoRef = trailer.get("Info");
         if (infoRef != null) {
-            COSBase infoObj = parser.resolveReference(infoRef);
-            if (infoObj instanceof COSDictionary) {
-                COSDictionary info = (COSDictionary) infoObj;
+            PdfBase infoObj = parser.resolveReference(infoRef);
+            if (infoObj instanceof PdfDictionary) {
+                PdfDictionary info = (PdfDictionary) infoObj;
                 title = safeString(info.getString("Title"));
                 author = safeString(info.getString("Author"));
                 subject = safeString(info.getString("Subject"));
@@ -115,18 +115,18 @@ public final class MetadataFixes {
         byte[] xmpBytes = buildXmpPacket(title, author, subject, keywords,
                 creator, producer, createDate, modDate, part, conformance);
 
-        // Create a COSStream for the metadata
-        COSStream metaStream = new COSStream();
-        metaStream.set("Type", COSName.of("Metadata"));
-        metaStream.set("Subtype", COSName.of("XML"));
+        // Create a PdfStream for the metadata
+        PdfStream metaStream = new PdfStream();
+        metaStream.set("Type", PdfName.of("Metadata"));
+        metaStream.set("Subtype", PdfName.of("XML"));
         metaStream.setDecodedData(xmpBytes);
         // Metadata must be uncompressed for PDF/A
-        metaStream.set(COSName.FILTER, null);
+        metaStream.set(PdfName.FILTER, null);
 
         // Register as an indirect object
         int maxObj = findMaxObjectNumber(parser);
-        COSObjectKey newKey = new COSObjectKey(maxObj + 1, 0);
-        COSObjectReference ref = new COSObjectReference(newKey,
+        PdfObjectKey newKey = new PdfObjectKey(maxObj + 1, 0);
+        PdfObjectReference ref = new PdfObjectReference(newKey,
                 k -> metaStream);
 
         catalog.set("Metadata", ref);
@@ -148,22 +148,22 @@ public final class MetadataFixes {
      */
     public void removeMetadataFilter(PDFParser parser, PdfFormat format,
                                      ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
-        COSDictionary catalog = parser.getCatalog();
-        COSBase metaRef = catalog.get("Metadata");
+        PdfDictionary catalog = parser.getCatalog();
+        PdfBase metaRef = catalog.get("Metadata");
         if (metaRef == null) {
             return;
         }
-        COSBase metaObj = parser.resolveReference(metaRef);
-        if (!(metaObj instanceof COSStream)) {
+        PdfBase metaObj = parser.resolveReference(metaRef);
+        if (!(metaObj instanceof PdfStream)) {
             return;
         }
-        COSStream metaStream = (COSStream) metaObj;
+        PdfStream metaStream = (PdfStream) metaObj;
         if (!metaStream.getFilters().isEmpty()) {
             LOG.info("Removing filter from metadata stream");
             // Get decoded data first, then store uncompressed
             byte[] decoded = metaStream.getDecodedData();
             metaStream.setDecodedData(decoded);
-            metaStream.set(COSName.FILTER, null);
+            metaStream.set(PdfName.FILTER, null);
             metaStream.set("DecodeParms", null);
             result.addWarning("meta.2", "Removed compression from metadata stream", "catalog/Metadata", null);
         }
@@ -189,16 +189,16 @@ public final class MetadataFixes {
             return;
         }
 
-        COSDictionary catalog = parser.getCatalog();
-        COSBase metaRef = catalog.get("Metadata");
+        PdfDictionary catalog = parser.getCatalog();
+        PdfBase metaRef = catalog.get("Metadata");
         if (metaRef == null) {
             return;
         }
-        COSBase metaObj = parser.resolveReference(metaRef);
-        if (!(metaObj instanceof COSStream)) {
+        PdfBase metaObj = parser.resolveReference(metaRef);
+        if (!(metaObj instanceof PdfStream)) {
             return;
         }
-        COSStream metaStream = (COSStream) metaObj;
+        PdfStream metaStream = (PdfStream) metaObj;
         byte[] xmpData = metaStream.getDecodedData();
         String xmp = new String(xmpData, StandardCharsets.UTF_8);
 
@@ -241,7 +241,7 @@ public final class MetadataFixes {
             }
 
             metaStream.setDecodedData(xmp.getBytes(StandardCharsets.UTF_8));
-            metaStream.set(COSName.FILTER, null);
+            metaStream.set(PdfName.FILTER, null);
             result.addWarning("meta.3", "Updated pdfaid:part and pdfaid:conformance in XMP",
                     "catalog/Metadata", null);
         }
@@ -263,28 +263,28 @@ public final class MetadataFixes {
      */
     public void syncDocInfoWithXmp(PDFParser parser, PdfFormat format,
                                    ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
-        COSDictionary trailer = parser.getTrailer();
-        COSBase infoRef = trailer.get("Info");
+        PdfDictionary trailer = parser.getTrailer();
+        PdfBase infoRef = trailer.get("Info");
         if (infoRef == null) {
             return;
         }
-        COSBase infoObj = parser.resolveReference(infoRef);
-        if (!(infoObj instanceof COSDictionary)) {
+        PdfBase infoObj = parser.resolveReference(infoRef);
+        if (!(infoObj instanceof PdfDictionary)) {
             return;
         }
 
-        COSDictionary catalog = parser.getCatalog();
-        COSBase metaRef = catalog.get("Metadata");
+        PdfDictionary catalog = parser.getCatalog();
+        PdfBase metaRef = catalog.get("Metadata");
         if (metaRef == null) {
             return;
         }
-        COSBase metaObj = parser.resolveReference(metaRef);
-        if (!(metaObj instanceof COSStream)) {
+        PdfBase metaObj = parser.resolveReference(metaRef);
+        if (!(metaObj instanceof PdfStream)) {
             return;
         }
 
-        COSDictionary info = (COSDictionary) infoObj;
-        COSStream metaStream = (COSStream) metaObj;
+        PdfDictionary info = (PdfDictionary) infoObj;
+        PdfStream metaStream = (PdfStream) metaObj;
         byte[] xmpData = metaStream.getDecodedData();
         String xmp = new String(xmpData, StandardCharsets.UTF_8);
 
@@ -314,7 +314,7 @@ public final class MetadataFixes {
         }
 
         metaStream.setDecodedData(xmp.getBytes(StandardCharsets.UTF_8));
-        metaStream.set(COSName.FILTER, null);
+        metaStream.set(PdfName.FILTER, null);
         LOG.fine("Synchronized DocInfo with XMP metadata");
     }
 
@@ -490,7 +490,7 @@ public final class MetadataFixes {
      */
     private static int findMaxObjectNumber(PDFParser parser) {
         int maxObj = 0;
-        for (COSObjectKey k : parser.getAllObjectKeys()) {
+        for (PdfObjectKey k : parser.getAllObjectKeys()) {
             maxObj = Math.max(maxObj, k.getObjectNumber());
         }
         return maxObj;

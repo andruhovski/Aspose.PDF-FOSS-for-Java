@@ -4,10 +4,10 @@ import org.aspose.pdf.CryptoAlgorithm;
 import org.aspose.pdf.Document;
 import org.aspose.pdf.Page;
 import org.aspose.pdf.Rectangle;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 import org.aspose.pdf.forms.RadioButtonField;
 import org.aspose.pdf.forms.TextBoxField;
 import org.aspose.pdf.text.Position;
@@ -52,11 +52,11 @@ class EncryptedStreamRoundTripTest {
                 new org.aspose.pdf.engine.parser.PDFParser(
                         org.aspose.pdf.engine.io.RandomAccessReader.fromBytes(pdfBytes));
         parser.parse();
-        COSDictionary trailer = parser.getTrailer();
-        COSBase encRef = trailer.get(COSName.of("Encrypt"));
-        COSBase enc = parser.resolveReference(encRef);
+        PdfDictionary trailer = parser.getTrailer();
+        PdfBase encRef = trailer.get(PdfName.of("Encrypt"));
+        PdfBase enc = parser.resolveReference(encRef);
         org.aspose.pdf.engine.security.PDFEncryptionDict encDict =
-                new org.aspose.pdf.engine.security.PDFEncryptionDict((COSDictionary) enc);
+                new org.aspose.pdf.engine.security.PDFEncryptionDict((PdfDictionary) enc);
         return org.aspose.pdf.engine.security.PDFKeyDerivation
                 .computeEncryptionKeyR6User(password.getBytes(StandardCharsets.UTF_8), encDict);
     }

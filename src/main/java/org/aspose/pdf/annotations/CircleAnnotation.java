@@ -1,7 +1,7 @@
 package org.aspose.pdf.annotations;
 
 import org.aspose.pdf.*;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 /**
  * Circle annotation (ISO 32000-1:2008, Section 12.5.6.8, /Subtype /Circle).
@@ -14,12 +14,12 @@ import org.aspose.pdf.engine.cos.*;
 public class CircleAnnotation extends MarkupAnnotation {
 
     /**
-     * Constructs a circle annotation from an existing COS dictionary.
+     * Constructs a circle annotation from an existing PDF dictionary.
      *
-     * @param dict the COS dictionary backing this annotation
+     * @param dict the PDF dictionary backing this annotation
      * @param page the page this annotation belongs to
      */
-    public CircleAnnotation(COSDictionary dict, Page page) {
+    public CircleAnnotation(PdfDictionary dict, Page page) {
         super(dict, page);
     }
 
@@ -31,6 +31,6 @@ public class CircleAnnotation extends MarkupAnnotation {
      */
     public CircleAnnotation(Page page, Rectangle rect) {
         super(page, rect);
-        dict.set(COSName.of("Subtype"), COSName.of("Circle"));
+        dict.set(PdfName.of("Subtype"), PdfName.of("Circle"));
     }
 }

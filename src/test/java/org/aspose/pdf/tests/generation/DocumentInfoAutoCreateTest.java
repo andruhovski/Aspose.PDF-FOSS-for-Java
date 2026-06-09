@@ -2,8 +2,8 @@ package org.aspose.pdf.tests.generation;
 
 import org.aspose.pdf.Document;
 import org.aspose.pdf.DocumentInfo;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -87,7 +87,7 @@ class DocumentInfoAutoCreateTest {
         try (Document reopened = new Document(out.toString())) {
             // Sanity: the saved file genuinely has no /Info entry in its
             // trailer (writer drops empty info dicts at save time).
-            COSDictionary trailer = reopened.getTrailer();
+            PdfDictionary trailer = reopened.getTrailer();
             assertFalse(trailer.containsKey("Info"),
                     "test premise: writer must have dropped the empty /Info entry");
 

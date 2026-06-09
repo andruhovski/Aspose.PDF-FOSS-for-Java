@@ -2,11 +2,11 @@ package org.aspose.pdf.facades;
 
 import org.aspose.pdf.CryptoAlgorithm;
 import org.aspose.pdf.Document;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 import org.aspose.pdf.engine.parser.PDFParser;
 import org.aspose.pdf.engine.security.PDFEncryptionDict;
 import org.aspose.pdf.engine.security.StandardSecurityHandler;
@@ -681,23 +681,23 @@ public class PdfFileSecurity implements Closeable {
         if (parser == null || !parser.isEncrypted()) {
             return null;
         }
-        COSBase encryptRef = parser.getTrailer().get(COSName.of("Encrypt"));
-        COSBase encryptObj = parser.resolveReference(encryptRef);
-        if (!(encryptObj instanceof COSDictionary)) {
+        PdfBase encryptRef = parser.getTrailer().get(PdfName.of("Encrypt"));
+        PdfBase encryptObj = parser.resolveReference(encryptRef);
+        if (!(encryptObj instanceof PdfDictionary)) {
             return null;
         }
-        return new PDFEncryptionDict((COSDictionary) encryptObj);
+        return new PDFEncryptionDict((PdfDictionary) encryptObj);
     }
 
     private static byte[] getDocumentId(PDFParser parser) {
         if (parser == null) {
             return null;
         }
-        COSBase idArray = parser.getTrailer().get(COSName.of("ID"));
-        if (!(idArray instanceof COSArray) || ((COSArray) idArray).size() == 0) {
+        PdfBase idArray = parser.getTrailer().get(PdfName.of("ID"));
+        if (!(idArray instanceof PdfArray) || ((PdfArray) idArray).size() == 0) {
             return null;
         }
-        COSBase firstId = ((COSArray) idArray).get(0);
-        return firstId instanceof COSString ? ((COSString) firstId).getBytes() : null;
+        PdfBase firstId = ((PdfArray) idArray).get(0);
+        return firstId instanceof PdfString ? ((PdfString) firstId).getBytes() : null;
     }
 }

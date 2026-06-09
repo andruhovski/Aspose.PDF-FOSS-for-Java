@@ -1,6 +1,6 @@
 package org.aspose.pdf.engine.font.cmap;
 
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -19,6 +19,15 @@ import java.util.logging.Logger;
 public final class CMapParser {
 
     private static final Logger LOG = Logger.getLogger(CMapParser.class.getName());
+
+    /**
+     * Upper bound on a single bfrange expansion. Conformant ranges cannot
+     * cross their high-byte boundary (≤ 256 codes, Adobe CMap spec §1.4.1);
+     * 64k allows sloppy-but-finite producers while stopping corrupt entries
+     * like {@code <0000> <7FFFFFFF>} from materialising billions of map
+     * entries (OOM + minutes of CPU — corpus 38236.PDF).
+     */
+    private static final int MAX_BFRANGE_SPAN = 0x10000;
 
     private CMapParser() {
         // Utility class
@@ -44,13 +53,13 @@ public final class CMapParser {
     }
 
     /**
-     * Parses a ToUnicode CMap from a COSStream.
+     * Parses a ToUnicode CMap from a PdfStream.
      *
      * @param stream the CMap stream
      * @return the parsed ToUnicodeCMap
      * @throws IOException if parsing or decoding fails
      */
-    public static ToUnicodeCMap parseToUnicode(COSStream stream) throws IOException {
+    public static ToUnicodeCMap parseToUnicode(PdfStream stream) throws IOException {
         if (stream == null) {
             return new ToUnicodeCMap(new HashMap<>());
         }
@@ -151,6 +160,25 @@ public final class CMapParser {
             try {
                 int lo = Integer.parseInt(loHex, 16);
                 int hi = Integer.parseInt(hiHex, 16);
+
+                // Corrupt CMaps declare absurd ranges (e.g. <0000> <7FFFFFFF>)
+                // that would materialise billions of map entries — observed as
+                // both an OutOfMemoryError and minutes of CPU per font (corpus
+                // 38236.PDF p7). A conformant bfrange may not cross its
+                // high-byte boundary (Adobe CMap spec §1.4.1), so legal spans
+                // are ≤ 256 codes; allow generous slack and clamp the rest.
+                if (hi < lo) {
+                    // Treat as a single-code entry; a bare `continue` would
+                    // leave the destination token unconsumed and desync the
+                    // entry scanning.
+                    LOG.warning(() -> "bfrange with hi < lo (" + loHex + ".." + hiHex + ")");
+                    hi = lo;
+                }
+                if (hi - lo > MAX_BFRANGE_SPAN) {
+                    LOG.warning(() -> "bfrange span " + loHex + ".." + hiHex
+                            + " exceeds " + MAX_BFRANGE_SPAN + " codes; clamping");
+                    hi = lo + MAX_BFRANGE_SPAN;
+                }
 
                 if (pos < block.length() && block.charAt(pos) == '[') {
                     // Array of destination values

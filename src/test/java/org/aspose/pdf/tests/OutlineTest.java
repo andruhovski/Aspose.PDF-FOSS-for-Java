@@ -1,7 +1,7 @@
 package org.aspose.pdf.tests;
 
 import org.aspose.pdf.*;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -204,8 +204,8 @@ public class OutlineTest {
         OutlineItemCollection item = new OutlineItemCollection(outlines);
         item.setTitle("Go to page");
 
-        COSDictionary pageDict = new COSDictionary();
-        pageDict.set(COSName.TYPE, COSName.PAGE);
+        PdfDictionary pageDict = new PdfDictionary();
+        pageDict.set(PdfName.TYPE, PdfName.PAGE);
         Page page = new Page(pageDict, null);
         XYZExplicitDestination dest = new XYZExplicitDestination(page, 0, 792, 1.0);
         item.setDestination(dest);
@@ -235,8 +235,8 @@ public class OutlineTest {
         OutlineCollection outlines = new OutlineCollection(null, null);
         OutlineItemCollection item = new OutlineItemCollection(outlines);
 
-        COSDictionary pageDict = new COSDictionary();
-        pageDict.set(COSName.TYPE, COSName.PAGE);
+        PdfDictionary pageDict = new PdfDictionary();
+        pageDict.set(PdfName.TYPE, PdfName.PAGE);
         item.setDestination(new FitExplicitDestination(new Page(pageDict, null)));
 
         // Setting action should remove destination
@@ -247,18 +247,18 @@ public class OutlineTest {
     @Test
     public void testParseLinkedList() {
         // Simulate a /First → /Next linked list
-        COSDictionary item1 = new COSDictionary();
-        item1.set(COSName.of("Title"), new COSString("First".getBytes()));
-        COSDictionary item2 = new COSDictionary();
-        item2.set(COSName.of("Title"), new COSString("Second".getBytes()));
-        COSDictionary item3 = new COSDictionary();
-        item3.set(COSName.of("Title"), new COSString("Third".getBytes()));
+        PdfDictionary item1 = new PdfDictionary();
+        item1.set(PdfName.of("Title"), new PdfString("First".getBytes()));
+        PdfDictionary item2 = new PdfDictionary();
+        item2.set(PdfName.of("Title"), new PdfString("Second".getBytes()));
+        PdfDictionary item3 = new PdfDictionary();
+        item3.set(PdfName.of("Title"), new PdfString("Third".getBytes()));
 
-        item1.set(COSName.of("Next"), item2);
-        item2.set(COSName.of("Next"), item3);
+        item1.set(PdfName.of("Next"), item2);
+        item2.set(PdfName.of("Next"), item3);
 
-        COSDictionary outlinesDict = new COSDictionary();
-        outlinesDict.set(COSName.of("First"), item1);
+        PdfDictionary outlinesDict = new PdfDictionary();
+        outlinesDict.set(PdfName.of("First"), item1);
 
         OutlineCollection outlines = new OutlineCollection(outlinesDict, null, null);
         assertEquals(3, outlines.getCount());

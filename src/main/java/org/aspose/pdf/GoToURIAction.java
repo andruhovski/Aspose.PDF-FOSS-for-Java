@@ -1,6 +1,6 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
 
 /**
  * GoToURI action — alias for {@link UriAction} for API compatibility with Aspose.PDF.
@@ -22,7 +22,7 @@ public class GoToURIAction extends UriAction {
      *
      * @param dict the action dictionary
      */
-    public GoToURIAction(COSDictionary dict) {
+    public GoToURIAction(PdfDictionary dict) {
         super(dict);
     }
 

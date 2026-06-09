@@ -1,6 +1,6 @@
 package org.aspose.pdf.engine.parser;
 
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 import org.aspose.pdf.engine.io.RandomAccessReader;
 
 import java.io.IOException;
@@ -27,9 +27,9 @@ public final class XRefParser {
     private final RandomAccessReader reader;
     private final PDFLexer lexer;
 
-    private final Map<COSObjectKey, XRefEntry> entries = new LinkedHashMap<>();
+    private final Map<PdfObjectKey, XRefEntry> entries = new LinkedHashMap<>();
     private final java.util.Set<Long> visitedOffsets = new java.util.HashSet<>();
-    private COSDictionary trailerDictionary;
+    private PdfDictionary trailerDictionary;
 
     /**
      * Constructs an XRefParser.
@@ -50,12 +50,12 @@ public final class XRefParser {
 
     /**
      * Clamps a malformed generation number read from an xref table or stream into the
-     * legal range [0, 65535] required by {@link COSObjectKey}.
+     * legal range [0, 65535] required by {@link PdfObjectKey}.
      * <p>
      * Many real-world PDFs (including some produced by widely-used tools) write a wrong
      * generation number for the free-list head — most commonly 65536 instead of 65535 —
      * or otherwise out-of-range values in xref entries. ISO 32000-1:2008 §7.5.4 restricts
-     * generations to the range above, and {@link COSObjectKey} enforces that range,
+     * generations to the range above, and {@link PdfObjectKey} enforces that range,
      * so the parser must sanitize input before constructing a key. A WARNING is emitted
      * for every clamp to keep downstream issues traceable.
      * </p>
@@ -121,7 +121,22 @@ public final class XRefParser {
                 reader.seek(token.getPosition());
                 lexer.clearPeek();
             }
-            parseTableFormat();
+            try {
+                parseTableFormat();
+            } catch (IOException tableFailure) {
+                // The xref table at startxref is malformed (binary type bytes from a
+                // mis-stored xref stream, shifted 20-byte entries, corrupt subsection
+                // header, signature /ByteRange bleeding into the table, literal "ERROR"
+                // text, etc.). Discard any partially-parsed entries and reconstruct the
+                // whole xref by scanning the file body for "N G obj" headers — the same
+                // permissive recovery Acrobat / pdf.js use.
+                LOGGER.log(Level.WARNING,
+                        "xref table at {0} could not be parsed ({1}); rebuilding from object scan",
+                        new Object[]{startxrefPosition, tableFailure.getMessage()});
+                entries.clear();
+                trailerDictionary = null;
+                rebuildFromObjectScan();
+            }
         } else if (token.getType() == PDFLexer.TokenType.INTEGER) {
             try {
                 parseStreamFormat(startxrefPosition);
@@ -194,14 +209,14 @@ public final class XRefParser {
 
         // Follow /Prev chain for incremental updates
         if (trailerDictionary != null) {
-            COSBase prevObj = trailerDictionary.get(COSName.of("Prev"));
-            if (prevObj instanceof COSInteger) {
-                long prevOffset = ((COSInteger) prevObj).longValue();
+            PdfBase prevObj = trailerDictionary.get(PdfName.of("Prev"));
+            if (prevObj instanceof PdfInteger) {
+                long prevOffset = ((PdfInteger) prevObj).longValue();
                 if (prevOffset <= 0) {
                     LOGGER.log(Level.FINE, "Ignoring /Prev offset {0} (invalid)", prevOffset);
                 } else {
                     LOGGER.log(Level.FINE, "Following /Prev chain to offset {0}", prevOffset);
-                    COSDictionary savedTrailer = trailerDictionary;
+                    PdfDictionary savedTrailer = trailerDictionary;
                     try {
                         parse(prevOffset);
                     } catch (IOException e) {
@@ -214,15 +229,15 @@ public final class XRefParser {
 
             // Handle hybrid-reference PDFs (§7.5.8.4): /XRefStm points to
             // an additional xref stream with extra entries
-            COSBase xrefStmObj = trailerDictionary.get(COSName.of("XRefStm"));
-            if (xrefStmObj instanceof COSInteger) {
-                long xrefStmOffset = ((COSInteger) xrefStmObj).longValue();
+            PdfBase xrefStmObj = trailerDictionary.get(PdfName.of("XRefStm"));
+            if (xrefStmObj instanceof PdfInteger) {
+                long xrefStmOffset = ((PdfInteger) xrefStmObj).longValue();
                 if (visitedOffsets.contains(xrefStmOffset)) {
                     LOGGER.log(Level.WARNING, "Cycle detected in /XRefStm at offset {0}, skipping", xrefStmOffset);
                 } else {
                     LOGGER.log(Level.FINE, "Following /XRefStm to offset {0}", xrefStmOffset);
                     visitedOffsets.add(xrefStmOffset);
-                    COSDictionary savedTrailer2 = trailerDictionary;
+                    PdfDictionary savedTrailer2 = trailerDictionary;
                     try {
                         parseStreamFormat(xrefStmOffset);
                     } catch (IOException e) {
@@ -240,7 +255,7 @@ public final class XRefParser {
      *
      * @return an unmodifiable view of the entries map
      */
-    public Map<COSObjectKey, XRefEntry> getEntries() {
+    public Map<PdfObjectKey, XRefEntry> getEntries() {
         return entries;
     }
 
@@ -249,7 +264,7 @@ public final class XRefParser {
      *
      * @return the trailer dictionary, or null if not yet parsed
      */
-    public COSDictionary getTrailerDictionary() {
+    public PdfDictionary getTrailerDictionary() {
         return trailerDictionary;
     }
 
@@ -425,6 +440,12 @@ public final class XRefParser {
 
         long absStart = 0;
         while (absStart < fileLen) {
+            // A rebuild scan over a multi-GB file runs for minutes; honour
+            // cancellation per slab so a timed-out worker unwinds instead of
+            // spinning as a zombie.
+            if (Thread.currentThread().isInterrupted()) {
+                throw new IOException("xref rebuild interrupted");
+            }
             long thisLen = Math.min(slab, fileLen - absStart);
             // include overlap for header detection
             long readEnd = Math.min(fileLen, absStart + thisLen + overlap);
@@ -458,14 +479,19 @@ public final class XRefParser {
                     int gen = parseAsciiInt(buf, genStart, genEnd);
                     if (objNum > 0 && gen >= 0) {
                         gen = sanitizeGeneration(objNum, gen);
-                        COSObjectKey key = new COSObjectKey(objNum, gen);
-                        // Only keep the first (lowest-offset) match per key — later
-                        // duplicates are typically remnants of incremental updates
-                        // we have no trailer chain for and cannot trust.
-                        entries.putIfAbsent(key, XRefEntry.inUse(objNum, gen, absObjPos));
+                        PdfObjectKey key = new PdfObjectKey(objNum, gen);
+                        // Keep the LAST (highest-offset) match per key: in an
+                        // incrementally-updated PDF (§7.5.6) later definitions of an
+                        // object supersede earlier ones, so the most recent occurrence
+                        // in file order is authoritative. (Earlier code kept the first
+                        // match, which resolved incrementally-updated page trees to
+                        // their original revision — e.g. a 4-revision file reported
+                        // /Count 1 instead of 4.) Matches Acrobat / pdf.js.
+                        entries.put(key, XRefEntry.inUse(objNum, gen, absObjPos));
                         // Catalog detection: peek at the first ~512 bytes after "obj"
-                        // looking for "/Type /Catalog" or "/Type/Catalog".
-                        if (firstCatalogObject < 0 && looksLikeCatalog(buf, i + 3)) {
+                        // looking for "/Type /Catalog" or "/Type/Catalog". Keep the
+                        // last catalog found, for the same incremental-update reason.
+                        if (looksLikeCatalog(buf, i + 3)) {
                             firstCatalogObject = objNum;
                             firstCatalogGen = gen;
                         }
@@ -487,13 +513,13 @@ public final class XRefParser {
         // create one if no real trailer was set earlier in this xref-walk —
         // a real trailer always has more accurate /Root/Info refs.
         if (trailerDictionary == null) {
-            COSDictionary t = new COSDictionary();
-            t.set(COSName.of("Size"),
-                    org.aspose.pdf.engine.cos.COSInteger.valueOf(entries.size() + 1));
+            PdfDictionary t = new PdfDictionary();
+            t.set(PdfName.of("Size"),
+                    org.aspose.pdf.engine.pdfobjects.PdfInteger.valueOf(entries.size() + 1));
             if (firstCatalogObject > 0) {
-                t.set(COSName.of("Root"),
-                        new org.aspose.pdf.engine.cos.COSObjectReference(
-                                new COSObjectKey(firstCatalogObject,
+                t.set(PdfName.of("Root"),
+                        new org.aspose.pdf.engine.pdfobjects.PdfObjectReference(
+                                new PdfObjectKey(firstCatalogObject,
                                         sanitizeGeneration(firstCatalogObject, firstCatalogGen)),
                                 k -> null));   // will be re-bound by PDFParser when it dereferences
             }
@@ -707,6 +733,12 @@ public final class XRefParser {
             // Read entries: each is "OOOOOOOOOO GGGGG n|f" followed by EOL
             // We use the lexer to read the three tokens per entry
             for (int i = 0; i < count; i++) {
+                // Corrupt tables can declare millions of entries over a huge
+                // file — honour cancellation so a timed-out worker unwinds
+                // instead of spinning (observed zombie: 38586.pdf).
+                if ((i & 0x3FF) == 0 && Thread.currentThread().isInterrupted()) {
+                    throw new IOException("xref table parse interrupted");
+                }
                 int objectNumber = firstObjectNumber + numberingOffset + i;
 
                 token = lexer.nextToken();
@@ -750,7 +782,7 @@ public final class XRefParser {
                 }
 
                 int sanitizedGen = sanitizeGeneration(objectNumber, generation);
-                COSObjectKey key = new COSObjectKey(objectNumber, sanitizedGen);
+                PdfObjectKey key = new PdfObjectKey(objectNumber, sanitizedGen);
 
                 // putIfAbsent: later (more recent) entries take precedence
                 if (!entries.containsKey(key)) {
@@ -819,11 +851,11 @@ public final class XRefParser {
             throw new IOException("Expected '<<' for xref stream dictionary at position " + position);
         }
 
-        COSDictionary streamDict = parseDictionaryContents();
-        COSBase typeObj = streamDict.get(COSName.of("Type"));
-        COSBase wObj = streamDict.get(COSName.of("W"));
-        boolean isXrefType = typeObj instanceof COSName && "XRef".equals(((COSName) typeObj).getName());
-        if (!isXrefType && !(wObj instanceof COSArray)) {
+        PdfDictionary streamDict = parseDictionaryContents();
+        PdfBase typeObj = streamDict.get(PdfName.of("Type"));
+        PdfBase wObj = streamDict.get(PdfName.of("W"));
+        boolean isXrefType = typeObj instanceof PdfName && "XRef".equals(((PdfName) typeObj).getName());
+        if (!isXrefType && !(wObj instanceof PdfArray)) {
             throw new IOException("Indirect object at position " + position + " is not an xref stream");
         }
 
@@ -845,11 +877,11 @@ public final class XRefParser {
         }
 
         // Read stream data based on /Length
-        COSBase lengthObj = streamDict.get(COSName.of("Length"));
-        if (!(lengthObj instanceof COSInteger)) {
+        PdfBase lengthObj = streamDict.get(PdfName.of("Length"));
+        if (!(lengthObj instanceof PdfInteger)) {
             throw new IOException("Xref stream missing /Length");
         }
-        int length = ((COSInteger) lengthObj).intValue();
+        int length = ((PdfInteger) lengthObj).intValue();
         byte[] rawData = reader.readFully(length);
 
         // Decode the stream data (apply filters)
@@ -872,22 +904,22 @@ public final class XRefParser {
      * Decodes stream data by applying filters specified in the stream dictionary
      * using FilterFactory. Supports /DecodeParms including /Predictor.
      */
-    private byte[] decodeStreamData(byte[] data, COSDictionary streamDict) throws IOException {
-        COSBase filterObj = streamDict.get(COSName.of("Filter"));
+    private byte[] decodeStreamData(byte[] data, PdfDictionary streamDict) throws IOException {
+        PdfBase filterObj = streamDict.get(PdfName.of("Filter"));
         if (filterObj == null) {
             return data;
         }
 
         // Build filter name list
-        java.util.List<COSName> filters = new java.util.ArrayList<>();
-        if (filterObj instanceof COSName) {
-            filters.add((COSName) filterObj);
-        } else if (filterObj instanceof COSArray) {
-            COSArray arr = (COSArray) filterObj;
+        java.util.List<PdfName> filters = new java.util.ArrayList<>();
+        if (filterObj instanceof PdfName) {
+            filters.add((PdfName) filterObj);
+        } else if (filterObj instanceof PdfArray) {
+            PdfArray arr = (PdfArray) filterObj;
             for (int i = 0; i < arr.size(); i++) {
-                COSBase f = arr.get(i);
-                if (f instanceof COSName) {
-                    filters.add((COSName) f);
+                PdfBase f = arr.get(i);
+                if (f instanceof PdfName) {
+                    filters.add((PdfName) f);
                 }
             }
         }
@@ -897,16 +929,16 @@ public final class XRefParser {
         }
 
         // Build decode params list
-        java.util.List<COSDictionary> params = null;
-        COSBase dpObj = streamDict.get(COSName.of("DecodeParms"));
-        if (dpObj instanceof COSDictionary) {
-            params = java.util.Collections.singletonList((COSDictionary) dpObj);
-        } else if (dpObj instanceof COSArray) {
-            COSArray dpArr = (COSArray) dpObj;
+        java.util.List<PdfDictionary> params = null;
+        PdfBase dpObj = streamDict.get(PdfName.of("DecodeParms"));
+        if (dpObj instanceof PdfDictionary) {
+            params = java.util.Collections.singletonList((PdfDictionary) dpObj);
+        } else if (dpObj instanceof PdfArray) {
+            PdfArray dpArr = (PdfArray) dpObj;
             params = new java.util.ArrayList<>(dpArr.size());
             for (int i = 0; i < dpArr.size(); i++) {
-                COSBase item = dpArr.get(i);
-                params.add(item instanceof COSDictionary ? (COSDictionary) item : null);
+                PdfBase item = dpArr.get(i);
+                params.add(item instanceof PdfDictionary ? (PdfDictionary) item : null);
             }
         }
 
@@ -919,38 +951,38 @@ public final class XRefParser {
      * @param data       the decoded stream data
      * @param streamDict the stream dictionary containing /W, /Size, and optionally /Index
      */
-    private void parseXRefStreamEntries(byte[] data, COSDictionary streamDict) throws IOException {
+    private void parseXRefStreamEntries(byte[] data, PdfDictionary streamDict) throws IOException {
         // Read /W array: [w1 w2 w3] — field widths
-        COSBase wObj = streamDict.get(COSName.of("W"));
-        if (!(wObj instanceof COSArray)) {
+        PdfBase wObj = streamDict.get(PdfName.of("W"));
+        if (!(wObj instanceof PdfArray)) {
             throw new IOException("Xref stream missing /W array");
         }
-        COSArray wArray = (COSArray) wObj;
+        PdfArray wArray = (PdfArray) wObj;
         if (wArray.size() != 3) {
             throw new IOException("Xref stream /W array must have 3 elements, got " + wArray.size());
         }
-        int w1 = ((COSInteger) wArray.get(0)).intValue();
-        int w2 = ((COSInteger) wArray.get(1)).intValue();
-        int w3 = ((COSInteger) wArray.get(2)).intValue();
+        int w1 = ((PdfInteger) wArray.get(0)).intValue();
+        int w2 = ((PdfInteger) wArray.get(1)).intValue();
+        int w3 = ((PdfInteger) wArray.get(2)).intValue();
         int entrySize = w1 + w2 + w3;
 
         // Read /Size
-        COSBase sizeObj = streamDict.get(COSName.of("Size"));
-        if (!(sizeObj instanceof COSInteger)) {
+        PdfBase sizeObj = streamDict.get(PdfName.of("Size"));
+        if (!(sizeObj instanceof PdfInteger)) {
             throw new IOException("Xref stream missing /Size");
         }
 
         // Read /Index (optional, default is [0 Size])
         int[] subsections;
-        COSBase indexObj = streamDict.get(COSName.of("Index"));
-        if (indexObj instanceof COSArray) {
-            COSArray indexArray = (COSArray) indexObj;
+        PdfBase indexObj = streamDict.get(PdfName.of("Index"));
+        if (indexObj instanceof PdfArray) {
+            PdfArray indexArray = (PdfArray) indexObj;
             subsections = new int[indexArray.size()];
             for (int i = 0; i < indexArray.size(); i++) {
-                subsections[i] = ((COSInteger) indexArray.get(i)).intValue();
+                subsections[i] = ((PdfInteger) indexArray.get(i)).intValue();
             }
         } else {
-            int size = ((COSInteger) sizeObj).intValue();
+            int size = ((PdfInteger) sizeObj).intValue();
             subsections = new int[]{0, size};
         }
 
@@ -977,24 +1009,24 @@ public final class XRefParser {
                 int type = (w1 == 0) ? 1 : field1;
                 int objectNumber = firstObj + i;
 
-                COSObjectKey key;
+                PdfObjectKey key;
                 switch (type) {
                     case 0: // Free
                         int freeGen = sanitizeGeneration(objectNumber, field3);
-                        key = new COSObjectKey(objectNumber, freeGen);
+                        key = new PdfObjectKey(objectNumber, freeGen);
                         if (!entries.containsKey(key)) {
                             entries.put(key, XRefEntry.free(objectNumber, freeGen, field2));
                         }
                         break;
                     case 1: // In-use
                         int inUseGen = sanitizeGeneration(objectNumber, field3);
-                        key = new COSObjectKey(objectNumber, inUseGen);
+                        key = new PdfObjectKey(objectNumber, inUseGen);
                         if (!entries.containsKey(key)) {
                             entries.put(key, XRefEntry.inUse(objectNumber, inUseGen, field2));
                         }
                         break;
                     case 2: // Compressed (objects inside an object stream always have gen=0 per §7.5.7)
-                        key = new COSObjectKey(objectNumber, 0);
+                        key = new PdfObjectKey(objectNumber, 0);
                         if (!entries.containsKey(key)) {
                             entries.put(key, XRefEntry.compressed(objectNumber, (int) field2, field3));
                         }
@@ -1041,7 +1073,7 @@ public final class XRefParser {
     /**
      * Parses a trailer dictionary. Expects the current position to be at '&lt;&lt;'.
      */
-    private COSDictionary parseTrailerDictionary() throws IOException {
+    private PdfDictionary parseTrailerDictionary() throws IOException {
         PDFLexer.Token token = lexer.nextToken();
         if (token.getType() != PDFLexer.TokenType.DICT_OPEN) {
             throw new IOException("Expected '<<' for trailer dictionary, got: " + token);
@@ -1053,8 +1085,8 @@ public final class XRefParser {
      * Parses dictionary contents after '&lt;&lt;' has been consumed.
      * Reads key-value pairs until '&gt;&gt;' is encountered.
      */
-    private COSDictionary parseDictionaryContents() throws IOException {
-        COSDictionary dict = new COSDictionary();
+    private PdfDictionary parseDictionaryContents() throws IOException {
+        PdfDictionary dict = new PdfDictionary();
 
         while (true) {
             PDFLexer.Token token = lexer.peekToken();
@@ -1078,10 +1110,10 @@ public final class XRefParser {
             if (token.getType() != PDFLexer.TokenType.NAME) {
                 throw new IOException("Expected name as dictionary key, got: " + token);
             }
-            COSName key = COSName.of(token.getValue());
+            PdfName key = PdfName.of(token.getValue());
 
             // Value
-            COSBase value = parseObject();
+            PdfBase value = parseObject();
             dict.set(key, value);
         }
 
@@ -1089,10 +1121,10 @@ public final class XRefParser {
     }
 
     /**
-     * Parses a single COS object from the current lexer position.
+     * Parses a single PDF object from the current lexer position.
      * Used for trailer dictionary values and xref stream dictionary values.
      */
-    COSBase parseObject() throws IOException {
+    PdfBase parseObject() throws IOException {
         PDFLexer.Token token = lexer.peekToken();
 
         switch (token.getType()) {
@@ -1110,32 +1142,32 @@ public final class XRefParser {
                     PDFLexer.Token rToken = lexer.peekToken();
                     if (rToken.getType() == PDFLexer.TokenType.KEYWORD && "R".equals(rToken.getValue())) {
                         lexer.nextToken(); // consume 'R'
-                        return new COSObjectReference(
-                                new COSObjectKey((int) intVal, Integer.parseInt(genToken.getValue())));
+                        return new PdfObjectReference(
+                                new PdfObjectKey((int) intVal, Integer.parseInt(genToken.getValue())));
                     }
                     // Not an indirect reference — backtrack to just after first integer
                     reader.seek(posAfterFirstInt);
                     lexer.clearPeek();
                 }
 
-                return COSInteger.valueOf(intVal);
+                return PdfInteger.valueOf(intVal);
             }
             case REAL: {
                 lexer.nextToken();
-                return new COSFloat(Float.parseFloat(token.getValue()));
+                return new PdfFloat(Float.parseFloat(token.getValue()));
             }
             case NAME: {
                 lexer.nextToken();
-                return COSName.of(token.getValue());
+                return PdfName.of(token.getValue());
             }
             case LITERAL_STRING: {
                 lexer.nextToken();
-                return new COSString(
+                return new PdfString(
                         token.getValue().getBytes(StandardCharsets.ISO_8859_1));
             }
             case HEX_STRING: {
                 lexer.nextToken();
-                COSString s = new COSString(
+                PdfString s = new PdfString(
                         token.getValue().getBytes(StandardCharsets.ISO_8859_1));
                 s.setForceHex(true);
                 return s;
@@ -1144,17 +1176,17 @@ public final class XRefParser {
                 lexer.nextToken();
                 String kw = token.getValue();
                 if ("true".equals(kw)) {
-                    return COSBoolean.TRUE;
+                    return PdfBoolean.TRUE;
                 } else if ("false".equals(kw)) {
-                    return COSBoolean.FALSE;
+                    return PdfBoolean.FALSE;
                 } else if ("null".equals(kw)) {
-                    return COSNull.INSTANCE;
+                    return PdfNull.INSTANCE;
                 }
                 throw new IOException("Unexpected keyword in object: " + kw);
             }
             case ARRAY_OPEN: {
                 lexer.nextToken();
-                COSArray array = new COSArray();
+                PdfArray array = new PdfArray();
                 while (true) {
                     PDFLexer.Token peek = lexer.peekToken();
                     if (peek.getType() == PDFLexer.TokenType.ARRAY_CLOSE) {

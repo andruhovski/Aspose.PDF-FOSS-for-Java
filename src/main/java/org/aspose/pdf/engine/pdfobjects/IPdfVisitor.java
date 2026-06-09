@@ -1,15 +1,15 @@
-package org.aspose.pdf.engine.cos;
+package org.aspose.pdf.engine.pdfobjects;
 
 /**
- * Visitor interface for type-safe traversal of COS object graphs.
+ * Visitor interface for type-safe traversal of PDF object graphs.
  * <p>
  * Implements the Visitor pattern (GoF) to avoid chains of {@code instanceof} checks.
- * Each COS object type calls the corresponding {@code visit*} method.
+ * Each PDF object type calls the corresponding {@code visit*} method.
  * </p>
  *
  * @param <T> the return type of the visitor methods
  */
-public interface ICOSVisitor<T> {
+public interface IPdfVisitor<T> {
 
     /**
      * Visit a boolean object.
@@ -17,7 +17,7 @@ public interface ICOSVisitor<T> {
      * @param obj the boolean object
      * @return visitor result
      */
-    T visitBoolean(COSBoolean obj);
+    T visitBoolean(PdfBoolean obj);
 
     /**
      * Visit an integer object.
@@ -25,7 +25,7 @@ public interface ICOSVisitor<T> {
      * @param obj the integer object
      * @return visitor result
      */
-    T visitInteger(COSInteger obj);
+    T visitInteger(PdfInteger obj);
 
     /**
      * Visit a float object.
@@ -33,7 +33,7 @@ public interface ICOSVisitor<T> {
      * @param obj the float object
      * @return visitor result
      */
-    T visitFloat(COSFloat obj);
+    T visitFloat(PdfFloat obj);
 
     /**
      * Visit a name object.
@@ -41,7 +41,7 @@ public interface ICOSVisitor<T> {
      * @param obj the name object
      * @return visitor result
      */
-    T visitName(COSName obj);
+    T visitName(PdfName obj);
 
     /**
      * Visit a string object.
@@ -49,7 +49,7 @@ public interface ICOSVisitor<T> {
      * @param obj the string object
      * @return visitor result
      */
-    T visitString(COSString obj);
+    T visitString(PdfString obj);
 
     /**
      * Visit a null object.
@@ -57,7 +57,7 @@ public interface ICOSVisitor<T> {
      * @param obj the null object
      * @return visitor result
      */
-    T visitNull(COSNull obj);
+    T visitNull(PdfNull obj);
 
     /**
      * Visit an array object.
@@ -65,7 +65,7 @@ public interface ICOSVisitor<T> {
      * @param obj the array object
      * @return visitor result
      */
-    T visitArray(COSArray obj);
+    T visitArray(PdfArray obj);
 
     /**
      * Visit a dictionary object.
@@ -73,7 +73,7 @@ public interface ICOSVisitor<T> {
      * @param obj the dictionary object
      * @return visitor result
      */
-    T visitDictionary(COSDictionary obj);
+    T visitDictionary(PdfDictionary obj);
 
     /**
      * Visit a stream object.
@@ -81,5 +81,5 @@ public interface ICOSVisitor<T> {
      * @param obj the stream object
      * @return visitor result
      */
-    T visitStream(COSStream obj);
+    T visitStream(PdfStream obj);
 }

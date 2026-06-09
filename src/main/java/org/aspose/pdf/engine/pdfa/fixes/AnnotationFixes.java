@@ -2,12 +2,12 @@ package org.aspose.pdf.engine.pdfa.fixes;
 
 import org.aspose.pdf.ConvertErrorAction;
 import org.aspose.pdf.PdfFormat;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectKey;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectKey;
 import org.aspose.pdf.engine.pdfa.PdfAValidationResult;
 import org.aspose.pdf.engine.parser.PDFParser;
 
@@ -68,16 +68,16 @@ public final class AnnotationFixes {
     public void removeForbiddenAnnotations(PDFParser parser, PdfFormat format,
                                            ConvertErrorAction errorAction,
                                            PdfAValidationResult result) throws IOException {
-        COSDictionary catalog = parser.getCatalog();
-        COSBase pagesRef = catalog.get("Pages");
+        PdfDictionary catalog = parser.getCatalog();
+        PdfBase pagesRef = catalog.get("Pages");
         if (pagesRef == null) {
             return;
         }
-        COSBase pagesObj = parser.resolveReference(pagesRef);
-        if (!(pagesObj instanceof COSDictionary)) {
+        PdfBase pagesObj = parser.resolveReference(pagesRef);
+        if (!(pagesObj instanceof PdfDictionary)) {
             return;
         }
-        processPageTreeForForbiddenAnnotations(parser, (COSDictionary) pagesObj, errorAction, result);
+        processPageTreeForForbiddenAnnotations(parser, (PdfDictionary) pagesObj, errorAction, result);
     }
 
     /**
@@ -97,16 +97,16 @@ public final class AnnotationFixes {
     public void fixAnnotationFlags(PDFParser parser, PdfFormat format,
                                    ConvertErrorAction errorAction,
                                    PdfAValidationResult result) throws IOException {
-        COSDictionary catalog = parser.getCatalog();
-        COSBase pagesRef = catalog.get("Pages");
+        PdfDictionary catalog = parser.getCatalog();
+        PdfBase pagesRef = catalog.get("Pages");
         if (pagesRef == null) {
             return;
         }
-        COSBase pagesObj = parser.resolveReference(pagesRef);
-        if (!(pagesObj instanceof COSDictionary)) {
+        PdfBase pagesObj = parser.resolveReference(pagesRef);
+        if (!(pagesObj instanceof PdfDictionary)) {
             return;
         }
-        processPageTreeForFlags(parser, (COSDictionary) pagesObj, result);
+        processPageTreeForFlags(parser, (PdfDictionary) pagesObj, result);
     }
 
     // -------------------------------------------------------------------------
@@ -116,45 +116,45 @@ public final class AnnotationFixes {
     /**
      * Recursively walks the page tree removing forbidden annotations.
      */
-    private void processPageTreeForForbiddenAnnotations(PDFParser parser, COSDictionary node,
+    private void processPageTreeForForbiddenAnnotations(PDFParser parser, PdfDictionary node,
                                                         ConvertErrorAction errorAction,
                                                         PdfAValidationResult result) throws IOException {
         String type = node.getNameAsString("Type");
         if ("Pages".equals(type)) {
-            COSBase kidsRef = node.get("Kids");
+            PdfBase kidsRef = node.get("Kids");
             if (kidsRef == null) {
                 return;
             }
-            COSBase kidsObj = parser.resolveReference(kidsRef);
-            if (!(kidsObj instanceof COSArray)) {
+            PdfBase kidsObj = parser.resolveReference(kidsRef);
+            if (!(kidsObj instanceof PdfArray)) {
                 return;
             }
-            COSArray kids = (COSArray) kidsObj;
+            PdfArray kids = (PdfArray) kidsObj;
             for (int i = 0; i < kids.size(); i++) {
-                COSBase childRef = kids.get(i);
-                COSBase childObj = parser.resolveReference(childRef);
-                if (childObj instanceof COSDictionary) {
-                    processPageTreeForForbiddenAnnotations(parser, (COSDictionary) childObj, errorAction, result);
+                PdfBase childRef = kids.get(i);
+                PdfBase childObj = parser.resolveReference(childRef);
+                if (childObj instanceof PdfDictionary) {
+                    processPageTreeForForbiddenAnnotations(parser, (PdfDictionary) childObj, errorAction, result);
                 }
             }
         } else if ("Page".equals(type) || type == null) {
             // It's a page (type may be absent per spec)
-            COSBase annotsRef = node.get("Annots");
+            PdfBase annotsRef = node.get("Annots");
             if (annotsRef == null) {
                 return;
             }
-            COSBase annotsObj = parser.resolveReference(annotsRef);
-            if (!(annotsObj instanceof COSArray)) {
+            PdfBase annotsObj = parser.resolveReference(annotsRef);
+            if (!(annotsObj instanceof PdfArray)) {
                 return;
             }
-            COSArray annots = (COSArray) annotsObj;
+            PdfArray annots = (PdfArray) annotsObj;
             for (int i = annots.size() - 1; i >= 0; i--) {
-                COSBase annotRef = annots.get(i);
-                COSBase annotObj = parser.resolveReference(annotRef);
-                if (!(annotObj instanceof COSDictionary)) {
+                PdfBase annotRef = annots.get(i);
+                PdfBase annotObj = parser.resolveReference(annotRef);
+                if (!(annotObj instanceof PdfDictionary)) {
                     continue;
                 }
-                COSDictionary annotDict = (COSDictionary) annotObj;
+                PdfDictionary annotDict = (PdfDictionary) annotObj;
                 String subtype = annotDict.getNameAsString("Subtype");
                 if (subtype != null && FORBIDDEN_SUBTYPES.contains(subtype)) {
                     if (errorAction == ConvertErrorAction.Delete) {
@@ -175,43 +175,43 @@ public final class AnnotationFixes {
     /**
      * Recursively walks the page tree fixing annotation flags.
      */
-    private void processPageTreeForFlags(PDFParser parser, COSDictionary node,
+    private void processPageTreeForFlags(PDFParser parser, PdfDictionary node,
                                          PdfAValidationResult result) throws IOException {
         String type = node.getNameAsString("Type");
         if ("Pages".equals(type)) {
-            COSBase kidsRef = node.get("Kids");
+            PdfBase kidsRef = node.get("Kids");
             if (kidsRef == null) {
                 return;
             }
-            COSBase kidsObj = parser.resolveReference(kidsRef);
-            if (!(kidsObj instanceof COSArray)) {
+            PdfBase kidsObj = parser.resolveReference(kidsRef);
+            if (!(kidsObj instanceof PdfArray)) {
                 return;
             }
-            COSArray kids = (COSArray) kidsObj;
+            PdfArray kids = (PdfArray) kidsObj;
             for (int i = 0; i < kids.size(); i++) {
-                COSBase childRef = kids.get(i);
-                COSBase childObj = parser.resolveReference(childRef);
-                if (childObj instanceof COSDictionary) {
-                    processPageTreeForFlags(parser, (COSDictionary) childObj, result);
+                PdfBase childRef = kids.get(i);
+                PdfBase childObj = parser.resolveReference(childRef);
+                if (childObj instanceof PdfDictionary) {
+                    processPageTreeForFlags(parser, (PdfDictionary) childObj, result);
                 }
             }
         } else if ("Page".equals(type) || type == null) {
-            COSBase annotsRef = node.get("Annots");
+            PdfBase annotsRef = node.get("Annots");
             if (annotsRef == null) {
                 return;
             }
-            COSBase annotsObj = parser.resolveReference(annotsRef);
-            if (!(annotsObj instanceof COSArray)) {
+            PdfBase annotsObj = parser.resolveReference(annotsRef);
+            if (!(annotsObj instanceof PdfArray)) {
                 return;
             }
-            COSArray annots = (COSArray) annotsObj;
+            PdfArray annots = (PdfArray) annotsObj;
             for (int i = 0; i < annots.size(); i++) {
-                COSBase annotRef = annots.get(i);
-                COSBase annotObj = parser.resolveReference(annotRef);
-                if (!(annotObj instanceof COSDictionary)) {
+                PdfBase annotRef = annots.get(i);
+                PdfBase annotObj = parser.resolveReference(annotRef);
+                if (!(annotObj instanceof PdfDictionary)) {
                     continue;
                 }
-                COSDictionary annotDict = (COSDictionary) annotObj;
+                PdfDictionary annotDict = (PdfDictionary) annotObj;
                 fixSingleAnnotationFlags(annotDict, result, i);
             }
         }
@@ -220,7 +220,7 @@ public final class AnnotationFixes {
     /**
      * Fixes flag bits on a single annotation dictionary.
      */
-    private void fixSingleAnnotationFlags(COSDictionary annotDict, PdfAValidationResult result, int idx) {
+    private void fixSingleAnnotationFlags(PdfDictionary annotDict, PdfAValidationResult result, int idx) {
         int flags = annotDict.getInt("F", 0);
         int original = flags;
 
@@ -239,7 +239,7 @@ public final class AnnotationFixes {
         }
 
         if (flags != original) {
-            annotDict.set("F", COSInteger.valueOf(flags));
+            annotDict.set("F", PdfInteger.valueOf(flags));
             result.addWarning("annot.2", "Fixed annotation flags (was 0x"
                     + Integer.toHexString(original) + ", now 0x" + Integer.toHexString(flags) + ")",
                     "page/Annots[" + idx + "]", "ISO 19005-1:2005, 6.5.3");

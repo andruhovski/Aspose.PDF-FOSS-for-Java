@@ -1,6 +1,6 @@
 package org.aspose.pdf.operators;
 
-import org.aspose.pdf.engine.cos.COSBase;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
 
 import java.util.Collections;
 import java.util.List;
@@ -32,7 +32,7 @@ public class SetCharacterSpacing extends TextStateOperator {
      *
      * @param operands the operands from the content stream parser
      */
-    public SetCharacterSpacing(List<COSBase> operands) {
+    public SetCharacterSpacing(List<PdfBase> operands) {
         super("Tc", operands);
         this.charSpace = (operands != null && !operands.isEmpty())
                 ? getNumber(operands.get(0))

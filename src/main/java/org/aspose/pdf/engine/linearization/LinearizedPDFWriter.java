@@ -1,14 +1,14 @@
 package org.aspose.pdf.engine.linearization;
 
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSNull;
-import org.aspose.pdf.engine.cos.COSObjectKey;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfNull;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectKey;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 import org.aspose.pdf.engine.parser.PDFParser;
 
 import java.io.ByteArrayOutputStream;
@@ -61,7 +61,7 @@ public final class LinearizedPDFWriter {
      * @throws IOException if writing fails
      */
     public void write(OutputStream output, PDFParser parser,
-                       COSDictionary trailer) throws IOException {
+                       PdfDictionary trailer) throws IOException {
         LOG.fine("Starting linearized PDF write");
 
         // Step 1: Collect and classify objects
@@ -107,10 +107,10 @@ public final class LinearizedPDFWriter {
      * Returns an OffsetTracker with all recorded positions.
      */
     private OffsetTracker writeParts(ByteArrayOutputStream buffer, PDFParser parser,
-                                     COSDictionary trailer, LinearizationPlan plan,
+                                     PdfDictionary trailer, LinearizationPlan plan,
                                      byte[] hintData) throws IOException {
         OffsetTracker t = new OffsetTracker(plan.getNumPages());
-        Map<COSObjectKey, Long> offsets = new LinkedHashMap<>();
+        Map<PdfObjectKey, Long> offsets = new LinkedHashMap<>();
         long[] pos = {0}; // mutable offset counter
 
         // ─── Part 1: Header ──────────────────────────────────────
@@ -124,7 +124,7 @@ public final class LinearizedPDFWriter {
         t.linDictOffset = pos[0];
         byte[] linDictBytes = formatLinearizationDictPlaceholder(plan, linDictObjNum);
         buffer.write(linDictBytes);
-        offsets.put(new COSObjectKey(linDictObjNum, 0), t.linDictOffset);
+        offsets.put(new PdfObjectKey(linDictObjNum, 0), t.linDictOffset);
         pos[0] += linDictBytes.length;
 
         // ─── Part 3: First-page xref + trailer ──────────────────
@@ -138,9 +138,9 @@ public final class LinearizedPDFWriter {
         // linearization dict is present and objects are ordered correctly.
 
         // ─── Part 4: Catalog + document-level objects ────────────
-        for (COSObjectKey key : plan.getDocumentLevel()) {
-            COSBase obj = parser.getObject(key);
-            if (obj == null || obj instanceof COSNull) continue;
+        for (PdfObjectKey key : plan.getDocumentLevel()) {
+            PdfBase obj = parser.getObject(key);
+            if (obj == null || obj instanceof PdfNull) continue;
             long objOffset = pos[0];
             byte[] objBytes = formatObject(key, obj);
             buffer.write(objBytes);
@@ -150,7 +150,7 @@ public final class LinearizedPDFWriter {
 
         // ─── Part 5: Hint stream ────────────────────────────────
         t.hintStreamOffset = pos[0];
-        COSObjectKey hintKey = new COSObjectKey(findMaxObjNum(parser) + 1, 0);
+        PdfObjectKey hintKey = new PdfObjectKey(findMaxObjNum(parser) + 1, 0);
         byte[] hintObjBytes = formatHintStream(hintKey, hintData);
         buffer.write(hintObjBytes);
         pos[0] += hintObjBytes.length;
@@ -161,9 +161,9 @@ public final class LinearizedPDFWriter {
         t.pageOffsets[plan.getFirstPageIndex()] = pos[0];
         long firstPageStart = pos[0];
         int firstPageObjCount = 0;
-        for (COSObjectKey key : plan.getFirstPageObjects()) {
-            COSBase obj = parser.getObject(key);
-            if (obj == null || obj instanceof COSNull) continue;
+        for (PdfObjectKey key : plan.getFirstPageObjects()) {
+            PdfBase obj = parser.getObject(key);
+            if (obj == null || obj instanceof PdfNull) continue;
             long objOffset = pos[0];
             byte[] objBytes = formatObject(key, obj);
             buffer.write(objBytes);
@@ -186,9 +186,9 @@ public final class LinearizedPDFWriter {
             t.pageOffsets[pageIdx] = pos[0];
             long pageStart = pos[0];
             int objCount = 0;
-            for (COSObjectKey key : plan.getPagePrivateObjects(pageIdx)) {
-                COSBase obj = parser.getObject(key);
-                if (obj == null || obj instanceof COSNull) continue;
+            for (PdfObjectKey key : plan.getPagePrivateObjects(pageIdx)) {
+                PdfBase obj = parser.getObject(key);
+                if (obj == null || obj instanceof PdfNull) continue;
                 long objOffset = pos[0];
                 byte[] objBytes = formatObject(key, obj);
                 buffer.write(objBytes);
@@ -201,15 +201,15 @@ public final class LinearizedPDFWriter {
         }
 
         // ─── Part 8: Shared objects ─────────────────────────────
-        List<COSObjectKey> allShared = new ArrayList<>();
+        List<PdfObjectKey> allShared = new ArrayList<>();
         allShared.addAll(plan.getFirstPageShared());
         allShared.addAll(plan.getSharedObjects());
         t.sharedOffsets = new long[allShared.size()];
         t.sharedLengths = new int[allShared.size()];
         for (int i = 0; i < allShared.size(); i++) {
-            COSObjectKey key = allShared.get(i);
-            COSBase obj = parser.getObject(key);
-            if (obj == null || obj instanceof COSNull) {
+            PdfObjectKey key = allShared.get(i);
+            PdfBase obj = parser.getObject(key);
+            if (obj == null || obj instanceof PdfNull) {
                 t.sharedOffsets[i] = pos[0];
                 t.sharedLengths[i] = 0;
                 continue;
@@ -303,7 +303,7 @@ public final class LinearizedPDFWriter {
         return base.getBytes(StandardCharsets.US_ASCII);
     }
 
-    private byte[] formatObject(COSObjectKey key, COSBase obj) throws IOException {
+    private byte[] formatObject(PdfObjectKey key, PdfBase obj) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         String header = key.getObjectNumber() + " " + key.getGenerationNumber() + " obj\n";
         out.write(header.getBytes(StandardCharsets.US_ASCII));
@@ -312,7 +312,7 @@ public final class LinearizedPDFWriter {
         return out.toByteArray();
     }
 
-    private byte[] formatHintStream(COSObjectKey key, byte[] hintData) throws IOException {
+    private byte[] formatHintStream(PdfObjectKey key, byte[] hintData) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         String header = key.getObjectNumber() + " " + key.getGenerationNumber() + " obj\n";
         out.write(header.getBytes(StandardCharsets.US_ASCII));
@@ -324,7 +324,7 @@ public final class LinearizedPDFWriter {
         return out.toByteArray();
     }
 
-    private byte[] formatXRefTable(Map<COSObjectKey, Long> offsets) {
+    private byte[] formatXRefTable(Map<PdfObjectKey, Long> offsets) {
         int maxObj = findMaxObjNum(offsets);
         int totalEntries = maxObj + 1;
 
@@ -335,7 +335,7 @@ public final class LinearizedPDFWriter {
 
         // Build lookup
         Map<Integer, Map.Entry<Long, Integer>> lookup = new java.util.HashMap<>();
-        for (Map.Entry<COSObjectKey, Long> e : offsets.entrySet()) {
+        for (Map.Entry<PdfObjectKey, Long> e : offsets.entrySet()) {
             lookup.put(e.getKey().getObjectNumber(),
                     new java.util.AbstractMap.SimpleEntry<>(e.getValue(), e.getKey().getGenerationNumber()));
         }
@@ -351,19 +351,19 @@ public final class LinearizedPDFWriter {
         return sb.toString().getBytes(StandardCharsets.US_ASCII);
     }
 
-    private byte[] formatTrailer(COSDictionary originalTrailer, int size, long xrefOffset)
+    private byte[] formatTrailer(PdfDictionary originalTrailer, int size, long xrefOffset)
             throws IOException {
-        COSDictionary trailerCopy = new COSDictionary();
-        for (Map.Entry<COSName, COSBase> entry : originalTrailer) {
+        PdfDictionary trailerCopy = new PdfDictionary();
+        for (Map.Entry<PdfName, PdfBase> entry : originalTrailer) {
             trailerCopy.set(entry.getKey(), entry.getValue());
         }
-        trailerCopy.set(COSName.of("Size"), COSInteger.valueOf(size));
+        trailerCopy.set(PdfName.of("Size"), PdfInteger.valueOf(size));
         // A linearized rewrite is a fresh single-revision file, so the original
         // trailer's /Prev and /XRefStm (which chain back to a previous xref)
         // must be dropped — otherwise hasIncrementalUpdate() on the reopened
         // file still reports true (PDFNET-54615).
-        trailerCopy.remove(COSName.of("Prev"));
-        trailerCopy.remove(COSName.of("XRefStm"));
+        trailerCopy.remove(PdfName.of("Prev"));
+        trailerCopy.remove(PdfName.of("XRefStm"));
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         out.write("trailer\n".getBytes(StandardCharsets.US_ASCII));
@@ -422,15 +422,15 @@ public final class LinearizedPDFWriter {
 
     private int findMaxObjNum(PDFParser parser) {
         int max = 0;
-        for (COSObjectKey key : parser.getAllObjectKeys()) {
+        for (PdfObjectKey key : parser.getAllObjectKeys()) {
             max = Math.max(max, key.getObjectNumber());
         }
         return max;
     }
 
-    private int findMaxObjNum(Map<COSObjectKey, Long> offsets) {
+    private int findMaxObjNum(Map<PdfObjectKey, Long> offsets) {
         int max = 0;
-        for (COSObjectKey key : offsets.keySet()) {
+        for (PdfObjectKey key : offsets.keySet()) {
             max = Math.max(max, key.getObjectNumber());
         }
         return max;
@@ -451,8 +451,8 @@ public final class LinearizedPDFWriter {
         long mainXrefOffset;
         long totalLength;
         int firstPageObjNum;
-        COSObjectKey hintObjKey;
-        Map<COSObjectKey, Long> objectOffsets;
+        PdfObjectKey hintObjKey;
+        Map<PdfObjectKey, Long> objectOffsets;
 
         final long[] pageOffsets;
         final int[] pageLengths;

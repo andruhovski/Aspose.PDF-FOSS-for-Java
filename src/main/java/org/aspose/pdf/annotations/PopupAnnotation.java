@@ -1,7 +1,7 @@
 package org.aspose.pdf.annotations;
 
 import org.aspose.pdf.*;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.io.IOException;
 
@@ -17,12 +17,12 @@ import java.io.IOException;
 public class PopupAnnotation extends Annotation {
 
     /**
-     * Constructs a popup annotation from an existing COS dictionary.
+     * Constructs a popup annotation from an existing PDF dictionary.
      *
-     * @param dict the COS dictionary backing this annotation
+     * @param dict the PDF dictionary backing this annotation
      * @param page the page this annotation belongs to
      */
-    public PopupAnnotation(COSDictionary dict, Page page) {
+    public PopupAnnotation(PdfDictionary dict, Page page) {
         super(dict, page);
     }
 
@@ -34,7 +34,7 @@ public class PopupAnnotation extends Annotation {
      */
     public PopupAnnotation(Page page, Rectangle rect) {
         super(page, rect);
-        dict.set(COSName.of("Subtype"), COSName.of("Popup"));
+        dict.set(PdfName.of("Subtype"), PdfName.of("Popup"));
     }
 
     /**
@@ -52,7 +52,7 @@ public class PopupAnnotation extends Annotation {
      * @param open true to display the popup open
      */
     public void setOpen(boolean open) {
-        dict.set(COSName.of("Open"), COSBoolean.valueOf(open));
+        dict.set(PdfName.of("Open"), PdfBoolean.valueOf(open));
     }
 
     /**
@@ -61,9 +61,9 @@ public class PopupAnnotation extends Annotation {
      * @return the parent annotation, or null if not set or unresolvable
      */
     public Annotation getParent() {
-        COSBase parent = resolveRef(dict.get("Parent"));
-        if (parent instanceof COSDictionary) {
-            return Annotation.fromDictionary((COSDictionary) parent, page);
+        PdfBase parent = resolveRef(dict.get("Parent"));
+        if (parent instanceof PdfDictionary) {
+            return Annotation.fromDictionary((PdfDictionary) parent, page);
         }
         return null;
     }
@@ -74,10 +74,10 @@ public class PopupAnnotation extends Annotation {
      * @param val the value to resolve
      * @return the resolved value, or the original if not an indirect reference
      */
-    private COSBase resolveRef(COSBase val) {
-        if (val instanceof COSObjectReference) {
+    private PdfBase resolveRef(PdfBase val) {
+        if (val instanceof PdfObjectReference) {
             try {
-                return ((COSObjectReference) val).dereference();
+                return ((PdfObjectReference) val).dereference();
             } catch (IOException e) {
                 return null;
             }

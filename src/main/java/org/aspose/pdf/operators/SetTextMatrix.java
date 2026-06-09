@@ -1,7 +1,7 @@
 package org.aspose.pdf.operators;
 
 import org.aspose.pdf.Matrix;
-import org.aspose.pdf.engine.cos.COSBase;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
 
 import java.util.List;
 
@@ -40,7 +40,7 @@ public class SetTextMatrix extends TextPlaceOperator {
      *
      * @param operands the operands from the content stream parser
      */
-    public SetTextMatrix(List<COSBase> operands) {
+    public SetTextMatrix(List<PdfBase> operands) {
         super("Tm", operands);
         if (operands != null && operands.size() >= 6) {
             this.matrix = new Matrix(

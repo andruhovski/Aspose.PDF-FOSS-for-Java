@@ -3,7 +3,7 @@ package org.aspose.pdf.forms;
 import org.aspose.pdf.*;
 import org.aspose.pdf.annotations.Border;
 import org.aspose.pdf.annotations.WidgetAnnotation;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 import org.aspose.pdf.engine.parser.PDFParser;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -35,13 +35,13 @@ Field extends WidgetAnnotation implements Iterable<Field> {
     private List<Field> childFields;
 
     /**
-     * Constructs a field from an existing COS dictionary.
+     * Constructs a field from an existing PDF dictionary.
      *
-     * @param dict     the COS dictionary backing this field
+     * @param dict     the PDF dictionary backing this field
      * @param page     the page this field belongs to (may be null)
      * @param fullName the fully-qualified dotted name of the field
      */
-    protected Field(COSDictionary dict, Page page, String fullName) {
+    protected Field(PdfDictionary dict, Page page, String fullName) {
         super(dict, page);
         this.fullName = fullName != null ? fullName : "";
     }
@@ -117,8 +117,8 @@ Field extends WidgetAnnotation implements Iterable<Field> {
      * @return the partial name, or null if not set
      */
     public String getPartialName() {
-        COSBase t = dict.get("T");
-        return (t instanceof COSString) ? ((COSString) t).getString() : null;
+        PdfBase t = dict.get("T");
+        return (t instanceof PdfString) ? ((PdfString) t).getString() : null;
     }
 
     /**
@@ -127,9 +127,9 @@ Field extends WidgetAnnotation implements Iterable<Field> {
      * @param name the partial name
      */
     public void setPartialName(String name) {
-        // Same BUG-054 path as setValue — let COSString(String) decide between
+        // Same BUG-054 path as setValue — let PdfString(String) decide between
         // PDFDocEncoding and UTF-16BE+BOM so non-Latin partial names round-trip.
-        dict.set(COSName.of("T"), new COSString(name));
+        dict.set(PdfName.of("T"), new PdfString(name));
     }
 
     /**
@@ -151,24 +151,24 @@ Field extends WidgetAnnotation implements Iterable<Field> {
      * @return the alternate name, or null if not set
      */
     public String getAlternateName() {
-        COSBase tu = dict.get("TU");
-        return (tu instanceof COSString) ? ((COSString) tu).getString() : null;
+        PdfBase tu = dict.get("TU");
+        return (tu instanceof PdfString) ? ((PdfString) tu).getString() : null;
     }
 
     /**
      * Returns the field value (/V entry) as a string.
      * <p>
-     * If /V is a {@link COSString}, its string value is returned.
-     * If /V is a {@link COSName}, the name string is returned.
+     * If /V is a {@link PdfString}, its string value is returned.
+     * If /V is a {@link PdfName}, the name string is returned.
      * Otherwise null.
      * </p>
      *
      * @return the value string, or null
      */
     public String getValue() {
-        COSBase v = dict.get("V");
-        if (v instanceof COSString) return ((COSString) v).getString();
-        if (v instanceof COSName) return ((COSName) v).getName();
+        PdfBase v = dict.get("V");
+        if (v instanceof PdfString) return ((PdfString) v).getString();
+        if (v instanceof PdfName) return ((PdfName) v).getName();
         return null;
     }
 
@@ -179,14 +179,14 @@ Field extends WidgetAnnotation implements Iterable<Field> {
      */
     public void setValue(String value) {
         if (value != null) {
-            // BUG-054 fix: route via COSString(String) so it picks PDFDocEncoding
+            // BUG-054 fix: route via PdfString(String) so it picks PDFDocEncoding
             // for ASCII/Win-1252 and falls back to UTF-16BE+BOM for non-Latin text
             // (Cyrillic, CJK, etc. — see ISO 32000-1 §7.9.2.2). The previous
             // raw UTF-8 byte path stored multi-byte sequences with no BOM, so
             // getString() decoded them as PDFDocEncoding garbage on read-back.
-            dict.set(COSName.of("V"), new COSString(value));
+            dict.set(PdfName.of("V"), new PdfString(value));
         } else {
-            dict.remove(COSName.of("V"));
+            dict.remove(PdfName.of("V"));
         }
     }
 
@@ -196,9 +196,9 @@ Field extends WidgetAnnotation implements Iterable<Field> {
      * @return the default value, or null
      */
     public String getDefaultValue() {
-        COSBase dv = dict.get("DV");
-        if (dv instanceof COSString) return ((COSString) dv).getString();
-        if (dv instanceof COSName) return ((COSName) dv).getName();
+        PdfBase dv = dict.get("DV");
+        if (dv instanceof PdfString) return ((PdfString) dv).getString();
+        if (dv instanceof PdfName) return ((PdfName) dv).getName();
         return null;
     }
 
@@ -217,7 +217,7 @@ Field extends WidgetAnnotation implements Iterable<Field> {
      * @param flags the flags integer
      */
     public void setFieldFlags(int flags) {
-        dict.set(COSName.of("Ff"), COSInteger.valueOf(flags));
+        dict.set(PdfName.of("Ff"), PdfInteger.valueOf(flags));
     }
 
     /**
@@ -253,8 +253,8 @@ Field extends WidgetAnnotation implements Iterable<Field> {
      * @return the DA string, or null
      */
     public String getDefaultAppearance() {
-        COSBase da = dict.get("DA");
-        return (da instanceof COSString) ? ((COSString) da).getString() : null;
+        PdfBase da = dict.get("DA");
+        return (da instanceof PdfString) ? ((PdfString) da).getString() : null;
     }
 
     /**
@@ -274,9 +274,9 @@ Field extends WidgetAnnotation implements Iterable<Field> {
      */
     public void setDefaultAppearance(String da) {
         if (da == null) {
-            dict.remove(COSName.of("DA"));
+            dict.remove(PdfName.of("DA"));
         } else {
-            dict.set(COSName.of("DA"), new COSString(da));
+            dict.set(PdfName.of("DA"), new PdfString(da));
         }
     }
 
@@ -304,31 +304,31 @@ Field extends WidgetAnnotation implements Iterable<Field> {
      * @return the typed appearance dictionary (never null)
      */
     public AppearanceDictionary getAppearance() {
-        COSBase ap = dict.get(COSName.of("AP"));
-        COSDictionary apDict;
-        if (ap instanceof COSDictionary) {
-            apDict = (COSDictionary) ap;
+        PdfBase ap = dict.get(PdfName.of("AP"));
+        PdfDictionary apDict;
+        if (ap instanceof PdfDictionary) {
+            apDict = (PdfDictionary) ap;
         } else {
-            apDict = new COSDictionary();
-            dict.set(COSName.of("AP"), apDict);
+            apDict = new PdfDictionary();
+            dict.set(PdfName.of("AP"), apDict);
         }
         return new AppearanceDictionary(apDict);
     }
 
     /**
-     * Factory method: creates the appropriate {@link Field} subclass from a COS dictionary.
+     * Factory method: creates the appropriate {@link Field} subclass from a PDF dictionary.
      *
      * @param dict     the field dictionary
-     * @param ftObj    the field type COS object (may be null)
+     * @param ftObj    the field type PDF object (may be null)
      * @param fullName the fully-qualified field name
      * @param page     the page (may be null)
      * @param parser   the PDF parser (may be null)
      * @return the concrete field instance
      */
-    public static Field fromDictionary(COSDictionary dict, COSBase ftObj, String fullName,
+    public static Field fromDictionary(PdfDictionary dict, PdfBase ftObj, String fullName,
                                        Page page, PDFParser parser) {
         String ft = null;
-        if (ftObj instanceof COSName) ft = ((COSName) ftObj).getName();
+        if (ftObj instanceof PdfName) ft = ((PdfName) ftObj).getName();
         if (ft == null) ft = dict.getNameAsString("FT");
         if (ft == null) ft = "";
 
@@ -349,7 +349,7 @@ Field extends WidgetAnnotation implements Iterable<Field> {
     /**
      * Creates the appropriate button field subclass based on /Ff flags.
      */
-    private static Field createButtonField(COSDictionary dict, Page page, String fullName) {
+    private static Field createButtonField(PdfDictionary dict, Page page, String fullName) {
         int ff = dict.getInt("Ff", 0);
         if ((ff & (1 << 16)) != 0) return new ButtonField(dict, page, fullName);
         if ((ff & (1 << 15)) != 0) return new RadioButtonField(dict, page, fullName);
@@ -359,7 +359,7 @@ Field extends WidgetAnnotation implements Iterable<Field> {
     /**
      * Creates the appropriate choice field subclass based on /Ff flags.
      */
-    private static Field createChoiceField(COSDictionary dict, Page page, String fullName) {
+    private static Field createChoiceField(PdfDictionary dict, Page page, String fullName) {
         int ff = dict.getInt("Ff", 0);
         if ((ff & (1 << 17)) != 0) return new ComboBoxField(dict, page, fullName);
         return new ListBoxField(dict, page, fullName);
@@ -439,7 +439,7 @@ Field extends WidgetAnnotation implements Iterable<Field> {
             var annots = p.getAnnotations();
             if (annots != null) {
                 for (int i = 1; i <= annots.size(); i++) {
-                    if (annots.get(i).getCOSDictionary() == this.dict) {
+                    if (annots.get(i).getPdfDictionary() == this.dict) {
                         return i - 1;
                     }
                 }
@@ -458,29 +458,29 @@ Field extends WidgetAnnotation implements Iterable<Field> {
     private List<Field> ensureChildFields() {
         if (childFields != null) return childFields;
         childFields = new ArrayList<>();
-        COSBase kids = dict.get("Kids");
-        if (kids instanceof COSObjectReference) {
-            try { kids = ((COSObjectReference) kids).dereference(); }
+        PdfBase kids = dict.get("Kids");
+        if (kids instanceof PdfObjectReference) {
+            try { kids = ((PdfObjectReference) kids).dereference(); }
             catch (Exception e) { kids = null; }
         }
-        if (!(kids instanceof COSArray)) return childFields;
+        if (!(kids instanceof PdfArray)) return childFields;
 
-        COSArray kidsArr = (COSArray) kids;
+        PdfArray kidsArr = (PdfArray) kids;
         for (int i = 0; i < kidsArr.size(); i++) {
-            COSBase kid = kidsArr.get(i);
-            if (kid instanceof COSObjectReference) {
-                try { kid = ((COSObjectReference) kid).dereference(); }
+            PdfBase kid = kidsArr.get(i);
+            if (kid instanceof PdfObjectReference) {
+                try { kid = ((PdfObjectReference) kid).dereference(); }
                 catch (Exception e) { continue; }
             }
-            if (kid instanceof COSDictionary) {
-                COSDictionary kidDict = (COSDictionary) kid;
+            if (kid instanceof PdfDictionary) {
+                PdfDictionary kidDict = (PdfDictionary) kid;
                 // Determine field type — inherit from parent if not present
-                COSBase ft = kidDict.get("FT");
+                PdfBase ft = kidDict.get("FT");
                 if (ft == null) ft = dict.get("FT");
                 // Build child full name
                 String childPartial = null;
-                COSBase t = kidDict.get("T");
-                if (t instanceof COSString) childPartial = ((COSString) t).getString();
+                PdfBase t = kidDict.get("T");
+                if (t instanceof PdfString) childPartial = ((PdfString) t).getString();
                 String childFullName;
                 if (childPartial != null) {
                     childFullName = (fullName != null && !fullName.isEmpty())

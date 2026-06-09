@@ -1,6 +1,6 @@
 package org.aspose.pdf.operators;
 
-import org.aspose.pdf.engine.cos.COSBase;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
 
 import java.util.Collections;
 import java.util.List;
@@ -46,7 +46,7 @@ public class SetTextRenderingMode extends TextStateOperator {
      *
      * @param operands the operands from the content stream parser
      */
-    public SetTextRenderingMode(List<COSBase> operands) {
+    public SetTextRenderingMode(List<PdfBase> operands) {
         super("Tr", operands);
         this.mode = (operands != null && !operands.isEmpty())
                 ? (int) getNumber(operands.get(0))

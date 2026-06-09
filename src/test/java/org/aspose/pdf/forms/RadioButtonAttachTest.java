@@ -5,11 +5,11 @@ import org.aspose.pdf.Document;
 import org.aspose.pdf.Page;
 import org.aspose.pdf.Rectangle;
 import org.aspose.pdf.annotations.Border;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -33,13 +33,13 @@ class RadioButtonAttachTest {
             red.setOptionName("Red");
             radio.add(red);
 
-            COSArray kids = (COSArray) radio.getCOSDictionary().get(COSName.of("Kids"));
+            PdfArray kids = (PdfArray) radio.getPdfDictionary().get(PdfName.of("Kids"));
             assertNotNull(kids);
             assertEquals(1, kids.size());
-            assertSame(red.getCOSDictionary(), kids.get(0));
+            assertSame(red.getPdfDictionary(), kids.get(0));
 
-            assertSame(radio.getCOSDictionary(),
-                    red.getCOSDictionary().get(COSName.of("Parent")));
+            assertSame(radio.getPdfDictionary(),
+                    red.getPdfDictionary().get(PdfName.of("Parent")));
         }
     }
 
@@ -61,8 +61,8 @@ class RadioButtonAttachTest {
             assertNotNull(ap.get("Red"));
             assertNotNull(ap.get("Off"));
             // The newly-generated streams have non-zero BBox
-            COSStream on = ap.get("Red").getCOSStream();
-            COSArray bbox = (COSArray) on.get(COSName.BBOX);
+            PdfStream on = ap.get("Red").getPdfStream();
+            PdfArray bbox = (PdfArray) on.get(PdfName.BBOX);
             assertNotNull(bbox);
             assertTrue(bbox.getFloat(2, 0) > 0, "BBox width should be > 0");
             assertTrue(bbox.getFloat(3, 0) > 0, "BBox height should be > 0");
@@ -123,10 +123,10 @@ class RadioButtonAttachTest {
         Border b = new Border((org.aspose.pdf.annotations.Annotation) null);
         b.setWidth(2.5);
         opt.setBorder(b);
-        COSDictionary bs = (COSDictionary) opt.getCOSDictionary().get(COSName.of("BS"));
+        PdfDictionary bs = (PdfDictionary) opt.getPdfDictionary().get(PdfName.of("BS"));
         assertNotNull(bs);
         assertEquals("Border",
-                ((COSName) bs.get(COSName.TYPE)).getName());
+                ((PdfName) bs.get(PdfName.TYPE)).getName());
 
         Border got = opt.getBorder();
         assertNotNull(got);
@@ -139,9 +139,9 @@ class RadioButtonAttachTest {
         Border b = new Border((org.aspose.pdf.annotations.Annotation) null);
         b.setWidth(1);
         opt.setBorder(b);
-        assertNotNull(opt.getCOSDictionary().get(COSName.of("BS")));
+        assertNotNull(opt.getPdfDictionary().get(PdfName.of("BS")));
         opt.setBorder(null);
-        assertNull(opt.getCOSDictionary().get(COSName.of("BS")));
+        assertNull(opt.getPdfDictionary().get(PdfName.of("BS")));
     }
 
     @Test
@@ -150,9 +150,9 @@ class RadioButtonAttachTest {
         opt.setCaption("Red option");
         assertEquals("Red option", opt.getCaption());
         // /MK/CA storage check
-        COSDictionary mk = (COSDictionary) opt.getCOSDictionary().get(COSName.of("MK"));
+        PdfDictionary mk = (PdfDictionary) opt.getPdfDictionary().get(PdfName.of("MK"));
         assertNotNull(mk);
-        assertNotNull(mk.get(COSName.of("CA")));
+        assertNotNull(mk.get(PdfName.of("CA")));
     }
 
     @Test
@@ -163,8 +163,8 @@ class RadioButtonAttachTest {
         Color got = opt.getColor();
         assertNotNull(got);
         // /MK/BC array of 3 floats
-        COSDictionary mk = (COSDictionary) opt.getCOSDictionary().get(COSName.of("MK"));
-        COSArray bc = (COSArray) mk.get(COSName.of("BC"));
+        PdfDictionary mk = (PdfDictionary) opt.getPdfDictionary().get(PdfName.of("MK"));
+        PdfArray bc = (PdfArray) mk.get(PdfName.of("BC"));
         assertNotNull(bc);
         assertEquals(3, bc.size());
     }
@@ -185,14 +185,14 @@ class RadioButtonAttachTest {
         opt.setOptionName("Red");
         opt.regenerateAppearance();
 
-        COSDictionary ap = (COSDictionary) opt.getCOSDictionary().get(COSName.of("AP"));
-        COSDictionary apN = (COSDictionary) ap.get(COSName.N);
-        COSBase red = apN.get(COSName.of("Red"));
-        COSBase off = apN.get(COSName.of("Off"));
-        assertTrue(red instanceof COSStream, "Red appearance should be a stream");
-        assertTrue(off instanceof COSStream, "Off appearance should be a stream");
+        PdfDictionary ap = (PdfDictionary) opt.getPdfDictionary().get(PdfName.of("AP"));
+        PdfDictionary apN = (PdfDictionary) ap.get(PdfName.N);
+        PdfBase red = apN.get(PdfName.of("Red"));
+        PdfBase off = apN.get(PdfName.of("Off"));
+        assertTrue(red instanceof PdfStream, "Red appearance should be a stream");
+        assertTrue(off instanceof PdfStream, "Off appearance should be a stream");
         // Sanity: stream contains ZapfDingbats invocation
-        String body = new String(((COSStream) red).getDecodedData(),
+        String body = new String(((PdfStream) red).getDecodedData(),
                 java.nio.charset.StandardCharsets.ISO_8859_1);
         assertTrue(body.contains("/ZaDb"));
     }

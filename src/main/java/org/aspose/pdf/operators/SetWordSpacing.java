@@ -1,6 +1,6 @@
 package org.aspose.pdf.operators;
 
-import org.aspose.pdf.engine.cos.COSBase;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
 
 import java.util.Collections;
 import java.util.List;
@@ -32,7 +32,7 @@ public class SetWordSpacing extends TextStateOperator {
      *
      * @param operands the operands from the content stream parser
      */
-    public SetWordSpacing(List<COSBase> operands) {
+    public SetWordSpacing(List<PdfBase> operands) {
         super("Tw", operands);
         this.wordSpace = (operands != null && !operands.isEmpty())
                 ? getNumber(operands.get(0))

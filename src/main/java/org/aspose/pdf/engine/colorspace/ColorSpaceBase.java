@@ -1,12 +1,12 @@
 package org.aspose.pdf.engine.colorspace;
 
 import org.aspose.pdf.Resources;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 import org.aspose.pdf.engine.parser.PDFParser;
 
 import java.io.IOException;
@@ -22,7 +22,7 @@ import java.util.logging.Logger;
  *   <li>Special: Indexed, Separation, DeviceN, Pattern</li>
  * </ul>
  * The {@link #resolve} factory method parses a color space specification
- * from a COSName or COSArray into the appropriate subclass.
+ * from a PdfName or PdfArray into the appropriate subclass.
  * </p>
  */
 public abstract class ColorSpaceBase {
@@ -44,30 +44,91 @@ public abstract class ColorSpaceBase {
     public abstract int getNumberOfComponents();
 
     /**
-     * Resolves a color space from a PDF object.
+     * Converts component values in THIS color space (each typically 0..1)
+     * to a packed ARGB int (alpha=0xFF).
      * <p>
-     * Handles COSName (e.g., /DeviceRGB) and COSArray (e.g., [/ICCBased stream]).
+     * The base implementation maps by component count — 1 = gray,
+     * 3 = RGB, 4 = CMYK — which is correct for the Device* families and a
+     * sane fallback for everything else. Subclasses with richer semantics
+     * (Separation/DeviceN tint transforms, Indexed palette lookup, Lab,
+     * CalRGB/CalGray, ICCBased alternate) override this. Shading functions
+     * and image samples MUST go through this method rather than assuming
+     * RGB — a DeviceCMYK shading read as RGB turns blue into orange
+     * (corpus 29077/10734).
      * </p>
      *
-     * @param csObj     the color space object (COSName or COSArray)
+     * @param comps the component values in this color space
+     * @return packed ARGB int (alpha=0xFF); black when comps is null/empty
+     */
+    public int toRGBInt(double[] comps) {
+        if (comps == null || comps.length == 0) return 0xFF000000;
+        switch (comps.length) {
+            case 1:
+                return DeviceGray.INSTANCE.toRGBInt(comps[0]);
+            case 4:
+                // Rendering pipeline → press-characterized display conversion
+                // (the algebraic DeviceCMYK.toRGBInt(c,m,y,k) stays reserved
+                // for the public API contract).
+                return CmykDisplay.toRGBInt(comps);
+            case 3:
+            default:
+                return DeviceRGB.INSTANCE.toRGBInt(comps[0], comps[1],
+                        comps.length > 2 ? comps[2] : 0);
+        }
+    }
+
+    /**
+     * Resolves a color space from a PDF object.
+     * <p>
+     * Handles PdfName (e.g., /DeviceRGB) and PdfArray (e.g., [/ICCBased stream]).
+     * </p>
+     *
+     * @param csObj     the color space object (PdfName or PdfArray)
      * @param resources the page resources for named color space lookup (may be null)
      * @param parser    the PDF parser for resolving indirect refs (may be null)
      * @return the resolved color space, or DeviceRGB as default
      * @throws IOException if resolution fails
      */
-    public static ColorSpaceBase resolve(COSBase csObj, Resources resources,
+    /**
+     * Identity-keyed cache of resolved composite color spaces. Content streams
+     * re-select spaces constantly ("/CS1 cs … /CS0 cs …" per text run); without
+     * a cache every {@code cs} operator re-parses the ICC profile and creates a
+     * fresh native LCMS transform — observed as render workers burning 15+ CPU
+     * minutes inside {@code LCMS.createNativeTransform} on a single page. The
+     * resources dictionary hands back the SAME PdfArray instance for a given
+     * name, so identity keys hit reliably ({@code PdfArray.equals} is deep
+     * value equality — unusable here both for cost and for cross-document
+     * collisions). Bounded: cleared wholesale when full so closed documents'
+     * objects are not pinned indefinitely.
+     */
+    private static final java.util.Map<PdfBase, ColorSpaceBase> RESOLVE_CACHE =
+            java.util.Collections.synchronizedMap(new java.util.IdentityHashMap<>());
+
+    /** Cache bound — typical documents define a handful of color spaces. */
+    private static final int RESOLVE_CACHE_MAX = 256;
+
+    public static ColorSpaceBase resolve(PdfBase csObj, Resources resources,
                                           PDFParser parser) throws IOException {
         if (csObj == null) {
             return DeviceRGB.INSTANCE;
         }
         csObj = resolveRef(csObj);
 
-        if (csObj instanceof COSName) {
-            return resolveByName(((COSName) csObj).getName(), resources, parser);
+        if (csObj instanceof PdfName) {
+            return resolveByName(((PdfName) csObj).getName(), resources, parser);
         }
 
-        if (csObj instanceof COSArray) {
-            return resolveFromArray((COSArray) csObj, resources, parser);
+        if (csObj instanceof PdfArray) {
+            ColorSpaceBase cached = RESOLVE_CACHE.get(csObj);
+            if (cached != null) {
+                return cached;
+            }
+            ColorSpaceBase resolved = resolveFromArray((PdfArray) csObj, resources, parser);
+            if (RESOLVE_CACHE.size() >= RESOLVE_CACHE_MAX) {
+                RESOLVE_CACHE.clear();
+            }
+            RESOLVE_CACHE.put(csObj, resolved);
+            return resolved;
         }
 
         return DeviceRGB.INSTANCE;
@@ -90,9 +151,9 @@ public abstract class ColorSpaceBase {
             default:
                 // Look up in resources /ColorSpace dictionary
                 if (resources != null) {
-                    COSDictionary csDict = resources.getColorSpaces();
+                    PdfDictionary csDict = resources.getColorSpaces();
                     if (csDict != null) {
-                        COSBase resolved = csDict.get(name);
+                        PdfBase resolved = csDict.get(name);
                         if (resolved != null) {
                             resolved = resolveRef(resolved);
                             return resolve(resolved, null, parser);
@@ -104,21 +165,21 @@ public abstract class ColorSpaceBase {
         }
     }
 
-    private static ColorSpaceBase resolveFromArray(COSArray arr, Resources resources,
+    private static ColorSpaceBase resolveFromArray(PdfArray arr, Resources resources,
                                                     PDFParser parser) throws IOException {
         if (arr.size() == 0) return DeviceRGB.INSTANCE;
 
-        COSBase firstElem = arr.get(0);
-        if (!(firstElem instanceof COSName)) return DeviceRGB.INSTANCE;
+        PdfBase firstElem = arr.get(0);
+        if (!(firstElem instanceof PdfName)) return DeviceRGB.INSTANCE;
 
-        String csType = ((COSName) firstElem).getName();
+        String csType = ((PdfName) firstElem).getName();
 
         switch (csType) {
             case "ICCBased":
                 if (arr.size() >= 2) {
-                    COSBase streamObj = resolveRef(arr.get(1));
-                    if (streamObj instanceof COSStream) {
-                        return new ICCBasedColorSpace((COSStream) streamObj, parser);
+                    PdfBase streamObj = resolveRef(arr.get(1));
+                    if (streamObj instanceof PdfStream) {
+                        return new ICCBasedColorSpace((PdfStream) streamObj, parser);
                     }
                 }
                 return DeviceRGB.INSTANCE;
@@ -134,27 +195,27 @@ public abstract class ColorSpaceBase {
 
             case "CalRGB":
                 if (arr.size() >= 2) {
-                    COSBase params = resolveRef(arr.get(1));
-                    if (params instanceof COSDictionary) {
-                        return new CalRGBColorSpace((COSDictionary) params);
+                    PdfBase params = resolveRef(arr.get(1));
+                    if (params instanceof PdfDictionary) {
+                        return new CalRGBColorSpace((PdfDictionary) params);
                     }
                 }
                 return DeviceRGB.INSTANCE;
 
             case "CalGray":
                 if (arr.size() >= 2) {
-                    COSBase params = resolveRef(arr.get(1));
-                    if (params instanceof COSDictionary) {
-                        return new CalGrayColorSpace((COSDictionary) params);
+                    PdfBase params = resolveRef(arr.get(1));
+                    if (params instanceof PdfDictionary) {
+                        return new CalGrayColorSpace((PdfDictionary) params);
                     }
                 }
                 return DeviceGray.INSTANCE;
 
             case "Lab":
                 if (arr.size() >= 2) {
-                    COSBase params = resolveRef(arr.get(1));
-                    if (params instanceof COSDictionary) {
-                        return new LabColorSpace((COSDictionary) params);
+                    PdfBase params = resolveRef(arr.get(1));
+                    if (params instanceof PdfDictionary) {
+                        return new LabColorSpace((PdfDictionary) params);
                     }
                 }
                 return DeviceRGB.INSTANCE;
@@ -171,9 +232,9 @@ public abstract class ColorSpaceBase {
     /**
      * Resolves an indirect object reference.
      */
-    protected static COSBase resolveRef(COSBase obj) throws IOException {
-        if (obj instanceof COSObjectReference) {
-            return ((COSObjectReference) obj).dereference();
+    protected static PdfBase resolveRef(PdfBase obj) throws IOException {
+        if (obj instanceof PdfObjectReference) {
+            return ((PdfObjectReference) obj).dereference();
         }
         return obj;
     }
@@ -228,7 +289,7 @@ public abstract class ColorSpaceBase {
      * @param defaultVal the default triple
      * @return the extracted triple
      */
-    protected static double[] getTriple(COSDictionary dict, String key, double[] defaultVal) {
+    protected static double[] getTriple(PdfDictionary dict, String key, double[] defaultVal) {
         double[] arr = getNumberArray(dict, key);
         return (arr != null && arr.length >= 3) ? arr : defaultVal;
     }
@@ -240,10 +301,10 @@ public abstract class ColorSpaceBase {
      * @param key  the key
      * @return array of doubles, or {@code null} if not present
      */
-    protected static double[] getNumberArray(COSDictionary dict, String key) {
-        COSBase val = dict.get(key);
-        if (val instanceof COSArray) {
-            COSArray arr = (COSArray) val;
+    protected static double[] getNumberArray(PdfDictionary dict, String key) {
+        PdfBase val = dict.get(key);
+        if (val instanceof PdfArray) {
+            PdfArray arr = (PdfArray) val;
             double[] result = new double[arr.size()];
             for (int i = 0; i < arr.size(); i++) {
                 result[i] = arr.getFloat(i, 0f);

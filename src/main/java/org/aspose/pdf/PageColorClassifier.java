@@ -1,11 +1,11 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 import org.aspose.pdf.operators.Do;
 import org.aspose.pdf.operators.SetCMYKColor;
 import org.aspose.pdf.operators.SetCMYKColorStroke;
@@ -212,22 +212,22 @@ final class PageColorClassifier {
             if (res == null) {
                 return Signal.NONE;
             }
-            COSDictionary xobjects = res.getXObjects();
+            PdfDictionary xobjects = res.getXObjects();
             if (xobjects == null) {
                 return Signal.NONE;
             }
-            COSBase entry = xobjects.get(xobjectName);
+            PdfBase entry = xobjects.get(xobjectName);
             entry = resolveRef(entry);
-            if (!(entry instanceof COSStream)) {
+            if (!(entry instanceof PdfStream)) {
                 return Signal.NONE;
             }
-            COSStream xobject = (COSStream) entry;
-            COSBase subtype = xobject.get(COSName.of("Subtype"));
-            if (subtype instanceof COSName && "Image".equals(((COSName) subtype).getName())) {
-                COSBase cs = resolveRef(xobject.get(COSName.of("ColorSpace")));
+            PdfStream xobject = (PdfStream) entry;
+            PdfBase subtype = xobject.get(PdfName.of("Subtype"));
+            if (subtype instanceof PdfName && "Image".equals(((PdfName) subtype).getName())) {
+                PdfBase cs = resolveRef(xobject.get(PdfName.of("ColorSpace")));
                 return classifyImageColorSpace(cs, xobject);
             }
-            if (subtype instanceof COSName && "Form".equals(((COSName) subtype).getName())) {
+            if (subtype instanceof PdfName && "Form".equals(((PdfName) subtype).getName())) {
                 // Recurse into the form XObject's content stream and aggregate
                 // the worst-case colour seen inside. A form's own /Resources
                 // shadows the page's, so look up XObject references against
@@ -241,7 +241,7 @@ final class PageColorClassifier {
         }
     }
 
-    private static Signal inspectFormXObject(COSStream form, Page hostPage) {
+    private static Signal inspectFormXObject(PdfStream form, Page hostPage) {
         try {
             OperatorCollection ops = org.aspose.pdf.engine.parser.ContentStreamParser
                     .parseToCollection(form);
@@ -264,34 +264,34 @@ final class PageColorClassifier {
         }
     }
 
-    private static Signal classifyImageColorSpace(COSBase cs, COSStream xobject) {
+    private static Signal classifyImageColorSpace(PdfBase cs, PdfStream xobject) {
         // Boolean ImageMask images are always one-bit stencils → BW.
-        COSBase imageMask = xobject.get(COSName.of("ImageMask"));
-        if (imageMask instanceof org.aspose.pdf.engine.cos.COSBoolean
-                && ((org.aspose.pdf.engine.cos.COSBoolean) imageMask).getValue()) {
+        PdfBase imageMask = xobject.get(PdfName.of("ImageMask"));
+        if (imageMask instanceof org.aspose.pdf.engine.pdfobjects.PdfBoolean
+                && ((org.aspose.pdf.engine.pdfobjects.PdfBoolean) imageMask).getValue()) {
             return Signal.GRAY_BW;
         }
-        if (cs instanceof COSName) {
-            String name = ((COSName) cs).getName();
+        if (cs instanceof PdfName) {
+            String name = ((PdfName) cs).getName();
             return colorSpaceNameSignal(name, xobject);
         }
-        if (cs instanceof COSArray) {
-            COSArray arr = (COSArray) cs;
-            if (arr.size() > 0 && arr.get(0) instanceof COSName) {
-                String family = ((COSName) arr.get(0)).getName();
+        if (cs instanceof PdfArray) {
+            PdfArray arr = (PdfArray) cs;
+            if (arr.size() > 0 && arr.get(0) instanceof PdfName) {
+                String family = ((PdfName) arr.get(0)).getName();
                 // Indexed / CalRGB / ICCBased / Lab → conservative classification.
                 if ("Indexed".equals(family) && arr.size() >= 2) {
-                    COSBase base = resolveRef(arr.get(1));
-                    if (base instanceof COSName) {
-                        return colorSpaceNameSignal(((COSName) base).getName(), xobject);
+                    PdfBase base = resolveRef(arr.get(1));
+                    if (base instanceof PdfName) {
+                        return colorSpaceNameSignal(((PdfName) base).getName(), xobject);
                     }
                 }
                 if ("ICCBased".equals(family) && arr.size() >= 2) {
-                    COSBase iccStream = resolveRef(arr.get(1));
-                    if (iccStream instanceof COSStream) {
-                        COSBase nComp = ((COSStream) iccStream).get(COSName.of("N"));
-                        if (nComp instanceof org.aspose.pdf.engine.cos.COSInteger) {
-                            int n = ((org.aspose.pdf.engine.cos.COSInteger) nComp).intValue();
+                    PdfBase iccStream = resolveRef(arr.get(1));
+                    if (iccStream instanceof PdfStream) {
+                        PdfBase nComp = ((PdfStream) iccStream).get(PdfName.of("N"));
+                        if (nComp instanceof org.aspose.pdf.engine.pdfobjects.PdfInteger) {
+                            int n = ((org.aspose.pdf.engine.pdfobjects.PdfInteger) nComp).intValue();
                             if (n == 1) return imageMonoSignal(xobject);
                             if (n >= 3) return Signal.CHROMATIC;
                         }
@@ -303,7 +303,7 @@ final class PageColorClassifier {
         return Signal.NONE;
     }
 
-    private static Signal colorSpaceNameSignal(String name, COSStream xobject) {
+    private static Signal colorSpaceNameSignal(String name, PdfStream xobject) {
         if (name == null) {
             return Signal.NONE;
         }
@@ -329,10 +329,10 @@ final class PageColorClassifier {
      * midtone is present. Falls back to {@code GRAY_BW} when the image is
      * declared as 1-bit-per-component, since those can't carry midtones.
      */
-    private static Signal imageMonoSignal(COSStream xobject) {
-        COSBase bpcRaw = xobject.get(COSName.of("BitsPerComponent"));
-        int bits = (bpcRaw instanceof org.aspose.pdf.engine.cos.COSInteger)
-                ? ((org.aspose.pdf.engine.cos.COSInteger) bpcRaw).intValue()
+    private static Signal imageMonoSignal(PdfStream xobject) {
+        PdfBase bpcRaw = xobject.get(PdfName.of("BitsPerComponent"));
+        int bits = (bpcRaw instanceof org.aspose.pdf.engine.pdfobjects.PdfInteger)
+                ? ((org.aspose.pdf.engine.pdfobjects.PdfInteger) bpcRaw).intValue()
                 : 8;
         if (bits <= 1) {
             return Signal.GRAY_BW;
@@ -369,10 +369,10 @@ final class PageColorClassifier {
         }
     }
 
-    private static COSBase resolveRef(COSBase value) {
-        if (value instanceof COSObjectReference) {
+    private static PdfBase resolveRef(PdfBase value) {
+        if (value instanceof PdfObjectReference) {
             try {
-                return ((COSObjectReference) value).dereference();
+                return ((PdfObjectReference) value).dereference();
             } catch (IOException e) {
                 return null;
             }

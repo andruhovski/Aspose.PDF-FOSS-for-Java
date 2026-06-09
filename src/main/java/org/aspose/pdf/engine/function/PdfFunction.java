@@ -1,10 +1,10 @@
 package org.aspose.pdf.engine.function;
 
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 import org.aspose.pdf.engine.parser.PDFParser;
 
 import java.io.IOException;
@@ -63,17 +63,17 @@ public abstract class PdfFunction {
     }
 
     /**
-     * Factory: parses a function from a COS object (dictionary or stream).
+     * Factory: parses a function from a PDF object (dictionary or stream).
      *
      * @param obj    the function object
      * @param parser the PDF parser for resolving references
      * @return the parsed function, or {@code null} if unparseable
      * @throws IOException if parsing fails
      */
-    public static PdfFunction parse(COSBase obj, PDFParser parser) throws IOException {
+    public static PdfFunction parse(PdfBase obj, PDFParser parser) throws IOException {
         obj = resolveRef(obj, parser);
-        if (!(obj instanceof COSDictionary)) return null;
-        COSDictionary dict = (COSDictionary) obj;
+        if (!(obj instanceof PdfDictionary)) return null;
+        PdfDictionary dict = (PdfDictionary) obj;
 
         int type = dict.getInt("FunctionType", -1);
         double[] domain = getNumberArray(dict, "Domain");
@@ -97,16 +97,16 @@ public abstract class PdfFunction {
      * @param key  the key
      * @return the array of doubles, or {@code null} if not present
      */
-    protected static double[] getNumberArray(COSDictionary dict, String key) {
-        COSBase val = dict.get(key);
-        if (val instanceof COSArray) {
-            return ((COSArray) val).toFloatArray() != null
-                    ? toDoubleArray((COSArray) val) : null;
+    protected static double[] getNumberArray(PdfDictionary dict, String key) {
+        PdfBase val = dict.get(key);
+        if (val instanceof PdfArray) {
+            return ((PdfArray) val).toFloatArray() != null
+                    ? toDoubleArray((PdfArray) val) : null;
         }
         return null;
     }
 
-    private static double[] toDoubleArray(COSArray arr) {
+    private static double[] toDoubleArray(PdfArray arr) {
         double[] result = new double[arr.size()];
         for (int i = 0; i < arr.size(); i++) {
             result[i] = arr.getFloat(i, 0f);
@@ -123,9 +123,9 @@ public abstract class PdfFunction {
         return arr;
     }
 
-    private static COSBase resolveRef(COSBase obj, PDFParser parser) throws IOException {
-        if (obj instanceof COSObjectReference) {
-            return ((COSObjectReference) obj).dereference();
+    private static PdfBase resolveRef(PdfBase obj, PDFParser parser) throws IOException {
+        if (obj instanceof PdfObjectReference) {
+            return ((PdfObjectReference) obj).dereference();
         }
         return obj;
     }

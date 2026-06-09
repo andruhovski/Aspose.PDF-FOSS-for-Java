@@ -1,7 +1,7 @@
 package org.aspose.pdf.operators;
 
 import org.aspose.pdf.Operator;
-import org.aspose.pdf.engine.cos.COSBase;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
 
 import java.util.Collections;
 import java.util.List;
@@ -35,7 +35,7 @@ public class SetLineCap extends Operator {
      *
      * @param operands the operands from the content stream parser
      */
-    public SetLineCap(List<COSBase> operands) {
+    public SetLineCap(List<PdfBase> operands) {
         super("J", operands);
         this.lineCap = (operands != null && operands.size() > 0) ? (int) getNumber(operands.get(0)) : 0;
     }

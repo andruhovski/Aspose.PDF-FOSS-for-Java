@@ -1,7 +1,7 @@
 package org.aspose.pdf.operators;
 
 import org.aspose.pdf.Operator;
-import org.aspose.pdf.engine.cos.COSBase;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
 
 import java.util.List;
 
@@ -37,7 +37,7 @@ public class LineTo extends Operator {
      *
      * @param operands the operands from the content stream parser
      */
-    public LineTo(List<COSBase> operands) {
+    public LineTo(List<PdfBase> operands) {
         super("l", operands);
         this.x = (operands != null && operands.size() > 0) ? getNumber(operands.get(0)) : 0;
         this.y = (operands != null && operands.size() > 1) ? getNumber(operands.get(1)) : 0;

@@ -1,7 +1,7 @@
 package org.aspose.pdf.tests;
 
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 import org.aspose.pdf.engine.font.FontRepository;
 import org.aspose.pdf.engine.font.PdfFont;
 import org.aspose.pdf.engine.font.Type1Font;
@@ -18,13 +18,13 @@ public class FontRepositoryTest {
 
     @Test
     public void testGetStandardFont() throws IOException {
-        COSDictionary fontDict = new COSDictionary();
-        fontDict.set(COSName.TYPE, COSName.of("Font"));
-        fontDict.set(COSName.of("Subtype"), COSName.of("Type1"));
-        fontDict.set(COSName.of("BaseFont"), COSName.of("Helvetica"));
+        PdfDictionary fontDict = new PdfDictionary();
+        fontDict.set(PdfName.TYPE, PdfName.of("Font"));
+        fontDict.set(PdfName.of("Subtype"), PdfName.of("Type1"));
+        fontDict.set(PdfName.of("BaseFont"), PdfName.of("Helvetica"));
 
-        COSDictionary fontsDict = new COSDictionary();
-        fontsDict.set(COSName.of("F1"), fontDict);
+        PdfDictionary fontsDict = new PdfDictionary();
+        fontsDict.set(PdfName.of("F1"), fontDict);
 
         FontRepository repo = new FontRepository();
         PdfFont font = repo.getFont(fontsDict, "F1", null);
@@ -35,12 +35,12 @@ public class FontRepositoryTest {
 
     @Test
     public void testCaching() throws IOException {
-        COSDictionary fontDict = new COSDictionary();
-        fontDict.set(COSName.of("Subtype"), COSName.of("Type1"));
-        fontDict.set(COSName.of("BaseFont"), COSName.of("Courier"));
+        PdfDictionary fontDict = new PdfDictionary();
+        fontDict.set(PdfName.of("Subtype"), PdfName.of("Type1"));
+        fontDict.set(PdfName.of("BaseFont"), PdfName.of("Courier"));
 
-        COSDictionary fontsDict = new COSDictionary();
-        fontsDict.set(COSName.of("F1"), fontDict);
+        PdfDictionary fontsDict = new PdfDictionary();
+        fontsDict.set(PdfName.of("F1"), fontDict);
 
         FontRepository repo = new FontRepository();
         PdfFont font1 = repo.getFont(fontsDict, "F1", null);
@@ -57,25 +57,25 @@ public class FontRepositoryTest {
     @Test
     public void testNullFontName() throws IOException {
         FontRepository repo = new FontRepository();
-        assertNull(repo.getFont(new COSDictionary(), null, null));
+        assertNull(repo.getFont(new PdfDictionary(), null, null));
     }
 
     @Test
     public void testMissingFont() throws IOException {
         FontRepository repo = new FontRepository();
-        COSDictionary fontsDict = new COSDictionary();
+        PdfDictionary fontsDict = new PdfDictionary();
         PdfFont font = repo.getFont(fontsDict, "F1", null);
         assertNull(font);
     }
 
     @Test
     public void testClear() throws IOException {
-        COSDictionary fontDict = new COSDictionary();
-        fontDict.set(COSName.of("Subtype"), COSName.of("Type1"));
-        fontDict.set(COSName.of("BaseFont"), COSName.of("Helvetica"));
+        PdfDictionary fontDict = new PdfDictionary();
+        fontDict.set(PdfName.of("Subtype"), PdfName.of("Type1"));
+        fontDict.set(PdfName.of("BaseFont"), PdfName.of("Helvetica"));
 
-        COSDictionary fontsDict = new COSDictionary();
-        fontsDict.set(COSName.of("F1"), fontDict);
+        PdfDictionary fontsDict = new PdfDictionary();
+        fontsDict.set(PdfName.of("F1"), fontDict);
 
         FontRepository repo = new FontRepository();
         PdfFont font1 = repo.getFont(fontsDict, "F1", null);

@@ -83,13 +83,24 @@ public class GraphicsStateTest {
     @Test
     public void fillColorCMYK() {
         GraphicsState gs = new GraphicsState();
-        // CMYK→RGB uses the naive subtractive formula (no ICC profile), so
-        // pure cyan (1,0,0,0) maps to algebraically pure RGB (0, 255, 255).
+        // Rendering uses the press-characterized display conversion
+        // (CmykDisplay, CGATS LUT): pure cyan ink shows as the print cyan
+        // ~rgb(0,174,239), NOT the algebraic (0,255,255). The algebraic
+        // mapping remains the public-API contract on DeviceCMYK.toRGBInt.
         gs.setFillColorCMYK(1.0, 0.0, 0.0, 0.0);
         java.awt.Color c = gs.getFillColor();
-        assertEquals(0, c.getRed(), "R should be 0 for pure cyan");
-        assertEquals(255, c.getGreen(), "G should be 255 for pure cyan");
-        assertEquals(255, c.getBlue(), "B should be 255 for pure cyan");
+        assertTrue(c.getRed() <= 16, "print cyan has near-zero R, got " + c.getRed());
+        assertTrue(Math.abs(c.getGreen() - 174) <= 10,
+                "print cyan G ~174, got " + c.getGreen());
+        assertTrue(Math.abs(c.getBlue() - 239) <= 10,
+                "print cyan B ~239, got " + c.getBlue());
+        // Print-neutral gray (C > M = Y) must come out NEUTRAL - the old
+        // algebraic formula rendered it greenish (corpus 10734 background).
+        gs.setFillColorCMYK(0.20, 0.14, 0.14, 0.04);
+        java.awt.Color g = gs.getFillColor();
+        assertTrue(Math.abs(g.getRed() - g.getGreen()) <= 8
+                        && Math.abs(g.getGreen() - g.getBlue()) <= 8,
+                "print gray must be neutral, got " + g);
     }
 
     @Test

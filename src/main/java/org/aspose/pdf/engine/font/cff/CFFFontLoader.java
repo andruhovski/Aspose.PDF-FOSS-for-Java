@@ -3,7 +3,7 @@ package org.aspose.pdf.engine.font.cff;
 import org.aspose.pdf.engine.font.FontDescriptor;
 import org.aspose.pdf.engine.font.FontEncoding;
 import org.aspose.pdf.engine.font.PdfFont;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 
 import java.awt.Font;
 import java.awt.FontFormatException;
@@ -65,7 +65,7 @@ public final class CFFFontLoader {
         // Prefer FontFile2 (full TTF/OpenType program) when present — Java's
         // Font.createFont accepts it as-is, no synthetic wrapping needed.
         // PDF spec §9.9 says /FontFile2 carries the entire sfnt-housed font.
-        COSStream fontFile2 = fd.getFontFile2();
+        PdfStream fontFile2 = fd.getFontFile2();
         if (fontFile2 != null) {
             try {
                 byte[] ttf = fontFile2.getDecodedData();
@@ -77,7 +77,7 @@ public final class CFFFontLoader {
             }
         }
 
-        COSStream fontFile3 = fd.getFontFile3();
+        PdfStream fontFile3 = fd.getFontFile3();
         if (fontFile3 == null) return null;
 
         byte[] cffBytes;

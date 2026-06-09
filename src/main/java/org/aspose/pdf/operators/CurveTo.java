@@ -1,7 +1,7 @@
 package org.aspose.pdf.operators;
 
 import org.aspose.pdf.Operator;
-import org.aspose.pdf.engine.cos.COSBase;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
 
 import java.util.Arrays;
 import java.util.List;
@@ -51,7 +51,7 @@ public class CurveTo extends Operator {
      *
      * @param operands the operands from the content stream parser
      */
-    public CurveTo(List<COSBase> operands) {
+    public CurveTo(List<PdfBase> operands) {
         super("c", operands);
         this.x1 = (operands != null && operands.size() > 0) ? getNumber(operands.get(0)) : 0;
         this.y1 = (operands != null && operands.size() > 1) ? getNumber(operands.get(1)) : 0;

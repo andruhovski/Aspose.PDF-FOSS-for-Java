@@ -7,15 +7,15 @@ import org.aspose.pdf.OperatorCollection;
 import org.aspose.pdf.Page;
 import org.aspose.pdf.Rectangle;
 import org.aspose.pdf.Resources;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSFloat;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSStream;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfFloat;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 import org.aspose.pdf.engine.font.FontRepository;
 import org.aspose.pdf.engine.font.PdfFont;
 import org.aspose.pdf.engine.parser.PDFParser;
@@ -91,14 +91,14 @@ public class TextExtractor {
     private int firstTextOpIndex = -1;
     private int lastTextOpIndex = -1;
     private OperatorCollection currentSourceOperators;
-    private COSStream currentSourceStream;
+    private PdfStream currentSourceStream;
 
     // Current page resources (for resolving XObject forms in Do operator)
     private Resources currentResources;
 
     // Tracks Form XObject streams currently being processed to prevent infinite recursion
     // when a Form XObject references itself (directly or through a chain).
-    private final Set<COSStream> activeFormXObjects = Collections.newSetFromMap(new IdentityHashMap<>());
+    private final Set<PdfStream> activeFormXObjects = Collections.newSetFromMap(new IdentityHashMap<>());
 
     /**
      * Creates a TextExtractor.
@@ -124,7 +124,7 @@ public class TextExtractor {
         Resources resources = page.getResources();
         this.currentResources = resources;
         this.currentPageRect = page.getRect();
-        COSDictionary fontsDict = resources != null ? resources.getFonts() : null;
+        PdfDictionary fontsDict = resources != null ? resources.getFonts() : null;
 
         OperatorCollection ops = page.getContents();
         currentSourceOperators = ops;
@@ -151,7 +151,7 @@ public class TextExtractor {
         return sb.toString();
     }
 
-    private void processOperators(OperatorCollection ops, COSDictionary fontsDict) throws IOException {
+    private void processOperators(OperatorCollection ops, PdfDictionary fontsDict) throws IOException {
         for (int i = 0; i < ops.size(); i++) {
             Operator op = ops.getAt(i);
             currentOperatorIndex = i;
@@ -163,9 +163,9 @@ public class TextExtractor {
         }
     }
 
-    private void processOperator(Operator op, COSDictionary fontsDict) throws IOException {
+    private void processOperator(Operator op, PdfDictionary fontsDict) throws IOException {
         String name = op.getName();
-        List<COSBase> operands = op.getOperands();
+        List<PdfBase> operands = op.getOperands();
 
         switch (name) {
             // -- Graphics state --
@@ -227,7 +227,7 @@ public class TextExtractor {
                         flushText();
                         currentText = new StringBuilder();
                     }
-                    String fontResourceName = ((COSName) operands.get(0)).getName();
+                    String fontResourceName = ((PdfName) operands.get(0)).getName();
                     fontSize = getNumber(operands.get(1));
                     // Default to the resource alias; replace with the dictionary's
                     // /BaseFont entry when it is available so callers see the real
@@ -235,16 +235,16 @@ public class TextExtractor {
                     currentFontName = fontResourceName;
                     if (fontsDict != null) {
                         currentFont = fontRepo.getFont(fontsDict, fontResourceName, parser);
-                        org.aspose.pdf.engine.cos.COSBase entry = fontsDict.get(fontResourceName);
-                        if (entry instanceof org.aspose.pdf.engine.cos.COSObjectReference) {
+                        org.aspose.pdf.engine.pdfobjects.PdfBase entry = fontsDict.get(fontResourceName);
+                        if (entry instanceof org.aspose.pdf.engine.pdfobjects.PdfObjectReference) {
                             try {
-                                entry = ((org.aspose.pdf.engine.cos.COSObjectReference) entry).dereference();
+                                entry = ((org.aspose.pdf.engine.pdfobjects.PdfObjectReference) entry).dereference();
                             } catch (java.io.IOException e) {
                                 entry = null;
                             }
                         }
-                        if (entry instanceof org.aspose.pdf.engine.cos.COSDictionary) {
-                            String baseFont = ((org.aspose.pdf.engine.cos.COSDictionary) entry).getNameAsString("BaseFont");
+                        if (entry instanceof org.aspose.pdf.engine.pdfobjects.PdfDictionary) {
+                            String baseFont = ((org.aspose.pdf.engine.pdfobjects.PdfDictionary) entry).getNameAsString("BaseFont");
                             if (baseFont != null && !baseFont.isEmpty()) {
                                 currentFontName = stripSubsetPrefix(baseFont);
                             }
@@ -340,32 +340,32 @@ public class TextExtractor {
 
             // -- Text showing --
             case "Tj":
-                if (operands.size() >= 1 && operands.get(0) instanceof COSString) {
+                if (operands.size() >= 1 && operands.get(0) instanceof PdfString) {
                     if (currentText != null && currentText.length() > 0) {
                         flushText();
                         currentText = new StringBuilder();
                     }
-                    showString((COSString) operands.get(0));
+                    showString((PdfString) operands.get(0));
                 }
                 break;
             case "TJ":
-                if (operands.size() >= 1 && operands.get(0) instanceof COSArray) {
+                if (operands.size() >= 1 && operands.get(0) instanceof PdfArray) {
                     if (currentText != null && currentText.length() > 0) {
                         flushText();
                         currentText = new StringBuilder();
                     }
-                    showStringArray((COSArray) operands.get(0));
+                    showStringArray((PdfArray) operands.get(0));
                 }
                 break;
             case "'":
                 // Move to next line and show string
                 doTStar();
-                if (operands.size() >= 1 && operands.get(0) instanceof COSString) {
+                if (operands.size() >= 1 && operands.get(0) instanceof PdfString) {
                     if (currentText != null && currentText.length() > 0) {
                         flushText();
                         currentText = new StringBuilder();
                     }
-                    showString((COSString) operands.get(0));
+                    showString((PdfString) operands.get(0));
                 }
                 break;
             case "\"":
@@ -374,20 +374,20 @@ public class TextExtractor {
                     wordSpacing = getNumber(operands.get(0));
                     charSpacing = getNumber(operands.get(1));
                     doTStar();
-                    if (operands.get(2) instanceof COSString) {
+                    if (operands.get(2) instanceof PdfString) {
                         if (currentText != null && currentText.length() > 0) {
                             flushText();
                             currentText = new StringBuilder();
                         }
-                        showString((COSString) operands.get(2));
+                        showString((PdfString) operands.get(2));
                     }
                 }
                 break;
 
             // -- XObject (Form) invocation --
             case "Do":
-                if (operands.size() >= 1 && operands.get(0) instanceof COSName) {
-                    String xobjName = ((COSName) operands.get(0)).getName();
+                if (operands.size() >= 1 && operands.get(0) instanceof PdfName) {
+                    String xobjName = ((PdfName) operands.get(0)).getName();
                     processFormXObject(xobjName, fontsDict);
                 }
                 break;
@@ -402,24 +402,24 @@ public class TextExtractor {
      * Processes a Form XObject invoked by the Do operator.
      * Recursively extracts text from the form's content stream.
      */
-    private void processFormXObject(String xobjName, COSDictionary pageFontsDict) {
+    private void processFormXObject(String xobjName, PdfDictionary pageFontsDict) {
         if (currentResources == null) return;
 
         try {
-            COSDictionary resDict = currentResources.getCOSDictionary();
-            COSBase xobjDictBase = resDict.get("XObject");
-            if (xobjDictBase instanceof COSObjectReference) {
-                xobjDictBase = ((COSObjectReference) xobjDictBase).dereference();
+            PdfDictionary resDict = currentResources.getPdfDictionary();
+            PdfBase xobjDictBase = resDict.get("XObject");
+            if (xobjDictBase instanceof PdfObjectReference) {
+                xobjDictBase = ((PdfObjectReference) xobjDictBase).dereference();
             }
-            if (!(xobjDictBase instanceof COSDictionary)) return;
+            if (!(xobjDictBase instanceof PdfDictionary)) return;
 
-            COSBase formBase = ((COSDictionary) xobjDictBase).get(xobjName);
-            if (formBase instanceof COSObjectReference) {
-                formBase = ((COSObjectReference) formBase).dereference();
+            PdfBase formBase = ((PdfDictionary) xobjDictBase).get(xobjName);
+            if (formBase instanceof PdfObjectReference) {
+                formBase = ((PdfObjectReference) formBase).dereference();
             }
-            if (!(formBase instanceof COSStream)) return;
+            if (!(formBase instanceof PdfStream)) return;
 
-            COSStream formStream = (COSStream) formBase;
+            PdfStream formStream = (PdfStream) formBase;
             String subtype = formStream.getNameAsString("Subtype");
             if (!"Form".equals(subtype)) return;
 
@@ -432,15 +432,15 @@ public class TextExtractor {
 
             try {
                 // Get form's own Resources (or fall back to page resources)
-                COSBase formResBase = formStream.get("Resources");
-                if (formResBase instanceof COSObjectReference) {
-                    formResBase = ((COSObjectReference) formResBase).dereference();
+                PdfBase formResBase = formStream.get("Resources");
+                if (formResBase instanceof PdfObjectReference) {
+                    formResBase = ((PdfObjectReference) formResBase).dereference();
                 }
-                COSDictionary formFontsDict = pageFontsDict; // default to page fonts
+                PdfDictionary formFontsDict = pageFontsDict; // default to page fonts
                 Resources formResources = currentResources;
-                if (formResBase instanceof COSDictionary) {
-                    formResources = new Resources((COSDictionary) formResBase);
-                    COSDictionary ff = formResources.getFonts();
+                if (formResBase instanceof PdfDictionary) {
+                    formResources = new Resources((PdfDictionary) formResBase);
+                    PdfDictionary ff = formResources.getFonts();
                     if (ff != null) formFontsDict = ff;
                 }
 
@@ -453,7 +453,7 @@ public class TextExtractor {
                 // Save and set resources context, then process
                 Resources savedResources = this.currentResources;
                 OperatorCollection savedSourceOperators = this.currentSourceOperators;
-                COSStream savedSourceStream = this.currentSourceStream;
+                PdfStream savedSourceStream = this.currentSourceStream;
                 this.currentResources = formResources;
                 this.currentSourceOperators = formOps;
                 this.currentSourceStream = formStream;
@@ -470,7 +470,7 @@ public class TextExtractor {
         }
     }
 
-    private void showString(COSString str) throws IOException {
+    private void showString(PdfString str) throws IOException {
         byte[] bytes = str.getBytes();
         String decoded;
         if (currentFont != null) {
@@ -510,18 +510,18 @@ public class TextExtractor {
         fragmentEndCtm = ctm != null ? ctm.clone() : null;
     }
 
-    private void showStringArray(COSArray arr) throws IOException {
+    private void showStringArray(PdfArray arr) throws IOException {
         boolean splitBeforeNextString = false;
         for (int i = 0; i < arr.size(); i++) {
-            COSBase elem = arr.get(i);
-            if (elem instanceof COSString) {
+            PdfBase elem = arr.get(i);
+            if (elem instanceof PdfString) {
                 if (splitBeforeNextString && currentText != null && currentText.length() > 0) {
                     flushText();
                     currentText = new StringBuilder();
                 }
                 splitBeforeNextString = false;
-                showString((COSString) elem);
-            } else if (elem instanceof COSInteger || elem instanceof COSFloat) {
+                showString((PdfString) elem);
+            } else if (elem instanceof PdfInteger || elem instanceof PdfFloat) {
                 // Numeric adjustment: displacement in thousandths of text space unit
                 double adjustment = getNumber(elem);
                 // Negative = move right (advance), positive = move left (kerning)
@@ -831,9 +831,9 @@ public class TextExtractor {
         };
     }
 
-    private static double getNumber(COSBase val) {
-        if (val instanceof COSInteger) return ((COSInteger) val).intValue();
-        if (val instanceof COSFloat) return ((COSFloat) val).doubleValue();
+    private static double getNumber(PdfBase val) {
+        if (val instanceof PdfInteger) return ((PdfInteger) val).intValue();
+        if (val instanceof PdfFloat) return ((PdfFloat) val).doubleValue();
         return 0;
     }
 

@@ -1,8 +1,8 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 import org.aspose.pdf.engine.parser.ContentStreamParser;
 import org.junit.jupiter.api.Test;
 
@@ -27,49 +27,49 @@ public class OperatorWriteToTest {
 
     @Test
     void writeTo_asciiTjOperand_roundTrips() throws Exception {
-        COSString text = new COSString("Hello".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+        PdfString text = new PdfString("Hello".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
         Operator op = new Operator("Tj", Collections.singletonList(text));
 
         OperatorCollection rt = ContentStreamParser.parseToCollection(serialize(op));
         assertEquals(1, rt.size());
         assertEquals("Tj", rt.getAt(0).getName());
-        COSString restored = (COSString) rt.getAt(0).getOperands().get(0);
+        PdfString restored = (PdfString) rt.getAt(0).getOperands().get(0);
         assertArrayEquals("Hello".getBytes(), restored.getBytes());
     }
 
     @Test
     void writeTo_nonAsciiCidOperand_preservesBytes() throws Exception {
         byte[] cidBytes = {(byte) 0x80, (byte) 0xA1, (byte) 0xFF, 0x41, 0x42};
-        COSString text = new COSString(cidBytes);
+        PdfString text = new PdfString(cidBytes);
         Operator op = new Operator("Tj", Collections.singletonList(text));
 
         OperatorCollection rt = ContentStreamParser.parseToCollection(serialize(op));
         assertEquals(1, rt.size());
-        COSString restored = (COSString) rt.getAt(0).getOperands().get(0);
+        PdfString restored = (PdfString) rt.getAt(0).getOperands().get(0);
         assertArrayEquals(cidBytes, restored.getBytes(),
                 "Non-ASCII bytes must survive operator serialization round-trip");
     }
 
     @Test
     void writeTo_tjArray_preservesAllStringBytes() throws Exception {
-        COSArray arr = new COSArray();
-        arr.add(new COSString("hello".getBytes()));
-        arr.add(COSInteger.valueOf(-250));
-        arr.add(new COSString(new byte[]{(byte) 0xC0, (byte) 0xFE}));
+        PdfArray arr = new PdfArray();
+        arr.add(new PdfString("hello".getBytes()));
+        arr.add(PdfInteger.valueOf(-250));
+        arr.add(new PdfString(new byte[]{(byte) 0xC0, (byte) 0xFE}));
         Operator op = new Operator("TJ", Collections.singletonList(arr));
 
         OperatorCollection rt = ContentStreamParser.parseToCollection(serialize(op));
         assertEquals(1, rt.size());
         assertEquals("TJ", rt.getAt(0).getName());
-        COSArray ra = (COSArray) rt.getAt(0).getOperands().get(0);
-        assertArrayEquals("hello".getBytes(), ((COSString) ra.get(0)).getBytes());
-        assertArrayEquals(new byte[]{(byte) 0xC0, (byte) 0xFE}, ((COSString) ra.get(2)).getBytes(),
+        PdfArray ra = (PdfArray) rt.getAt(0).getOperands().get(0);
+        assertArrayEquals("hello".getBytes(), ((PdfString) ra.get(0)).getBytes());
+        assertArrayEquals(new byte[]{(byte) 0xC0, (byte) 0xFE}, ((PdfString) ra.get(2)).getBytes(),
                 "High bytes inside a TJ array must survive");
     }
 
     @Test
     void writeTo_matchesToString_forPurelyAscii() throws Exception {
-        COSString text = new COSString("plain ASCII text".getBytes());
+        PdfString text = new PdfString("plain ASCII text".getBytes());
         Operator op = new Operator("Tj", Collections.singletonList(text));
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();

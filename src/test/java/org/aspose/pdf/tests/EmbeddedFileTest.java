@@ -1,7 +1,7 @@
 package org.aspose.pdf.tests;
 
 import org.aspose.pdf.*;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -128,9 +128,9 @@ public class EmbeddedFileTest {
 
     @Test
     public void testWrapExistingDict() {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("F"), new COSString("existing.pdf".getBytes()));
-        dict.set(COSName.of("Desc"), new COSString("An existing file".getBytes()));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("F"), new PdfString("existing.pdf".getBytes()));
+        dict.set(PdfName.of("Desc"), new PdfString("An existing file".getBytes()));
         FileSpecification fs = new FileSpecification(dict);
         assertEquals("existing.pdf", fs.getName());
         assertEquals("An existing file", fs.getDescription());

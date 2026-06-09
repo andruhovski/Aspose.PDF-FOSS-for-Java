@@ -1,8 +1,8 @@
 package org.aspose.pdf.engine.layout;
 
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -12,7 +12,7 @@ import java.util.logging.Logger;
  * Builds the /Resources dictionary for a PDF page during layout.
  * <p>
  * Tracks registered fonts and image XObjects, assigning resource names
- * (e.g. "F1", "Im1") and creating the corresponding COS dictionary entries.
+ * (e.g. "F1", "Im1") and creating the corresponding PDF dictionary entries.
  * Each font is registered as a Type 1 standard font with WinAnsiEncoding
  * (ISO 32000-1:2008, Section 9.6.2.2).
  * </p>
@@ -22,14 +22,14 @@ public class ResourceBuilder {
     private static final Logger LOG = Logger.getLogger(ResourceBuilder.class.getName());
 
     /**
-     * Maps resource name (e.g. "F1") to its font COS dictionary.
+     * Maps resource name (e.g. "F1") to its font PDF dictionary.
      */
-    private final Map<String, COSDictionary> fonts = new LinkedHashMap<>();
+    private final Map<String, PdfDictionary> fonts = new LinkedHashMap<>();
 
     /**
-     * Maps resource name (e.g. "Im1") to its image COS stream.
+     * Maps resource name (e.g. "Im1") to its image PDF stream.
      */
-    private final Map<String, COSStream> images = new LinkedHashMap<>();
+    private final Map<String, PdfStream> images = new LinkedHashMap<>();
 
     /**
      * Maps base font name to resource name for deduplication.
@@ -146,11 +146,11 @@ public class ResourceBuilder {
         fontCounter++;
         String resourceName = "F" + fontCounter;
 
-        COSDictionary fontDict = new COSDictionary();
-        fontDict.set(COSName.TYPE, COSName.FONT);
-        fontDict.set(COSName.SUBTYPE, COSName.of("Type1"));
-        fontDict.set(COSName.BASE_FONT, COSName.of(effectiveFont));
-        fontDict.set(COSName.ENCODING, COSName.of("WinAnsiEncoding"));
+        PdfDictionary fontDict = new PdfDictionary();
+        fontDict.set(PdfName.TYPE, PdfName.FONT);
+        fontDict.set(PdfName.SUBTYPE, PdfName.of("Type1"));
+        fontDict.set(PdfName.BASE_FONT, PdfName.of(effectiveFont));
+        fontDict.set(PdfName.ENCODING, PdfName.of("WinAnsiEncoding"));
 
         fonts.put(resourceName, fontDict);
         fontNameToResource.put(effectiveFont, resourceName);
@@ -162,7 +162,7 @@ public class ResourceBuilder {
     /**
      * Registers an image XObject and returns its resource name.
      * <p>
-     * The caller provides the image COSStream which must already contain
+     * The caller provides the image PdfStream which must already contain
      * the appropriate /Subtype /Image, /Width, /Height, etc. entries.
      * </p>
      *
@@ -170,7 +170,7 @@ public class ResourceBuilder {
      * @param imageStream the image XObject stream
      * @return the resource name (e.g. "Im1")
      */
-    public String addImage(String key, COSStream imageStream) {
+    public String addImage(String key, PdfStream imageStream) {
         if (key == null) {
             throw new IllegalArgumentException("Image key must not be null");
         }
@@ -179,7 +179,7 @@ public class ResourceBuilder {
         }
 
         // Check if already registered
-        for (Map.Entry<String, COSStream> entry : images.entrySet()) {
+        for (Map.Entry<String, PdfStream> entry : images.entrySet()) {
             if (entry.getValue() == imageStream) {
                 return entry.getKey();
             }
@@ -194,33 +194,33 @@ public class ResourceBuilder {
     }
 
     /**
-     * Builds and returns the complete /Resources COS dictionary.
+     * Builds and returns the complete /Resources PDF dictionary.
      * <p>
      * The dictionary contains /Font and /XObject sub-dictionaries mapping
      * resource names to their objects.
      * </p>
      *
-     * @return the /Resources COSDictionary
+     * @return the /Resources PdfDictionary
      */
-    public COSDictionary buildResourcesDictionary() {
-        COSDictionary resources = new COSDictionary();
+    public PdfDictionary buildResourcesDictionary() {
+        PdfDictionary resources = new PdfDictionary();
 
         // Build /Font sub-dictionary
         if (!fonts.isEmpty()) {
-            COSDictionary fontDict = new COSDictionary();
-            for (Map.Entry<String, COSDictionary> entry : fonts.entrySet()) {
-                fontDict.set(COSName.of(entry.getKey()), entry.getValue());
+            PdfDictionary fontDict = new PdfDictionary();
+            for (Map.Entry<String, PdfDictionary> entry : fonts.entrySet()) {
+                fontDict.set(PdfName.of(entry.getKey()), entry.getValue());
             }
-            resources.set(COSName.FONT, fontDict);
+            resources.set(PdfName.FONT, fontDict);
         }
 
         // Build /XObject sub-dictionary
         if (!images.isEmpty()) {
-            COSDictionary xobjectDict = new COSDictionary();
-            for (Map.Entry<String, COSStream> entry : images.entrySet()) {
-                xobjectDict.set(COSName.of(entry.getKey()), entry.getValue());
+            PdfDictionary xobjectDict = new PdfDictionary();
+            for (Map.Entry<String, PdfStream> entry : images.entrySet()) {
+                xobjectDict.set(PdfName.of(entry.getKey()), entry.getValue());
             }
-            resources.set(COSName.XOBJECT, xobjectDict);
+            resources.set(PdfName.XOBJECT, xobjectDict);
         }
 
         LOG.fine(() -> "Built resources dictionary with " + fonts.size()

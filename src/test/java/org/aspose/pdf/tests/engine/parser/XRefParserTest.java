@@ -1,8 +1,8 @@
 package org.aspose.pdf.tests.engine.parser;
 import org.aspose.pdf.engine.parser.*;
 
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSObjectKey;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectKey;
 import org.aspose.pdf.engine.io.RandomAccessReader;
 import org.junit.jupiter.api.Test;
 
@@ -36,32 +36,32 @@ public class XRefParserTest {
         XRefParser parser = new XRefParser(reader, lexer);
         parser.parse(0);
 
-        Map<COSObjectKey, XRefEntry> entries = parser.getEntries();
+        Map<PdfObjectKey, XRefEntry> entries = parser.getEntries();
         assertEquals(4, entries.size());
 
         // Object 0 should be free
-        XRefEntry entry0 = entries.get(new COSObjectKey(0, 65535));
+        XRefEntry entry0 = entries.get(new PdfObjectKey(0, 65535));
         assertNotNull(entry0);
         assertEquals(XRefEntry.Type.FREE, entry0.getType());
 
         // Object 1 should be in-use at offset 10
-        XRefEntry entry1 = entries.get(new COSObjectKey(1, 0));
+        XRefEntry entry1 = entries.get(new PdfObjectKey(1, 0));
         assertNotNull(entry1);
         assertEquals(XRefEntry.Type.IN_USE, entry1.getType());
         assertEquals(10, entry1.getByteOffset());
 
         // Object 2 at offset 79
-        XRefEntry entry2 = entries.get(new COSObjectKey(2, 0));
+        XRefEntry entry2 = entries.get(new PdfObjectKey(2, 0));
         assertNotNull(entry2);
         assertEquals(79, entry2.getByteOffset());
 
         // Object 3 at offset 173
-        XRefEntry entry3 = entries.get(new COSObjectKey(3, 0));
+        XRefEntry entry3 = entries.get(new PdfObjectKey(3, 0));
         assertNotNull(entry3);
         assertEquals(173, entry3.getByteOffset());
 
         // Trailer should have /Size 4
-        COSDictionary trailer = parser.getTrailerDictionary();
+        PdfDictionary trailer = parser.getTrailerDictionary();
         assertNotNull(trailer);
     }
 
@@ -84,11 +84,11 @@ public class XRefParserTest {
         XRefParser parser = new XRefParser(reader, lexer);
         parser.parse(0);
 
-        Map<COSObjectKey, XRefEntry> entries = parser.getEntries();
+        Map<PdfObjectKey, XRefEntry> entries = parser.getEntries();
         assertEquals(3, entries.size());
 
         // Object 5 at offset 200
-        XRefEntry entry5 = entries.get(new COSObjectKey(5, 0));
+        XRefEntry entry5 = entries.get(new PdfObjectKey(5, 0));
         assertNotNull(entry5);
         assertEquals(XRefEntry.Type.IN_USE, entry5.getType());
         assertEquals(200, entry5.getByteOffset());
@@ -128,7 +128,7 @@ public class XRefParserTest {
         parser.parse(0);
 
         // Object 2, gen 1 should be free
-        XRefEntry entry2 = parser.getEntries().get(new COSObjectKey(2, 1));
+        XRefEntry entry2 = parser.getEntries().get(new PdfObjectKey(2, 1));
         assertNotNull(entry2);
         assertEquals(XRefEntry.Type.FREE, entry2.getType());
     }

@@ -41,7 +41,7 @@ public class PDFEncryptionDictBuildTest {
         assertArrayEquals(U, dict.getU());
         assertEquals("Standard", dict.getFilter());
         assertEquals(PDFEncryptionDict.CipherType.RC4, dict.getCipherType());
-        assertNotNull(dict.getCOSDictionary());
+        assertNotNull(dict.getPdfDictionary());
     }
 
     // ── RC4x128 (V=2, R=3, Length=128) ──
@@ -64,7 +64,7 @@ public class PDFEncryptionDictBuildTest {
         assertArrayEquals(U, dict.getU());
         assertEquals("Standard", dict.getFilter());
         assertEquals(PDFEncryptionDict.CipherType.RC4, dict.getCipherType());
-        assertNotNull(dict.getCOSDictionary());
+        assertNotNull(dict.getPdfDictionary());
     }
 
     // ── AESx128 (V=4, R=4, Length=128) ──
@@ -90,7 +90,7 @@ public class PDFEncryptionDictBuildTest {
         assertEquals("StdCF", dict.getStmF());
         assertEquals("StdCF", dict.getStrF());
         assertNotNull(dict.getCF());
-        assertNotNull(dict.getCOSDictionary());
+        assertNotNull(dict.getPdfDictionary());
     }
 
     // ── AESx256 (V=5, R=6, Length=256) ──
@@ -122,7 +122,7 @@ public class PDFEncryptionDictBuildTest {
         assertEquals("StdCF", dict.getStmF());
         assertEquals("StdCF", dict.getStrF());
         assertNotNull(dict.getCF());
-        assertNotNull(dict.getCOSDictionary());
+        assertNotNull(dict.getPdfDictionary());
     }
 
     // ── AESx256 with null OE/UE/Perms (graceful) ──

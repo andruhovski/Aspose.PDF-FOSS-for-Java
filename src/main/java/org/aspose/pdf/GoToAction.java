@@ -1,10 +1,10 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 
 import java.io.IOException;
 
@@ -22,11 +22,11 @@ public class GoToAction extends PdfAction {
      * @param page the target page
      */
     public GoToAction(Page page) {
-        this.actionDict = new COSDictionary();
-        actionDict.set(COSName.of("S"), COSName.of("GoTo"));
+        this.actionDict = new PdfDictionary();
+        actionDict.set(PdfName.of("S"), PdfName.of("GoTo"));
         ExplicitDestination dest = new XYZExplicitDestination(page, Double.NaN, Double.NaN, 0);
         this.destination = dest;
-        actionDict.set(COSName.of("D"), dest.toCOSArray());
+        actionDict.set(PdfName.of("D"), dest.toPdfArray());
     }
 
     /**
@@ -34,8 +34,8 @@ public class GoToAction extends PdfAction {
      * subsequently invoke {@link #setDestination(IAppointment)}.
      */
     public GoToAction() {
-        this.actionDict = new COSDictionary();
-        actionDict.set(COSName.of("S"), COSName.of("GoTo"));
+        this.actionDict = new PdfDictionary();
+        actionDict.set(PdfName.of("S"), PdfName.of("GoTo"));
     }
 
     /**
@@ -44,11 +44,11 @@ public class GoToAction extends PdfAction {
      * @param dest the explicit destination
      */
     public GoToAction(ExplicitDestination dest) {
-        this.actionDict = new COSDictionary();
-        actionDict.set(COSName.of("S"), COSName.of("GoTo"));
+        this.actionDict = new PdfDictionary();
+        actionDict.set(PdfName.of("S"), PdfName.of("GoTo"));
         this.destination = dest;
         if (dest != null) {
-            actionDict.set(COSName.of("D"), dest.toCOSArray());
+            actionDict.set(PdfName.of("D"), dest.toPdfArray());
         }
     }
 
@@ -58,11 +58,11 @@ public class GoToAction extends PdfAction {
      * @param dest the named destination
      */
     public GoToAction(NamedDestination dest) {
-        this.actionDict = new COSDictionary();
-        actionDict.set(COSName.of("S"), COSName.of("GoTo"));
+        this.actionDict = new PdfDictionary();
+        actionDict.set(PdfName.of("S"), PdfName.of("GoTo"));
         this.destination = dest;
         if (dest != null) {
-            actionDict.set(COSName.of("D"), dest.toCos());
+            actionDict.set(PdfName.of("D"), dest.toCos());
         }
     }
 
@@ -73,16 +73,16 @@ public class GoToAction extends PdfAction {
      * @param doc  the document for page resolution (may be null)
      * @throws IOException if parsing fails
      */
-    public GoToAction(COSDictionary dict, Document doc) throws IOException {
+    public GoToAction(PdfDictionary dict, Document doc) throws IOException {
         this.actionDict = dict;
-        COSBase d = resolve(dict.get("D"));
-        if (d instanceof COSArray) {
-            this.destination = ExplicitDestination.fromCOSArray((COSArray) d, doc);
-        } else if (d instanceof COSString || d instanceof COSName) {
+        PdfBase d = resolve(dict.get("D"));
+        if (d instanceof PdfArray) {
+            this.destination = ExplicitDestination.fromPdfArray((PdfArray) d, doc);
+        } else if (d instanceof PdfString || d instanceof PdfName) {
             // Named destination
-            String name = (d instanceof COSString)
-                    ? ((COSString) d).getString()
-                    : ((COSName) d).getName();
+            String name = (d instanceof PdfString)
+                    ? ((PdfString) d).getString()
+                    : ((PdfName) d).getName();
             if (doc != null) {
                 NamedDestinations nd = doc.getNamedDestinations();
                 if (nd != null) this.destination = nd.get(name);
@@ -128,11 +128,11 @@ public class GoToAction extends PdfAction {
     public void setDestination(IAppointment dest) {
         this.destination = dest;
         if (dest instanceof ExplicitDestination) {
-            actionDict.set(COSName.of("D"), ((ExplicitDestination) dest).toCOSArray());
+            actionDict.set(PdfName.of("D"), ((ExplicitDestination) dest).toPdfArray());
         } else if (dest instanceof NamedDestination) {
-            actionDict.set(COSName.of("D"), ((NamedDestination) dest).toCos());
+            actionDict.set(PdfName.of("D"), ((NamedDestination) dest).toCos());
         } else if (dest == null) {
-            actionDict.remove(COSName.of("D"));
+            actionDict.remove(PdfName.of("D"));
         }
     }
 }

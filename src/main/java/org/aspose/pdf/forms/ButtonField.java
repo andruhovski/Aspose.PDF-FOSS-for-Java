@@ -1,7 +1,7 @@
 package org.aspose.pdf.forms;
 
 import org.aspose.pdf.*;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.io.IOException;
 
@@ -15,13 +15,13 @@ import java.io.IOException;
 public class ButtonField extends Field {
 
     /**
-     * Constructs a push button field from an existing COS dictionary.
+     * Constructs a push button field from an existing PDF dictionary.
      *
-     * @param dict     the COS dictionary backing this field
+     * @param dict     the PDF dictionary backing this field
      * @param page     the page this field belongs to (may be null)
      * @param fullName the fully-qualified dotted name
      */
-    public ButtonField(COSDictionary dict, Page page, String fullName) {
+    public ButtonField(PdfDictionary dict, Page page, String fullName) {
         super(dict, page, fullName);
     }
 
@@ -32,12 +32,12 @@ public class ButtonField extends Field {
      * @param rect the field rectangle
      */
     public ButtonField(Page page, Rectangle rect) {
-        super(new COSDictionary(), page, "");
-        dict.set(COSName.of("Type"), COSName.of("Annot"));
-        dict.set(COSName.of("Subtype"), COSName.of("Widget"));
-        dict.set(COSName.of("FT"), COSName.of("Btn"));
+        super(new PdfDictionary(), page, "");
+        dict.set(PdfName.of("Type"), PdfName.of("Annot"));
+        dict.set(PdfName.of("Subtype"), PdfName.of("Widget"));
+        dict.set(PdfName.of("FT"), PdfName.of("Btn"));
         // Set push button flag (bit 17)
-        dict.set(COSName.of("Ff"), COSInteger.valueOf(1 << 16));
+        dict.set(PdfName.of("Ff"), PdfInteger.valueOf(1 << 16));
         setRectLenient(rect);
     }
 
@@ -47,15 +47,15 @@ public class ButtonField extends Field {
      * @param caption the caption string
      */
     public void setNormalCaption(String caption) {
-        COSBase mk = dict.get("MK");
-        COSDictionary mkDict;
-        if (mk instanceof COSDictionary) {
-            mkDict = (COSDictionary) mk;
+        PdfBase mk = dict.get("MK");
+        PdfDictionary mkDict;
+        if (mk instanceof PdfDictionary) {
+            mkDict = (PdfDictionary) mk;
         } else {
-            mkDict = new COSDictionary();
-            dict.set(COSName.of("MK"), mkDict);
+            mkDict = new PdfDictionary();
+            dict.set(PdfName.of("MK"), mkDict);
         }
-        mkDict.set(COSName.of("CA"), new COSString(caption.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+        mkDict.set(PdfName.of("CA"), new PdfString(caption.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
     }
 
     /**
@@ -64,10 +64,10 @@ public class ButtonField extends Field {
      * @return the caption string, or null
      */
     public String getNormalCaption() {
-        COSBase mk = dict.get("MK");
-        if (mk instanceof COSDictionary) {
-            COSBase ca = ((COSDictionary) mk).get("CA");
-            if (ca instanceof COSString) return ((COSString) ca).getString();
+        PdfBase mk = dict.get("MK");
+        if (mk instanceof PdfDictionary) {
+            PdfBase ca = ((PdfDictionary) mk).get("CA");
+            if (ca instanceof PdfString) return ((PdfString) ca).getString();
         }
         return null;
     }
@@ -79,14 +79,14 @@ public class ButtonField extends Field {
      * @throws IOException if parsing fails
      */
     public PdfAction getAction() throws IOException {
-        COSBase a = dict.get("A");
-        if (a instanceof COSObjectReference) {
+        PdfBase a = dict.get("A");
+        if (a instanceof PdfObjectReference) {
             try {
-                a = ((COSObjectReference) a).dereference();
+                a = ((PdfObjectReference) a).dereference();
             } catch (Exception e) {
                 return null;
             }
         }
-        return (a instanceof COSDictionary) ? PdfAction.fromDictionary((COSDictionary) a, null) : null;
+        return (a instanceof PdfDictionary) ? PdfAction.fromDictionary((PdfDictionary) a, null) : null;
     }
 }

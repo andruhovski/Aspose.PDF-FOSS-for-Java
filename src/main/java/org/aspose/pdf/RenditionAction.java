@@ -1,7 +1,7 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
 
 /**
  * Rendition action — controls multimedia renditions
@@ -25,7 +25,7 @@ public class RenditionAction extends PdfAction {
      *
      * @param dict the action dictionary
      */
-    public RenditionAction(COSDictionary dict) {
+    public RenditionAction(PdfDictionary dict) {
         this.actionDict = dict;
     }
 
@@ -43,9 +43,9 @@ public class RenditionAction extends PdfAction {
      *
      * @return the rendition dictionary, or {@code null}
      */
-    public COSDictionary getRendition() {
-        COSBase r = resolve(actionDict.get("R"));
-        return (r instanceof COSDictionary) ? (COSDictionary) r : null;
+    public PdfDictionary getRendition() {
+        PdfBase r = resolve(actionDict.get("R"));
+        return (r instanceof PdfDictionary) ? (PdfDictionary) r : null;
     }
 
     /**
@@ -53,8 +53,8 @@ public class RenditionAction extends PdfAction {
      *
      * @return the annotation dictionary, or {@code null}
      */
-    public COSDictionary getAnnotation() {
-        COSBase an = resolve(actionDict.get("AN"));
-        return (an instanceof COSDictionary) ? (COSDictionary) an : null;
+    public PdfDictionary getAnnotation() {
+        PdfBase an = resolve(actionDict.get("AN"));
+        return (an instanceof PdfDictionary) ? (PdfDictionary) an : null;
     }
 }

@@ -2,13 +2,13 @@ package org.aspose.pdf.engine.pdfa.fixes;
 
 import org.aspose.pdf.ConvertErrorAction;
 import org.aspose.pdf.PdfFormat;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectKey;
-import org.aspose.pdf.engine.cos.COSStream;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectKey;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 import org.aspose.pdf.engine.pdfa.PdfAValidationResult;
 import org.aspose.pdf.engine.parser.PDFParser;
 
@@ -51,8 +51,8 @@ public final class FileStructureFixes {
      */
     public void removeEncryption(PDFParser parser, PdfFormat format,
                                  ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
-        COSDictionary trailer = parser.getTrailer();
-        COSBase encrypt = trailer.get("Encrypt");
+        PdfDictionary trailer = parser.getTrailer();
+        PdfBase encrypt = trailer.get("Encrypt");
         if (encrypt != null) {
             LOG.info("Removing /Encrypt from trailer for PDF/A compliance");
             trailer.set("Encrypt", null);
@@ -76,20 +76,20 @@ public final class FileStructureFixes {
      */
     public void replaceLzwWithFlate(PDFParser parser, PdfFormat format,
                                     ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
-        for (COSObjectKey key : parser.getAllObjectKeys()) {
-            COSBase obj;
+        for (PdfObjectKey key : parser.getAllObjectKeys()) {
+            PdfBase obj;
             try {
                 obj = parser.getObject(key);
             } catch (IOException e) {
                 LOG.fine(() -> "Could not load object " + key + ": " + e.getMessage());
                 continue;
             }
-            if (!(obj instanceof COSStream)) {
+            if (!(obj instanceof PdfStream)) {
                 continue;
             }
-            COSStream stream = (COSStream) obj;
+            PdfStream stream = (PdfStream) obj;
             boolean hasLzw = false;
-            for (COSName filter : stream.getFilters()) {
+            for (PdfName filter : stream.getFilters()) {
                 if ("LZWDecode".equals(filter.getName())) {
                     hasLzw = true;
                     break;
@@ -106,7 +106,7 @@ public final class FileStructureFixes {
                 // Re-encode with Flate
                 byte[] compressed = flateCompress(decoded);
                 stream.setDecodedData(decoded);
-                stream.setFilter(COSName.FLATE_DECODE);
+                stream.setFilter(PdfName.FLATE_DECODE);
                 // Remove old DecodeParms that were LZW-specific
                 stream.set("DecodeParms", null);
                 result.addWarning("struct.2", "Replaced LZWDecode with FlateDecode",
@@ -133,17 +133,17 @@ public final class FileStructureFixes {
      */
     public void removeExternalStreamRefs(PDFParser parser, PdfFormat format,
                                          ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
-        for (COSObjectKey key : parser.getAllObjectKeys()) {
-            COSBase obj;
+        for (PdfObjectKey key : parser.getAllObjectKeys()) {
+            PdfBase obj;
             try {
                 obj = parser.getObject(key);
             } catch (IOException e) {
                 continue;
             }
-            if (!(obj instanceof COSStream)) {
+            if (!(obj instanceof PdfStream)) {
                 continue;
             }
-            COSStream stream = (COSStream) obj;
+            PdfStream stream = (PdfStream) obj;
             boolean changed = false;
             if (stream.get("F") != null && !"Font".equals(stream.getNameAsString("Type"))) {
                 // /F in a stream context means external file — but check it's not /Font
@@ -182,16 +182,16 @@ public final class FileStructureFixes {
      */
     public void removeEmbeddedFiles(PDFParser parser, PdfFormat format,
                                     ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
-        COSDictionary catalog = parser.getCatalog();
-        COSBase namesRef = catalog.get("Names");
+        PdfDictionary catalog = parser.getCatalog();
+        PdfBase namesRef = catalog.get("Names");
         if (namesRef == null) {
             return;
         }
-        COSBase namesObj = parser.resolveReference(namesRef);
-        if (!(namesObj instanceof COSDictionary)) {
+        PdfBase namesObj = parser.resolveReference(namesRef);
+        if (!(namesObj instanceof PdfDictionary)) {
             return;
         }
-        COSDictionary names = (COSDictionary) namesObj;
+        PdfDictionary names = (PdfDictionary) namesObj;
         if (names.get("EmbeddedFiles") != null) {
             LOG.info("Removing /EmbeddedFiles from /Names for PDF/A-1 compliance");
             names.set("EmbeddedFiles", null);
@@ -214,7 +214,7 @@ public final class FileStructureFixes {
      */
     public void removeOCProperties(PDFParser parser, PdfFormat format,
                                    ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
-        COSDictionary catalog = parser.getCatalog();
+        PdfDictionary catalog = parser.getCatalog();
         if (catalog.get("OCProperties") != null) {
             LOG.info("Removing /OCProperties from catalog for PDF/A-1 compliance");
             catalog.set("OCProperties", null);
@@ -238,9 +238,9 @@ public final class FileStructureFixes {
      */
     public void ensureTrailerId(PDFParser parser, PdfFormat format,
                                 ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
-        COSDictionary trailer = parser.getTrailer();
-        COSBase id = trailer.get("ID");
-        if (id instanceof COSArray && ((COSArray) id).size() >= 2) {
+        PdfDictionary trailer = parser.getTrailer();
+        PdfBase id = trailer.get("ID");
+        if (id instanceof PdfArray && ((PdfArray) id).size() >= 2) {
             LOG.fine("Trailer already has /ID array");
             return;
         }
@@ -252,9 +252,9 @@ public final class FileStructureFixes {
         rng.nextBytes(id1);
         rng.nextBytes(id2);
 
-        COSArray idArray = new COSArray(2);
-        idArray.add(new COSString(id1));
-        idArray.add(new COSString(id2));
+        PdfArray idArray = new PdfArray(2);
+        idArray.add(new PdfString(id1));
+        idArray.add(new PdfString(id2));
         trailer.set("ID", idArray);
 
         result.addWarning("struct.6", "Added /ID array to trailer",

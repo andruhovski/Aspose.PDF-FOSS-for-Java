@@ -47,6 +47,13 @@ public class TrueTypeReader {
     /** Glyph names indexed by glyph ID (from /post table). null until parsePost runs. */
     private String[] glyphNames;
 
+    /** {@code head.indexToLocFormat}: 0 = short (uint16×2) offsets, 1 = long (uint32). */
+    private int indexToLocFormat;
+    /** Byte offset of each glyph into the {@code glyf} table; length numGlyphs+1. Null if no outlines. */
+    private int[] loca;
+    /** Absolute byte offset of the {@code glyf} table, or -1 when absent. */
+    private int glyfOffset = -1;
+
     /**
      * Creates a TrueTypeReader from raw font data.
      *
@@ -117,6 +124,19 @@ public class TrueTypeReader {
         if (unicodeReverseCmap == null) return 0;
         Integer unicode = unicodeReverseCmap.get(glyphId);
         return unicode != null ? unicode : 0;
+    }
+
+    /**
+     * Returns true if the font ships at least one true-Unicode cmap subtable
+     * (platform 3 encoding 1/10, or platform 0). Subset fonts produced by
+     * office suites often carry only a code-keyed (1,0)/(3,0) subtable whose
+     * keys are the PDF character codes, not Unicode — glyph selection for
+     * those must go through the raw code (ISO 32000-1:2008, §9.6.6.4).
+     *
+     * @return true if a Unicode cmap subtable was parsed
+     */
+    public boolean hasUnicodeCmap() {
+        return unicodeReverseCmap != null && !unicodeReverseCmap.isEmpty();
     }
 
     /**
@@ -216,6 +236,19 @@ public class TrueTypeReader {
                 LOG.fine(() -> "Failed to parse post table: " + e.getMessage());
             }
         }
+        // Outline tables: glyf + loca let us draw glyphs by id directly, without
+        // java.awt.Font — essential for subset CIDFontType2 programs that ship no
+        // cmap (the JDK rejects those for layout and silently substitutes Arial).
+        if (tables.containsKey("glyf") && tables.containsKey("loca")) {
+            try {
+                glyfOffset = tables.get("glyf")[0];
+                parseLoca(tables.get("loca")[0]);
+            } catch (Exception e) {
+                glyfOffset = -1;
+                loca = null;
+                LOG.fine(() -> "Failed to parse glyf/loca: " + e.getMessage());
+            }
+        }
 
         LOG.fine(() -> "TrueType parsed: unitsPerEm=" + unitsPerEm + ", numGlyphs=" + numGlyphs
                 + ", cmap entries=" + (cmapTable != null ? cmapTable.size() : 0));
@@ -225,6 +258,8 @@ public class TrueTypeReader {
         if (offset + 54 <= data.length) {
             unitsPerEm = readUInt16(offset + 18);
             if (unitsPerEm == 0) unitsPerEm = 1000;
+            // indexToLocFormat lives at head + 50 (UInt16): 0 short, 1 long.
+            indexToLocFormat = readUInt16(offset + 50);
         }
     }
 
@@ -568,6 +603,253 @@ public class TrueTypeReader {
             "gbreve", "Idotaccent", "Scedilla", "scedilla", "Cacute", "cacute", "Ccaron",
             "ccaron", "dcroat"
     };
+
+    private void parseLoca(int offset) {
+        if (numGlyphs <= 0) return;
+        int[] arr = new int[numGlyphs + 1];
+        if (indexToLocFormat == 0) {
+            // Short format: UInt16 offsets, stored as half the real byte offset.
+            for (int i = 0; i <= numGlyphs; i++) {
+                arr[i] = readUInt16(offset + i * 2) * 2;
+            }
+        } else {
+            // Long format: UInt32 byte offsets.
+            for (int i = 0; i <= numGlyphs; i++) {
+                arr[i] = readInt32(offset + i * 4);
+            }
+        }
+        this.loca = arr;
+    }
+
+    /**
+     * Returns the outline of a glyph as a {@link java.awt.geom.GeneralPath} in
+     * em-normalised coordinates (font units divided by {@code unitsPerEm}), with
+     * the TrueType Y-up orientation preserved. Empty path for blank glyphs (e.g.
+     * space); {@code null} when the font has no {@code glyf}/{@code loca} tables,
+     * the glyph id is out of range, or the data is malformed.
+     * <p>
+     * Drawing by outline bypasses {@code java.awt.Font}, which silently
+     * substitutes the default physical font when an embedded subset program
+     * lacks a usable {@code cmap} (ISO 32000-1:2008 §9.7.4 CIDFontType2 programs
+     * are addressed purely by glyph id and frequently ship no cmap).
+     *
+     * @param gid the glyph id
+     * @return the em-normalised, Y-up outline, or {@code null}
+     */
+    public java.awt.geom.GeneralPath getGlyphPath(int gid) {
+        if (loca == null || glyfOffset < 0 || gid < 0 || gid + 1 >= loca.length) {
+            return null;
+        }
+        java.awt.geom.GeneralPath path = new java.awt.geom.GeneralPath();
+        try {
+            if (!appendGlyph(gid, path, new java.awt.geom.AffineTransform(), 0)) {
+                return null;
+            }
+        } catch (RuntimeException e) {
+            LOG.fine(() -> "glyf parse failed for gid " + gid + ": " + e);
+            return null;
+        }
+        double s = 1.0 / unitsPerEm;
+        path.transform(java.awt.geom.AffineTransform.getScaleInstance(s, s));
+        return path;
+    }
+
+    /**
+     * Appends one glyph's contours (in raw font units, through {@code xf}) to
+     * {@code path}. Recurses for composite glyphs. Returns false on malformed
+     * data so the caller can fall back.
+     */
+    private boolean appendGlyph(int gid, java.awt.geom.GeneralPath path,
+                                java.awt.geom.AffineTransform xf, int depth) {
+        if (depth > 8 || gid < 0 || gid + 1 >= loca.length) return false;
+        int start = glyfOffset + loca[gid];
+        int end = glyfOffset + loca[gid + 1];
+        if (loca[gid + 1] <= loca[gid]) return true; // empty glyph (e.g. space)
+        if (start + 10 > data.length || end > data.length) return false;
+
+        int numberOfContours = readInt16(start);
+        if (numberOfContours >= 0) {
+            return appendSimpleGlyph(start, numberOfContours, path, xf);
+        }
+        return appendCompositeGlyph(start + 10, end, path, xf, depth);
+    }
+
+    private boolean appendSimpleGlyph(int p, int numberOfContours,
+                                      java.awt.geom.GeneralPath path,
+                                      java.awt.geom.AffineTransform xf) {
+        int o = p + 10; // skip numberOfContours(2) + bbox(8)
+        int[] endPts = new int[numberOfContours];
+        for (int i = 0; i < numberOfContours; i++) {
+            endPts[i] = readUInt16(o);
+            o += 2;
+        }
+        int numPoints = numberOfContours > 0 ? endPts[numberOfContours - 1] + 1 : 0;
+        if (numPoints <= 0) return true;
+
+        int instrLen = readUInt16(o);
+        o += 2 + instrLen;
+
+        // Flags (with repeat compression).
+        byte[] flags = new byte[numPoints];
+        for (int i = 0; i < numPoints && o < data.length; ) {
+            byte flag = data[o++];
+            flags[i++] = flag;
+            if ((flag & 0x08) != 0 && o < data.length) { // REPEAT_FLAG
+                int repeat = data[o++] & 0xFF;
+                while (repeat-- > 0 && i < numPoints) flags[i++] = flag;
+            }
+        }
+
+        // X coordinates (delta-encoded).
+        int[] xs = new int[numPoints];
+        int x = 0;
+        for (int i = 0; i < numPoints; i++) {
+            int flag = flags[i];
+            if ((flag & 0x02) != 0) {            // X_SHORT_VECTOR
+                int dx = data[o++] & 0xFF;
+                x += ((flag & 0x10) != 0) ? dx : -dx; // X_IS_SAME_OR_POSITIVE_X_SHORT
+            } else if ((flag & 0x10) == 0) {     // not same → 16-bit delta
+                x += readInt16(o);
+                o += 2;
+            }
+            xs[i] = x;
+        }
+        // Y coordinates (delta-encoded).
+        int[] ys = new int[numPoints];
+        int y = 0;
+        for (int i = 0; i < numPoints; i++) {
+            int flag = flags[i];
+            if ((flag & 0x04) != 0) {            // Y_SHORT_VECTOR
+                int dy = data[o++] & 0xFF;
+                y += ((flag & 0x20) != 0) ? dy : -dy; // Y_IS_SAME_OR_POSITIVE_Y_SHORT
+            } else if ((flag & 0x20) == 0) {
+                y += readInt16(o);
+                o += 2;
+            }
+            ys[i] = y;
+        }
+
+        int contourStart = 0;
+        for (int c = 0; c < numberOfContours; c++) {
+            int contourEnd = endPts[c];
+            buildContour(path, xf, xs, ys, flags, contourStart, contourEnd);
+            contourStart = contourEnd + 1;
+        }
+        return true;
+    }
+
+    /**
+     * Emits one closed contour, converting TrueType quadratic on/off-curve
+     * points (with implicit midpoints between consecutive off-curve points)
+     * into {@code quadTo} segments.
+     */
+    private void buildContour(java.awt.geom.GeneralPath path,
+                              java.awt.geom.AffineTransform xf,
+                              int[] xs, int[] ys, byte[] flags, int s, int e) {
+        int n = e - s + 1;
+        if (n <= 0) return;
+
+        // Locate a starting on-curve point; synthesise one if the contour is all
+        // off-curve (start = midpoint of first and last off-curve points).
+        int startIdx = -1;
+        for (int i = s; i <= e; i++) {
+            if ((flags[i] & 0x01) != 0) { startIdx = i; break; }
+        }
+        double sx, sy;
+        if (startIdx >= 0) {
+            sx = xs[startIdx]; sy = ys[startIdx];
+        } else {
+            startIdx = s;
+            sx = (xs[s] + xs[e]) / 2.0;
+            sy = (ys[s] + ys[e]) / 2.0;
+        }
+        double[] pt = transform(xf, sx, sy);
+        path.moveTo(pt[0], pt[1]);
+
+        double cx = 0, cy = 0;
+        boolean haveCtrl = false;
+        for (int k = 1; k <= n; k++) {
+            int i = s + ((startIdx - s) + k) % n;
+            boolean onCurve = (flags[i] & 0x01) != 0;
+            double px = xs[i], py = ys[i];
+            if (onCurve) {
+                if (haveCtrl) {
+                    double[] c = transform(xf, cx, cy);
+                    double[] q = transform(xf, px, py);
+                    path.quadTo(c[0], c[1], q[0], q[1]);
+                    haveCtrl = false;
+                } else {
+                    double[] q = transform(xf, px, py);
+                    path.lineTo(q[0], q[1]);
+                }
+            } else {
+                if (haveCtrl) {
+                    // Two consecutive off-curve points: implicit on-curve midpoint.
+                    double mx = (cx + px) / 2.0, my = (cy + py) / 2.0;
+                    double[] c = transform(xf, cx, cy);
+                    double[] m = transform(xf, mx, my);
+                    path.quadTo(c[0], c[1], m[0], m[1]);
+                }
+                cx = px; cy = py; haveCtrl = true;
+            }
+        }
+        if (haveCtrl) {
+            double[] c = transform(xf, cx, cy);
+            path.quadTo(c[0], c[1], pt[0], pt[1]);
+        }
+        path.closePath();
+    }
+
+    private boolean appendCompositeGlyph(int o, int end, java.awt.geom.GeneralPath path,
+                                         java.awt.geom.AffineTransform xf, int depth) {
+        boolean more = true;
+        while (more && o + 4 <= data.length && o < end) {
+            int flags = readUInt16(o);
+            int componentGid = readUInt16(o + 2);
+            o += 4;
+
+            double arg1, arg2;
+            if ((flags & 0x0001) != 0) { // ARG_1_AND_2_ARE_WORDS
+                arg1 = readInt16(o); arg2 = readInt16(o + 2); o += 4;
+            } else {
+                arg1 = (byte) data[o]; arg2 = (byte) data[o + 1]; o += 2;
+            }
+
+            double a = 1, b = 0, c = 0, d = 1;
+            if ((flags & 0x0008) != 0) {            // WE_HAVE_A_SCALE
+                a = d = f2dot14(o); o += 2;
+            } else if ((flags & 0x0040) != 0) {     // WE_HAVE_AN_X_AND_Y_SCALE
+                a = f2dot14(o); d = f2dot14(o + 2); o += 4;
+            } else if ((flags & 0x0080) != 0) {     // WE_HAVE_A_TWO_BY_TWO
+                a = f2dot14(o); b = f2dot14(o + 2); c = f2dot14(o + 4); d = f2dot14(o + 6); o += 8;
+            }
+
+            // ARGS_ARE_XY_VALUES: args are a translation in font units. (Point
+            // matching — the alternative — is extremely rare in subsets; treat
+            // args as 0 offset in that case.)
+            double dx = 0, dy = 0;
+            if ((flags & 0x0002) != 0) { dx = arg1; dy = arg2; }
+
+            java.awt.geom.AffineTransform comp = new java.awt.geom.AffineTransform(a, b, c, d, dx, dy);
+            java.awt.geom.AffineTransform combined = new java.awt.geom.AffineTransform(xf);
+            combined.concatenate(comp);
+            appendGlyph(componentGid, path, combined, depth + 1);
+
+            more = (flags & 0x0020) != 0; // MORE_COMPONENTS
+        }
+        return true;
+    }
+
+    /** Reads an F2Dot14 fixed-point value (signed 2.14) as a double. */
+    private double f2dot14(int offset) {
+        return readInt16(offset) / 16384.0;
+    }
+
+    private static double[] transform(java.awt.geom.AffineTransform xf, double x, double y) {
+        double[] p = {x, y};
+        xf.transform(p, 0, p, 0, 1);
+        return p;
+    }
 
     private int readUInt16(int offset) {
         if (offset + 2 > data.length) return 0;

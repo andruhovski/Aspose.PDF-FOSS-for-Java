@@ -1,4 +1,4 @@
-package org.aspose.pdf.engine.cos;
+package org.aspose.pdf.engine.pdfobjects;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -13,12 +13,12 @@ import java.util.logging.Logger;
  * on first access via an {@link ObjectResolver}.
  * </p>
  */
-public final class COSObjectReference extends COSBase {
+public final class PdfObjectReference extends PdfBase {
 
-    private static final Logger LOG = Logger.getLogger(COSObjectReference.class.getName());
+    private static final Logger LOG = Logger.getLogger(PdfObjectReference.class.getName());
 
-    private final COSObjectKey key;
-    private COSBase resolvedObject;
+    private final PdfObjectKey key;
+    private PdfBase resolvedObject;
     private ObjectResolver resolver;
 
     /**
@@ -33,7 +33,7 @@ public final class COSObjectReference extends COSBase {
          * @return the resolved object, or null
          * @throws IOException if an I/O error occurs during loading
          */
-        COSBase resolve(COSObjectKey key) throws IOException;
+        PdfBase resolve(PdfObjectKey key) throws IOException;
     }
 
     /**
@@ -42,7 +42,7 @@ public final class COSObjectReference extends COSBase {
      * @param key the indirect object key
      * @throws IllegalArgumentException if key is null
      */
-    public COSObjectReference(COSObjectKey key) {
+    public PdfObjectReference(PdfObjectKey key) {
         if (key == null) {
             throw new IllegalArgumentException("Key must not be null");
         }
@@ -55,8 +55,8 @@ public final class COSObjectReference extends COSBase {
      * @param objectNumber     the object number
      * @param generationNumber the generation number
      */
-    public COSObjectReference(int objectNumber, int generationNumber) {
-        this(new COSObjectKey(objectNumber, generationNumber));
+    public PdfObjectReference(int objectNumber, int generationNumber) {
+        this(new PdfObjectKey(objectNumber, generationNumber));
     }
 
     /**
@@ -65,7 +65,7 @@ public final class COSObjectReference extends COSBase {
      * @param key      the indirect object key
      * @param resolver the resolver for lazy loading, may be null
      */
-    public COSObjectReference(COSObjectKey key, ObjectResolver resolver) {
+    public PdfObjectReference(PdfObjectKey key, ObjectResolver resolver) {
         this(key);
         this.resolver = resolver;
     }
@@ -75,19 +75,19 @@ public final class COSObjectReference extends COSBase {
      *
      * @return the key
      */
-    public COSObjectKey getKey() {
+    public PdfObjectKey getKey() {
         return key;
     }
 
     /**
      * Resolves the reference to the actual object. The result is cached.
-     * If the resolver returns null, {@link COSNull#INSTANCE} is returned.
+     * If the resolver returns null, {@link PdfNull#INSTANCE} is returned.
      *
      * @return the resolved object
      * @throws IOException           if an I/O error occurs
      * @throws IllegalStateException if no resolver has been set
      */
-    public COSBase dereference() throws IOException {
+    public PdfBase dereference() throws IOException {
         if (resolvedObject != null) {
             return resolvedObject;
         }
@@ -97,7 +97,7 @@ public final class COSObjectReference extends COSBase {
         LOG.fine(() -> "Resolving indirect reference: " + key);
         resolvedObject = resolver.resolve(key);
         if (resolvedObject == null) {
-            resolvedObject = COSNull.INSTANCE;
+            resolvedObject = PdfNull.INSTANCE;
         }
         return resolvedObject;
     }
@@ -118,12 +118,12 @@ public final class COSObjectReference extends COSBase {
     }
 
     @Override
-    public <T> T accept(ICOSVisitor<T> visitor) {
+    public <T> T accept(IPdfVisitor<T> visitor) {
         // A reference is not directly visited; it should be dereferenced first.
         // However, for completeness in serialization, we write the reference form.
         // Visitors that encounter a reference should dereference it themselves.
         try {
-            COSBase resolved = dereference();
+            PdfBase resolved = dereference();
             return resolved.accept(visitor);
         } catch (IOException e) {
             throw new RuntimeException("Failed to dereference object " + key, e);
@@ -133,8 +133,8 @@ public final class COSObjectReference extends COSBase {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof COSObjectReference)) return false;
-        return key.equals(((COSObjectReference) o).key);
+        if (!(o instanceof PdfObjectReference)) return false;
+        return key.equals(((PdfObjectReference) o).key);
     }
 
     @Override
@@ -144,6 +144,6 @@ public final class COSObjectReference extends COSBase {
 
     @Override
     public String toString() {
-        return "COSObjectReference{" + key + " R}";
+        return "PdfObjectReference{" + key + " R}";
     }
 }

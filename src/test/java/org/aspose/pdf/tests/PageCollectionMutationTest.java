@@ -3,10 +3,10 @@ package org.aspose.pdf.tests;
 import org.aspose.pdf.Page;
 import org.aspose.pdf.PageCollection;
 import org.aspose.pdf.Rectangle;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -17,17 +17,17 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class PageCollectionMutationTest {
 
-    private COSDictionary pagesDict;
-    private COSArray kids;
+    private PdfDictionary pagesDict;
+    private PdfArray kids;
     private PageCollection collection;
 
     @BeforeEach
     public void setUp() {
-        pagesDict = new COSDictionary();
-        pagesDict.set(COSName.TYPE, COSName.PAGES);
-        kids = new COSArray();
-        pagesDict.set(COSName.KIDS, kids);
-        pagesDict.set(COSName.COUNT, COSInteger.valueOf(0));
+        pagesDict = new PdfDictionary();
+        pagesDict.set(PdfName.TYPE, PdfName.PAGES);
+        kids = new PdfArray();
+        pagesDict.set(PdfName.KIDS, kids);
+        pagesDict.set(PdfName.COUNT, PdfInteger.valueOf(0));
         collection = new PageCollection(pagesDict, null);
     }
 
@@ -76,15 +76,15 @@ public class PageCollectionMutationTest {
     @Test
     public void addDefaultPageSetsParent() {
         Page page = collection.add();
-        COSDictionary pageDict = page.getCOSDictionary();
-        assertSame(pagesDict, pageDict.get(COSName.PARENT));
+        PdfDictionary pageDict = page.getPdfDictionary();
+        assertSame(pagesDict, pageDict.get(PdfName.PARENT));
     }
 
     @Test
     public void addDefaultPageSetsTypeToPage() {
         Page page = collection.add();
-        COSDictionary pageDict = page.getCOSDictionary();
-        assertEquals(COSName.PAGE, pageDict.get(COSName.TYPE));
+        PdfDictionary pageDict = page.getPdfDictionary();
+        assertEquals(PdfName.PAGE, pageDict.get(PdfName.TYPE));
     }
 
     @Test
@@ -98,11 +98,11 @@ public class PageCollectionMutationTest {
 
     @Test
     public void addExistingPage() {
-        COSDictionary pageDict = createPageDict();
+        PdfDictionary pageDict = createPageDict();
         Page page = new Page(pageDict, null);
         collection.add(page);
         assertEquals(1, collection.size());
-        assertSame(pagesDict, pageDict.get(COSName.PARENT));
+        assertSame(pagesDict, pageDict.get(PdfName.PARENT));
     }
 
     @Test
@@ -115,25 +115,25 @@ public class PageCollectionMutationTest {
         collection.add(); // page 1
         collection.add(); // page 2
 
-        COSDictionary insertDict = createPageDict();
+        PdfDictionary insertDict = createPageDict();
         Page insertPage = new Page(insertDict, null);
         collection.insert(1, insertPage);
 
         assertEquals(3, collection.size());
         // The inserted page should be at position 1
-        assertSame(insertDict, collection.get(1).getCOSDictionary());
+        assertSame(insertDict, collection.get(1).getPdfDictionary());
     }
 
     @Test
     public void insertAtEnd() {
         collection.add(); // page 1
 
-        COSDictionary insertDict = createPageDict();
+        PdfDictionary insertDict = createPageDict();
         Page insertPage = new Page(insertDict, null);
         collection.insert(2, insertPage);
 
         assertEquals(2, collection.size());
-        assertSame(insertDict, collection.get(2).getCOSDictionary());
+        assertSame(insertDict, collection.get(2).getPdfDictionary());
     }
 
     @Test
@@ -141,22 +141,22 @@ public class PageCollectionMutationTest {
         Page p1 = collection.add();
         Page p3 = collection.add();
 
-        COSDictionary insertDict = createPageDict();
+        PdfDictionary insertDict = createPageDict();
         Page p2 = new Page(insertDict, null);
         collection.insert(2, p2);
 
         assertEquals(3, collection.size());
-        assertSame(p1.getCOSDictionary(), collection.get(1).getCOSDictionary());
-        assertSame(insertDict, collection.get(2).getCOSDictionary());
-        assertSame(p3.getCOSDictionary(), collection.get(3).getCOSDictionary());
+        assertSame(p1.getPdfDictionary(), collection.get(1).getPdfDictionary());
+        assertSame(insertDict, collection.get(2).getPdfDictionary());
+        assertSame(p3.getPdfDictionary(), collection.get(3).getPdfDictionary());
     }
 
     @Test
     public void insertSetsParent() {
-        COSDictionary insertDict = createPageDict();
+        PdfDictionary insertDict = createPageDict();
         Page page = new Page(insertDict, null);
         collection.insert(1, page);
-        assertSame(pagesDict, insertDict.get(COSName.PARENT));
+        assertSame(pagesDict, insertDict.get(PdfName.PARENT));
     }
 
     @Test
@@ -186,7 +186,7 @@ public class PageCollectionMutationTest {
         collection.add();
         collection.delete(2);
         assertEquals(1, collection.size());
-        assertSame(p1.getCOSDictionary(), collection.get(1).getCOSDictionary());
+        assertSame(p1.getPdfDictionary(), collection.get(1).getPdfDictionary());
     }
 
     @Test
@@ -196,8 +196,8 @@ public class PageCollectionMutationTest {
         Page p3 = collection.add();
         collection.delete(2);
         assertEquals(2, collection.size());
-        assertSame(p1.getCOSDictionary(), collection.get(1).getCOSDictionary());
-        assertSame(p3.getCOSDictionary(), collection.get(2).getCOSDictionary());
+        assertSame(p1.getPdfDictionary(), collection.get(1).getPdfDictionary());
+        assertSame(p3.getPdfDictionary(), collection.get(2).getPdfDictionary());
     }
 
     @Test
@@ -223,7 +223,7 @@ public class PageCollectionMutationTest {
     public void countUpdatedAfterAdd() {
         collection.add();
         collection.add();
-        int count = pagesDict.getInt(COSName.COUNT, -1);
+        int count = pagesDict.getInt(PdfName.COUNT, -1);
         assertEquals(2, count);
     }
 
@@ -232,7 +232,7 @@ public class PageCollectionMutationTest {
         collection.add();
         collection.add();
         collection.delete(1);
-        int count = pagesDict.getInt(COSName.COUNT, -1);
+        int count = pagesDict.getInt(PdfName.COUNT, -1);
         assertEquals(1, count);
     }
 
@@ -240,7 +240,7 @@ public class PageCollectionMutationTest {
     public void countUpdatedAfterInsert() {
         collection.add();
         collection.insert(1, new Page(createPageDict(), null));
-        int count = pagesDict.getInt(COSName.COUNT, -1);
+        int count = pagesDict.getInt(PdfName.COUNT, -1);
         assertEquals(2, count);
     }
 
@@ -259,10 +259,10 @@ public class PageCollectionMutationTest {
     /**
      * Creates a minimal page dictionary for testing.
      */
-    private COSDictionary createPageDict() {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.TYPE, COSName.PAGE);
-        dict.set(COSName.MEDIABOX, new Rectangle(0, 0, 612, 792).toCOSArray());
+    private PdfDictionary createPageDict() {
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.TYPE, PdfName.PAGE);
+        dict.set(PdfName.MEDIABOX, new Rectangle(0, 0, 612, 792).toPdfArray());
         return dict;
     }
 }

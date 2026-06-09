@@ -6,13 +6,13 @@ import org.aspose.pdf.Page;
 import org.aspose.pdf.PageCollection;
 import org.aspose.pdf.Rectangle;
 import org.aspose.pdf.Resources;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSCloner;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectCloner;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -339,7 +339,7 @@ public class PdfFileEditor {
      * Merges every entry from {@code src.getEmbeddedFiles()} into
      * {@code dst.getEmbeddedFiles()} as a fresh {@link FileSpecification} so
      * the embedded stream is owned by the destination's object table (the
-     * source's COS objects die when its document closes). Mirrors the
+     * source's PDF objects die when its document closes). Mirrors the
      * Aspose contract that concatenate preserves attachments from every
      * input — PDFNEWNET-32261.
      */
@@ -389,21 +389,21 @@ public class PdfFileEditor {
      */
     private void copyLogicalStructure(Document src, Document dst, int pageOffset) {
         try {
-            COSDictionary srcCatalog = src.getCatalog();
-            COSDictionary dstCatalog = dst.getCatalog();
+            PdfDictionary srcCatalog = src.getCatalog();
+            PdfDictionary dstCatalog = dst.getCatalog();
             if (srcCatalog == null || dstCatalog == null) {
                 return;
             }
-            COSBase srcStruct = srcCatalog.get(COSName.of("StructTreeRoot"));
+            PdfBase srcStruct = srcCatalog.get(PdfName.of("StructTreeRoot"));
             if (srcStruct == null) {
                 return;
             }
-            COSBase markInfo = dstCatalog.get(COSName.of("MarkInfo"));
+            PdfBase markInfo = dstCatalog.get(PdfName.of("MarkInfo"));
             if (markInfo == null) {
-                COSDictionary mi = new COSDictionary();
-                mi.set(COSName.of("Marked"),
-                        org.aspose.pdf.engine.cos.COSBoolean.TRUE);
-                dstCatalog.set(COSName.of("MarkInfo"), mi);
+                PdfDictionary mi = new PdfDictionary();
+                mi.set(PdfName.of("Marked"),
+                        org.aspose.pdf.engine.pdfobjects.PdfBoolean.TRUE);
+                dstCatalog.set(PdfName.of("MarkInfo"), mi);
             }
             LOG.fine(() -> "copyLogicalStructure: /MarkInfo propagated; "
                     + "full /StructTreeRoot cross-document merge is deferred");
@@ -532,7 +532,7 @@ public class PdfFileEditor {
 
     private static org.aspose.pdf.ExplicitDestination retargetDestination(
             org.aspose.pdf.ExplicitDestination src, Page newPage) {
-        // Recreate the destination of the same subclass so toCOSArray emits
+        // Recreate the destination of the same subclass so toPdfArray emits
         // the same /Fit … shape on save; fall back to /XYZ when the subclass
         // is unrecognised.
         if (src instanceof org.aspose.pdf.FitHExplicitDestination) {
@@ -1496,16 +1496,16 @@ public class PdfFileEditor {
                 : slotWidth + ((slotWidth - scaledWidth) / 2.0);
         double yOffset = (slotHeight - scaledHeight) / 2.0;
 
-        COSStream formStream = createFormXObject(targetDocument, sourcePage, sourceRect);
-        COSObjectReference formRef = targetDocument.registerImportedObject(formStream);
+        PdfStream formStream = createFormXObject(targetDocument, sourcePage, sourceRect);
+        PdfObjectReference formRef = targetDocument.registerImportedObject(formStream);
 
         Resources resources = targetPage.getResources();
-        COSDictionary xObjects = resources.getXObjects();
+        PdfDictionary xObjects = resources.getXObjects();
         if (xObjects == null) {
-            xObjects = new COSDictionary();
-            resources.getCOSDictionary().set(COSName.of("XObject"), xObjects);
+            xObjects = new PdfDictionary();
+            resources.getPdfDictionary().set(PdfName.of("XObject"), xObjects);
         }
-        xObjects.set(COSName.of(resourceName), formRef);
+        xObjects.set(PdfName.of(resourceName), formRef);
 
         String ops = "q\n"
                 + formatMatrix(scale, 0, 0, scale, xOffset, yOffset)
@@ -1514,19 +1514,19 @@ public class PdfFileEditor {
         targetPage.appendToContentStream(ops.getBytes(StandardCharsets.US_ASCII));
     }
 
-    private COSStream createFormXObject(Document targetDocument, Page sourcePage, Rectangle sourceRect) throws IOException {
-        COSStream formStream = new COSStream();
-        formStream.set("Type", COSName.of("XObject"));
-        formStream.set("Subtype", COSName.of("Form"));
-        formStream.set("BBox", sourceRect.toCOSArray());
+    private PdfStream createFormXObject(Document targetDocument, Page sourcePage, Rectangle sourceRect) throws IOException {
+        PdfStream formStream = new PdfStream();
+        formStream.set("Type", PdfName.of("XObject"));
+        formStream.set("Subtype", PdfName.of("Form"));
+        formStream.set("BBox", sourceRect.toPdfArray());
 
-        COSDictionary sourceResources = sourcePage.getResources() != null
-                ? sourcePage.getResources().getCOSDictionary()
+        PdfDictionary sourceResources = sourcePage.getResources() != null
+                ? sourcePage.getResources().getPdfDictionary()
                 : null;
         if (sourceResources != null) {
-            COSCloner cloner = new COSCloner(targetDocument::registerImportedObject);
-            COSBase clonedResources = cloner.cloneAny(sourceResources);
-            if (clonedResources instanceof COSDictionary) {
+            PdfObjectCloner cloner = new PdfObjectCloner(targetDocument::registerImportedObject);
+            PdfBase clonedResources = cloner.cloneAny(sourceResources);
+            if (clonedResources instanceof PdfDictionary) {
                 formStream.set("Resources", clonedResources);
             }
         }
@@ -1537,23 +1537,23 @@ public class PdfFileEditor {
     }
 
     private byte[] readPageContentBytes(Page sourcePage) throws IOException {
-        COSBase sourceContents = sourcePage.getRawContents();
-        if (sourceContents instanceof COSObjectReference) {
-            sourceContents = ((COSObjectReference) sourceContents).dereference();
+        PdfBase sourceContents = sourcePage.getRawContents();
+        if (sourceContents instanceof PdfObjectReference) {
+            sourceContents = ((PdfObjectReference) sourceContents).dereference();
         }
-        if (sourceContents instanceof COSStream) {
-            return ((COSStream) sourceContents).getDecodedData();
+        if (sourceContents instanceof PdfStream) {
+            return ((PdfStream) sourceContents).getDecodedData();
         }
-        if (sourceContents instanceof COSArray) {
+        if (sourceContents instanceof PdfArray) {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            COSArray arr = (COSArray) sourceContents;
+            PdfArray arr = (PdfArray) sourceContents;
             for (int i = 0; i < arr.size(); i++) {
-                COSBase item = arr.get(i);
-                if (item instanceof COSObjectReference) {
-                    item = ((COSObjectReference) item).dereference();
+                PdfBase item = arr.get(i);
+                if (item instanceof PdfObjectReference) {
+                    item = ((PdfObjectReference) item).dereference();
                 }
-                if (item instanceof COSStream) {
-                    byte[] data = ((COSStream) item).getDecodedData();
+                if (item instanceof PdfStream) {
+                    byte[] data = ((PdfStream) item).getDecodedData();
                     if (data != null && data.length > 0) {
                         baos.write(data);
                         baos.write('\n');

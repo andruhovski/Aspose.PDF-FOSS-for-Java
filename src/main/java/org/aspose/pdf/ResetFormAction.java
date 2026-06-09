@@ -1,9 +1,9 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 
 /**
  * ResetForm action — resets form fields to default values
@@ -19,7 +19,7 @@ public class ResetFormAction extends PdfAction {
      *
      * @param dict the action dictionary
      */
-    public ResetFormAction(COSDictionary dict) {
+    public ResetFormAction(PdfDictionary dict) {
         this.actionDict = dict;
     }
 
@@ -27,8 +27,8 @@ public class ResetFormAction extends PdfAction {
      * Creates a ResetFormAction that resets all fields.
      */
     public ResetFormAction() {
-        this.actionDict = new COSDictionary();
-        actionDict.set(COSName.of("S"), COSName.of("ResetForm"));
+        this.actionDict = new PdfDictionary();
+        actionDict.set(PdfName.of("S"), PdfName.of("ResetForm"));
     }
 
     /**
@@ -50,9 +50,9 @@ public class ResetFormAction extends PdfAction {
      *
      * @return the fields array, or {@code null}
      */
-    public COSArray getFields() {
-        COSBase f = resolve(actionDict.get("Fields"));
-        return (f instanceof COSArray) ? (COSArray) f : null;
+    public PdfArray getFields() {
+        PdfBase f = resolve(actionDict.get("Fields"));
+        return (f instanceof PdfArray) ? (PdfArray) f : null;
     }
 
     /**
@@ -60,7 +60,7 @@ public class ResetFormAction extends PdfAction {
      *
      * @param fields the fields array (or {@code null} for all fields)
      */
-    public void setFields(COSArray fields) {
-        actionDict.set(COSName.of("Fields"), fields);
+    public void setFields(PdfArray fields) {
+        actionDict.set(PdfName.of("Fields"), fields);
     }
 }

@@ -1,7 +1,7 @@
 package org.aspose.pdf.engine.function;
 
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 
 import java.io.IOException;
 import java.util.logging.Logger;
@@ -26,14 +26,14 @@ public final class SampledFunction extends PdfFunction {
     private final int[] samples; // flat array of all sample values (unsigned ints)
 
     /**
-     * Creates a sampled function from a COS stream dictionary.
+     * Creates a sampled function from a PDF stream dictionary.
      *
      * @param dict   the function stream dictionary
      * @param domain the input domain
      * @param range  the output range
      * @throws IOException if the sample data cannot be read
      */
-    public SampledFunction(COSDictionary dict, double[] domain, double[] range)
+    public SampledFunction(PdfDictionary dict, double[] domain, double[] range)
             throws IOException {
         super(domain, range);
 
@@ -63,8 +63,8 @@ public final class SampledFunction extends PdfFunction {
         }
 
         // Read sample data from stream
-        if (dict instanceof COSStream) {
-            byte[] data = ((COSStream) dict).getDecodedData();
+        if (dict instanceof PdfStream) {
+            byte[] data = ((PdfStream) dict).getDecodedData();
             this.samples = decodeSamples(data);
         } else {
             this.samples = new int[0];

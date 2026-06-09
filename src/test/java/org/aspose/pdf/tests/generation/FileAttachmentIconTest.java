@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Stage 11 / Bug J — {@link FileAttachmentAnnotation#setIcon(String)} must
  * write through to the {@code /Name} entry per ISO 32000-1:2008 §12.5.6.15
- * Table 184 so callers no longer have to reach into {@code getCOSDictionary()}
+ * Table 184 so callers no longer have to reach into {@code getPdfDictionary()}
  * directly.
  */
 class FileAttachmentIconTest {
@@ -83,7 +83,7 @@ class FileAttachmentIconTest {
         // /Name is gone — getIcon() falls back to its default "PushPin".
         assertEquals("PushPin", fa.getIcon(),
                 "missing /Name should make getIcon() return the documented default");
-        assertFalse(fa.getCOSDictionary().containsKey("Name"),
+        assertFalse(fa.getPdfDictionary().containsKey("Name"),
                 "/Name entry must be removed from the dict after setIcon(null)");
     }
 }

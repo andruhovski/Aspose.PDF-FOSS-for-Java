@@ -56,8 +56,8 @@ public class TOCIElement extends Element {
             throw new IllegalArgumentException("Header reference must not be null");
         }
         LOG.fine(() -> "Adding Ref from TOCI to header: " + header.getText());
-        structureElement.getCOSDictionary().set(
-            org.aspose.pdf.engine.cos.COSName.of("Ref"),
-            header.getStructureElement().getCOSDictionary());
+        structureElement.getPdfDictionary().set(
+            org.aspose.pdf.engine.pdfobjects.PdfName.of("Ref"),
+            header.getStructureElement().getPdfDictionary());
     }
 }

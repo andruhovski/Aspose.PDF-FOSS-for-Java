@@ -1,10 +1,10 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSObjectReference;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 import org.aspose.pdf.engine.parser.ContentStreamParser;
 import org.aspose.pdf.engine.parser.PDFParser;
 
@@ -23,19 +23,19 @@ public class XForm {
 
     private static final Logger LOG = Logger.getLogger(XForm.class.getName());
 
-    private final COSStream stream;
+    private final PdfStream stream;
     private final String name;
     private final PDFParser parser;
 
     /**
      * Creates an XForm from a form XObject stream.
      *
-     * @param stream the form XObject COSStream
+     * @param stream the form XObject PdfStream
      * @param name   the resource name (e.g., "Fm1")
      * @param parser the PDF parser (may be null)
      */
-    public XForm(COSStream stream, String name, PDFParser parser) {
-        this.stream = stream != null ? stream : new COSStream();
+    public XForm(PdfStream stream, String name, PDFParser parser) {
+        this.stream = stream != null ? stream : new PdfStream();
         this.name = name;
         this.parser = parser;
     }
@@ -55,9 +55,9 @@ public class XForm {
      * @return the bounding box, or null if absent
      */
     public Rectangle getBBox() {
-        COSBase bbox = stream.get("BBox");
-        if (bbox instanceof COSArray && ((COSArray) bbox).size() == 4) {
-            return Rectangle.fromCOSArray((COSArray) bbox);
+        PdfBase bbox = stream.get("BBox");
+        if (bbox instanceof PdfArray && ((PdfArray) bbox).size() == 4) {
+            return Rectangle.fromPdfArray((PdfArray) bbox);
         }
         return null;
     }
@@ -69,9 +69,9 @@ public class XForm {
      * @return the matrix
      */
     public Matrix getMatrix() {
-        COSBase m = stream.get("Matrix");
-        if (m instanceof COSArray && ((COSArray) m).size() == 6) {
-            return Matrix.fromCOSArray((COSArray) m);
+        PdfBase m = stream.get("Matrix");
+        if (m instanceof PdfArray && ((PdfArray) m).size() == 6) {
+            return Matrix.fromPdfArray((PdfArray) m);
         }
         return Matrix.IDENTITY;
     }
@@ -82,9 +82,9 @@ public class XForm {
      * @return the Resources, or null if absent
      */
     public Resources getResources() {
-        COSBase res = resolveRef(stream.get("Resources"));
-        if (res instanceof COSDictionary) {
-            return new Resources((COSDictionary) res);
+        PdfBase res = resolveRef(stream.get("Resources"));
+        if (res instanceof PdfDictionary) {
+            return new Resources((PdfDictionary) res);
         }
         return null;
     }
@@ -103,7 +103,7 @@ public class XForm {
      * Replaces the content stream of this form XObject with the serialized form
      * of {@code contents}. Mirrors C# {@code XForm.Contents = …} semantics so
      * mutations made to the {@link OperatorCollection} returned by
-     * {@link #getContents()} can be persisted back to the COSStream.
+     * {@link #getContents()} can be persisted back to the PdfStream.
      *
      * @param contents the new operator collection to serialize
      */
@@ -120,18 +120,18 @@ public class XForm {
     }
 
     /**
-     * Returns the underlying COS stream.
+     * Returns the underlying PDF stream.
      *
      * @return the form XObject stream
      */
-    public COSStream getCOSStream() {
+    public PdfStream getPdfStream() {
         return stream;
     }
 
-    private COSBase resolveRef(COSBase val) {
-        if (val instanceof COSObjectReference) {
+    private PdfBase resolveRef(PdfBase val) {
+        if (val instanceof PdfObjectReference) {
             try {
-                return ((COSObjectReference) val).dereference();
+                return ((PdfObjectReference) val).dereference();
             } catch (IOException e) {
                 LOG.warning(() -> "Failed to dereference: " + e.getMessage());
                 return null;

@@ -1,11 +1,11 @@
 package org.aspose.pdf.engine.security;
 
 import org.aspose.pdf.CryptoAlgorithm;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 
 import java.util.logging.Logger;
 
@@ -21,14 +21,14 @@ public class PDFEncryptionDict {
 
     private static final Logger LOG = Logger.getLogger(PDFEncryptionDict.class.getName());
 
-    private final COSDictionary dict;
+    private final PdfDictionary dict;
 
     /**
      * Creates an encryption dictionary wrapper.
      *
-     * @param dict the /Encrypt COS dictionary
+     * @param dict the /Encrypt PDF dictionary
      */
-    public PDFEncryptionDict(COSDictionary dict) {
+    public PDFEncryptionDict(PdfDictionary dict) {
         this.dict = dict;
     }
 
@@ -54,32 +54,32 @@ public class PDFEncryptionDict {
 
     /** O: owner password hash. */
     public byte[] getO() {
-        COSBase o = dict.get("O");
-        return (o instanceof COSString) ? ((COSString) o).getBytes() : new byte[0];
+        PdfBase o = dict.get("O");
+        return (o instanceof PdfString) ? ((PdfString) o).getBytes() : new byte[0];
     }
 
     /** U: user password hash. */
     public byte[] getU() {
-        COSBase u = dict.get("U");
-        return (u instanceof COSString) ? ((COSString) u).getBytes() : new byte[0];
+        PdfBase u = dict.get("U");
+        return (u instanceof PdfString) ? ((PdfString) u).getBytes() : new byte[0];
     }
 
     /** OE: owner encryption key (R=6, 32 bytes). */
     public byte[] getOE() {
-        COSBase oe = dict.get("OE");
-        return (oe instanceof COSString) ? ((COSString) oe).getBytes() : null;
+        PdfBase oe = dict.get("OE");
+        return (oe instanceof PdfString) ? ((PdfString) oe).getBytes() : null;
     }
 
     /** UE: user encryption key (R=6, 32 bytes). */
     public byte[] getUE() {
-        COSBase ue = dict.get("UE");
-        return (ue instanceof COSString) ? ((COSString) ue).getBytes() : null;
+        PdfBase ue = dict.get("UE");
+        return (ue instanceof PdfString) ? ((PdfString) ue).getBytes() : null;
     }
 
     /** Perms: encrypted permissions (R=6, 16 bytes). */
     public byte[] getPerms() {
-        COSBase p = dict.get("Perms");
-        return (p instanceof COSString) ? ((COSString) p).getBytes() : null;
+        PdfBase p = dict.get("Perms");
+        return (p instanceof PdfString) ? ((PdfString) p).getBytes() : null;
     }
 
     /**
@@ -112,9 +112,9 @@ public class PDFEncryptionDict {
     }
 
     /** CF: crypt filter dictionary (V=4+). */
-    public COSDictionary getCF() {
-        COSBase cf = dict.get("CF");
-        return (cf instanceof COSDictionary) ? (COSDictionary) cf : null;
+    public PdfDictionary getCF() {
+        PdfBase cf = dict.get("CF");
+        return (cf instanceof PdfDictionary) ? (PdfDictionary) cf : null;
     }
 
     /**
@@ -125,14 +125,24 @@ public class PDFEncryptionDict {
     public CipherType getCipherType() {
         int v = getV();
         if (v <= 3) return CipherType.RC4;
+
+        // V >= 4: the cipher applied to streams is selected by the /StmF crypt
+        // filter (§7.6.5, Table 25). When /StmF is /Identity the streams are NOT
+        // encrypted — applying any cipher to them corrupts already-valid data
+        // (e.g. a FlateDecode stream that starts with a real zlib header).
+        String stmF = getStmF();
+        if ("Identity".equals(stmF)) return CipherType.IDENTITY;
+
         if (v == 4) {
-            String stmF = getStmF();
-            COSDictionary cf = getCF();
-            if (cf != null && !"Identity".equals(stmF)) {
-                COSBase filterObj = cf.get(COSName.of(stmF));
-                if (filterObj instanceof COSDictionary) {
-                    String cfm = ((COSDictionary) filterObj).getNameAsString("CFM");
+            PdfDictionary cf = getCF();
+            if (cf != null) {
+                PdfBase filterObj = cf.get(PdfName.of(stmF));
+                if (filterObj instanceof PdfDictionary) {
+                    String cfm = ((PdfDictionary) filterObj).getNameAsString("CFM");
                     if ("AESV2".equals(cfm)) return CipherType.AES_128;
+                    if ("AESV3".equals(cfm)) return CipherType.AES_256;
+                    if ("Identity".equals(cfm)) return CipherType.IDENTITY;
+                    // "V2" (and anything else) → RC4
                 }
             }
             return CipherType.RC4;
@@ -140,8 +150,8 @@ public class PDFEncryptionDict {
         return CipherType.AES_256;
     }
 
-    /** Supported cipher types. */
-    public enum CipherType { RC4, AES_128, AES_256 }
+    /** Supported cipher types ({@code IDENTITY} = no encryption applied). */
+    public enum CipherType { RC4, AES_128, AES_256, IDENTITY }
 
     // ── Write-side: static factory ──────────────────────────────────
 
@@ -164,8 +174,8 @@ public class PDFEncryptionDict {
     public static PDFEncryptionDict build(CryptoAlgorithm algorithm, int permissions,
                                            byte[] O, byte[] U,
                                            byte[] OE, byte[] UE, byte[] Perms) {
-        COSDictionary d = new COSDictionary();
-        d.set(COSName.of("Filter"), COSName.of("Standard"));
+        PdfDictionary d = new PdfDictionary();
+        d.set(PdfName.of("Filter"), PdfName.of("Standard"));
 
         int V, R, length;
         switch (algorithm) {
@@ -185,8 +195,8 @@ public class PDFEncryptionDict {
                 throw new IllegalArgumentException("Unsupported algorithm: " + algorithm);
         }
 
-        d.set(COSName.of("V"), COSInteger.valueOf(V));
-        d.set(COSName.of("R"), COSInteger.valueOf(R));
+        d.set(PdfName.of("V"), PdfInteger.valueOf(V));
+        d.set(PdfName.of("R"), PdfInteger.valueOf(R));
         // Top-level /Length is required by Adobe Acrobat for V=5 per the
         // Adobe Supplement to ISO 32000 (PDF 1.7 Extension Level 3) — Acrobat
         // refuses to open the file with "the document cannot be decrypted"
@@ -194,44 +204,44 @@ public class PDFEncryptionDict {
         // includes /Length 256 for V=5/R=6. (In PDF 2.0 it is marked
         // deprecated but still tolerated.) For V ∈ {1, 2, 4} the entry is
         // also defined by ISO 32000-1 Table 20.
-        d.set(COSName.of("Length"), COSInteger.valueOf(length));
-        d.set(COSName.of("P"), COSInteger.valueOf(permissions));
-        d.set(COSName.of("O"), new COSString(O));
-        d.set(COSName.of("U"), new COSString(U));
+        d.set(PdfName.of("Length"), PdfInteger.valueOf(length));
+        d.set(PdfName.of("P"), PdfInteger.valueOf(permissions));
+        d.set(PdfName.of("O"), new PdfString(O));
+        d.set(PdfName.of("U"), new PdfString(U));
 
         // V=4 and V=5: add crypt filter dictionaries (§7.6.3.2.3, Table 25)
         if (V >= 4) {
-            d.set(COSName.of("StmF"), COSName.of("StdCF"));
-            d.set(COSName.of("StrF"), COSName.of("StdCF"));
+            d.set(PdfName.of("StmF"), PdfName.of("StdCF"));
+            d.set(PdfName.of("StrF"), PdfName.of("StdCF"));
             // /EncryptMetadata default is true but Adobe Acrobat is strict
             // about its presence on the encrypt dict for V≥4. Set it
             // explicitly to keep Perms[8]='T' (set by encrypt()) consistent.
-            d.set(COSName.of("EncryptMetadata"), org.aspose.pdf.engine.cos.COSBoolean.TRUE);
+            d.set(PdfName.of("EncryptMetadata"), org.aspose.pdf.engine.pdfobjects.PdfBoolean.TRUE);
 
             String cfm = (V == 4) ? "AESV2" : "AESV3";
             int cfLen = (V == 4) ? 16 : 32;
 
-            COSDictionary stdCF = new COSDictionary();
-            stdCF.set(COSName.of("Type"), COSName.of("CryptFilter"));
-            stdCF.set(COSName.of("CFM"), COSName.of(cfm));
-            stdCF.set(COSName.of("AuthEvent"), COSName.of("DocOpen"));
-            stdCF.set(COSName.of("Length"), COSInteger.valueOf(cfLen));
+            PdfDictionary stdCF = new PdfDictionary();
+            stdCF.set(PdfName.of("Type"), PdfName.of("CryptFilter"));
+            stdCF.set(PdfName.of("CFM"), PdfName.of(cfm));
+            stdCF.set(PdfName.of("AuthEvent"), PdfName.of("DocOpen"));
+            stdCF.set(PdfName.of("Length"), PdfInteger.valueOf(cfLen));
 
-            COSDictionary cf = new COSDictionary();
-            cf.set(COSName.of("StdCF"), stdCF);
-            d.set(COSName.of("CF"), cf);
+            PdfDictionary cf = new PdfDictionary();
+            cf.set(PdfName.of("StdCF"), stdCF);
+            d.set(PdfName.of("CF"), cf);
         }
 
         // R=6: add OE, UE, Perms (§7.6.3.3)
         if (R == 6) {
-            if (OE != null) d.set(COSName.of("OE"), new COSString(OE));
-            if (UE != null) d.set(COSName.of("UE"), new COSString(UE));
-            if (Perms != null) d.set(COSName.of("Perms"), new COSString(Perms));
+            if (OE != null) d.set(PdfName.of("OE"), new PdfString(OE));
+            if (UE != null) d.set(PdfName.of("UE"), new PdfString(UE));
+            if (Perms != null) d.set(PdfName.of("Perms"), new PdfString(Perms));
         }
 
         return new PDFEncryptionDict(d);
     }
 
     /** Returns the underlying dictionary. */
-    public COSDictionary getCOSDictionary() { return dict; }
+    public PdfDictionary getPdfDictionary() { return dict; }
 }

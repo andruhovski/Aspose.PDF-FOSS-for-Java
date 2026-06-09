@@ -1,7 +1,7 @@
 package org.aspose.pdf.operators;
 
 import org.aspose.pdf.Operator;
-import org.aspose.pdf.engine.cos.COSBase;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
 
 import java.util.List;
 
@@ -22,7 +22,7 @@ public class FillStroke extends Operator {
     }
 
     /** Creates a FillStroke operator from parsed operands. */
-    public FillStroke(List<COSBase> operands) {
+    public FillStroke(List<PdfBase> operands) {
         super("B", operands);
     }
 }

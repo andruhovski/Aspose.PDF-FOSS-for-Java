@@ -1,7 +1,7 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 
 /**
  * Named action — predefined action (ISO 32000-1:2008, §12.6.4.11).
@@ -17,9 +17,9 @@ public class NamedAction extends PdfAction {
      * @param name the action name (e.g., "NextPage")
      */
     public NamedAction(String name) {
-        this.actionDict = new COSDictionary();
-        actionDict.set(COSName.of("S"), COSName.of("Named"));
-        actionDict.set(COSName.of("N"), COSName.of(name));
+        this.actionDict = new PdfDictionary();
+        actionDict.set(PdfName.of("S"), PdfName.of("Named"));
+        actionDict.set(PdfName.of("N"), PdfName.of(name));
     }
 
     /**
@@ -27,7 +27,7 @@ public class NamedAction extends PdfAction {
      *
      * @param dict the action dictionary
      */
-    public NamedAction(COSDictionary dict) {
+    public NamedAction(PdfDictionary dict) {
         this.actionDict = dict;
     }
 

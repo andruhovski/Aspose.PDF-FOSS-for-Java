@@ -1,10 +1,10 @@
 package org.aspose.pdf.engine.font;
 
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSInteger;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfInteger;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 import org.aspose.pdf.engine.font.ttf.TrueTypeReader;
 import org.aspose.pdf.engine.parser.PDFParser;
 
@@ -43,11 +43,11 @@ public class CIDFont extends PdfFont {
      * @param parser   the PDF parser (may be null)
      * @throws IOException if reading font data fails
      */
-    public CIDFont(COSDictionary fontDict, PDFParser parser) throws IOException {
+    public CIDFont(PdfDictionary fontDict, PDFParser parser) throws IOException {
         super(fontDict, parser);
 
         // /DW default width
-        COSBase dwVal = fontDict.get("DW");
+        PdfBase dwVal = fontDict.get("DW");
         if (dwVal != null) {
             defaultWidth = getNumber(dwVal);
         }
@@ -110,16 +110,56 @@ public class CIDFont extends PdfFont {
         return cid;
     }
 
+    /**
+     * Maps a CID to the embedded font program's glyph id via /CIDToGIDMap
+     * (explicit stream or the default Identity). Public for glyph-level
+     * rendering: a CIDFontType2 content stream addresses GLYPHS, so drawing
+     * by glyph id preserves exactly what the producer laid out (e.g.
+     * pre-shaped Arabic presentation forms — corpus 29111), where a decode
+     * to Unicode + re-draw loses the shaping.
+     *
+     * @param cid the character id from the content stream
+     * @return the glyph id (0 = .notdef / out of range)
+     */
+    public int toGlyphId(int cid) {
+        return cidToGid(cid);
+    }
+
+    /**
+     * Returns the em-normalised, Y-up outline of the given glyph id from the
+     * embedded TrueType program, or {@code null} when no embedded program is
+     * available or the glyph cannot be parsed. Drawing this outline directly
+     * avoids {@code java.awt.Font}, which substitutes the default physical font
+     * for cmap-less subset programs (corpus APS/37100: every glyph rendered as
+     * the wrong Arial shape).
+     *
+     * @param gid the glyph id (see {@link #toGlyphId(int)})
+     * @return the glyph outline, or {@code null}
+     */
+    public java.awt.geom.GeneralPath glyphOutline(int gid) {
+        return ttReader != null ? ttReader.getGlyphPath(gid) : null;
+    }
+
+    /**
+     * Returns true if the descendant subtype is CIDFontType2 (TrueType-housed,
+     * glyph ids resolvable via /CIDToGIDMap).
+     *
+     * @return true for CIDFontType2
+     */
+    public boolean isType2() {
+        return "CIDFontType2".equals(fontDict.getNameAsString("Subtype"));
+    }
+
     private void initCidToGidMap() {
-        COSBase mapVal = resolve(fontDict.get("CIDToGIDMap"));
-        if (mapVal instanceof COSStream) {
+        PdfBase mapVal = resolve(fontDict.get("CIDToGIDMap"));
+        if (mapVal instanceof PdfStream) {
             try {
-                this.cidToGidMap = ((COSStream) mapVal).getDecodedData();
+                this.cidToGidMap = ((PdfStream) mapVal).getDecodedData();
             } catch (IOException e) {
                 LOG.fine(() -> "Failed to read /CIDToGIDMap stream: " + e.getMessage());
             }
         }
-        // COSName "Identity" (or absent) → leave cidToGidMap null (CID == GID).
+        // PdfName "Identity" (or absent) → leave cidToGidMap null (CID == GID).
     }
 
     private void initEmbeddedFontProgram() {
@@ -129,7 +169,7 @@ public class CIDFont extends PdfFont {
         // CIDFontType2 embeds a TrueType program in /FontFile2. CIDFontType0
         // (CFF) uses /FontFile3 and is not handled here (returns 0 → caller falls
         // back to its previous behaviour).
-        COSStream fontFile = fontDescriptor.getFontFile2();
+        PdfStream fontFile = fontDescriptor.getFontFile2();
         if (fontFile == null) {
             return;
         }
@@ -202,30 +242,30 @@ public class CIDFont extends PdfFont {
      * </p>
      */
     private void parseWidthArray() {
-        COSBase wVal = resolve(fontDict.get("W"));
-        if (!(wVal instanceof COSArray)) return;
-        COSArray wArray = (COSArray) wVal;
+        PdfBase wVal = resolve(fontDict.get("W"));
+        if (!(wVal instanceof PdfArray)) return;
+        PdfArray wArray = (PdfArray) wVal;
 
         int i = 0;
         while (i < wArray.size()) {
-            COSBase first = wArray.get(i);
-            if (!(first instanceof COSInteger)) { i++; continue; }
-            int cidFirst = ((COSInteger) first).intValue();
+            PdfBase first = wArray.get(i);
+            if (!(first instanceof PdfInteger)) { i++; continue; }
+            int cidFirst = ((PdfInteger) first).intValue();
 
             if (i + 1 >= wArray.size()) break;
-            COSBase second = wArray.get(i + 1);
+            PdfBase second = wArray.get(i + 1);
 
-            if (second instanceof COSArray) {
+            if (second instanceof PdfArray) {
                 // Format: cidFirst [w1 w2 w3 ...]
-                COSArray widths = (COSArray) second;
+                PdfArray widths = (PdfArray) second;
                 for (int j = 0; j < widths.size(); j++) {
                     cidWidths.put(cidFirst + j, getNumber(widths.get(j)));
                 }
                 i += 2;
-            } else if (second instanceof COSInteger) {
+            } else if (second instanceof PdfInteger) {
                 // Format: cidFirst cidLast w
                 if (i + 2 >= wArray.size()) break;
-                int cidLast = ((COSInteger) second).intValue();
+                int cidLast = ((PdfInteger) second).intValue();
                 double width = getNumber(wArray.get(i + 2));
                 for (int cid = cidFirst; cid <= cidLast; cid++) {
                     cidWidths.put(cid, width);

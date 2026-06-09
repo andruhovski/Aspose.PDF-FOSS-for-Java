@@ -1,7 +1,7 @@
 package org.aspose.pdf.engine.filter;
 
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -57,7 +57,7 @@ import java.util.logging.Logger;
  *       are essentially equivalent to single-layer for the supported profile.</li>
  * </ul>
  */
-public final class JPXDecodeFilter implements COSFilter {
+public final class JPXDecodeFilter implements PdfFilter {
 
     private static final Logger LOG = Logger.getLogger(JPXDecodeFilter.class.getName());
 
@@ -921,12 +921,14 @@ public final class JPXDecodeFilter implements COSFilter {
 
     /** 2D inverse DWT for one decomposition level using 5/3 wavelet. */
     static void inverseDWT53_2D(int[] data, int width, int height, int stride) {
+        checkCancelled(); // see inverseDWT97_2D
         int[] row = new int[width];
         for (int y = 0; y < height; y++) {
             System.arraycopy(data, y * stride, row, 0, width);
             inverseDWT53_1D(row, 0, width);
             System.arraycopy(row, 0, data, y * stride, width);
         }
+        checkCancelled();
         int[] col = new int[height];
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) col[y] = data[y * stride + x];
@@ -937,12 +939,17 @@ public final class JPXDecodeFilter implements COSFilter {
 
     /** 2D inverse DWT for one decomposition level using 9/7 wavelet. */
     static void inverseDWT97_2D(double[] data, int width, int height, int stride) {
+        // Large JPEG2000 tiles run the wavelet for minutes — honour
+        // cancellation so a timed-out mass-testing worker unwinds instead of
+        // spinning as a zombie thread (observed via jstack on corpus giants).
+        checkCancelled();
         double[] row = new double[width];
         for (int y = 0; y < height; y++) {
             System.arraycopy(data, y * stride, row, 0, width);
             inverseDWT97_1D(row, 0, width);
             System.arraycopy(row, 0, data, y * stride, width);
         }
+        checkCancelled();
         double[] col = new double[height];
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) col[y] = data[y * stride + x];
@@ -951,12 +958,19 @@ public final class JPXDecodeFilter implements COSFilter {
         }
     }
 
+    /** Throws an unchecked cancellation marker when the worker is interrupted. */
+    private static void checkCancelled() {
+        if (Thread.currentThread().isInterrupted()) {
+            throw new IllegalStateException("JPXDecode: interrupted");
+        }
+    }
+
     // ═══════════════════════════════════════════════════════════════
     //  Main Decoder
     // ═══════════════════════════════════════════════════════════════
 
     @Override
-    public byte[] decode(byte[] encoded, COSDictionary params) throws IOException {
+    public byte[] decode(byte[] encoded, PdfDictionary params) throws IOException {
         if (encoded == null || encoded.length == 0) return encoded;
         try {
             return decodeJP2(encoded);
@@ -1949,15 +1963,15 @@ public final class JPXDecodeFilter implements COSFilter {
         return result;
     }
 
-    // ─── COSFilter interface ─────────────────────────────────────
+    // ─── PdfFilter interface ─────────────────────────────────────
 
     @Override
-    public byte[] encode(byte[] decoded, COSDictionary params) throws IOException {
+    public byte[] encode(byte[] decoded, PdfDictionary params) throws IOException {
         throw new IOException("JPXDecode encoding not implemented");
     }
 
     @Override
-    public COSName getName() {
-        return COSName.of("JPXDecode");
+    public PdfName getName() {
+        return PdfName.of("JPXDecode");
     }
 }

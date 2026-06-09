@@ -2,7 +2,7 @@ package org.aspose.pdf.tests;
 
 import org.aspose.pdf.*;
 import org.aspose.pdf.annotations.*;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -15,9 +15,9 @@ import static org.junit.jupiter.api.Assertions.*;
 public class AnnotationTest {
 
     private Page createPage() {
-        COSDictionary pageDict = new COSDictionary();
-        pageDict.set(COSName.TYPE, COSName.PAGE);
-        pageDict.set(COSName.MEDIABOX, new Rectangle(0, 0, 595, 842).toCOSArray());
+        PdfDictionary pageDict = new PdfDictionary();
+        pageDict.set(PdfName.TYPE, PdfName.PAGE);
+        pageDict.set(PdfName.MEDIABOX, new Rectangle(0, 0, 595, 842).toPdfArray());
         return new Page(pageDict, null);
     }
 
@@ -25,47 +25,47 @@ public class AnnotationTest {
 
     @Test
     public void testFactoryText() {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("Subtype"), COSName.of("Text"));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("Subtype"), PdfName.of("Text"));
         Annotation a = Annotation.fromDictionary(dict, null);
         assertTrue(a instanceof TextAnnotation);
     }
 
     @Test
     public void testFactoryLink() {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("Subtype"), COSName.of("Link"));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("Subtype"), PdfName.of("Link"));
         Annotation a = Annotation.fromDictionary(dict, null);
         assertTrue(a instanceof LinkAnnotation);
     }
 
     @Test
     public void testFactoryHighlight() {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("Subtype"), COSName.of("Highlight"));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("Subtype"), PdfName.of("Highlight"));
         Annotation a = Annotation.fromDictionary(dict, null);
         assertTrue(a instanceof HighlightAnnotation);
     }
 
     @Test
     public void testFactoryWidget() {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("Subtype"), COSName.of("Widget"));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("Subtype"), PdfName.of("Widget"));
         Annotation a = Annotation.fromDictionary(dict, null);
         assertTrue(a instanceof WidgetAnnotation);
     }
 
     @Test
     public void testFactoryUnknown() {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("Subtype"), COSName.of("XYZUnknown"));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("Subtype"), PdfName.of("XYZUnknown"));
         Annotation a = Annotation.fromDictionary(dict, null);
         assertTrue(a instanceof GenericAnnotation);
     }
 
     @Test
     public void testFactoryNoSubtype() {
-        COSDictionary dict = new COSDictionary();
+        PdfDictionary dict = new PdfDictionary();
         Annotation a = Annotation.fromDictionary(dict, null);
         assertTrue(a instanceof GenericAnnotation);
     }
@@ -74,13 +74,13 @@ public class AnnotationTest {
 
     @Test
     public void testCollectionFromArray() {
-        COSArray arr = new COSArray();
-        COSDictionary d1 = new COSDictionary();
-        d1.set(COSName.of("Subtype"), COSName.of("Text"));
-        COSDictionary d2 = new COSDictionary();
-        d2.set(COSName.of("Subtype"), COSName.of("Link"));
-        COSDictionary d3 = new COSDictionary();
-        d3.set(COSName.of("Subtype"), COSName.of("Highlight"));
+        PdfArray arr = new PdfArray();
+        PdfDictionary d1 = new PdfDictionary();
+        d1.set(PdfName.of("Subtype"), PdfName.of("Text"));
+        PdfDictionary d2 = new PdfDictionary();
+        d2.set(PdfName.of("Subtype"), PdfName.of("Link"));
+        PdfDictionary d3 = new PdfDictionary();
+        d3.set(PdfName.of("Subtype"), PdfName.of("Highlight"));
         arr.add(d1); arr.add(d2); arr.add(d3);
 
         AnnotationCollection coll = new AnnotationCollection(arr, null, null);
@@ -92,8 +92,8 @@ public class AnnotationTest {
 
     @Test
     public void testCollectionOneBasedIndex() {
-        COSArray arr = new COSArray();
-        arr.add(new COSDictionary());
+        PdfArray arr = new PdfArray();
+        arr.add(new PdfDictionary());
         AnnotationCollection coll = new AnnotationCollection(arr, null, null);
         assertThrows(IndexOutOfBoundsException.class, () -> coll.get(0));
         assertThrows(IndexOutOfBoundsException.class, () -> coll.get(2));
@@ -101,7 +101,7 @@ public class AnnotationTest {
 
     @Test
     public void testCollectionAdd() {
-        COSArray arr = new COSArray();
+        PdfArray arr = new PdfArray();
         AnnotationCollection coll = new AnnotationCollection(arr, null, null);
         assertEquals(0, coll.getCount());
 
@@ -113,13 +113,13 @@ public class AnnotationTest {
 
     @Test
     public void testCollectionDelete() {
-        COSArray arr = new COSArray();
-        COSDictionary d1 = new COSDictionary();
-        d1.set(COSName.of("Subtype"), COSName.of("Text"));
-        d1.set(COSName.of("Contents"), new COSString("First".getBytes()));
-        COSDictionary d2 = new COSDictionary();
-        d2.set(COSName.of("Subtype"), COSName.of("Text"));
-        d2.set(COSName.of("Contents"), new COSString("Second".getBytes()));
+        PdfArray arr = new PdfArray();
+        PdfDictionary d1 = new PdfDictionary();
+        d1.set(PdfName.of("Subtype"), PdfName.of("Text"));
+        d1.set(PdfName.of("Contents"), new PdfString("First".getBytes()));
+        PdfDictionary d2 = new PdfDictionary();
+        d2.set(PdfName.of("Subtype"), PdfName.of("Text"));
+        d2.set(PdfName.of("Contents"), new PdfString("Second".getBytes()));
         arr.add(d1); arr.add(d2);
 
         AnnotationCollection coll = new AnnotationCollection(arr, null, null);
@@ -131,10 +131,10 @@ public class AnnotationTest {
 
     @Test
     public void testCollectionIteration() {
-        COSArray arr = new COSArray();
+        PdfArray arr = new PdfArray();
         for (int i = 0; i < 5; i++) {
-            COSDictionary d = new COSDictionary();
-            d.set(COSName.of("Subtype"), COSName.of("Text"));
+            PdfDictionary d = new PdfDictionary();
+            d.set(PdfName.of("Subtype"), PdfName.of("Text"));
             arr.add(d);
         }
         AnnotationCollection coll = new AnnotationCollection(arr, null, null);
@@ -148,7 +148,7 @@ public class AnnotationTest {
 
     @Test
     public void testEmptyCollection() {
-        AnnotationCollection coll = new AnnotationCollection(new COSArray(), null, null);
+        AnnotationCollection coll = new AnnotationCollection(new PdfArray(), null, null);
         assertEquals(0, coll.getCount());
     }
 
@@ -280,9 +280,9 @@ public class AnnotationTest {
 
     @Test
     public void testFreeTextJustification() {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("Subtype"), COSName.of("FreeText"));
-        dict.set(COSName.of("Q"), COSInteger.valueOf(1));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("Subtype"), PdfName.of("FreeText"));
+        dict.set(PdfName.of("Q"), PdfInteger.valueOf(1));
         FreeTextAnnotation ft = new FreeTextAnnotation(dict, null);
         assertEquals(1, ft.getJustification());
     }
@@ -326,9 +326,9 @@ public class AnnotationTest {
 
     @Test
     public void testWidgetFieldType() {
-        COSDictionary dict = new COSDictionary();
-        dict.set(COSName.of("Subtype"), COSName.of("Widget"));
-        dict.set(COSName.of("FT"), COSName.of("Tx"));
+        PdfDictionary dict = new PdfDictionary();
+        dict.set(PdfName.of("Subtype"), PdfName.of("Widget"));
+        dict.set(PdfName.of("FT"), PdfName.of("Tx"));
         WidgetAnnotation w = new WidgetAnnotation(dict, null);
         assertEquals("Tx", w.getFieldType());
     }
@@ -351,7 +351,7 @@ public class AnnotationTest {
         ta.setContents("A note");
         coll.add(ta);
 
-        // Re-fetch to verify persistence in COSArray
+        // Re-fetch to verify persistence in PdfArray
         AnnotationCollection coll2 = page.getAnnotations();
         assertEquals(1, coll2.getCount());
     }

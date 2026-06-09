@@ -1,6 +1,6 @@
 package org.aspose.pdf.operators;
 
-import org.aspose.pdf.engine.cos.COSBase;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
 
 import java.util.List;
 
@@ -20,7 +20,7 @@ public class MoveToNextLine extends TextPlaceOperator {
     }
 
     /** Creates a MoveToNextLine operator from parsed operands. */
-    public MoveToNextLine(List<COSBase> operands) {
+    public MoveToNextLine(List<PdfBase> operands) {
         super("T*", operands);
     }
 }

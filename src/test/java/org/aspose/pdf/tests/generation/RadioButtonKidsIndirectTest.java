@@ -3,11 +3,11 @@ package org.aspose.pdf.tests.generation;
 import org.aspose.pdf.Document;
 import org.aspose.pdf.Page;
 import org.aspose.pdf.Rectangle;
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
 import org.aspose.pdf.forms.RadioButtonField;
 import org.aspose.pdf.forms.RadioButtonOptionField;
 import org.junit.jupiter.api.DisplayName;
@@ -144,24 +144,24 @@ class RadioButtonKidsIndirectTest {
             doc.save(out.toString());
         }
         try (Document r = new Document(out.toString())) {
-            COSDictionary parentDict =
-                    r.getForm().get("plan").getCOSDictionary();
-            COSBase kidsVal = parentDict.get("Kids");
-            if (kidsVal instanceof COSObjectReference) {
-                kidsVal = ((COSObjectReference) kidsVal).dereference();
+            PdfDictionary parentDict =
+                    r.getForm().get("plan").getPdfDictionary();
+            PdfBase kidsVal = parentDict.get("Kids");
+            if (kidsVal instanceof PdfObjectReference) {
+                kidsVal = ((PdfObjectReference) kidsVal).dereference();
             }
-            assertTrue(kidsVal instanceof COSArray);
-            COSArray kids = (COSArray) kidsVal;
+            assertTrue(kidsVal instanceof PdfArray);
+            PdfArray kids = (PdfArray) kidsVal;
             assertTrue(kids.size() >= 2);
             for (int i = 0; i < kids.size(); i++) {
-                COSBase kid = kids.get(i);
-                assertTrue(kid instanceof COSObjectReference,
+                PdfBase kid = kids.get(i);
+                assertTrue(kid instanceof PdfObjectReference,
                         "every /Kids entry must be an indirect reference on reopen");
-                COSBase kidObj = ((COSObjectReference) kid).dereference();
-                assertTrue(kidObj instanceof COSDictionary);
-                COSBase parent = ((COSDictionary) kidObj).get("Parent");
-                if (parent instanceof COSObjectReference) {
-                    parent = ((COSObjectReference) parent).dereference();
+                PdfBase kidObj = ((PdfObjectReference) kid).dereference();
+                assertTrue(kidObj instanceof PdfDictionary);
+                PdfBase parent = ((PdfDictionary) kidObj).get("Parent");
+                if (parent instanceof PdfObjectReference) {
+                    parent = ((PdfObjectReference) parent).dereference();
                 }
                 assertSame(parentDict, parent,
                         "kid /Parent must resolve back to the radio field");
@@ -207,26 +207,26 @@ class RadioButtonKidsIndirectTest {
         }
         try (Document r = new Document(out.toString())) {
             Page page = r.getPages().get(1);
-            COSBase annotsVal = page.getCOSDictionary().get(COSName.ANNOTS);
-            if (annotsVal instanceof COSObjectReference) {
-                annotsVal = ((COSObjectReference) annotsVal).dereference();
+            PdfBase annotsVal = page.getPdfDictionary().get(PdfName.ANNOTS);
+            if (annotsVal instanceof PdfObjectReference) {
+                annotsVal = ((PdfObjectReference) annotsVal).dereference();
             }
-            assertTrue(annotsVal instanceof COSArray, "page must have /Annots");
-            COSArray annots = (COSArray) annotsVal;
+            assertTrue(annotsVal instanceof PdfArray, "page must have /Annots");
+            PdfArray annots = (PdfArray) annotsVal;
             // Collect the kid object keys from the radio field's /Kids.
-            COSDictionary parent = r.getForm().get("plan").getCOSDictionary();
-            COSBase kidsVal = parent.get("Kids");
-            if (kidsVal instanceof COSObjectReference) kidsVal = ((COSObjectReference) kidsVal).dereference();
-            COSArray kids = (COSArray) kidsVal;
+            PdfDictionary parent = r.getForm().get("plan").getPdfDictionary();
+            PdfBase kidsVal = parent.get("Kids");
+            if (kidsVal instanceof PdfObjectReference) kidsVal = ((PdfObjectReference) kidsVal).dereference();
+            PdfArray kids = (PdfArray) kidsVal;
             int matched = 0;
             for (int i = 0; i < kids.size(); i++) {
-                COSBase kid = kids.get(i);
-                if (!(kid instanceof COSObjectReference)) continue;
+                PdfBase kid = kids.get(i);
+                if (!(kid instanceof PdfObjectReference)) continue;
                 for (int j = 0; j < annots.size(); j++) {
-                    COSBase a = annots.get(j);
-                    if (a instanceof COSObjectReference
-                            && ((COSObjectReference) a).getKey().equals(
-                                    ((COSObjectReference) kid).getKey())) {
+                    PdfBase a = annots.get(j);
+                    if (a instanceof PdfObjectReference
+                            && ((PdfObjectReference) a).getKey().equals(
+                                    ((PdfObjectReference) kid).getKey())) {
                         matched++;
                         break;
                     }

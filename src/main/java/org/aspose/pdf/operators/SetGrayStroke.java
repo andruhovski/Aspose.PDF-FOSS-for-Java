@@ -1,6 +1,6 @@
 package org.aspose.pdf.operators;
 
-import org.aspose.pdf.engine.cos.COSBase;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
 
 import java.util.Collections;
 import java.util.List;
@@ -35,7 +35,7 @@ public class SetGrayStroke extends SetColorOperator {
      *
      * @param operands the operands from the content stream parser
      */
-    public SetGrayStroke(List<COSBase> operands) {
+    public SetGrayStroke(List<PdfBase> operands) {
         super("G", operands);
         this.gray = (operands != null && operands.size() > 0) ? getNumber(operands.get(0)) : 0;
     }

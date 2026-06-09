@@ -1,9 +1,9 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
 import org.aspose.pdf.text.Font;
 
 import java.io.IOException;
@@ -57,13 +57,13 @@ public class FontUtilities {
                 Page page = pages.get(i);
                 Resources resources = page.getResources();
                 if (resources == null) continue;
-                COSDictionary fontsDict = resources.getFonts();
+                PdfDictionary fontsDict = resources.getFonts();
                 if (fontsDict == null) continue;
-                for (COSName key : fontsDict.keySet()) {
-                    COSBase fontObj = fontsDict.get(key);
+                for (PdfName key : fontsDict.keySet()) {
+                    PdfBase fontObj = fontsDict.get(key);
                     fontObj = resolveRef(fontObj);
-                    if (fontObj instanceof COSDictionary) {
-                        COSDictionary fontDict = (COSDictionary) fontObj;
+                    if (fontObj instanceof PdfDictionary) {
+                        PdfDictionary fontDict = (PdfDictionary) fontObj;
                         String baseFontName = fontDict.getNameAsString("BaseFont");
                         if (baseFontName == null) {
                             baseFontName = key.getName();
@@ -102,10 +102,10 @@ public class FontUtilities {
      * @param fontDict the font dictionary
      * @return true if the font has an embedded program
      */
-    private boolean isFontEmbedded(COSDictionary fontDict) {
-        COSBase descriptor = resolveRef(fontDict.get("FontDescriptor"));
-        if (descriptor instanceof COSDictionary) {
-            COSDictionary desc = (COSDictionary) descriptor;
+    private boolean isFontEmbedded(PdfDictionary fontDict) {
+        PdfBase descriptor = resolveRef(fontDict.get("FontDescriptor"));
+        if (descriptor instanceof PdfDictionary) {
+            PdfDictionary desc = (PdfDictionary) descriptor;
             if (desc.get("FontFile") != null || desc.get("FontFile2") != null
                     || desc.get("FontFile3") != null) {
                 return true;
@@ -134,13 +134,13 @@ public class FontUtilities {
     /**
      * Resolves an indirect object reference.
      *
-     * @param val the COS value to resolve
+     * @param val the PDF value to resolve
      * @return the resolved value, or null
      */
-    private COSBase resolveRef(COSBase val) {
-        if (val instanceof COSObjectReference) {
+    private PdfBase resolveRef(PdfBase val) {
+        if (val instanceof PdfObjectReference) {
             try {
-                return ((COSObjectReference) val).dereference();
+                return ((PdfObjectReference) val).dereference();
             } catch (Exception e) {
                 return null;
             }

@@ -1,7 +1,7 @@
 package org.aspose.pdf.annotations;
 
 import org.aspose.pdf.*;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,12 +17,12 @@ import java.io.InputStream;
 public class StampAnnotation extends MarkupAnnotation {
 
     /**
-     * Constructs a stamp annotation from an existing COS dictionary.
+     * Constructs a stamp annotation from an existing PDF dictionary.
      *
-     * @param dict the COS dictionary backing this annotation
+     * @param dict the PDF dictionary backing this annotation
      * @param page the page this annotation belongs to
      */
-    public StampAnnotation(COSDictionary dict, Page page) {
+    public StampAnnotation(PdfDictionary dict, Page page) {
         super(dict, page);
     }
 
@@ -34,7 +34,7 @@ public class StampAnnotation extends MarkupAnnotation {
      */
     public StampAnnotation(Page page, Rectangle rect) {
         super(page, rect);
-        dict.set(COSName.of("Subtype"), COSName.of("Stamp"));
+        dict.set(PdfName.of("Subtype"), PdfName.of("Stamp"));
     }
 
     /**
@@ -43,9 +43,9 @@ public class StampAnnotation extends MarkupAnnotation {
      * @param document the document this stamp annotation belongs to
      */
     public StampAnnotation(Document document) {
-        super((COSDictionary) null, (Page) null);
-        dict.set(COSName.of("Type"), COSName.of("Annot"));
-        dict.set(COSName.of("Subtype"), COSName.of("Stamp"));
+        super((PdfDictionary) null, (Page) null);
+        dict.set(PdfName.of("Type"), PdfName.of("Annot"));
+        dict.set(PdfName.of("Subtype"), PdfName.of("Stamp"));
     }
 
     /** Stored image data for the stamp appearance. */
@@ -101,7 +101,7 @@ public class StampAnnotation extends MarkupAnnotation {
      */
     public void setIcon(String icon) {
         if (icon != null) {
-            dict.set(COSName.of("Name"), COSName.of(icon));
+            dict.set(PdfName.of("Name"), PdfName.of(icon));
         }
     }
 }

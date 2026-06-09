@@ -1,7 +1,7 @@
 package org.aspose.pdf.forms;
 
 import org.aspose.pdf.*;
-import org.aspose.pdf.engine.cos.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
@@ -18,13 +18,13 @@ public class TextBoxField extends Field {
     private static final int COMB_FLAG = 1 << 24;
 
     /**
-     * Constructs a text box field from an existing COS dictionary.
+     * Constructs a text box field from an existing PDF dictionary.
      *
-     * @param dict     the COS dictionary backing this field
+     * @param dict     the PDF dictionary backing this field
      * @param page     the page this field belongs to (may be null)
      * @param fullName the fully-qualified dotted name
      */
-    public TextBoxField(COSDictionary dict, Page page, String fullName) {
+    public TextBoxField(PdfDictionary dict, Page page, String fullName) {
         super(dict, page, fullName);
     }
 
@@ -35,10 +35,10 @@ public class TextBoxField extends Field {
      * @param rect the field rectangle
      */
     public TextBoxField(Page page, Rectangle rect) {
-        super(new COSDictionary(), page, "");
-        dict.set(COSName.of("Type"), COSName.of("Annot"));
-        dict.set(COSName.of("Subtype"), COSName.of("Widget"));
-        dict.set(COSName.of("FT"), COSName.of("Tx"));
+        super(new PdfDictionary(), page, "");
+        dict.set(PdfName.of("Type"), PdfName.of("Annot"));
+        dict.set(PdfName.of("Subtype"), PdfName.of("Widget"));
+        dict.set(PdfName.of("FT"), PdfName.of("Tx"));
         setRectLenient(rect);
         // ISO §12.7.3.3: variable-text fields need /DA with at least a /Tf
         // selector or strict readers (poppler, mupdf) won't render typed text.
@@ -73,26 +73,26 @@ public class TextBoxField extends Field {
      * @param rects the array of rectangles for the field's widgets
      */
     public TextBoxField(Page page, Rectangle[] rects) {
-        super(new COSDictionary(), page, "");
-        dict.set(COSName.of("Type"), COSName.of("Annot"));
-        dict.set(COSName.of("Subtype"), COSName.of("Widget"));
-        dict.set(COSName.of("FT"), COSName.of("Tx"));
+        super(new PdfDictionary(), page, "");
+        dict.set(PdfName.of("Type"), PdfName.of("Annot"));
+        dict.set(PdfName.of("Subtype"), PdfName.of("Widget"));
+        dict.set(PdfName.of("FT"), PdfName.of("Tx"));
         if (rects != null && rects.length > 0) {
             if (rects.length == 1) {
                 setRectLenient(rects[0]);
             } else {
                 // Multiple rects: create /Kids array with one widget per rect
-                COSArray kids = new COSArray();
+                PdfArray kids = new PdfArray();
                 for (Rectangle rect : rects) {
-                    COSDictionary kid = new COSDictionary();
-                    kid.set(COSName.of("Type"), COSName.of("Annot"));
-                    kid.set(COSName.of("Subtype"), COSName.of("Widget"));
+                    PdfDictionary kid = new PdfDictionary();
+                    kid.set(PdfName.of("Type"), PdfName.of("Annot"));
+                    kid.set(PdfName.of("Subtype"), PdfName.of("Widget"));
                     if (rect != null) {
-                        kid.set(COSName.of("Rect"), rect.toCOSArray());
+                        kid.set(PdfName.of("Rect"), rect.toPdfArray());
                     }
                     kids.add(kid);
                 }
-                dict.set(COSName.of("Kids"), kids);
+                dict.set(PdfName.of("Kids"), kids);
                 // Set main Rect to the first rectangle
                 setRectLenient(rects[0]);
             }
@@ -142,7 +142,7 @@ public class TextBoxField extends Field {
      * @param maxLen the maximum length
      */
     public void setMaxLen(int maxLen) {
-        dict.set(COSName.of("MaxLen"), COSInteger.valueOf(maxLen));
+        dict.set(PdfName.of("MaxLen"), PdfInteger.valueOf(maxLen));
     }
 
     /**
@@ -217,25 +217,25 @@ public class TextBoxField extends Field {
         if (text == null) text = "";
 
         // Try /Kids first — widget annotations may live as separate dicts.
-        COSBase kidsObj = dict.get(COSName.of("Kids"));
-        if (kidsObj instanceof COSObjectReference) {
-            try { kidsObj = ((COSObjectReference) kidsObj).dereference(); }
+        PdfBase kidsObj = dict.get(PdfName.of("Kids"));
+        if (kidsObj instanceof PdfObjectReference) {
+            try { kidsObj = ((PdfObjectReference) kidsObj).dereference(); }
             catch (Exception e) { kidsObj = null; }
         }
 
-        COSStream firstAp = null;
-        if (kidsObj instanceof COSArray) {
-            COSArray kids = (COSArray) kidsObj;
+        PdfStream firstAp = null;
+        if (kidsObj instanceof PdfArray) {
+            PdfArray kids = (PdfArray) kidsObj;
             for (int i = 0; i < kids.size(); i++) {
-                COSBase kid = kids.get(i);
-                if (kid instanceof COSObjectReference) {
-                    try { kid = ((COSObjectReference) kid).dereference(); }
+                PdfBase kid = kids.get(i);
+                if (kid instanceof PdfObjectReference) {
+                    try { kid = ((PdfObjectReference) kid).dereference(); }
                     catch (Exception e) { continue; }
                 }
-                if (kid instanceof COSDictionary) {
-                    Rectangle kidRect = rectFromDict((COSDictionary) kid);
+                if (kid instanceof PdfDictionary) {
+                    Rectangle kidRect = rectFromDict((PdfDictionary) kid);
                     if (kidRect != null) {
-                        COSStream ap = buildAndStoreAppearance((COSDictionary) kid, text, kidRect);
+                        PdfStream ap = buildAndStoreAppearance((PdfDictionary) kid, text, kidRect);
                         if (firstAp == null) firstAp = ap;
                     }
                 }
@@ -254,7 +254,7 @@ public class TextBoxField extends Field {
         }
     }
 
-    private COSStream buildAndStoreAppearance(COSDictionary widgetDict, String text, Rectangle rect) {
+    private PdfStream buildAndStoreAppearance(PdfDictionary widgetDict, String text, Rectangle rect) {
         DAInfo da = parseDA(getEffectiveDA());
         double size = da.size;
         if (size <= 0) {
@@ -287,46 +287,46 @@ public class TextBoxField extends Field {
         cs.append("Q\n");
         cs.append("EMC\n");
 
-        COSStream apStream = new COSStream();
-        apStream.set(COSName.TYPE, COSName.XOBJECT);
-        apStream.set(COSName.SUBTYPE, COSName.FORM);
-        COSArray bbox = new COSArray();
-        bbox.add(new COSFloat(0));
-        bbox.add(new COSFloat(0));
-        bbox.add(new COSFloat(rect.getWidth()));
-        bbox.add(new COSFloat(rect.getHeight()));
-        apStream.set(COSName.BBOX, bbox);
-        apStream.set(COSName.RESOURCES, buildAppearanceResources(fontName));
+        PdfStream apStream = new PdfStream();
+        apStream.set(PdfName.TYPE, PdfName.XOBJECT);
+        apStream.set(PdfName.SUBTYPE, PdfName.FORM);
+        PdfArray bbox = new PdfArray();
+        bbox.add(new PdfFloat(0));
+        bbox.add(new PdfFloat(0));
+        bbox.add(new PdfFloat(rect.getWidth()));
+        bbox.add(new PdfFloat(rect.getHeight()));
+        apStream.set(PdfName.BBOX, bbox);
+        apStream.set(PdfName.RESOURCES, buildAppearanceResources(fontName));
         apStream.setDecodedData(cs.toString().getBytes(StandardCharsets.ISO_8859_1));
 
         installAppearance(widgetDict, apStream);
         return apStream;
     }
 
-    private static void installAppearance(COSDictionary widgetDict, COSStream apStream) {
-        COSBase apVal = widgetDict.get(COSName.of("AP"));
-        if (apVal instanceof COSObjectReference) {
-            try { apVal = ((COSObjectReference) apVal).dereference(); }
+    private static void installAppearance(PdfDictionary widgetDict, PdfStream apStream) {
+        PdfBase apVal = widgetDict.get(PdfName.of("AP"));
+        if (apVal instanceof PdfObjectReference) {
+            try { apVal = ((PdfObjectReference) apVal).dereference(); }
             catch (Exception e) { apVal = null; }
         }
-        COSDictionary ap;
-        if (apVal instanceof COSDictionary) {
-            ap = (COSDictionary) apVal;
+        PdfDictionary ap;
+        if (apVal instanceof PdfDictionary) {
+            ap = (PdfDictionary) apVal;
         } else {
-            ap = new COSDictionary();
-            widgetDict.set(COSName.of("AP"), ap);
+            ap = new PdfDictionary();
+            widgetDict.set(PdfName.of("AP"), ap);
         }
-        ap.set(COSName.N, apStream);
+        ap.set(PdfName.N, apStream);
     }
 
-    private static Rectangle rectFromDict(COSDictionary widgetDict) {
-        COSBase r = widgetDict.get(COSName.of("Rect"));
-        if (r instanceof COSObjectReference) {
-            try { r = ((COSObjectReference) r).dereference(); }
+    private static Rectangle rectFromDict(PdfDictionary widgetDict) {
+        PdfBase r = widgetDict.get(PdfName.of("Rect"));
+        if (r instanceof PdfObjectReference) {
+            try { r = ((PdfObjectReference) r).dereference(); }
             catch (Exception e) { return null; }
         }
-        if (r instanceof COSArray && ((COSArray) r).size() == 4) {
-            return Rectangle.fromCOSArray((COSArray) r);
+        if (r instanceof PdfArray && ((PdfArray) r).size() == 4) {
+            return Rectangle.fromPdfArray((PdfArray) r);
         }
         return null;
     }
@@ -339,16 +339,16 @@ public class TextBoxField extends Field {
         return "/Helv 0 Tf 0 g";
     }
 
-    private static COSDictionary buildAppearanceResources(String fontName) {
-        COSDictionary resources = new COSDictionary();
-        COSDictionary fonts = new COSDictionary();
-        COSDictionary font = new COSDictionary();
-        font.set(COSName.TYPE, COSName.FONT);
-        font.set(COSName.SUBTYPE, COSName.of("Type1"));
-        font.set(COSName.BASE_FONT, COSName.of("Helvetica"));
-        font.set(COSName.of("Name"), COSName.of(fontName));
+    private static PdfDictionary buildAppearanceResources(String fontName) {
+        PdfDictionary resources = new PdfDictionary();
+        PdfDictionary fonts = new PdfDictionary();
+        PdfDictionary font = new PdfDictionary();
+        font.set(PdfName.TYPE, PdfName.FONT);
+        font.set(PdfName.SUBTYPE, PdfName.of("Type1"));
+        font.set(PdfName.BASE_FONT, PdfName.of("Helvetica"));
+        font.set(PdfName.of("Name"), PdfName.of(fontName));
         fonts.set(fontName, font);
-        resources.set(COSName.of("Font"), fonts);
+        resources.set(PdfName.of("Font"), fonts);
         return resources;
     }
 

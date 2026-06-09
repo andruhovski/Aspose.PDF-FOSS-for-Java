@@ -107,6 +107,20 @@ public class RandomAccessReaderTest {
         }
     }
 
+    @Test
+    public void readFully_hugeRequestFailsWithoutAllocating() throws IOException {
+        // A corrupt stream /Length can request gigabytes from a tiny file. The
+        // EOF check must run BEFORE the array allocation — with -Xmx defaults a
+        // 2 GB allocation would OOM the JVM instead of failing the one object.
+        byte[] data = {0x01, 0x02, 0x03};
+        try (RandomAccessReader reader = RandomAccessReader.fromBytes(data)) {
+            assertThrows(EOFException.class, () -> reader.readFully(Integer.MAX_VALUE - 8));
+            // Reader stays usable at its original position.
+            assertEquals(0, reader.getPosition());
+            assertArrayEquals(data, reader.readFully(3));
+        }
+    }
+
     // ---- peek ----
 
     @Test

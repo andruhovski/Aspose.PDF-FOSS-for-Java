@@ -1,9 +1,9 @@
 package org.aspose.pdf.tests;
 
 import org.aspose.pdf.*;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSStream;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfStream;
 import org.aspose.pdf.operators.*;
 
 import org.junit.jupiter.api.Test;
@@ -26,9 +26,9 @@ public class ColorConverterTest {
     private Document createDocWithContent(String content) throws IOException {
         Document doc = new Document();
         Page page = doc.getPages().add();
-        COSStream stream = new COSStream();
+        PdfStream stream = new PdfStream();
         stream.setDecodedData(content.getBytes(StandardCharsets.US_ASCII));
-        page.getCOSDictionary().set(COSName.CONTENTS, stream);
+        page.getPdfDictionary().set(PdfName.CONTENTS, stream);
         return doc;
     }
 

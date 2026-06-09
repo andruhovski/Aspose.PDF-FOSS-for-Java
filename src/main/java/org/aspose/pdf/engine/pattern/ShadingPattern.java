@@ -1,7 +1,7 @@
 package org.aspose.pdf.engine.pattern;
 
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
 import org.aspose.pdf.engine.parser.PDFParser;
 
 import java.io.IOException;
@@ -21,9 +21,9 @@ public final class ShadingPattern extends PdfPattern {
      * @param parser the PDF parser
      * @throws IOException if the shading cannot be parsed
      */
-    public ShadingPattern(COSDictionary dict, PDFParser parser) throws IOException {
+    public ShadingPattern(PdfDictionary dict, PDFParser parser) throws IOException {
         super(dict);
-        COSBase shadingObj = resolveRef(dict.get("Shading"));
+        PdfBase shadingObj = resolveRef(dict.get("Shading"));
         this.shading = (shadingObj != null) ? Shading.parse(shadingObj, parser) : null;
     }
 
@@ -39,8 +39,8 @@ public final class ShadingPattern extends PdfPattern {
      *
      * @return the graphics state dictionary, or {@code null}
      */
-    public COSDictionary getExtGState() {
-        COSBase gs = resolveRef(dict.get("ExtGState"));
-        return (gs instanceof COSDictionary) ? (COSDictionary) gs : null;
+    public PdfDictionary getExtGState() {
+        PdfBase gs = resolveRef(dict.get("ExtGState"));
+        return (gs instanceof PdfDictionary) ? (PdfDictionary) gs : null;
     }
 }

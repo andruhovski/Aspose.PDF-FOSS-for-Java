@@ -1,10 +1,10 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSArray;
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSString;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 
 /**
  * SubmitForm action — submits form data to a URL (ISO 32000-1:2008, §12.6.4.14).
@@ -44,7 +44,7 @@ public class SubmitFormAction extends PdfAction {
      *
      * @param dict the action dictionary
      */
-    public SubmitFormAction(COSDictionary dict) {
+    public SubmitFormAction(PdfDictionary dict) {
         this.actionDict = dict;
     }
 
@@ -54,12 +54,12 @@ public class SubmitFormAction extends PdfAction {
      * @param url the submission URL
      */
     public SubmitFormAction(String url) {
-        this.actionDict = new COSDictionary();
-        actionDict.set(COSName.of("S"), COSName.of("SubmitForm"));
-        COSDictionary fileSpec = new COSDictionary();
-        fileSpec.set(COSName.of("Type"), COSName.of("Filespec"));
-        fileSpec.set(COSName.of("F"), new COSString(url));
-        actionDict.set(COSName.of("F"), fileSpec);
+        this.actionDict = new PdfDictionary();
+        actionDict.set(PdfName.of("S"), PdfName.of("SubmitForm"));
+        PdfDictionary fileSpec = new PdfDictionary();
+        fileSpec.set(PdfName.of("Type"), PdfName.of("Filespec"));
+        fileSpec.set(PdfName.of("F"), new PdfString(url));
+        actionDict.set(PdfName.of("F"), fileSpec);
     }
 
     /**
@@ -68,9 +68,9 @@ public class SubmitFormAction extends PdfAction {
      * @return the URL string, or {@code null}
      */
     public String getUrl() {
-        COSBase f = resolve(actionDict.get("F"));
-        if (f instanceof COSString) return ((COSString) f).getString();
-        if (f instanceof COSDictionary) return ((COSDictionary) f).getString("F");
+        PdfBase f = resolve(actionDict.get("F"));
+        if (f instanceof PdfString) return ((PdfString) f).getString();
+        if (f instanceof PdfDictionary) return ((PdfDictionary) f).getString("F");
         return null;
     }
 
@@ -93,8 +93,8 @@ public class SubmitFormAction extends PdfAction {
      *
      * @return the fields array, or {@code null}
      */
-    public COSArray getFields() {
-        COSBase fields = resolve(actionDict.get("Fields"));
-        return (fields instanceof COSArray) ? (COSArray) fields : null;
+    public PdfArray getFields() {
+        PdfBase fields = resolve(actionDict.get("Fields"));
+        return (fields instanceof PdfArray) ? (PdfArray) fields : null;
     }
 }

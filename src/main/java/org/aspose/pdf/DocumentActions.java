@@ -1,9 +1,9 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.cos.COSBase;
-import org.aspose.pdf.engine.cos.COSDictionary;
-import org.aspose.pdf.engine.cos.COSName;
-import org.aspose.pdf.engine.cos.COSObjectReference;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
 
 import java.io.IOException;
 import java.util.logging.Logger;
@@ -30,26 +30,26 @@ public class DocumentActions {
 
     private static final Logger LOG = Logger.getLogger(DocumentActions.class.getName());
 
-    private static final COSName OPEN_ACTION = COSName.of("OpenAction");
-    private static final COSName AA = COSName.of("AA");
-    private static final COSName WC = COSName.of("WC");
-    private static final COSName WS = COSName.of("WS");
-    private static final COSName DS = COSName.of("DS");
-    private static final COSName WP = COSName.of("WP");
-    private static final COSName DP = COSName.of("DP");
+    private static final PdfName OPEN_ACTION = PdfName.of("OpenAction");
+    private static final PdfName AA = PdfName.of("AA");
+    private static final PdfName WC = PdfName.of("WC");
+    private static final PdfName WS = PdfName.of("WS");
+    private static final PdfName DS = PdfName.of("DS");
+    private static final PdfName WP = PdfName.of("WP");
+    private static final PdfName DP = PdfName.of("DP");
 
-    private final COSDictionary catalog;
+    private final PdfDictionary catalog;
     private final Document document;
 
     /**
      * Wraps the given catalog dictionary as a document-actions view.
      *
-     * @param catalog  the catalog COSDictionary (must not be null)
+     * @param catalog  the catalog PdfDictionary (must not be null)
      * @param document the owning document, used as factory context for action
      *                 dereferencing (may be null)
      * @throws IllegalArgumentException if {@code catalog} is null
      */
-    public DocumentActions(COSDictionary catalog, Document document) {
+    public DocumentActions(PdfDictionary catalog, Document document) {
         if (catalog == null) {
             throw new IllegalArgumentException("Catalog must not be null");
         }
@@ -65,10 +65,10 @@ public class DocumentActions {
      * @return the open action, or null
      */
     public PdfAction getOpenAction() {
-        COSBase value = resolve(catalog.get(OPEN_ACTION));
-        if (value instanceof COSDictionary) {
+        PdfBase value = resolve(catalog.get(OPEN_ACTION));
+        if (value instanceof PdfDictionary) {
             try {
-                return PdfAction.fromDictionary((COSDictionary) value, document);
+                return PdfAction.fromDictionary((PdfDictionary) value, document);
             } catch (IOException e) {
                 LOG.warning(() -> "Failed to parse /OpenAction: " + e.getMessage());
                 return null;
@@ -87,7 +87,7 @@ public class DocumentActions {
             catalog.remove(OPEN_ACTION);
             return;
         }
-        catalog.set(OPEN_ACTION, action.getCOSDictionary());
+        catalog.set(OPEN_ACTION, action.getPdfDictionary());
     }
 
     /** @return the will-close action ({@code /AA/WC}), or null. */
@@ -112,13 +112,13 @@ public class DocumentActions {
     /** Sets the did-print ({@code /AA/DP}) action; null removes the entry. */
     public void setAfterPrinting(PdfAction action)  { setAA(DP, action); }
 
-    private PdfAction getAA(COSName key) {
-        COSBase aaValue = resolve(catalog.get(AA));
-        if (!(aaValue instanceof COSDictionary)) return null;
-        COSBase entry = resolve(((COSDictionary) aaValue).get(key));
-        if (entry instanceof COSDictionary) {
+    private PdfAction getAA(PdfName key) {
+        PdfBase aaValue = resolve(catalog.get(AA));
+        if (!(aaValue instanceof PdfDictionary)) return null;
+        PdfBase entry = resolve(((PdfDictionary) aaValue).get(key));
+        if (entry instanceof PdfDictionary) {
             try {
-                return PdfAction.fromDictionary((COSDictionary) entry, document);
+                return PdfAction.fromDictionary((PdfDictionary) entry, document);
             } catch (IOException e) {
                 LOG.warning(() -> "Failed to parse /AA/" + key.getName() + ": " + e.getMessage());
                 return null;
@@ -127,8 +127,8 @@ public class DocumentActions {
         return null;
     }
 
-    private void setAA(COSName key, PdfAction action) {
-        COSDictionary aa = (COSDictionary) resolve(catalog.get(AA));
+    private void setAA(PdfName key, PdfAction action) {
+        PdfDictionary aa = (PdfDictionary) resolve(catalog.get(AA));
         if (action == null) {
             if (aa != null) {
                 aa.remove(key);
@@ -137,16 +137,16 @@ public class DocumentActions {
             return;
         }
         if (aa == null) {
-            aa = new COSDictionary();
+            aa = new PdfDictionary();
             catalog.set(AA, aa);
         }
-        aa.set(key, action.getCOSDictionary());
+        aa.set(key, action.getPdfDictionary());
     }
 
-    private static COSBase resolve(COSBase value) {
-        if (value instanceof COSObjectReference) {
+    private static PdfBase resolve(PdfBase value) {
+        if (value instanceof PdfObjectReference) {
             try {
-                return ((COSObjectReference) value).dereference();
+                return ((PdfObjectReference) value).dereference();
             } catch (IOException e) {
                 return null;
             }
