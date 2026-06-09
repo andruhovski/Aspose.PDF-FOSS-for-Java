@@ -8,9 +8,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Tests for the press-characterized DeviceCMYK display conversion
- * (CGATS LUT, see {@link CmykDisplay}). Anchors taken from the source
- * characterization data; tolerances cover LUT interpolation error.
+ * Tests for the analytical DeviceCMYK display conversion (process-ink mixing
+ * formula, see {@link CmykDisplay}). Anchors are the standard process-color
+ * primaries; tolerances cover the mixing-model approximation.
  */
 public class CmykDisplayTest {
 

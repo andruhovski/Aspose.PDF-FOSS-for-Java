@@ -1,66 +1,65 @@
 package org.aspose.pdf.engine.colorspace;
 
-import java.util.logging.Logger;
-
 /**
  * Display-oriented DeviceCMYK → sRGB conversion (ISO 32000-1:2008, §8.6.4.4).
  * <p>
- * Real viewers (Adobe Acrobat, PDFBox, Chrome) render DeviceCMYK through a
- * press characterization profile, which differs visibly from the algebraic
- * {@code (1-C)(1-K)} formula: print-neutral grays (C &gt; M ≈ Y) come out
- * neutral instead of greenish, and solid inks are muted (pure cyan ≈
- * {@code rgb(0,174,239)}, pure black ≈ {@code rgb(35,31,32)}).
+ * Real viewers (Adobe Acrobat, Chrome, print drivers) render DeviceCMYK so that
+ * it looks like ink on paper, which differs visibly from the naive algebraic
+ * {@code (1-C)(1-K)} formula: print-neutral grays (C &gt; M ≈ Y) come out neutral
+ * instead of greenish, and solid inks are muted (pure process cyan ≈
+ * {@code rgb(0,174,239)}, rich black ≈ {@code rgb(35,31,32)}).
  * </p>
  * <p>
- * This class provides that conversion <b>without any runtime dependency</b>:
- * a 9×9×9×9 sRGB lookup table (19 683 bytes) embedded as a Base64 constant in
- * {@link CmykDisplayData} — so the library carries no external/binary asset —
- * sampled from a press-characterized CMYK profile and interpolated quadrilinearly.
- * Interpolation error vs the full profile: mean &lt; 1, p95 ≤ 3.5, max ≈ 32
- * (one dark corner) per 8-bit channel.
+ * This class reproduces that look with a small <b>analytical ink-mixing
+ * formula</b> — <b>no external data, no binary resource, no third-party
+ * profile</b>. Each ink is given its standard published <i>process-color</i>
+ * solid appearance in sRGB, and inks combine by a per-channel multiplicative
+ * (subtractive, Beer–Lambert-style) transmittance:
+ * </p>
+ * <pre>
+ *   channel = 255 · ∏<sub>ink∈{C,M,Y,K}</sub> ( 1 − amount<sub>ink</sub> · a<sub>ink,channel</sub> )
+ *   where a<sub>ink,channel</sub> = 1 − solid<sub>ink,channel</sub> / 255
+ * </pre>
+ * <p>
+ * The solid appearances are the well-known process primaries (the same values
+ * cited in general references for the CMYK process colors), so no ink amount of
+ * zero changes a channel and white maps to white exactly. By construction the
+ * four solid primaries, paper white and registration black are reproduced
+ * exactly; mixtures are a physically-motivated approximation.
  * </p>
  * <p>
  * NOTE: this is the <b>rendering</b> conversion. The public-API conversion
  * {@link DeviceCMYK#toRGBInt(double, double, double, double)} keeps the
- * algebraic formula — Aspose.PDF compatibility tests pin pure C/M/Y/K to
- * exact RGB primaries there.
+ * algebraic formula — Aspose.PDF compatibility tests pin pure C/M/Y/K to exact
+ * RGB primaries there.
  * </p>
  */
 public final class CmykDisplay {
 
-    private static final Logger LOG = Logger.getLogger(CmykDisplay.class.getName());
+    // Standard process-color solid appearances in sRGB (R,G,B). These are the
+    // commonly-published process primaries, not data sampled from any profile:
+    //   process cyan (0,174,239), process magenta (236,0,140),
+    //   process yellow (255,242,0), process/rich black ~(35,31,32).
+    private static final double[] CYAN_SOLID    = {0,   174, 239};
+    private static final double[] MAGENTA_SOLID = {236, 0,   140};
+    private static final double[] YELLOW_SOLID  = {255, 242, 0};
+    private static final double[] BLACK_SOLID   = {35,  31,  32};
 
-    /** Grid points per axis. */
-    private static final int N = 9;
-    /** LUT laid out C-major … K-minor, 3 bytes (sRGB) per node; null = load failed. */
-    private static final byte[] LUT = loadLut();
+    // Per-channel absorption of each ink at full strength: a = 1 - solid/255.
+    private static final double[] A_C = absorption(CYAN_SOLID);
+    private static final double[] A_M = absorption(MAGENTA_SOLID);
+    private static final double[] A_Y = absorption(YELLOW_SOLID);
+    private static final double[] A_K = absorption(BLACK_SOLID);
 
     private CmykDisplay() {}
 
-    private static byte[] loadLut() {
-        // The LUT is embedded as a Base64 constant ({@link CmykDisplayData}) rather
-        // than a binary classpath resource: that keeps the library free of any
-        // external/binary asset that could be lost on a fresh checkout or mangled
-        // by cross-platform git EOL handling (which silently degraded DeviceCMYK
-        // rendering to the algebraic fallback on CI).
-        try {
-            byte[] data = java.util.Base64.getDecoder().decode(CmykDisplayData.LUT_BASE64);
-            int expected = N * N * N * N * 3;
-            if (data.length != expected) {
-                LOG.warning("Embedded CMYK LUT has " + data.length + " bytes (expected "
-                        + expected + "); falling back to algebraic CMYK");
-                return null;
-            }
-            return data;
-        } catch (RuntimeException e) {
-            LOG.warning("Failed to decode embedded CMYK LUT: " + e.getMessage());
-            return null;
-        }
+    private static double[] absorption(double[] solid) {
+        return new double[]{1 - solid[0] / 255.0, 1 - solid[1] / 255.0, 1 - solid[2] / 255.0};
     }
 
     /**
      * Converts CMYK components (each 0..1) to a packed ARGB int using the
-     * press-characterized LUT with quadrilinear interpolation.
+     * analytical process-ink mixing model described in the class doc.
      *
      * @param c cyan (0..1)
      * @param m magenta (0..1)
@@ -69,43 +68,16 @@ public final class CmykDisplay {
      * @return packed ARGB int (alpha=0xFF)
      */
     public static int toRGBInt(double c, double m, double y, double k) {
-        if (LUT == null) {
-            return DeviceCMYK.INSTANCE.toRGBInt(c, m, y, k);
+        double cc = clamp01(c), mm = clamp01(m), yy = clamp01(y), kk = clamp01(k);
+        int rgb = 0xFF000000;
+        for (int ch = 0; ch < 3; ch++) {
+            double t = (1 - cc * A_C[ch]) * (1 - mm * A_M[ch]) * (1 - yy * A_Y[ch]) * (1 - kk * A_K[ch]);
+            int v = (int) Math.round(255 * t);
+            if (v < 0) v = 0;
+            else if (v > 255) v = 255;
+            rgb |= v << (8 * (2 - ch));
         }
-        double[] in = {clamp01(c), clamp01(m), clamp01(y), clamp01(k)};
-        int[] i0 = new int[4];
-        double[] f = new double[4];
-        for (int i = 0; i < 4; i++) {
-            double pos = in[i] * (N - 1);
-            int idx = (int) pos;
-            if (idx > N - 2) idx = N - 2;
-            i0[i] = idx;
-            f[i] = pos - idx;
-        }
-        double r = 0, g = 0, b = 0;
-        for (int dc = 0; dc <= 1; dc++) {
-            double wc = dc == 0 ? 1 - f[0] : f[0];
-            if (wc == 0) continue;
-            for (int dm = 0; dm <= 1; dm++) {
-                double wm = wc * (dm == 0 ? 1 - f[1] : f[1]);
-                if (wm == 0) continue;
-                for (int dy = 0; dy <= 1; dy++) {
-                    double wy = wm * (dy == 0 ? 1 - f[2] : f[2]);
-                    if (wy == 0) continue;
-                    for (int dk = 0; dk <= 1; dk++) {
-                        double w = wy * (dk == 0 ? 1 - f[3] : f[3]);
-                        if (w == 0) continue;
-                        int base = (((i0[0] + dc) * N + (i0[1] + dm)) * N + (i0[2] + dy)) * N + (i0[3] + dk);
-                        base *= 3;
-                        r += w * (LUT[base] & 0xFF);
-                        g += w * (LUT[base + 1] & 0xFF);
-                        b += w * (LUT[base + 2] & 0xFF);
-                    }
-                }
-            }
-        }
-        int ri = (int) Math.round(r), gi = (int) Math.round(g), bi = (int) Math.round(b);
-        return 0xFF000000 | (Math.min(255, ri) << 16) | (Math.min(255, gi) << 8) | Math.min(255, bi);
+        return rgb;
     }
 
     /** Array variant for the {@link ColorSpaceBase#toRGBInt(double[])} pipeline. */
