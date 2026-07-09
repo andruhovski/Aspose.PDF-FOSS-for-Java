@@ -243,7 +243,7 @@ public final class ActionFixes {
         PdfDictionary actionDict = (PdfDictionary) actionObj;
         String actionType = actionDict.getNameAsString("S");
         if (actionType != null && FORBIDDEN_ACTION_TYPES.contains(actionType)) {
-            if (errorAction == ConvertErrorAction.Delete) {
+            if (errorAction != null && errorAction.isDelete()) {
                 dict.set("A", null);
                 result.addWarning("action.4", "Removed forbidden " + actionType + " action",
                         "obj " + key.getObjectNumber() + "/A", "ISO 19005-1:2005, 6.6.2");

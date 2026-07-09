@@ -150,6 +150,49 @@ public class ContentStreamParserTest {
         assertEquals("ET", coll.get(3).getName());
     }
 
+    /**
+     * PDFNEWNET-39178: some producers butt the {@code EI} terminator right
+     * against the last image data byte (no preceding whitespace). The parser
+     * must still find it — otherwise every operator after the inline image
+     * is swallowed into the image data.
+     */
+    @Test
+    public void parseInlineImageWithoutWhitespaceBeforeEI() throws IOException {
+        byte[] imageData = new byte[]{0x10, 0x42, (byte) 0x9C, 0x55, 0x7F};
+        java.io.ByteArrayOutputStream content = new java.io.ByteArrayOutputStream();
+        content.write("q BI /W 2 /H 2 /BPC 8 /CS /G ID ".getBytes(StandardCharsets.US_ASCII));
+        content.write(imageData);
+        content.write("EI Q BT (after) Tj ET".getBytes(StandardCharsets.US_ASCII));
+
+        List<Operator> ops = ContentStreamParser.parse(content.toByteArray());
+        // q, BI, Q, BT, Tj, ET — the operators AFTER the image must survive.
+        assertEquals("Tj", ops.get(ops.size() - 2).getName());
+        Operator bi = ops.get(1);
+        assertEquals("BI", bi.getName());
+        // Data byte before EI is preserved (no whitespace was trimmed).
+        PdfString data = (PdfString) bi.getOperands().get(1);
+        assertEquals(imageData.length, data.getBytes().length);
+    }
+
+    /**
+     * The BI operator must serialise back as {@code BI <pairs> ID <raw> EI}
+     * (not as generic operands) so a rewritten page still parses.
+     */
+    @Test
+    public void inlineImageSerializationRoundTrips() throws IOException {
+        String content = "BI /W 1 /H 1 /BPC 8 /CS /G ID ÿ\nEI\nBT (tail) Tj ET";
+        List<Operator> ops = ContentStreamParser.parse(
+                content.getBytes(StandardCharsets.ISO_8859_1));
+        java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+        for (Operator op : ops) {
+            op.writeTo(out);
+            out.write('\n');
+        }
+        List<Operator> reparsed = ContentStreamParser.parse(out.toByteArray());
+        assertEquals(ops.size(), reparsed.size(), "serialized inline image must re-parse");
+        assertEquals("Tj", reparsed.get(reparsed.size() - 2).getName());
+    }
+
     @Test
     public void parseToCollectionNullThrows() {
         assertThrows(IllegalArgumentException.class, () -> ContentStreamParser.parseToCollection((org.aspose.pdf.engine.pdfobjects.PdfStream) null));

@@ -75,6 +75,35 @@ public class TextExtractor {
 
     // Results
     private final List<TextFragment> fragments = new ArrayList<>();
+    // Thin filled rules painted in the content stream, in device space, used after
+    // extraction to detect underline/strikeout decorations drawn as rules beneath/
+    // through text (no font flag exists). Each decoration also carries the source
+    // operators that drew it so an underline edit can remove them on save.
+    private final List<Decoration> decorations = new ArrayList<>();
+    // Rectangles added to the current path since the last paint operator.
+    private final List<double[]> pendingPathRects = new ArrayList<>();
+    // Line segments (device space [x1,y1,x2,y2]) added since the last paint;
+    // a stroked horizontal segment is also an underline/strikeout rule.
+    private final List<double[]> pendingPathLines = new ArrayList<>();
+    // Content-stream operators of the current subpath (re/m/l), accumulated since
+    // the last paint operator so a detected underline can be linked to its drawing ops.
+    private final List<Operator> pendingPathOps = new ArrayList<>();
+
+    /** A thin rule painted in the content stream, in device space [llx,lly,urx,ury],
+     *  together with the operators that drew it and the collection that owns them. */
+    private static final class Decoration {
+        final double[] rect;
+        final List<Operator> ops;
+        final OperatorCollection coll;
+        Decoration(double[] rect, List<Operator> ops, OperatorCollection coll) {
+            this.rect = rect;
+            this.ops = ops;
+            this.coll = coll;
+        }
+    }
+    private double pathCurX, pathCurY;
+    private boolean hasPathPoint;
+    private double lineWidthUser = 1.0;
     private StringBuilder currentText;
     private double currentX;
     private double currentY;
@@ -84,6 +113,19 @@ public class TextExtractor {
     private double[] fragmentStartCtm;
     private double[] fragmentEndTextMatrix;
     private double[] fragmentEndCtm;
+    // Exact per-character device-space X positions for the fragment currently
+    // being assembled. fragCharX holds one entry per character boundary
+    // (length == currentText.length()+1), so a substring at char offset i
+    // starts at fragCharX[i] and ends at fragCharX[i+len]. This preserves the
+    // true horizontal advance — including per-space word spacing (Tw) and
+    // char spacing (Tc) — that proportional re-measurement in
+    // TextFragmentAbsorber cannot reconstruct from the merged text alone.
+    // Disabled (fragOffsetsValid=false) for kerning-split fragments (TJ numeric
+    // adjustments) and non-1:1 byte→char decodes (CID), where the per-char
+    // alignment cannot be guaranteed; those fall back to the approximation.
+    private java.util.List<Double> fragCharX;
+    private double fragTextX;
+    private boolean fragOffsetsValid;
 
     // Source tracking: operator index of the first and last text-showing
     // operator contributing to the currently accumulating fragment.
@@ -130,6 +172,7 @@ public class TextExtractor {
         currentSourceOperators = ops;
         currentSourceStream = null;
         processOperators(ops, fontsDict);
+        detectTextDecorations();
         fragments.addAll(page.getSyntheticTextFragments());
 
         return new ArrayList<>(fragments);
@@ -149,6 +192,155 @@ public class TextExtractor {
             sb.append(frag.getText());
         }
         return sb.toString();
+    }
+
+    /**
+     * Detects underline and strikeout decorations drawn as thin filled rules and
+     * sets the corresponding {@link TextState} flags on the fragments they cover.
+     * A rule qualifies if it is thin (height ≤ 3pt), wider than tall, and overlaps
+     * a fragment's horizontal span by at least 40%. Its vertical position relative
+     * to the fragment box decides the kind: lower third → underline, middle → strikeout.
+     * Decoration rects are in raw device space; fragment rects were normalised to the
+     * page-box origin, so the same offset is applied here before comparing.
+     */
+    /**
+     * Upper bound on retained decoration rules per page. A thin filled rule under
+     * text is how underline/strikeout is drawn; but vector-heavy pages (scientific
+     * figures, hatching) can emit millions of filled rectangles. Since the detection
+     * loop is O(fragments × rules), we cap the rule list: beyond this many rules,
+     * decoration detection is best-effort. Underline/strikeout flags are a cosmetic
+     * enhancement — far better to drop a few than to spin for minutes on a page with
+     * tens of thousands of fragments. (Corpus pathology: 57236.pdf produced 5,027,972
+     * filled rects × 18,363 fragments ≈ 9×10^10 iterations.)
+     */
+    private static final int MAX_DECORATION_RECTS = 20_000;
+
+    /** True when a device-space rect is a thin horizontal rule (wider than tall,
+     *  height ≤ 3pt) — the only shape that can be an underline/strikeout. The test
+     *  is translation-invariant, so it is equivalent whether applied here or after
+     *  the page-origin offset in {@link #detectTextDecorations()}. */
+    private static boolean isThinRule(double[] r) {
+        double w = r[2] - r[0], h = r[3] - r[1];
+        return h > 0 && h <= 3.0 && w > h;
+    }
+
+    /** Adds only the thin-horizontal-rule rectangles from {@code rects} to
+     *  {@link #decorations}, up to {@link #MAX_DECORATION_RECTS}. Filtering at
+     *  insertion keeps the detection loop's cost bounded by the number of genuine
+     *  rules rather than every filled rectangle on the page. */
+    private void addThinRuleRects(List<double[]> rects, List<Operator> ops, OperatorCollection coll) {
+        for (double[] r : rects) {
+            if (decorations.size() >= MAX_DECORATION_RECTS) return;
+            if (isThinRule(r)) decorations.add(new Decoration(r, ops, coll));
+        }
+    }
+
+    /** Converts pending near-horizontal stroked line segments into thin decoration
+     *  rects (a stroked rule under/through text is an underline/strikeout). */
+    private void addStrokedLineRules(List<Operator> ops, OperatorCollection coll) {
+        if (pendingPathLines.isEmpty()) return;
+        double scaleY = ctm != null ? Math.hypot(ctm[1], ctm[3]) : 1.0;
+        double h = Math.max(lineWidthUser * scaleY, 0.4);
+        for (double[] ln : pendingPathLines) {
+            if (decorations.size() >= MAX_DECORATION_RECTS) return;
+            if (Math.abs(ln[3] - ln[1]) > 0.6) continue; // not horizontal
+            double cy = (ln[1] + ln[3]) / 2;
+            decorations.add(new Decoration(new double[]{
+                    Math.min(ln[0], ln[2]), cy - h / 2, Math.max(ln[0], ln[2]), cy + h / 2}, ops, coll));
+        }
+    }
+
+    private void clearPath() {
+        pendingPathRects.clear();
+        pendingPathLines.clear();
+        pendingPathOps.clear();
+        hasPathPoint = false;
+    }
+
+    /** Snapshot of the current subpath's constructing operators plus the paint
+     *  operator {@code paintOp} — the full set to remove if this subpath turns out
+     *  to be an underline that is later edited off. */
+    private List<Operator> subpathOps(Operator paintOp) {
+        List<Operator> sub = new ArrayList<>(pendingPathOps.size() + 1);
+        sub.addAll(pendingPathOps);
+        sub.add(paintOp);
+        return sub;
+    }
+
+    private void detectTextDecorations() {
+        if (decorations.isEmpty() || fragments.isEmpty()) {
+            return;
+        }
+        double offX = currentPageRect != null ? currentPageRect.getLLX() : 0;
+        double offY = currentPageRect != null ? currentPageRect.getLLY() : 0;
+
+        // Build a list of candidate rules (offset-applied, thin horizontal only)
+        // sorted by vertical centre. decorations is already pre-filtered to
+        // thin rules at insertion, but re-check defensively. Sorting by cy lets
+        // each fragment binary-search just the rules in its vertical neighbourhood
+        // instead of scanning all of them — the naive O(fragments × rules) loop is
+        // catastrophic on vector-heavy pages (see MAX_DECORATION_RECTS).
+        // Each rule keeps a back-index into `decorations` so a matched underline
+        // can be linked to the operators that drew it (for removal on edit).
+        int m = decorations.size();
+        double[][] rules = new double[m][];   // [x0, x1, cy, decorationIndex]
+        int n = 0;
+        for (int di = 0; di < m; di++) {
+            double[] r = decorations.get(di).rect;
+            if (!isThinRule(r)) continue;
+            rules[n++] = new double[]{r[0] - offX, r[2] - offX, ((r[1] + r[3]) / 2) - offY, di};
+        }
+        if (n == 0) return;
+        java.util.Arrays.sort(rules, 0, n, (a, b) -> Double.compare(a[2], b[2]));
+        double[] cys = new double[n];
+        for (int i = 0; i < n; i++) cys[i] = rules[i][2];
+
+        for (TextFragment frag : fragments) {
+            Rectangle fr = frag.getRectangle();
+            if (fr == null) {
+                continue;
+            }
+            double fLLX = fr.getLLX(), fLLY = fr.getLLY(), fURX = fr.getURX(), fURY = fr.getURY();
+            double fW = fURX - fLLX, fH = fURY - fLLY;
+            if (fW <= 0 || fH <= 0) {
+                continue;
+            }
+            // A decoration sits within roughly one line-height of the text box:
+            // rel = (ruleCy - fLLY)/fH must be ≤ 0.70 (strikeout upper bound); the
+            // lower bound (one line-height below the box) bounds the search and
+            // suppresses cross-line false positives from rules far below.
+            double loCy = fLLY - fH;
+            double hiCy = fLLY + 0.70 * fH;
+            int j = lowerBound(cys, n, loCy);
+            for (; j < n && cys[j] <= hiCy; j++) {
+                double[] ru = rules[j];
+                double overlap = Math.min(fURX, ru[1]) - Math.max(fLLX, ru[0]);
+                if (overlap < fW * 0.4) {
+                    continue; // does not run under/through this fragment
+                }
+                double rel = (ru[2] - fLLY) / fH; // 0 = bottom, 1 = top
+                if (rel < 0.33) {
+                    frag.getTextState().setUnderline(true);
+                    // Link the drawing operators so setUnderline(false) can strip them.
+                    Decoration d = decorations.get((int) ru[3]);
+                    frag.addSourceUnderline(d.ops, d.coll);
+                } else if (rel <= 0.70) {
+                    frag.getTextState().setStrikeOut(true);
+                }
+            }
+        }
+    }
+
+    /** Returns the index of the first element of {@code cys[0..len)} that is
+     *  ≥ {@code target} (i.e. a standard lower-bound binary search). */
+    private static int lowerBound(double[] cys, int len, double target) {
+        int lo = 0, hi = len;
+        while (lo < hi) {
+            int mid = (lo + hi) >>> 1;
+            if (cys[mid] < target) lo = mid + 1;
+            else hi = mid;
+        }
+        return lo;
     }
 
     private void processOperators(OperatorCollection ops, PdfDictionary fontsDict) throws IOException {
@@ -208,6 +400,62 @@ public class TextExtractor {
                     for (int i = 0; i < 6; i++) m[i] = getNumber(operands.get(i));
                     ctm = multiplyMatrix(m, ctm);
                 }
+                break;
+
+            // -- Path construction / painting (underline & strikeout detection) --
+            // We don't render paths, but a thin filled rectangle beneath or
+            // through a text run is how PDFs draw underline/strikeout (no font
+            // flag carries it). Capture rectangle subpaths in device space and,
+            // on a fill paint operator, record them for post-extraction matching.
+            case "w":
+                if (operands.size() >= 1) lineWidthUser = getNumber(operands.get(0));
+                break;
+            case "re":
+                if (operands.size() >= 4) {
+                    double[] id = {1, 0, 0, 1, 0, 0};
+                    double rx = getNumber(operands.get(0)), ry = getNumber(operands.get(1));
+                    double rw = getNumber(operands.get(2)), rh = getNumber(operands.get(3));
+                    double[] a = transformPoint(id, ctm, rx, ry);
+                    double[] b = transformPoint(id, ctm, rx + rw, ry + rh);
+                    pendingPathRects.add(new double[]{
+                            Math.min(a[0], b[0]), Math.min(a[1], b[1]),
+                            Math.max(a[0], b[0]), Math.max(a[1], b[1])});
+                    pendingPathOps.add(op);
+                }
+                break;
+            case "m":
+                if (operands.size() >= 2) {
+                    double[] p = transformPoint(new double[]{1, 0, 0, 1, 0, 0}, ctm,
+                            getNumber(operands.get(0)), getNumber(operands.get(1)));
+                    pathCurX = p[0]; pathCurY = p[1]; hasPathPoint = true;
+                    pendingPathOps.add(op);
+                }
+                break;
+            case "l":
+                if (operands.size() >= 2 && hasPathPoint) {
+                    double[] p = transformPoint(new double[]{1, 0, 0, 1, 0, 0}, ctm,
+                            getNumber(operands.get(0)), getNumber(operands.get(1)));
+                    pendingPathLines.add(new double[]{pathCurX, pathCurY, p[0], p[1]});
+                    pathCurX = p[0]; pathCurY = p[1];
+                    pendingPathOps.add(op);
+                }
+                break;
+            case "f": case "F": case "f*":
+            case "b": case "b*": case "B": case "B*": {
+                List<Operator> sub = subpathOps(op);
+                addThinRuleRects(pendingPathRects, sub, currentSourceOperators);
+                addStrokedLineRules(sub, currentSourceOperators);
+                clearPath();
+                break;
+            }
+            case "S": case "s": {
+                List<Operator> sub = subpathOps(op);
+                addStrokedLineRules(sub, currentSourceOperators);
+                clearPath();
+                break;
+            }
+            case "n":
+                clearPath();
                 break;
 
             // -- Text object --
@@ -500,6 +748,34 @@ public class TextExtractor {
             currentY = pos[1];
             fragmentStartTextMatrix = textMatrix.clone();
             fragmentStartCtm = ctm != null ? ctm.clone() : null;
+            // Begin exact per-character offset tracking for this fragment.
+            fragCharX = new java.util.ArrayList<>();
+            fragCharX.add(currentX);
+            fragTextX = 0;
+            fragOffsetsValid = true;
+        }
+
+        // Capture per-character device-space X by walking the same glyph
+        // advances advanceTextPosition() uses. Only reliable when the decode is
+        // 1:1 (one byte == one decoded char); otherwise mark offsets invalid.
+        if (fragOffsetsValid) {
+            if (currentFont != null && fragmentStartTextMatrix != null
+                    && decoded.length() == bytes.length) {
+                double unitScale = currentFont.getWidthUnitScale();
+                for (byte b : bytes) {
+                    int code = b & 0xFF;
+                    double w = currentFont.getWidth(code) * unitScale;
+                    double adv = (w * fontSize + charSpacing) * (horizontalScaling / 100.0);
+                    if (code == 32) {
+                        adv += wordSpacing * (horizontalScaling / 100.0);
+                    }
+                    fragTextX += adv;
+                    fragCharX.add(transformPoint(fragmentStartTextMatrix, fragmentStartCtm,
+                            fragTextX, 0)[0]);
+                }
+            } else {
+                fragOffsetsValid = false;
+            }
         }
 
         currentText.append(decoded);
@@ -522,7 +798,11 @@ public class TextExtractor {
                 splitBeforeNextString = false;
                 showString((PdfString) elem);
             } else if (elem instanceof PdfInteger || elem instanceof PdfFloat) {
-                // Numeric adjustment: displacement in thousandths of text space unit
+                // Numeric adjustment: displacement in thousandths of text space unit.
+                // Exact per-char offsets can't follow mid-fragment kerning jumps
+                // (and synthetic-space insertion), so disable them for this
+                // fragment and let the absorber fall back to approximation.
+                fragOffsetsValid = false;
                 double adjustment = getNumber(elem);
                 // Negative = move right (advance), positive = move left (kerning)
                 double tx = -adjustment / 1000.0 * fontSize * (horizontalScaling / 100.0);
@@ -549,12 +829,21 @@ public class TextExtractor {
         if (textMatrix == null || currentFont == null) return;
 
         double totalWidth = 0;
-        for (byte b : bytes) {
-            int code = b & 0xFF;
-            double w = currentFont.getWidth(code) / 1000.0;
+        double unitScale = currentFont.getWidthUnitScale();
+        // Composite fonts (Type0 / Identity-H) encode each glyph as a 2-byte
+        // code; simple fonts use 1 byte. Walking byte-by-byte for a composite
+        // font would look up a width for each half of the code (e.g. the high
+        // 0x00 byte), inflating the advance and shifting every fragment that
+        // follows on the line. Match the renderer's code stride.
+        int stride = currentFont.isComposite() ? 2 : 1;
+        for (int i = 0; i + stride <= bytes.length; i += stride) {
+            int code = stride == 2
+                    ? (((bytes[i] & 0xFF) << 8) | (bytes[i + 1] & 0xFF))
+                    : (bytes[i] & 0xFF);
+            double w = currentFont.getWidth(code) * unitScale;
             totalWidth += (w * fontSize + charSpacing) * (horizontalScaling / 100.0);
-            // Add word spacing for space character (code 32)
-            if (code == 32) {
+            // Word spacing (Tw) applies only to the single-byte space code 32.
+            if (stride == 1 && code == 32) {
                 totalWidth += wordSpacing * (horizontalScaling / 100.0);
             }
         }
@@ -586,7 +875,23 @@ public class TextExtractor {
         // Set text state on the first segment
         TextState state = fragment.getTextState();
         state.setFontName(currentFontName);
-        state.setFontSize(fontSize);
+        // Report the EFFECTIVE font size: many producers set "/F1 1 Tf" and
+        // carry the real size in the text matrix (e.g. Tm [0 14 -14 0 …] on a
+        // rotated page). Aspose reports Tf × Tm-vertical-scale, so tests like
+        // PDFNEWNET_30639 assert 14, not the raw 1. The glyph height direction
+        // (0,1) maps through Tm to (c,d), hence the scale is hypot(c,d).
+        double effectiveFontSize = fontSize;
+        double[] tmForScale = fragmentStartTextMatrix != null ? fragmentStartTextMatrix : textMatrix;
+        if (tmForScale != null) {
+            double tmScale = Math.hypot(tmForScale[2], tmForScale[3]);
+            if (tmScale > 1e-9 && Math.abs(tmScale - 1.0) > 1e-9) {
+                effectiveFontSize = fontSize * tmScale;
+            }
+        }
+        state.setFontSize(effectiveFontSize);
+        // Content-stream edit math (TJ compensation) needs the raw Tf size —
+        // see TextFragment#setSourceTfSize.
+        fragment.setSourceTfSize(fontSize);
         state.setCharacterSpacing(charSpacing);
         state.setWordSpacing(wordSpacing);
         state.setHorizontalScaling(horizontalScaling);
@@ -653,10 +958,26 @@ public class TextExtractor {
             }
         }
 
+        // Attach exact per-character X positions (normalised to the page-box
+        // origin, matching the fragment rectangle/position space) so the
+        // absorber can locate sub-phrases precisely. Only when the boundary
+        // count lines up with the text length and the fragment is upright —
+        // for rotated text the X coordinate alone does not bound a sub-phrase.
+        if (fragOffsetsValid && fragCharX != null
+                && fragCharX.size() == text.length() + 1
+                && fragment.getRotation() == 0) {
+            double[] charX = new double[fragCharX.size()];
+            for (int i = 0; i < charX.length; i++) {
+                charX[i] = fragCharX.get(i) - offX;
+            }
+            fragment.setCharXPositions(charX);
+        }
+
         // Record source operator range for content stream modification
         fragment.setSourceOperatorIndex(firstTextOpIndex);
         fragment.setLastSourceOperatorIndex(lastTextOpIndex);
         fragment.setSourceFontName(currentFontName);
+        fragment.setSourceFont(currentFont);
         fragment.setSourceTextStart(0);
         fragment.setSourceTextLength(text.length());
         fragment.setSourceOperators(currentSourceOperators);
@@ -681,6 +1002,9 @@ public class TextExtractor {
         fragmentStartCtm = null;
         fragmentEndTextMatrix = null;
         fragmentEndCtm = null;
+        fragCharX = null;
+        fragTextX = 0;
+        fragOffsetsValid = false;
     }
 
     /** Quantizes a device-space baseline angle (degrees) to {0,90,180,270}. */
@@ -694,9 +1018,10 @@ public class TextExtractor {
     private double estimateTextWidth(String text) {
         if (currentFont == null) return text.length() * fontSize * 0.5;
         double width = 0;
+        double unitScale = currentFont.getWidthUnitScale();
         for (int i = 0; i < text.length(); i++) {
             char c = text.charAt(i);
-            double w = currentFont.getWidth(c) / 1000.0;
+            double w = currentFont.getWidth(c) * unitScale;
             width += w * fontSize * (horizontalScaling / 100.0);
         }
         return width;
@@ -802,6 +1127,12 @@ public class TextExtractor {
         fragmentEndCtm = null;
         currentFillColor = null;
         fillColorStack.clear();
+        decorations.clear();
+        pendingPathRects.clear();
+        pendingPathLines.clear();
+        pendingPathOps.clear();
+        hasPathPoint = false;
+        lineWidthUser = 1.0;
         fontRepo.clear();
     }
 

@@ -281,7 +281,19 @@ public class TextBoxField extends Field {
             cs.append("0 g\n");
         }
         double yOffset = Math.max(0, (rect.getHeight() - size) / 2.0);
-        cs.append("2 ").append(formatNum(yOffset)).append(" Td\n");
+        // Horizontal placement honours the field quadding (/Q): 0=left (2pt inset), 1=centre, 2=right.
+        // Right/centre need the run width, measured from the standard Helvetica metrics (the /DA font).
+        double xOffset = 2.0;
+        int q = effectiveQuadding(widgetDict);
+        if (q != 0) {
+            double textWidth = helveticaWidth(text, size);
+            double avail = rect.getWidth() - 4.0;
+            if (textWidth < avail) {
+                xOffset = q == 2 ? rect.getWidth() - 2.0 - textWidth
+                        : Math.max(2.0, (rect.getWidth() - textWidth) / 2.0);
+            }
+        }
+        cs.append(formatNum(xOffset)).append(' ').append(formatNum(yOffset)).append(" Td\n");
         cs.append(escapeLiteral(text)).append(" Tj\n");
         cs.append("ET\n");
         cs.append("Q\n");
@@ -339,6 +351,41 @@ public class TextBoxField extends Field {
         return "/Helv 0 Tf 0 g";
     }
 
+    /** The effective {@code /Q} quadding for the appearance — the widget's, else the field's, else 0. */
+    private int effectiveQuadding(PdfDictionary widgetDict) {
+        int q = quaddingOf(widgetDict);
+        if (q < 0) {
+            q = quaddingOf(dict);
+        }
+        return q < 0 ? 0 : q;
+    }
+
+    private static int quaddingOf(PdfDictionary d) {
+        if (d == null) {
+            return -1;
+        }
+        PdfBase v = d.get(PdfName.of("Q"));
+        if (v instanceof PdfObjectReference) {
+            try { v = ((PdfObjectReference) v).dereference(); }
+            catch (Exception e) { return -1; }
+        }
+        return v instanceof PdfInteger ? ((PdfInteger) v).intValue() : -1;
+    }
+
+    /** Width of {@code text} at {@code size} pt in Helvetica, from the standard AFM metrics (1/1000 em). */
+    private static double helveticaWidth(String text, double size) {
+        int[] w = org.aspose.pdf.engine.font.StandardFonts.getWidths("Helvetica");
+        if (w == null) {
+            return text.length() * size * 0.5; // fallback ≈ avg em width
+        }
+        double total = 0;
+        for (int i = 0; i < text.length(); i++) {
+            int c = text.charAt(i) & 0xFF;
+            total += w[c];
+        }
+        return total / 1000.0 * size;
+    }
+
     private static PdfDictionary buildAppearanceResources(String fontName) {
         PdfDictionary resources = new PdfDictionary();
         PdfDictionary fonts = new PdfDictionary();
@@ -346,6 +393,11 @@ public class TextBoxField extends Field {
         font.set(PdfName.TYPE, PdfName.FONT);
         font.set(PdfName.SUBTYPE, PdfName.of("Type1"));
         font.set(PdfName.BASE_FONT, PdfName.of("Helvetica"));
+        // Without an /Encoding a viewer uses Helvetica's built-in StandardEncoding (0xE1='æ' etc.), which
+        // garbles the ISO-8859-1 bytes we write — "Česká" rendered "?eskÆ". WinAnsiEncoding maps the
+        // Latin-1 accents correctly (á/é/í/ó/ú/ý). (Truly non-WinAnsi glyphs — Czech č/ř/š/ž/Č — still
+        // need an embedded font, as the render track uses.)
+        font.set(PdfName.of("Encoding"), PdfName.of("WinAnsiEncoding"));
         font.set(PdfName.of("Name"), PdfName.of(fontName));
         fonts.set(fontName, font);
         resources.set(PdfName.of("Font"), fonts);

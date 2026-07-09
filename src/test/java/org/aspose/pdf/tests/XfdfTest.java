@@ -182,7 +182,8 @@ public class XfdfTest {
         importFromString(doc, xfdf);
 
         Page page = doc.getPages().get(1);
-        assertEquals(1, page.getAnnotations().size());
+        // text annotation + its auto-paired Popup (Adobe/Aspose XFDF-import semantics)
+        assertEquals(2, page.getAnnotations().size());
 
         Annotation first = page.getAnnotations().get(1);
         assertEquals("Text", first.getSubtype());
@@ -428,7 +429,8 @@ public class XfdfTest {
         importFromString(doc2, xfdf);
 
         Page page2 = doc2.getPages().get(1);
-        assertEquals(2, page2.getAnnotations().size(), "Should have 2 annotations after round trip");
+        // 2 markup annotations + their auto-paired Popups
+        assertEquals(4, page2.getAnnotations().size(), "Should have 2 annotations + 2 popups after round trip");
 
         // Verify text annotation
         TextAnnotation imported1 = (TextAnnotation) page2.getAnnotations().get(1);
@@ -443,8 +445,8 @@ public class XfdfTest {
         assertEquals("Review", imported1.getStateModel());
         assertTrue(imported1.isPrint());
 
-        // Verify highlight annotation with coords
-        HighlightAnnotation imported2 = (HighlightAnnotation) page2.getAnnotations().get(2);
+        // Verify highlight annotation with coords (index 3: the Text's Popup sits at 2)
+        HighlightAnnotation imported2 = (HighlightAnnotation) page2.getAnnotations().get(3);
         assertEquals("Highlight", imported2.getSubtype());
         assertEquals("Highlighted", imported2.getContents());
         double[] qp = imported2.getQuadPoints();
@@ -520,7 +522,8 @@ public class XfdfTest {
 
         importFromString(doc, xfdf);
 
-        assertEquals(1, doc.getPages().get(1).getAnnotations().size());
+        // markup annotation + its auto-paired Popup
+        assertEquals(2, doc.getPages().get(1).getAnnotations().size());
         assertEquals("Square", doc.getPages().get(1).getAnnotations().get(1).getSubtype());
         assertEquals("Green box", doc.getPages().get(1).getAnnotations().get(1).getContents());
 
@@ -586,7 +589,8 @@ public class XfdfTest {
         ByteArrayInputStream bais = new ByteArrayInputStream(xfdf.getBytes(StandardCharsets.UTF_8));
         editor.importAnnotationFromXfdf(bais);
 
-        assertEquals(2, editor.getDocument().getPages().get(1).getAnnotations().size());
+        // 2 markup annotations + their auto-paired Popups
+        assertEquals(4, editor.getDocument().getPages().get(1).getAnnotations().size());
 
         // Import with type filter
         Document doc2 = new Document();
@@ -597,8 +601,9 @@ public class XfdfTest {
         bais = new ByteArrayInputStream(xfdf.getBytes(StandardCharsets.UTF_8));
         editor2.importAnnotationFromXfdf(bais, new AnnotationType[]{AnnotationType.Text});
 
-        assertEquals(1, editor2.getDocument().getPages().get(1).getAnnotations().size(),
-                "Should only import Text annotations when filtered");
+        // the filtered Text annotation + its auto-paired Popup
+        assertEquals(2, editor2.getDocument().getPages().get(1).getAnnotations().size(),
+                "Should only import Text annotations (plus their popups) when filtered");
         assertEquals("Text", editor2.getDocument().getPages().get(1).getAnnotations().get(1).getSubtype());
 
         editor.close();
@@ -679,8 +684,10 @@ public class XfdfTest {
         doc.getPages().add();
         importFromString(doc, xfdf);
 
-        assertEquals(15, doc.getPages().get(1).getAnnotations().size(),
-                "Should import all 15 annotation types");
+        // 15 imported annotations + an auto-paired Popup for each markup type
+        // except FreeText (Adobe/Aspose XFDF-import semantics) = 15 + 14
+        assertEquals(29, doc.getPages().get(1).getAnnotations().size(),
+                "Should import all 15 annotation types (+14 popups)");
 
         doc.close();
     }
@@ -691,6 +698,35 @@ public class XfdfTest {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         XfdfExporter.export(doc, baos);
         return baos.toString("UTF-8");
+    }
+
+    @Test
+    public void testImportPairsMarkupWithPopup() throws IOException {
+        String xfdf = "<?xml version=\"1.0\"?><xfdf>"
+                + "<annots>"
+                + "<square page=\"0\" rect=\"10,700,110,760\" name=\"sq1\"><contents>box</contents></square>"
+                + "<freetext page=\"0\" rect=\"10,600,110,660\" name=\"ft1\"><contents>label</contents></freetext>"
+                + "</annots></xfdf>";
+        Document doc = new Document();
+        doc.getPages().add();
+        importFromString(doc, xfdf);
+
+        Page page = doc.getPages().get(1);
+        // square + its popup + freetext (freetext displays its own text: no popup)
+        assertEquals(3, page.getAnnotations().size());
+        SquareAnnotation sq = (SquareAnnotation) page.getAnnotations().get(1);
+        Annotation popup = page.getAnnotations().get(2);
+        assertEquals("Popup", popup.getSubtype());
+        assertNotNull(sq.getPopup(), "square must be linked to its popup via /Popup");
+        assertEquals("Popup", sq.getPopup().getSubtype());
+        assertEquals(sq.getPdfDictionary(),
+                ((PopupAnnotation) popup).getParent().getPdfDictionary(),
+                "popup /Parent must point back to the square");
+        assertEquals("FreeText", page.getAnnotations().get(3).getSubtype());
+        // popup is top-aligned with its parent in the right page margin
+        assertEquals(760.0, popup.getRect().getURY(), 0.01);
+        assertTrue(popup.getRect().getLLX() >= page.getRect().getURX() - 0.01);
+        doc.close();
     }
 
     private void importFromString(Document doc, String xfdf) throws IOException {

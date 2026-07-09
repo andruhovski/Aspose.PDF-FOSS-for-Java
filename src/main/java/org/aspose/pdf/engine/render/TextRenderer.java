@@ -227,10 +227,16 @@ public class TextRenderer {
         // wrong cmap key, silently drops codes that collide with control
         // characters, and renders ".notdef" boxes for subset programs whose cmap
         // java.awt mishandles.
+        int[] cffSimpleGid = cffSimpleCodeToGidFor(pdfFont, jdkFont);
         if (canDrawAsSingleRun(state, text, rawBytes)
                 && codeKeyedReaderFor(pdfFont, jdkFont) == null
                 && compositeGidFontFor(pdfFont, jdkFont) == null
-                && embeddedTrueTypeFor(pdfFont, jdkFont) == null) {
+                && embeddedTrueTypeFor(pdfFont, jdkFont) == null
+                // A simple CFF font reaches the single-run drawString path only
+                // when java.awt can display every decoded char; if any char is
+                // undisplayable (custom /Differences encoding) we divert to the
+                // per-glyph loop below to draw those by glyph id.
+                && (cffSimpleGid == null || !hasUndisplayableChar(jdkFont, text))) {
             drawSingleRun(g2d, state, text, rawBytes, pdfFont, jdkFont);
             return;
         }
@@ -282,6 +288,19 @@ public class TextRenderer {
                     // control characters that drawString silently skips.
                     ckGid = ckReader.getGlyphId(charCode);
                     if (ckGid == 0) ckGid = ckReader.getGlyphId(0xF000 | charCode);
+                } else if (cffSimpleGid != null
+                        && (ch == null || ch.isEmpty() || !jdkFont.canDisplay(ch.codePointAt(0)))) {
+                    // Simple CFF (Type1C) font with a custom /Differences encoding:
+                    // the decoded Unicode isn't in the synthetic OTF cmap, so
+                    // drawString would emit a .notdef box. Resolve the glyph id
+                    // straight from the encoding (charcode → name → CFF gid) and
+                    // draw it by id below (PDFNEWNET_38043 Arabic Hacen subsets).
+                    int g = (charCode >= 0 && charCode < 256) ? cffSimpleGid[charCode] : -1;
+                    if (g > 0) {
+                        ckGid = g;
+                    } else {
+                        ch = remapForSymbolicCmap(jdkFont, ch, charCode);
+                    }
                 } else {
                     // Symbolic TrueType fonts with a (3,0)-only cmap (§9.6.6.4)
                     ch = remapForSymbolicCmap(jdkFont, ch, charCode);
@@ -301,7 +320,7 @@ public class TextRenderer {
             if (glyphOutline == null && gidFont != null && ckGid >= 0) {
                 glyphOutline = gidFont.glyphOutline(ckGid);
             }
-            boolean drawGv = glyphOutline == null && ckGid > 0 && ckReader != null;
+            boolean drawGv = glyphOutline == null && ckGid > 0 && (ckReader != null || cffSimpleGid != null);
             boolean drawStr = glyphOutline == null && !drawGv && ch != null && !ch.isEmpty();
 
             if (!invisible && (glyphOutline != null || drawGv || drawStr)) {
@@ -474,6 +493,27 @@ public class TextRenderer {
     }
 
     /**
+     * Returns the charcode→gid map for a simple (non-composite) font whose
+     * outlines come from an embedded CFF ({@code FontFile3}) and that is being
+     * drawn with that embedded program — otherwise {@code null}.
+     * <p>
+     * Such fonts otherwise reach {@code drawString}, which resolves the decoded
+     * Unicode through the synthetic OTF cmap and renders {@code .notdef} boxes
+     * for custom {@code /Differences} encodings (Arabic Hacen subsets in
+     * PDFNEWNET_38043). The map lets the per-glyph loop draw by glyph id
+     * instead — but only as a fallback when {@code java.awt.Font#canDisplay}
+     * reports the decoded char unavailable, so Latin CFF fonts that already
+     * render correctly keep their {@code drawString} path unchanged.
+     */
+    private static int[] cffSimpleCodeToGidFor(PdfFont pdfFont, Font jdkFont) {
+        if (pdfFont == null || jdkFont == null || pdfFont.isComposite()) return null;
+        if (org.aspose.pdf.engine.font.cff.CFFFontLoader.load(pdfFont) != jdkFont) {
+            return null;
+        }
+        return org.aspose.pdf.engine.font.cff.CFFFontLoader.simpleCffCodeToGid(pdfFont);
+    }
+
+    /**
      * Whole-string variant of {@link #remapForSymbolicCmap(Font, String, int)}
      * for the single-run path, where {@code text.length() == rawBytes.length}
      * is guaranteed by {@link #canDrawAsSingleRun}.
@@ -497,6 +537,22 @@ public class TextRenderer {
             }
         }
         return sb != null ? sb.toString() : text;
+    }
+
+    /**
+     * True if {@code jdkFont} cannot display at least one code point of
+     * {@code text} — the signal that a simple CFF font's custom encoding would
+     * make {@code drawString} emit a {@code .notdef} box, so the per-glyph
+     * draw-by-id path should be used instead.
+     */
+    private static boolean hasUndisplayableChar(Font jdkFont, String text) {
+        if (jdkFont == null || text == null) return false;
+        for (int i = 0; i < text.length(); ) {
+            int cp = text.codePointAt(i);
+            if (!jdkFont.canDisplay(cp)) return true;
+            i += Character.charCount(cp);
+        }
+        return false;
     }
 
     private boolean canDrawAsSingleRun(GraphicsState state, String text, byte[] rawBytes) {

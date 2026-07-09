@@ -89,4 +89,19 @@ public class ButtonField extends Field {
         }
         return (a instanceof PdfDictionary) ? PdfAction.fromDictionary((PdfDictionary) a, null) : null;
     }
+
+    /**
+     * Sets this push button's activation action ({@code /A}, fired on mouse-up) to a JavaScript action
+     * running {@code script} (ISO 32000-1:2008 §12.6.4.16). Used by the XFA→AcroForm converter to wire
+     * a {@code +}/{@code -} control's original XFA click script onto the converted button.
+     *
+     * @param script the JavaScript source (ignored when {@code null}/blank)
+     */
+    public void setOnClickJavaScript(String script) {
+        if (script == null || script.trim().isEmpty()) {
+            return;
+        }
+        JavaScriptAction action = new JavaScriptAction(script);
+        dict.set(PdfName.of("A"), action.getPdfDictionary());
+    }
 }

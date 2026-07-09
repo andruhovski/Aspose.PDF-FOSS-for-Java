@@ -542,4 +542,60 @@ public class IncrementalUpdateTest {
         }
         return count;
     }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  Object-number collision on incremental update
+    // ═══════════════════════════════════════════════════════════════
+
+    /**
+     * Regression: in an incremental update the original objects are preserved
+     * verbatim in the copied prefix but are absent from the modified-objects
+     * map. A freshly-created orphan stream must therefore be numbered above the
+     * original {@code /Size}, never reusing a still-live original number.
+     *
+     * <p>The real-world failure: a redaction appends a content stream that the
+     * writer numbered using only the small modified set, colliding with an
+     * {@code /ObjStm} that backed compressed objects. On reopen, loading those
+     * compressed objects threw "Invalid index 0 in object stream N" because the
+     * reused number now pointed at a non-{@code /ObjStm} dictionary (no
+     * {@code /N}). Corpus repro: 45502.pdf (RegressionTests_v24_09).</p>
+     */
+    @Test
+    public void incrementalSaveDoesNotReuseOriginalObjectNumbers() throws IOException {
+        // Minimal original whose trailer declares /Size 50 — i.e. objects up to
+        // number 49 are considered to exist (preserved in the copied prefix).
+        byte[] original = ("%PDF-1.7\n"
+                + "1 0 obj\n<< /Type /Catalog >>\nendobj\n"
+                + "xref\n0 2\n0000000000 65535 f \n0000000009 00000 n \n"
+                + "trailer\n<< /Size 50 /Root 1 0 R >>\nstartxref\n0\n%%EOF\n")
+                .getBytes(StandardCharsets.US_ASCII);
+        RandomAccessReader reader = RandomAccessReader.fromBytes(original);
+
+        PdfDictionary trailer = new PdfDictionary();
+        trailer.set(PdfName.of("Size"), PdfInteger.valueOf(50));
+        trailer.set(PdfName.of("Root"),
+                new PdfObjectReference(new PdfObjectKey(1, 0), k -> PdfNull.INSTANCE));
+
+        // A modified object with a LOW number (5) that owns an orphan stream
+        // (no object key). getMaxObjectNumber over the modified set alone is 5,
+        // so the buggy allocator would hand the orphan number 6 — a preserved
+        // original number.
+        PdfStream orphan = new PdfStream();
+        orphan.setDecodedData("appended".getBytes(StandardCharsets.US_ASCII));
+        PdfDictionary modDict = new PdfDictionary();
+        modDict.setObjectKey(new PdfObjectKey(5, 0));
+        modDict.set(PdfName.of("Contents"), orphan);
+
+        Map<PdfObjectKey, PdfBase> modified = new LinkedHashMap<>();
+        modified.put(new PdfObjectKey(5, 0), modDict);
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        PDFWriter writer = new PDFWriter(out, 1.7f);
+        writer.writeIncremental(reader, trailer, modified);
+
+        assertNotNull(orphan.getObjectKey(), "orphan stream was not promoted to indirect");
+        assertTrue(orphan.getObjectKey().getObjectNumber() >= 50,
+                "orphan stream reused a preserved original number: "
+                        + orphan.getObjectKey().getObjectNumber() + " (< /Size 50)");
+    }
 }

@@ -1666,7 +1666,9 @@ public class LayoutEngine {
             // reserve vertical space and don't crash.
             return reserveImagePlaceholder(image, ctx);
         }
-        DecodedImage decoded = decodeImageBytes(rawBytes);
+        DecodedImage decoded = image.getSelectedFrame() >= 0
+                ? decodeImageFrame(rawBytes, image.getSelectedFrame())
+                : decodeImageBytes(rawBytes);
         if (decoded == null) {
             LOG.warning(() -> "Could not decode image; falling back to placeholder");
             return reserveImagePlaceholder(image, ctx);
@@ -1773,34 +1775,118 @@ public class LayoutEngine {
             java.awt.image.BufferedImage bi = javax.imageio.ImageIO.read(
                     new java.io.ByteArrayInputStream(raw));
             if (bi == null) return null;
-            int w = bi.getWidth();
-            int h = bi.getHeight();
-            byte[] rgb = new byte[w * h * 3];
-            int idx = 0;
-            for (int y = 0; y < h; y++) {
-                for (int x = 0; x < w; x++) {
-                    int argb = bi.getRGB(x, y);
-                    // Composite alpha against white so transparent GIF
-                    // backgrounds match the surrounding page paper.
-                    int a = (argb >>> 24) & 0xFF;
-                    int r = (argb >>> 16) & 0xFF;
-                    int g = (argb >>> 8) & 0xFF;
-                    int b = argb & 0xFF;
-                    if (a < 255) {
-                        r = (r * a + 255 * (255 - a)) / 255;
-                        g = (g * a + 255 * (255 - a)) / 255;
-                        b = (b * a + 255 * (255 - a)) / 255;
-                    }
-                    rgb[idx++] = (byte) r;
-                    rgb[idx++] = (byte) g;
-                    rgb[idx++] = (byte) b;
-                }
-            }
-            byte[] compressed = flateCompress(rgb);
-            return new DecodedImage(w, h, "FlateDecode", "DeviceRGB", compressed);
+            return packBufferedImage(bi);
         } catch (java.io.IOException e) {
             LOG.warning(() -> "ImageIO failed to decode: " + e.getMessage());
             return null;
+        }
+    }
+
+    /**
+     * Decodes one specific frame of a multi-frame image source (multi-page
+     * TIFF, animated GIF) through the ImageIO reader plugin.
+     *
+     * @param raw   the raw source bytes
+     * @param frame the 0-based frame index
+     * @return the decoded frame, or {@code null} if the frame cannot be read
+     */
+    private DecodedImage decodeImageFrame(byte[] raw, int frame) {
+        try (javax.imageio.stream.ImageInputStream iis =
+                     javax.imageio.ImageIO.createImageInputStream(new java.io.ByteArrayInputStream(raw))) {
+            java.util.Iterator<javax.imageio.ImageReader> readers = javax.imageio.ImageIO.getImageReaders(iis);
+            if (!readers.hasNext()) return null;
+            javax.imageio.ImageReader reader = readers.next();
+            try {
+                reader.setInput(iis, false, true);
+                java.awt.image.BufferedImage bi = reader.read(frame);
+                return bi == null ? null : packBufferedImage(bi);
+            } finally {
+                reader.dispose();
+            }
+        } catch (Exception e) {
+            LOG.warning(() -> "Failed to decode image frame " + frame + ": " + e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Packs a decoded {@link java.awt.image.BufferedImage} as 8-bit DeviceRGB
+     * with {@code /FlateDecode} compression, compositing any alpha channel
+     * against white so transparent backgrounds match the page paper.
+     */
+    private static DecodedImage packBufferedImage(java.awt.image.BufferedImage bi) {
+        int w = bi.getWidth();
+        int h = bi.getHeight();
+        byte[] rgb = new byte[w * h * 3];
+        int idx = 0;
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                int argb = bi.getRGB(x, y);
+                int a = (argb >>> 24) & 0xFF;
+                int r = (argb >>> 16) & 0xFF;
+                int g = (argb >>> 8) & 0xFF;
+                int b = argb & 0xFF;
+                if (a < 255) {
+                    r = (r * a + 255 * (255 - a)) / 255;
+                    g = (g * a + 255 * (255 - a)) / 255;
+                    b = (b * a + 255 * (255 - a)) / 255;
+                }
+                rgb[idx++] = (byte) r;
+                rgb[idx++] = (byte) g;
+                rgb[idx++] = (byte) b;
+            }
+        }
+        byte[] compressed = flateCompress(rgb);
+        return new DecodedImage(w, h, "FlateDecode", "DeviceRGB", compressed);
+    }
+
+    /**
+     * Returns the 0-based indices of the frames of a multi-frame image that
+     * actually decode. A single-frame (or non-TIFF, non-animated) source
+     * returns a one-element array; a source ImageIO cannot read at all
+     * returns an empty array. Broken frames inside an otherwise valid
+     * multi-page TIFF are skipped — Aspose paginates only decodable frames
+     * (PDFNET-38363: a 21-frame TIFF with one corrupt frame yields 20 pages).
+     *
+     * @param raw the raw source bytes
+     * @return the decodable frame indices, in order
+     */
+    public static int[] getDecodableImageFrames(byte[] raw) {
+        if (raw == null || raw.length == 0) return new int[0];
+        // JPEG sources take the verbatim /DCTDecode path and are single-frame.
+        if (raw.length >= 2 && (raw[0] & 0xFF) == 0xFF && (raw[1] & 0xFF) == 0xD8) {
+            return new int[]{0};
+        }
+        try (javax.imageio.stream.ImageInputStream iis =
+                     javax.imageio.ImageIO.createImageInputStream(new java.io.ByteArrayInputStream(raw))) {
+            java.util.Iterator<javax.imageio.ImageReader> readers = javax.imageio.ImageIO.getImageReaders(iis);
+            if (!readers.hasNext()) return new int[0];
+            javax.imageio.ImageReader reader = readers.next();
+            try {
+                reader.setInput(iis, false, true);
+                int count;
+                try {
+                    count = reader.getNumImages(true);
+                } catch (Exception e) {
+                    count = 1;
+                }
+                if (count <= 1) return new int[]{0};
+                java.util.List<Integer> ok = new ArrayList<>();
+                for (int i = 0; i < count; i++) {
+                    try {
+                        if (reader.read(i) != null) ok.add(i);
+                    } catch (Exception e) {
+                        LOG.fine("Skipping undecodable frame " + i + ": " + e.getMessage());
+                    }
+                }
+                int[] result = new int[ok.size()];
+                for (int i = 0; i < result.length; i++) result[i] = ok.get(i);
+                return result;
+            } finally {
+                reader.dispose();
+            }
+        } catch (Exception e) {
+            return new int[0];
         }
     }
 

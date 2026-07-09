@@ -9,7 +9,9 @@ import java.awt.Font;
 import java.awt.FontFormatException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -33,10 +35,97 @@ public final class CFFFontLoader {
 
     private static final Logger LOG = Logger.getLogger(CFFFontLoader.class.getName());
 
-    /** Cache: PdfFont identity (font dict reference) → loaded AWT Font (or null on failure). */
-    private static final Map<Object, Font> CACHE = new HashMap<>();
+    // These caches MUST key on object identity, not content. PdfDictionary
+    // overrides equals/hashCode by content, and tools like Aspose.Words emit
+    // PDFs with deterministic object numbering, so structurally identical font
+    // dictionaries (e.g. the evaluation watermark subset) from two different
+    // documents compare equal — a content-keyed cache then returns one
+    // document's parsed font/glyph map for another's, corrupting glyphs
+    // (e.g. space → 'L'). IdentityHashMap keys on the instance, so each
+    // document's distinct dictionary instance gets its own entry while
+    // intra-document reuse (the parser hands back the same instance) still hits.
+
+    /** Cache: font-dict instance → loaded AWT Font (or null on failure). */
+    private static final Map<Object, Font> CACHE =
+            Collections.synchronizedMap(new IdentityHashMap<>());
+
+    /** Cache: font-dict instance → 256-entry charcode→CFF gid map for simple CFF fonts (or null). */
+    private static final Map<Object, int[]> CODE_TO_GID =
+            Collections.synchronizedMap(new IdentityHashMap<>());
 
     private CFFFontLoader() {}
+
+    /**
+     * Returns a 256-entry array mapping each 1-byte character code to its glyph
+     * id in the embedded CFF program, resolved through the PDF {@code /Encoding}
+     * (charcode → glyph name → CFF charset gid). Entry is {@code -1} when the
+     * code maps to no glyph.
+     * <p>
+     * Used by the renderer to draw a <em>simple</em> (non-composite) Type1/Type1C
+     * font with an embedded {@code FontFile3} CFF directly by glyph id, instead
+     * of routing the decoded Unicode through {@code java.awt.Font#drawString}.
+     * The latter renders {@code .notdef} boxes when the PDF uses a custom
+     * {@code /Differences} encoding whose glyph names carry Unicode values that
+     * the synthetic OpenType cmap does not cover (e.g. Arabic Hacen subsets in
+     * PDFNEWNET_38043). The CFF gid order is preserved by {@link OpenTypeBuilder},
+     * so these ids index the synthetic OTF handed to {@code Font.createFont}.
+     *
+     * @param pdfFont the font; must be non-composite with an embedded CFF
+     * @return the charcode→gid map, or {@code null} if not a simple CFF font or
+     *         the CFF cannot be parsed
+     */
+    public static int[] simpleCffCodeToGid(PdfFont pdfFont) {
+        if (pdfFont == null || pdfFont.isComposite()) return null;
+        Object key = pdfFont.getFontDictionary();
+        if (key == null) key = pdfFont;
+        if (CODE_TO_GID.containsKey(key)) return CODE_TO_GID.get(key);
+
+        int[] map = buildSimpleCffCodeToGid(pdfFont);
+        CODE_TO_GID.put(key, map);
+        return map;
+    }
+
+    private static int[] buildSimpleCffCodeToGid(PdfFont pdfFont) {
+        FontDescriptor fd = pdfFont.getFontDescriptor();
+        if (fd == null) return null;
+        // Only simple fonts whose outlines come from an embedded CFF (FontFile3).
+        // FontFile2 (TrueType) has its own draw-by-outline path; CID fonts are
+        // composite and excluded above.
+        if (fd.getFontFile2() != null) return null;
+        PdfStream fontFile3 = fd.getFontFile3();
+        if (fontFile3 == null) return null;
+
+        CFFParser cff;
+        try {
+            byte[] cffBytes = fontFile3.getDecodedData();
+            if (cffBytes == null || cffBytes.length < 4) return null;
+            cff = new CFFParser(cffBytes);
+        } catch (IOException e) {
+            LOG.fine(() -> "simpleCffCodeToGid: CFF parse failed for " + pdfFont.getBaseFont() + ": " + e);
+            return null;
+        }
+
+        Map<String, Integer> nameToGid = new HashMap<>(cff.numGlyphs * 2);
+        for (int gid = 0; gid < cff.numGlyphs; gid++) {
+            String n = cff.glyphNames[gid];
+            if (n != null && !nameToGid.containsKey(n)) nameToGid.put(n, gid);
+        }
+
+        FontEncoding enc = pdfFont.getEncoding();
+        int[] codeToGid = new int[256];
+        java.util.Arrays.fill(codeToGid, -1);
+        boolean any = false;
+        for (int code = 0; code <= 255; code++) {
+            String name = (enc != null) ? enc.getGlyphName(code) : null;
+            if (name == null || name.isEmpty() || ".notdef".equals(name)) continue;
+            Integer gid = nameToGid.get(name);
+            if (gid != null && gid > 0) {
+                codeToGid[code] = gid;
+                any = true;
+            }
+        }
+        return any ? codeToGid : null;
+    }
 
     /**
      * Returns a Java {@code Font} backed by the embedded CFF, or {@code null}

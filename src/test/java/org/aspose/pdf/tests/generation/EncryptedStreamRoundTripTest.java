@@ -217,17 +217,19 @@ class EncryptedStreamRoundTripTest {
     }
 
     @Test
-    @DisplayName("Defensive: empty plaintext under AES still emits a 32-byte ciphertext stream")
+    @DisplayName("Defensive: empty plaintext on the AES stream-write path still emits 32 bytes")
     void emptyPayloadUnderAES_emitsThirtyTwoBytes() {
-        // The PDFEncryptor / AESCipher must never return /Length 0 for AES paths,
-        // otherwise Adobe-strict readers reject the document. 32 bytes = 16 IV +
-        // 16 PKCS#7-padded all-zero-length plaintext block.
+        // The object/stream encryption path (PDFEncryptor -> AESCipher.encryptPadded)
+        // must never return /Length 0 for AES, otherwise Adobe-strict readers reject
+        // the document. 32 bytes = 16 IV + 16 PKCS#7-padded zero-length plaintext block.
+        // (The general-purpose AESCipher.encrypt round-trips empty as empty — see
+        // EncryptAndDecryptEmptyArray1/2 in the regression suite.)
         byte[] key = new byte[32];
         for (int i = 0; i < 32; i++) key[i] = (byte) i;
-        byte[] result = org.aspose.pdf.engine.security.AESCipher.encrypt(key, new byte[0]);
+        byte[] result = org.aspose.pdf.engine.security.AESCipher.encryptPadded(key, new byte[0]);
         assertEquals(32, result.length,
                 "AES-CBC of empty plaintext must produce a 16-byte IV + 16-byte padding block");
-        byte[] result2 = org.aspose.pdf.engine.security.AESCipher.encrypt(key, null);
+        byte[] result2 = org.aspose.pdf.engine.security.AESCipher.encryptPadded(key, null);
         assertEquals(32, result2.length,
                 "AES-CBC of null plaintext must also produce a 16-byte IV + 16-byte padding block");
     }

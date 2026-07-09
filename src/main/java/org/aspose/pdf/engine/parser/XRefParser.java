@@ -28,6 +28,15 @@ public final class XRefParser {
     private final PDFLexer lexer;
 
     private final Map<PdfObjectKey, XRefEntry> entries = new LinkedHashMap<>();
+
+    /**
+     * Non-zero when the xref table was recovered by scanning and sits this
+     * many bytes AFTER the position startxref claimed: the file is a chain of
+     * appended whole-file revisions whose offsets are segment-relative
+     * (PDFNET_51575). Object loaders should retry a failed entry offset with
+     * this delta added before falling back to a full object scan.
+     */
+    private long entryOffsetAdjustment;
     private final java.util.Set<Long> visitedOffsets = new java.util.HashSet<>();
     private PdfDictionary trailerDictionary;
 
@@ -181,6 +190,19 @@ public final class XRefParser {
                     new Object[]{startxrefPosition, token});
             long xrefPos = scanForXref();
             if (xrefPos >= 0) {
+                // Concatenated-revision PDFs (a growing document appended as
+                // whole files) carry startxref values relative to their own
+                // revision segment, not the file start. The distance between
+                // where the table actually is and where startxref claimed it
+                // to be equals the segment's base offset, so the same delta
+                // relocates every entry offset of that table (PDFNET_51575).
+                if (startxrefPosition > 0 && xrefPos > startxrefPosition) {
+                    entryOffsetAdjustment = xrefPos - startxrefPosition;
+                    LOGGER.log(Level.WARNING,
+                            "Scanned xref found {0} bytes after the claimed startxref; "
+                                    + "entry offsets will also be retried with this delta",
+                            entryOffsetAdjustment);
+                }
                 try {
                     reader.seek(xrefPos);
                     lexer.clearPeek();
@@ -266,6 +288,16 @@ public final class XRefParser {
      */
     public PdfDictionary getTrailerDictionary() {
         return trailerDictionary;
+    }
+
+    /**
+     * Returns the delta to retry entry offsets with when the xref table was
+     * relocated by scanning (see {@link #entries} doc), or 0.
+     *
+     * @return the entry-offset adjustment in bytes
+     */
+    public long getEntryOffsetAdjustment() {
+        return entryOffsetAdjustment;
     }
 
     /**

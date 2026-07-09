@@ -857,18 +857,19 @@ public class PdfPageRenderer {
             int jMin = (int) Math.floor((patBounds.getMinY() - bbox.getURY()) / yStep);
             int jMax = (int) Math.ceil((patBounds.getMaxY() - bbox.getLLY()) / yStep);
             long tileCount = (long) (iMax - iMin + 1) * (jMax - jMin + 1);
-            // Single-tile / page-background patterns (where one tile covers the
-            // whole fill area) are the high-leverage case: the tile is the
-            // visual content (e.g. PDFNEWNET_32223's purple gradient + ribbon
-            // background). Fine repeating texture patterns (e.g. cross-hatch
-            // shading at <50 user units / step) make small visual contribution
-            // but have order-of-magnitude pixel-coverage AND order-of-magnitude
-            // rendering cost — and Java's grayscale resampling of these tiny
-            // tiles drifts from Aspose's. Cap iteration at a level that keeps
-            // single-tile patterns intact and lets fine-texture patterns fall
-            // back to the default fill color (matching pre-pattern rendering
-            // for tests like PDFNEWNET_31977).
-            if (tileCount > 25) {
+            // Fine repeating texture patterns (e.g. PDFNEWNET_38922's 8×8 red-dot
+            // page background, ~6000 tiles, or PDFNEWNET_31977's cross-hatch) ARE
+            // the visual content — dropping them leaves a flat solid fill whose
+            // structure diverges wildly from the gold (SSIM 0.20 for 38922).
+            // Rendering them via per-tile replay is both correct and cheap
+            // (~0.15 ms/tile; tile count is dpi-independent, driven by user-space
+            // bounds ÷ step) and matches Aspose more closely, not less — 31977's
+            // pHash distance drops from a borderline pass to 4 once tiled. We
+            // keep a generous upper bound only as a runtime backstop for
+            // pathological step/area ratios; the in-loop interrupt check and the
+            // global RenderBudget interrupt true runaways. Override via
+            // -Dopenpdf.pattern.maxtiles for diagnostics.
+            if (tileCount > Long.getLong("openpdf.pattern.maxtiles", 100_000L)) {
                 LOG.fine(() -> "Pattern tiling skipped for " + patternName + " (tileCount=" + tileCount + ")");
                 return false;
             }

@@ -170,10 +170,11 @@ public class PdfBookmarkEditor implements AutoCloseable {
         }
         org.w3c.dom.Document xml;
         try {
-            javax.xml.parsers.DocumentBuilder db = javax.xml.parsers.DocumentBuilderFactory
-                    .newInstance().newDocumentBuilder();
+            // bookmark XML is untrusted input: parse with the shared XXE-hardened builder
+            // (DOCTYPE disallowed, external entities/XInclude disabled).
+            javax.xml.parsers.DocumentBuilder db = org.aspose.pdf.engine.xml.SecureXml.newBuilder(false);
             xml = db.parse(new java.io.File(xmlFile));
-        } catch (javax.xml.parsers.ParserConfigurationException | org.xml.sax.SAXException e) {
+        } catch (org.xml.sax.SAXException e) {
             throw new java.io.IOException("Failed to parse bookmark XML: " + xmlFile, e);
         }
         try {

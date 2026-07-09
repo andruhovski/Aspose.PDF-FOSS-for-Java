@@ -3,7 +3,6 @@ package org.aspose.pdf.text;
 import org.aspose.pdf.Rectangle;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -31,11 +30,22 @@ public class AbsorbedCell {
 
     /**
      * Returns the text fragments in this cell.
+     * <p>
+     * Returns a {@link TextFragmentCollection} for API compatibility with
+     * Aspose.PDF ({@code AbsorbedCell.TextFragments}): the collection uses
+     * <strong>1-based indexing</strong>, so {@code get(1)} is the first
+     * fragment — matching the C# indexer in customer code such as
+     * {@code cell.TextFragments[1].Text}.
+     * </p>
      *
-     * @return unmodifiable list of text fragments
+     * @return the text fragments of this cell (1-based collection)
      */
-    public List<TextFragment> getTextFragments() {
-        return Collections.unmodifiableList(textFragments);
+    public TextFragmentCollection getTextFragments() {
+        TextFragmentCollection collection = new TextFragmentCollection();
+        for (TextFragment fragment : textFragments) {
+            collection.add(fragment);
+        }
+        return collection;
     }
 
     /**

@@ -49,6 +49,20 @@ public class PdfFloatTest {
     }
 
     @Test
+    public void largeFractionalRoundsToIntegerPerAdobeLimit() throws IOException {
+        // ISO 32000-1 Annex C: |value| >= 32767 cannot carry fractional precision,
+        // so it is written as an integer (Adobe implementation limit).
+        assertWritesTo("-671089", new PdfFloat(-671088.625));
+        assertWritesTo("671089", new PdfFloat(671088.625));
+        assertWritesTo("32768", new PdfFloat(32767.5));
+    }
+
+    @Test
+    public void justBelowLimitKeepsFraction() throws IOException {
+        assertWritesTo("32766.5", new PdfFloat(32766.5));
+    }
+
+    @Test
     public void constructorFromString() {
         assertEquals(3.14, new PdfFloat("3.14").doubleValue(), 0.0001);
     }

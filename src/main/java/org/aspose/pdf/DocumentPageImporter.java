@@ -36,6 +36,9 @@ public final class DocumentPageImporter {
      */
     private final PdfObjectCloner cloner;
 
+    /** Identity set of field dicts reachable from the source /AcroForm /Fields; lazily built. */
+    private java.util.Set<PdfDictionary> sourceFormFields;
+
     /**
      * @param target target document, receives cloned pages
      * @param source source document, owns the original pages
@@ -155,9 +158,72 @@ public final class DocumentPageImporter {
             if (srcAnnot == null) continue;
             PdfDictionary clonedAnnot = cloner.cloneAnnotationDict(srcAnnot);
             clonedAnnot.set(PdfName.of("P"), newPageRef);
+            // Drop a dangling /Parent: a widget whose /Parent field is not part of
+            // the source /AcroForm /Fields tree (e.g. a source with no AcroForm
+            // whose widgets are parented to a junk grouping field — corpus 36395)
+            // would otherwise carry that malformed parent into the merged document.
+            // The widget keeps its own /T, becoming a clean self-named field.
+            PdfDictionary srcParent = resolveDict(srcAnnot.get(PdfName.of("Parent")));
+            if (srcParent != null && !sourceFormFields().contains(srcParent)) {
+                clonedAnnot.remove(PdfName.of("Parent"));
+            }
             newAnnots.add(target.registerImportedObject(clonedAnnot));
         }
         newPage.set(PdfName.ANNOTS, newAnnots);
+    }
+
+    /**
+     * Lazily collects (by identity) every field dictionary reachable from the
+     * source document's {@code /AcroForm /Fields} tree. A widget {@code /Parent}
+     * that is absent from this set is a dangling reference (the source has no
+     * AcroForm, or the parent is a junk grouping field) and is dropped on import.
+     */
+    private java.util.Set<PdfDictionary> sourceFormFields() {
+        if (sourceFormFields != null) {
+            return sourceFormFields;
+        }
+        sourceFormFields = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+        try {
+            PdfDictionary catalog = source.getCatalog();
+            if (catalog != null) {
+                PdfBase af = deref(catalog.get(PdfName.of("AcroForm")));
+                if (af instanceof PdfDictionary) {
+                    PdfBase fields = deref(((PdfDictionary) af).get(PdfName.of("Fields")));
+                    if (fields instanceof PdfArray) {
+                        collectFieldDicts((PdfArray) fields, 0);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            LOG.fine("Could not read source AcroForm for parent validation: " + e.getMessage());
+        }
+        return sourceFormFields;
+    }
+
+    private void collectFieldDicts(PdfArray arr, int depth) throws IOException {
+        if (depth > 50) {
+            return;
+        }
+        for (int i = 0; i < arr.size(); i++) {
+            PdfDictionary d = resolveDict(arr.get(i));
+            if (d != null && sourceFormFields.add(d)) {
+                PdfBase kids = deref(d.get(PdfName.of("Kids")));
+                if (kids instanceof PdfArray) {
+                    collectFieldDicts((PdfArray) kids, depth + 1);
+                }
+            }
+        }
+    }
+
+    private PdfBase deref(PdfBase v) throws IOException {
+        if (v instanceof PdfObjectReference) {
+            try {
+                return ((PdfObjectReference) v).dereference();
+            } catch (RuntimeException e) {
+                return null;
+            }
+        }
+        return v;
     }
 
     private PdfDictionary resolveDict(PdfBase v) throws IOException {

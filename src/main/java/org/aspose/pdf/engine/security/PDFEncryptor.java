@@ -69,14 +69,15 @@ public class PDFEncryptor {
     public byte[] encrypt(byte[] data, int objectNumber, int generationNumber) {
         if (data == null) return null;
         // Empty input under AES still produces 32 bytes (IV + one PKCS#7 pad
-        // block); under RC4 it stays empty. The dispatch below handles both.
+        // block, via encryptPadded — Adobe rejects /Length 0 encrypted streams);
+        // under RC4 it stays empty. The dispatch below handles both.
         try {
             if (customHandler != null) {
                 return customHandler.encrypt(data, objectNumber, generationNumber, encryptionKey);
             }
             if (revision >= 5) {
                 // R=5/R=6: AES-256 with file key directly
-                return AESCipher.encrypt(encryptionKey, data);
+                return AESCipher.encryptPadded(encryptionKey, data);
             }
             byte[] objectKey = PDFCryptoUtils.computeObjectKey(
                     encryptionKey, objectNumber, generationNumber, cipherType);
@@ -85,7 +86,7 @@ public class PDFEncryptor {
                     if (data.length == 0) return data;
                     return RC4Cipher.process(objectKey, data);
                 case AES_128:
-                    return AESCipher.encrypt(objectKey, data);
+                    return AESCipher.encryptPadded(objectKey, data);
                 default:
                     return data;
             }

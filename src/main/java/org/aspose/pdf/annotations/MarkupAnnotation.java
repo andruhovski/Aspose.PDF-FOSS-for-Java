@@ -43,7 +43,7 @@ public abstract class MarkupAnnotation extends Annotation {
      * @param title the title string, or null to remove
      */
     public void setTitle(String title) {
-        if (title != null) dict.set(PdfName.of("T"), new PdfString(title.getBytes(StandardCharsets.UTF_8)));
+        if (title != null) dict.set(PdfName.of("T"), new PdfString(title));
         else dict.remove(PdfName.of("T"));
     }
 
@@ -82,7 +82,7 @@ public abstract class MarkupAnnotation extends Annotation {
      * @param subject the subject string, or null to remove
      */
     public void setSubject(String subject) {
-        if (subject != null) dict.set(PdfName.of("Subj"), new PdfString(subject.getBytes(StandardCharsets.UTF_8)));
+        if (subject != null) dict.set(PdfName.of("Subj"), new PdfString(subject));
         else dict.remove(PdfName.of("Subj"));
     }
 
@@ -102,7 +102,7 @@ public abstract class MarkupAnnotation extends Annotation {
      * @param richText the rich text string
      */
     public void setRichText(String richText) {
-        if (richText != null) dict.set(PdfName.of("RC"), new PdfString(richText.getBytes(StandardCharsets.UTF_8)));
+        if (richText != null) dict.set(PdfName.of("RC"), new PdfString(richText));
     }
 
     /**
@@ -121,7 +121,7 @@ public abstract class MarkupAnnotation extends Annotation {
      * @param date the creation date string in PDF date format, or null to remove
      */
     public void setCreationDate(String date) {
-        if (date != null) dict.set(PdfName.of("CreationDate"), new PdfString(date.getBytes(StandardCharsets.UTF_8)));
+        if (date != null) dict.set(PdfName.of("CreationDate"), new PdfString(date));
         else dict.remove(PdfName.of("CreationDate"));
     }
 

@@ -78,7 +78,14 @@ public final class PageObjectCollector {
         for (PdfObjectKey key : allKeys) {
             Set<Integer> pages = objectToPages.get(key);
             if (pages == null || pages.isEmpty()) {
-                // Not referenced by any page → document-level
+                // Not referenced by any page → document-level. But drop a stale
+                // linearization parameter dictionary carried over from an
+                // already-linearized source: the writer emits a fresh one as the
+                // first object, and a second /Linearized dict is dead weight that
+                // misleads linearization detectors (ISO 32000-1 Annex F.2.2).
+                if (isStaleLinearizationDict(parser, key)) {
+                    continue;
+                }
                 documentLevel.add(key);
             } else if (pages.size() == 1 && pages.contains(firstPage)) {
                 firstPagePrivate.add(key);
@@ -103,6 +110,23 @@ public final class PageObjectCollector {
         return new LinearizationPlan(
                 pageKeys, firstPage, firstPagePrivate, firstPageShared,
                 otherPagePrivate, sharedObjects, documentLevel, numPages);
+    }
+
+    /**
+     * Returns true if {@code key} resolves to a linearization parameter dictionary
+     * (a dictionary whose first/identifying entry is {@code /Linearized}, ISO
+     * 32000-1 Annex F.2.2). Such a dictionary is meaningful only as the first
+     * object of a linearized file; one left over from an already-linearized
+     * source is stale and must not be re-emitted.
+     */
+    private static boolean isStaleLinearizationDict(PDFParser parser, PdfObjectKey key) {
+        try {
+            PdfBase obj = parser.getObject(key);
+            return obj instanceof PdfDictionary
+                    && ((PdfDictionary) obj).get("Linearized") != null;
+        } catch (IOException e) {
+            return false; // unreadable — leave classification untouched
+        }
     }
 
     /**

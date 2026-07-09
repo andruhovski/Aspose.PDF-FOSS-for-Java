@@ -149,6 +149,9 @@ public class ComboBoxField extends Field {
         font.set(PdfName.TYPE, PdfName.of("Font"));
         font.set(PdfName.SUBTYPE, PdfName.of("Type1"));
         font.set(PdfName.of("BaseFont"), PdfName.of("Helvetica"));
+        // WinAnsiEncoding so the ISO-8859-1 bytes we write render their Latin-1 accents (else the
+        // built-in StandardEncoding garbles them: 0xE1 'á' → 'æ').
+        font.set(PdfName.of("Encoding"), PdfName.of("WinAnsiEncoding"));
         PdfDictionary fonts = new PdfDictionary();
         fonts.set(PdfName.of(fontName), font);
         PdfDictionary res = new PdfDictionary();

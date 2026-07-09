@@ -18,6 +18,7 @@ public class TextSegment {
     private Rectangle rectangle;
     private int startCharIndex;
     private int endCharIndex = -1;
+    private TextEditOptions textEditOptions;
 
     /**
      * Creates a TextSegment with the given text.
@@ -149,6 +150,24 @@ public class TextSegment {
      */
     public void setEndCharIndex(int endCharIndex) {
         this.endCharIndex = endCharIndex < 0 ? -1 : Math.max(endCharIndex, startCharIndex);
+    }
+
+    /**
+     * Returns the text edit options applied when this segment is rendered/edited.
+     *
+     * @return the edit options, or {@code null} if not set
+     */
+    public TextEditOptions getTextEditOptions() {
+        return textEditOptions;
+    }
+
+    /**
+     * Sets the text edit options for this segment.
+     *
+     * @param textEditOptions the edit options
+     */
+    public void setTextEditOptions(TextEditOptions textEditOptions) {
+        this.textEditOptions = textEditOptions;
     }
 
     @Override

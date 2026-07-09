@@ -57,7 +57,7 @@ public class RedactionAnnotation extends MarkupAnnotation {
      */
     public void setOverlayText(String text) {
         if (text != null) {
-            dict.set(PdfName.of("OverlayText"), new PdfString(text.getBytes(StandardCharsets.UTF_8)));
+            dict.set(PdfName.of("OverlayText"), new PdfString(text));
         } else {
             dict.remove(PdfName.of("OverlayText"));
         }
@@ -185,6 +185,36 @@ public class RedactionAnnotation extends MarkupAnnotation {
                 return;
             }
 
+            // Redaction must REMOVE the underlying text, not merely paint over it —
+            // painted-over content stays extractable (and searchable), which defeats
+            // the purpose of redaction (ISO 32000-1 §12.5.6.23: the content within
+            // the region is to be removed). A fragment fully inside the area is
+            // deleted whole; a fragment that merely overlaps it loses only the
+            // characters actually covered (PDFNET_50927: redacting the ":" of
+            // "Date:  13 November 2019" must keep the rest of the line).
+            try {
+                org.aspose.pdf.text.TextFragmentAbsorber all =
+                        new org.aspose.pdf.text.TextFragmentAbsorber();
+                all.visit(page);
+                for (org.aspose.pdf.text.TextFragment tf : all.getTextFragments()) {
+                    Rectangle fr = tf.getRectangle();
+                    if (fr == null || !fr.isIntersect(rect)) {
+                        continue;
+                    }
+                    try {
+                        String remaining = textOutsideRedaction(tf, fr, rect);
+                        if (remaining != null && !remaining.equals(tf.getText())) {
+                            tf.setText(remaining);
+                        }
+                    } catch (RuntimeException perFragment) {
+                        LOG.fine(() -> "Could not remove text fragment under redaction: "
+                                + perFragment.getMessage());
+                    }
+                }
+            } catch (RuntimeException textRemoval) {
+                LOG.log(Level.FINE, "Text removal under redaction failed", textRemoval);
+            }
+
             // Determine fill color (default to white if not set)
             Color fill = getFillColor();
             double r = 1.0, g = 1.0, b = 1.0;
@@ -233,6 +263,83 @@ public class RedactionAnnotation extends MarkupAnnotation {
         } catch (Exception e) {
             LOG.log(Level.WARNING, "Failed to apply redaction", e);
         }
+    }
+
+    /**
+     * Computes the text of a fragment with the characters covered by the
+     * redaction area removed.
+     * <p>
+     * A fragment whose rectangle lies (almost) entirely inside the area loses
+     * all its text. For a partial horizontal overlap the covered character
+     * range is derived from the extractor's per-character X boundaries when
+     * available, else by linear interpolation across the fragment width — a
+     * character is removed when the redaction covers most (&gt;60%) of its
+     * cell. Returns {@code null} when nothing is covered.
+     * </p>
+     *
+     * @param tf   the fragment overlapping the redaction area
+     * @param fr   the fragment rectangle (non-null)
+     * @param rect the redaction rectangle (non-null)
+     * @return the remaining text, {@code ""} to delete all, or {@code null} to keep as is
+     */
+    private static String textOutsideRedaction(org.aspose.pdf.text.TextFragment tf,
+                                               Rectangle fr, Rectangle rect) {
+        String text = tf.getText();
+        if (text == null || text.isEmpty()) {
+            return null;
+        }
+        final double tol = 0.5;
+        boolean fullyInside = fr.getLLX() >= rect.getLLX() - tol
+                && fr.getURX() <= rect.getURX() + tol
+                && fr.getLLY() >= rect.getLLY() - tol
+                && fr.getURY() <= rect.getURY() + tol;
+        if (fullyInside) {
+            return "";
+        }
+        // Require a real vertical overlap before removing anything: a redaction
+        // band above/below the baseline must not eat the neighbouring line.
+        double vOverlap = Math.min(fr.getURY(), rect.getURY()) - Math.max(fr.getLLY(), rect.getLLY());
+        double frHeight = fr.getURY() - fr.getLLY();
+        if (frHeight <= 0 || vOverlap < frHeight * 0.5) {
+            return null;
+        }
+        double[] xs = tf.getCharXPositions();
+        int n = text.length();
+        StringBuilder remaining = new StringBuilder(n);
+        boolean removedAny = false;
+        for (int i = 0; i < n; i++) {
+            double left;
+            double right;
+            if (xs != null && xs.length == n + 1) {
+                left = xs[i];
+                right = xs[i + 1];
+            } else {
+                double w = (fr.getURX() - fr.getLLX()) / n;
+                left = fr.getLLX() + i * w;
+                right = left + w;
+            }
+            double cover = Math.min(right, rect.getURX()) - Math.max(left, rect.getLLX());
+            double cellWidth = right - left;
+            // Midpoint-in-area also counts as covered: with interpolated cells
+            // a narrow glyph (":") occupies less than 60% of its average-width
+            // cell even when the redaction covers the whole glyph.
+            double mid = (left + right) / 2;
+            boolean covered = cellWidth > 0
+                    && (cover >= cellWidth * 0.6
+                        || (mid >= rect.getLLX() && mid <= rect.getURX() && cover > 0));
+            if (covered) {
+                removedAny = true;
+                // Replace with a space instead of deleting so the surviving
+                // glyphs keep their original advance positions: rectangles of
+                // other pending redaction matches on the same line were
+                // computed against the ORIGINAL layout and must stay valid
+                // (PDFNET_40853 redacts three keywords sequentially).
+                remaining.append(' ');
+            } else {
+                remaining.append(text.charAt(i));
+            }
+        }
+        return removedAny ? remaining.toString() : null;
     }
 
     /**

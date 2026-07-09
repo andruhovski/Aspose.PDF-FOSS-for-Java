@@ -6,7 +6,6 @@ import org.aspose.pdf.forms.Field;
 import org.aspose.pdf.forms.Form;
 
 import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -120,9 +119,9 @@ public final class XfdfImporter {
         }
 
         try {
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            factory.setNamespaceAware(false);
-            DocumentBuilder builder = factory.newDocumentBuilder();
+            // XFDF is untrusted input: parse with the shared XXE-hardened builder
+            // (DOCTYPE disallowed, external entities/XInclude disabled).
+            DocumentBuilder builder = org.aspose.pdf.engine.xml.SecureXml.newBuilder(false);
             org.w3c.dom.Document xmlDoc = builder.parse(input);
 
             // Import form fields
@@ -199,17 +198,38 @@ public final class XfdfImporter {
         PageCollection pages = doc.getPages();
         NodeList children = annotsNode.getChildNodes();
 
+        // An XFDF /name uniquely identifies an annotation; an export may contain
+        // several entries with the same name representing successive revisions of
+        // that one annotation. Aspose imports a single annotation per unique name,
+        // keeping the LAST (final) revision. Deduplicate accordingly, preserving
+        // first-occurrence order; unnamed entries are always imported.
+        java.util.List<Element> ordered = new java.util.ArrayList<>();
+        java.util.Map<String, Integer> namedSlot = new java.util.HashMap<>();
         for (int i = 0; i < children.getLength(); i++) {
             Node child = children.item(i);
             if (child.getNodeType() != Node.ELEMENT_NODE) continue;
-
             String elementName = child.getNodeName().toLowerCase();
             String subtype = ELEMENT_TO_SUBTYPE.get(elementName);
             if (subtype == null) continue;
             if (allowedTypes != null && !allowedTypes.contains(subtype)) continue;
 
+            Element elem = (Element) child;
+            String name = elem.getAttribute("name");
+            if (name == null || name.isEmpty()) {
+                ordered.add(elem);
+            } else if (namedSlot.containsKey(name)) {
+                ordered.set(namedSlot.get(name), elem); // replace earlier revision in place
+            } else {
+                namedSlot.put(name, ordered.size());
+                ordered.add(elem);
+            }
+        }
+
+        for (Element elem : ordered) {
+            String elementName = elem.getNodeName().toLowerCase();
+            String subtype = ELEMENT_TO_SUBTYPE.get(elementName);
             try {
-                importAnnotation((Element) child, subtype, pages);
+                importAnnotation(elem, subtype, pages);
             } catch (Exception e) {
                 LOG.fine(() -> "Failed to import annotation '" + elementName + "': " + e.getMessage());
             }
@@ -300,6 +320,14 @@ public final class XfdfImporter {
             }
         }
 
+        // Redaction specifics: overlay text
+        if (annot instanceof RedactionAnnotation) {
+            String overlay = elem.getAttribute("overlaytext");
+            if (!overlay.isEmpty()) {
+                ((RedactionAnnotation) annot).setOverlayText(overlay);
+            }
+        }
+
         // Text annotation specifics
         if (annot instanceof TextAnnotation) {
             TextAnnotation text = (TextAnnotation) annot;
@@ -385,6 +413,25 @@ public final class XfdfImporter {
 
         // Add to page
         page.getAnnotations().add(annot);
+
+        // Pair the markup annotation with a Popup, the way Adobe/Aspose do on XFDF
+        // import (ISO 32000-1 §12.5.6.14): every markup annotation except FreeText
+        // (which displays its text directly) gets a /Popup added right after it in
+        // /Annots. Placement follows the Acrobat convention — a 204x114 box in the
+        // margin to the right of the page, top-aligned with the parent.
+        if (annot instanceof MarkupAnnotation && !(annot instanceof FreeTextAnnotation)) {
+            try {
+                double pageW = page.getRect().getURX();
+                Rectangle popupRect = new Rectangle(
+                        pageW, rect.getURY() - 114, pageW + 204, rect.getURY());
+                PopupAnnotation popup = new PopupAnnotation(page, popupRect);
+                popup.getPdfDictionary().set(PdfName.of("Parent"), annot.getPdfDictionary());
+                ((MarkupAnnotation) annot).setPopup(popup);
+                page.getAnnotations().add(popup);
+            } catch (RuntimeException e) {
+                LOG.fine(() -> "Could not create popup for imported annotation: " + e.getMessage());
+            }
+        }
     }
 
     /**

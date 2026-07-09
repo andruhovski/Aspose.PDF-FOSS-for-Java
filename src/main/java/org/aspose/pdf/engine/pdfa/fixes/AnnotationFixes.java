@@ -157,7 +157,7 @@ public final class AnnotationFixes {
                 PdfDictionary annotDict = (PdfDictionary) annotObj;
                 String subtype = annotDict.getNameAsString("Subtype");
                 if (subtype != null && FORBIDDEN_SUBTYPES.contains(subtype)) {
-                    if (errorAction == ConvertErrorAction.Delete) {
+                    if (errorAction != null && errorAction.isDelete()) {
                         annots.remove(i);
                         result.addWarning("annot.1",
                                 "Removed forbidden " + subtype + " annotation",

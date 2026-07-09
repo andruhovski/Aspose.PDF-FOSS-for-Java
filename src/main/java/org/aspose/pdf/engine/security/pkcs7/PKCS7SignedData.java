@@ -147,19 +147,36 @@ public class PKCS7SignedData {
         byte[] attrsContent = concat(contentTypeAttr, messageDigestAttr, signingTimeAttr);
         byte[] attrsForSigning = DEREncoder.encodeSet(contentTypeAttr, messageDigestAttr, signingTimeAttr);
 
-        // Sign attributes
-        String sigAlg = OIDs.signatureAlgorithmForDigest(digestAlgorithm);
+        // Sign attributes with an algorithm matched to the private key family
+        // (RSA / DSA / EC). Hardcoding RSA here previously threw
+        // InvalidKeyException for DSA/EC keys (e.g. 43255.pfx is DSA), which the
+        // facade swallowed — leaving the document unsigned. (ISO 32000-1:2008
+        // §12.8.3.3: any algorithm from the SubjectPublicKeyInfo family is valid.)
+        String keyAlg = privateKey.getAlgorithm();
+        String sigAlg = OIDs.signatureAlgorithmFor(digestAlgorithm, keyAlg);
         Signature sig = Signature.getInstance(sigAlg);
         sig.initSign(privateKey);
         sig.update(attrsForSigning);
         byte[] signatureBytes = sig.sign();
+
+        // The SignerInfo digestEncryptionAlgorithm carries the bare public-key
+        // OID (RFC 3370 §3.2/§3.3): rsaEncryption for RSA, id-dsa for DSA,
+        // id-ecPublicKey for ECDSA. The digest is conveyed separately by the
+        // digestAlgorithm field, so verify() combines the two.
+        String sigAlgOID;
+        switch (keyAlg == null ? "RSA" : keyAlg.toUpperCase()) {
+            case "DSA": sigAlgOID = OIDs.DSA; break;
+            case "EC":
+            case "ECDSA": sigAlgOID = OIDs.EC_PUBLIC_KEY; break;
+            default: sigAlgOID = OIDs.RSA_ENCRYPTION; break;
+        }
 
         // Build SignerInfo
         SignerInfo si = new SignerInfo();
         si.setIssuerDER(certificate.getIssuerX500Principal().getEncoded());
         si.setSerialNumber(certificate.getSerialNumber());
         si.setDigestAlgorithmOID(digestOID);
-        si.setSignatureAlgorithmOID(OIDs.signatureToOID(sigAlg));
+        si.setSignatureAlgorithmOID(sigAlgOID);
         si.setEncryptedDigest(signatureBytes);
         si.setAuthenticatedAttributesRaw(attrsContent);
         si.putAuthenticatedAttribute(OIDs.CONTENT_TYPE, DEREncoder.encodeOID(OIDs.DATA));
@@ -200,8 +217,13 @@ public class PKCS7SignedData {
         byte[] encDigest = si.getEncryptedDigest();
         if (encDigest == null) return false;
 
+        // The digestEncryptionAlgorithm OID may be a combined "digest-with-key"
+        // OID (a full JCA name) or a bare public-key OID (RSA/DSA/EC), which must
+        // be combined with the SignerInfo digest to form the JCA verifier name.
         String sigAlg = OIDs.toJCASignature(si.getSignatureAlgorithmOID());
-        if ("RSA".equals(sigAlg)) sigAlg = OIDs.signatureAlgorithmForDigest(digestAlg);
+        if ("RSA".equals(sigAlg) || "DSA".equals(sigAlg) || "EC".equals(sigAlg) || "ECDSA".equals(sigAlg)) {
+            sigAlg = OIDs.signatureAlgorithmFor(digestAlg, sigAlg);
+        }
         Signature verifier = Signature.getInstance(sigAlg);
         verifier.initVerify(cert.getPublicKey());
 

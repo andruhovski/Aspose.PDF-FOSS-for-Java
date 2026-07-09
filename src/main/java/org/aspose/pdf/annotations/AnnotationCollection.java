@@ -73,7 +73,21 @@ public class AnnotationCollection implements Iterable<Annotation> {
         if (annotations != null) {
             annotations.add(annotation);
         }
-        annotsArray.add(annotation.getPdfDictionary());
+        PdfDictionary annotDict = annotation.getPdfDictionary();
+        // Newly-created annotation dicts are DIRECT objects. A /Annots array must
+        // hold INDIRECT references (ISO 32000-1 §12.5.2); appending a direct dict to
+        // an existing /Annots that already holds indirect refs corrupts the array on
+        // save and drops every annotation on reload (PDFNET_42398). Register the dict
+        // as an indirect object and store a reference instead. Dicts already loaded
+        // from the file (objectKey set) are referenced as-is.
+        PdfBase entry = annotDict;
+        if (annotDict != null && annotDict.getObjectKey() == null && page != null) {
+            org.aspose.pdf.Document doc = page.getOwningDocument();
+            if (doc != null) {
+                entry = doc.registerImportedObject(annotDict);
+            }
+        }
+        annotsArray.add(entry);
     }
 
     /**

@@ -961,17 +961,160 @@ public class Page {
     }
 
     /**
-     * Returns the list of layers (Optional Content Groups) on this page.
-     * Returns the layers list for this page.
-     * If no layers have been set, returns an empty mutable list.
+     * Returns the list of layers (Optional Content Groups) on this page
+     * (ISO 32000-1:2008, §8.11).
+     * <p>
+     * On first access the layers are read from the page itself:
+     * </p>
+     * <ul>
+     *   <li>every {@code /Resources /Properties} entry whose value is an
+     *       {@code OCG} (or {@code OCMD}) dictionary becomes one layer whose
+     *       id is the property name (e.g. {@code oc1}) and whose contents are
+     *       the operators wrapped in the corresponding
+     *       {@code /OC /name BDC … EMC} sequence of the content stream;</li>
+     *   <li>every {@code /Resources /XObject} entry carrying an {@code /OC}
+     *       membership becomes one layer per XObject (matching Aspose, which
+     *       does not deduplicate XObjects sharing one OCG).</li>
+     * </ul>
+     * <p>The returned list is live: layers added to it are serialised into
+     * the document on the next {@code Document.save(...)}.</p>
      *
-     * @return the layers list
+     * @return the layers list (never {@code null}; may be empty)
      */
     public java.util.List<Layer> getLayers() {
         if (_layers == null) {
-            _layers = new java.util.ArrayList<>();
+            _layers = readLayersFromPage();
         }
         return _layers;
+    }
+
+    /**
+     * @return the cached layers list, or {@code null} if {@link #getLayers()}
+     * has not been called (used by the save path to avoid forcing a read)
+     */
+    java.util.List<Layer> peekLayers() {
+        return _layers;
+    }
+
+    /** Reads the page's Optional Content Groups (see {@link #getLayers()}). */
+    private java.util.List<Layer> readLayersFromPage() {
+        java.util.List<Layer> result = new java.util.ArrayList<>();
+        try {
+            PdfBase resVal = resolveRef(pageDict.get("Resources"));
+            if (!(resVal instanceof PdfDictionary)) {
+                return result;
+            }
+            PdfDictionary res = (PdfDictionary) resVal;
+
+            // 1) /Resources /Properties: named OCG/OCMD entries (used via
+            //    "/OC /name BDC" marked content, ISO 32000-1 §8.11.3.2).
+            PdfBase propsVal = resolveRef(res.get("Properties"));
+            java.util.Map<String, Layer> byId = new java.util.LinkedHashMap<>();
+            if (propsVal instanceof PdfDictionary) {
+                PdfDictionary props = (PdfDictionary) propsVal;
+                for (PdfName key : new java.util.ArrayList<>(props.keySet())) {
+                    PdfBase v = resolveRef(props.get(key.getName()));
+                    if (!(v instanceof PdfDictionary)) continue;
+                    PdfDictionary d = (PdfDictionary) v;
+                    String type = d.getType();
+                    if ("OCG".equals(type)) {
+                        Layer layer = new Layer(key.getName(), d);
+                        byId.put(key.getName(), layer);
+                        result.add(layer);
+                    } else if ("OCMD".equals(type)) {
+                        PdfDictionary g = firstOcgOfMembership(d);
+                        Layer layer = new Layer(key.getName(), g != null ? g : d);
+                        byId.put(key.getName(), layer);
+                        result.add(layer);
+                    }
+                }
+                if (!byId.isEmpty()) {
+                    collectLayerContents(byId);
+                }
+            }
+
+            // 2) /Resources /XObject entries with an /OC membership: one layer
+            //    per XObject (Aspose does not deduplicate a shared OCG/OCMD).
+            PdfBase xoVal = resolveRef(res.get("XObject"));
+            if (xoVal instanceof PdfDictionary) {
+                PdfDictionary xo = (PdfDictionary) xoVal;
+                for (PdfName key : new java.util.ArrayList<>(xo.keySet())) {
+                    PdfBase v = resolveRef(xo.get(key.getName()));
+                    if (!(v instanceof PdfDictionary)) continue;
+                    PdfBase ocVal = resolveRef(((PdfDictionary) v).get("OC"));
+                    if (!(ocVal instanceof PdfDictionary)) continue;
+                    PdfDictionary oc = (PdfDictionary) ocVal;
+                    PdfDictionary g = "OCMD".equals(oc.getType()) ? firstOcgOfMembership(oc) : oc;
+                    result.add(new Layer(key.getName(), g != null ? g : oc));
+                }
+            }
+        } catch (RuntimeException e) {
+            LOG.warning(() -> "Failed to read page layers: " + e.getMessage());
+        }
+        return result;
+    }
+
+    /**
+     * Resolves the first OCG of an {@code /OCMD} membership dictionary
+     * (ISO 32000-1:2008, §8.11.2.2): {@code /OCGs} may hold a single OCG
+     * dictionary or an array of them.
+     */
+    private PdfDictionary firstOcgOfMembership(PdfDictionary ocmd) {
+        PdfBase ocgs = resolveRef(ocmd.get("OCGs"));
+        if (ocgs instanceof PdfDictionary) {
+            return (PdfDictionary) ocgs;
+        }
+        if (ocgs instanceof PdfArray && ((PdfArray) ocgs).size() > 0) {
+            PdfBase first = resolveRef(((PdfArray) ocgs).get(0));
+            if (first instanceof PdfDictionary) {
+                return (PdfDictionary) first;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Walks the page content stream and attaches to each layer the operators
+     * wrapped in its {@code /OC /id BDC … EMC} block (BDC/EMC excluded,
+     * nesting-aware). A layer referenced by several blocks accumulates all of
+     * them in stream order.
+     */
+    private void collectLayerContents(java.util.Map<String, Layer> byId) {
+        try {
+            OperatorCollection ops = getContents();
+            int size = ops.size();
+            int i = 0;
+            while (i < size) {
+                Operator op = ops.getAt(i);
+                Layer target = null;
+                if (op instanceof BDC && "OC".equals(((BDC) op).getTag())) {
+                    PdfBase props = ((BDC) op).getProperties();
+                    if (props instanceof PdfName) {
+                        target = byId.get(((PdfName) props).getName());
+                    }
+                }
+                if (target == null) {
+                    i++;
+                    continue;
+                }
+                i++; // move past the BDC
+                int depth = 1;
+                while (i < size && depth > 0) {
+                    Operator inner = ops.getAt(i);
+                    if (inner instanceof EMC) {
+                        depth--;
+                        if (depth == 0) break;
+                    } else if (inner instanceof BDC || inner instanceof BMC) {
+                        depth++;
+                    }
+                    target.getContents().add(inner);
+                    i++;
+                }
+                i++; // move past the closing EMC
+            }
+        } catch (IOException e) {
+            LOG.warning(() -> "Failed to collect layer contents: " + e.getMessage());
+        }
     }
 
     /**

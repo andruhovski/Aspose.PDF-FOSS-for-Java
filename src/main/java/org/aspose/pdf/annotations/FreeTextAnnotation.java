@@ -95,7 +95,7 @@ public class FreeTextAnnotation extends MarkupAnnotation {
     public void setDefaultAppearance(String da) {
         this.defaultAppearanceObj = null;
         if (da != null) {
-            dict.set(PdfName.of("DA"), new PdfString(da.getBytes(StandardCharsets.UTF_8)));
+            dict.set(PdfName.of("DA"), new PdfString(da));
         }
     }
 
@@ -118,7 +118,7 @@ public class FreeTextAnnotation extends MarkupAnnotation {
         this.defaultAppearanceObj = da;
         if (da != null) {
             String daStr = da.getText();
-            dict.set(PdfName.of("DA"), new PdfString(daStr.getBytes(StandardCharsets.UTF_8)));
+            dict.set(PdfName.of("DA"), new PdfString(daStr));
         }
     }
 

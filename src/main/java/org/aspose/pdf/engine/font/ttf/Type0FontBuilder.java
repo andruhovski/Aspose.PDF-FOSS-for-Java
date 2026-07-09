@@ -61,6 +61,56 @@ public final class Type0FontBuilder {
     private Type0FontBuilder() {}
 
     /**
+     * Builds a Type0 graph for a <b>Latin / proportional</b> font: identical to {@link #build} but
+     * additionally emits a real {@code /W} width array derived from the font's {@code hmtx} table and
+     * marks the descriptor {@code /Nonsymbolic}. The base {@link #build} relies on {@code /DW 1000},
+     * which is correct for CJK full-width glyphs but spaces proportional Latin text at one em per
+     * glyph; for XFA paint fidelity (Arial/Times/…) the per-glyph advance MUST come from the font.
+     *
+     * @param baseFontName the {@code /BaseFont} value (PDF-friendly form)
+     * @param ttfBytes     standalone TrueType bytes
+     * @return the assembled Type0 dict (with {@code /W}) + parsed reader
+     * @throws java.io.IOException if the TrueType bytes are malformed
+     */
+    public static Result buildLatin(String baseFontName, byte[] ttfBytes) throws java.io.IOException {
+        Result base = build(baseFontName, ttfBytes);
+        PdfArray descendants = base.type0Font.getArray("DescendantFonts");
+        if (descendants != null && descendants.size() > 0) {
+            PdfDictionary cidFont = descendants.getDictionary(0);
+            if (cidFont != null) {
+                cidFont.set(PdfName.of("W"), widthArray(base.reader));
+                PdfDictionary fd = cidFont.getDictionary("FontDescriptor");
+                if (fd != null) {
+                    // Nonsymbolic (bit 6) — a Latin text font, not a symbol font.
+                    fd.set(PdfName.of("Flags"), PdfInteger.valueOf(32));
+                }
+            }
+        }
+        return base;
+    }
+
+    /**
+     * Builds the {@code /W} width array {@code [0 [w0 w1 … w(n-1)]]} (CID == GID under Identity-H)
+     * with each advance scaled from font units to the PDF 1000-unit text space.
+     */
+    private static PdfArray widthArray(TrueTypeReader reader) {
+        int upm = reader.getUnitsPerEm();
+        if (upm <= 0) {
+            upm = 1000;
+        }
+        int n = reader.getNumGlyphs();
+        PdfArray run = new PdfArray();
+        for (int gid = 0; gid < n; gid++) {
+            int w1000 = (int) Math.round(reader.getAdvanceWidth(gid) * 1000.0 / upm);
+            run.add(PdfInteger.valueOf(w1000));
+        }
+        PdfArray w = new PdfArray();
+        w.add(PdfInteger.valueOf(0)); // starting CID
+        w.add(run);
+        return w;
+    }
+
+    /**
      * Builds the Type0 font object graph for the supplied TrueType bytes.
      *
      * @param baseFontName the {@code /BaseFont} value to use on the Type0

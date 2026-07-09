@@ -32,6 +32,9 @@ public class TextState {
     private int fontStyle = 0; // FontStyles bitmask
     private float lineSpacing = 0;
     private boolean underline;
+    // Hooks invoked when underline transitions true -> false (source-underline removal on edit).
+    // transient: not part of the visual state; never copied when a TextState is cloned.
+    private transient java.util.List<Runnable> underlineRemovalHooks;
     private boolean strikeOut;
 
     /**
@@ -376,11 +379,46 @@ public class TextState {
 
     /**
      * Sets whether the text is underlined.
+     * <p>
+     * When the underline state transitions from {@code true} to {@code false} on a
+     * fragment whose underline was drawn as explicit path operators in the source
+     * content (detected via {@code TextEditOptions.ToAttemptGetUnderlineFromSource}),
+     * any registered {@linkplain #addUnderlineRemovalHook removal hooks} are invoked
+     * so the underline operators are removed from the content stream on save.
+     * </p>
      *
      * @param underline true to enable underline
      */
     public void setUnderline(boolean underline) {
+        boolean was = this.underline;
         this.underline = underline;
+        if (was && !underline && underlineRemovalHooks != null) {
+            // Run-and-clear: removal is idempotent but we avoid re-firing on a
+            // subsequent toggle that no longer has source operators to remove.
+            java.util.List<Runnable> hooks = underlineRemovalHooks;
+            underlineRemovalHooks = null;
+            for (Runnable hook : hooks) {
+                hook.run();
+            }
+        }
+    }
+
+    /**
+     * Registers a hook that removes source-drawn underline operators when this
+     * state's underline is turned off. Used by the text-extraction engine to
+     * associate detected underline path operators with the fragment so a later
+     * {@code setUnderline(false)} edit can strip them on save.
+     *
+     * @param hook the removal action (ignored if {@code null})
+     */
+    public void addUnderlineRemovalHook(Runnable hook) {
+        if (hook == null) {
+            return;
+        }
+        if (underlineRemovalHooks == null) {
+            underlineRemovalHooks = new java.util.ArrayList<>(1);
+        }
+        underlineRemovalHooks.add(hook);
     }
 
     /**

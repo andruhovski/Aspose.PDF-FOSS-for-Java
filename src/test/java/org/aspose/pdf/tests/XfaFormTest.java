@@ -598,4 +598,100 @@ public class XfaFormTest {
         // #subform is skipped in data navigation, just pass through
         assertEquals("inner value", xfa.get("form1.#subform[0].InnerField"));
     }
+
+    // ══════════════════════════════════════════════
+    // Repeated-instance set/get (indexed rows)
+    // ══════════════════════════════════════════════
+
+    /** A repeated row subform bound via a renamed MULTI-COMPONENT dataRef (the common SAP/LiveCycle
+     *  table shape: "body" rows stored as IM_ITEMS/DATA groups). */
+    private static final String TEMPLATE_TABLE_XML =
+        "<template xmlns=\"http://www.xfa.org/schema/xfa-template/3.0/\">" +
+        "  <subform name=\"data\">" +
+        "    <subform name=\"item_table\">" +
+        "      <bind match=\"none\"/>" +
+        "      <subform name=\"body\">" +
+        "        <occur min=\"1\" max=\"-1\"/>" +
+        "        <bind match=\"dataRef\" ref=\"$.IM_ITEMS.DATA[*]\"/>" +
+        "        <field name=\"EBELP\"><ui><textEdit/></ui>" +
+        "          <bind match=\"dataRef\" ref=\"$.EBELP\"/>" +
+        "        </field>" +
+        "      </subform>" +
+        "    </subform>" +
+        "  </subform>" +
+        "</template>";
+
+    private static final String DATASETS_TABLE_XML =
+        "<xfa:datasets xmlns:xfa=\"http://www.xfa.org/schema/xfa-data/1.0/\">" +
+        "  <xfa:data>" +
+        "    <data>" +
+        "      <IM_ITEMS>" +
+        "        <DATA><EBELP>0010</EBELP></DATA>" +
+        "        <DATA><EBELP>0020</EBELP></DATA>" +
+        "      </IM_ITEMS>" +
+        "    </data>" +
+        "  </xfa:data>" +
+        "</xfa:datasets>";
+
+    /** A repeated subform whose rows are absent from the (sparse) data entirely. */
+    private static final String TEMPLATE_ROWS_XML =
+        "<template xmlns=\"http://www.xfa.org/schema/xfa-template/3.0/\">" +
+        "  <subform name=\"form1\">" +
+        "    <subform name=\"Zaznam\">" +
+        "      <occur min=\"1\" max=\"-1\" initial=\"3\"/>" +
+        "      <field name=\"cislo\"><ui><textEdit/></ui></field>" +
+        "    </subform>" +
+        "  </subform>" +
+        "</template>";
+
+    @Test
+    public void testSetIndexedRow_renamedBoundPath_writesRealRowNode() throws IOException {
+        PdfDictionary acroForm = buildXfaAcroForm(TEMPLATE_TABLE_XML, DATASETS_TABLE_XML);
+        XfaForm xfa = new XfaForm(acroForm);
+
+        // both rows resolve through the renamed IM_ITEMS/DATA groups
+        assertEquals("0010", xfa.get("data.item_table.body[0].EBELP"));
+        assertEquals("0020", xfa.get("data.item_table.body[1].EBELP"));
+
+        // writing row 1 must hit the SECOND DATA group, not collapse onto row 0
+        xfa.set("data.item_table.body[1].EBELP", "row-two");
+        assertEquals("0010", xfa.get("data.item_table.body[0].EBELP"));
+        assertEquals("row-two", xfa.get("data.item_table.body[1].EBELP"));
+    }
+
+    @Test
+    public void testSetIndexedRow_beyondExisting_padsBoundInstances() throws IOException {
+        PdfDictionary acroForm = buildXfaAcroForm(TEMPLATE_TABLE_XML, DATASETS_TABLE_XML);
+        XfaForm xfa = new XfaForm(acroForm);
+
+        // row 3 does not exist (data has 2 rows): DATA groups are padded and the write lands
+        // at its own position, leaving existing rows intact
+        xfa.set("data.item_table.body[3].EBELP", "row-four");
+        assertEquals("0010", xfa.get("data.item_table.body[0].EBELP"));
+        assertEquals("0020", xfa.get("data.item_table.body[1].EBELP"));
+        assertEquals("row-four", xfa.get("data.item_table.body[3].EBELP"));
+    }
+
+    @Test
+    public void testSetIndexedRows_sparseData_noCollapse() throws IOException {
+        PdfDictionary acroForm = buildXfaAcroForm(TEMPLATE_ROWS_XML, EMPTY_DATASETS_XML);
+        XfaForm xfa = new XfaForm(acroForm);
+
+        // no data rows exist at all; each explicitly indexed write must keep its own instance
+        xfa.set("form1.Zaznam[0].cislo", "one");
+        xfa.set("form1.Zaznam[1].cislo", "two");
+        xfa.set("form1.Zaznam[2].cislo", "three");
+        assertEquals("one", xfa.get("form1.Zaznam[0].cislo"));
+        assertEquals("two", xfa.get("form1.Zaznam[1].cislo"));
+        assertEquals("three", xfa.get("form1.Zaznam[2].cislo"));
+    }
+
+    @Test
+    public void testGetIndexedRow_missingInstance_returnsNullNotOtherRow() throws IOException {
+        PdfDictionary acroForm = buildXfaAcroForm(TEMPLATE_TABLE_XML, DATASETS_TABLE_XML);
+        XfaForm xfa = new XfaForm(acroForm);
+
+        // only 2 rows exist; an explicitly indexed missing instance must NOT fall back to row 0
+        assertNull(xfa.get("data.item_table.body[5].EBELP"));
+    }
 }

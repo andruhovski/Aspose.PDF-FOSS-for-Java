@@ -159,6 +159,48 @@ public class XRefStreamWriterTest {
         assertTrue(atOffset.contains("0 obj"), "Offset should point to an obj: " + atOffset);
     }
 
+    /** Hybrid layout (§7.5.8.4): classic table + /XRefStm trailer key + parseable output. */
+    @Test
+    public void testHybridWritePreservesXRefStm() throws IOException {
+        Map<PdfObjectKey, PdfBase> objects = createTestObjects();
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        PDFWriter writer = new PDFWriter(bos, 1.5f);
+        writer.setPreserveHybridXRef(true);
+        writer.write(createTrailer(), objects);
+        byte[] pdf = bos.toByteArray();
+        String content = new String(pdf, StandardCharsets.US_ASCII);
+
+        // Classic table + trailer present, carrying /XRefStm.
+        assertTrue(content.contains("\nxref\n"), "Hybrid must keep the classic xref table");
+        int trailerIdx = content.lastIndexOf("trailer");
+        assertTrue(trailerIdx > 0, "Hybrid must keep the classic trailer");
+        String tail = content.substring(trailerIdx);
+        assertTrue(tail.contains("/XRefStm"), "Table trailer must carry /XRefStm: " + tail);
+
+        // /XRefStm points at a /Type /XRef stream object.
+        int stmKeyIdx = tail.indexOf("/XRefStm");
+        int stmEnd = tail.indexOf('\n', stmKeyIdx);
+        String stmVal = tail.substring(stmKeyIdx + "/XRefStm".length(),
+                stmEnd < 0 ? tail.length() : stmEnd).replaceAll("[^0-9]", " ").trim().split("\\s+")[0];
+        int stmOffset = Integer.parseInt(stmVal);
+        String atStm = content.substring(stmOffset, Math.min(stmOffset + 120, content.length()));
+        assertTrue(atStm.contains("/Type /XRef"),
+                "/XRefStm must point at the cross-reference stream, got: " + atStm);
+
+        // The output must reload through the parser (classic-table path).
+        PDFParser parser = new PDFParser(RandomAccessReader.fromBytes(pdf));
+        parser.parse();
+        assertNotNull(parser.getCatalog(), "Hybrid output must reparse");
+    }
+
+    /** Without the hybrid flag the plain-table output must not mention XRefStm. */
+    @Test
+    public void testPlainWriteHasNoXRefStm() throws IOException {
+        byte[] pdf = writeStandardPdf(createTestObjects(), createTrailer());
+        String content = new String(pdf, StandardCharsets.US_ASCII);
+        assertFalse(content.contains("XRefStm"), "Plain write must not emit XRefStm");
+    }
+
     /** Test 6: XRef stream /W array has 3 elements. */
     @Test
     public void testXRefStreamWArray() throws IOException {

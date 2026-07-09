@@ -28,13 +28,33 @@ public final class AESCipher {
      * The result is {@code IV(16) + ciphertext} — the format expected by
      * {@link #decrypt(byte[], byte[])}.
      *
+     * <p>Empty (or null) input short-circuits to an empty ciphertext, so an
+     * empty payload round-trips as empty through {@code encrypt}/{@code decrypt}.
+     * The PDF <em>stream-write</em> path must instead use
+     * {@link #encryptPadded} (Adobe Reader rejects {@code /Length 0} encrypted
+     * streams, so an empty stream still needs its IV + one padding block).</p>
+     *
      * @param key  16 or 32 byte AES key
      * @param data plaintext data (may be empty)
-     * @return IV-prefixed ciphertext (32 bytes minimum: 16-byte IV + at least
-     *         one 16-byte PKCS#7-padded block, even for empty input — Adobe
-     *         Reader rejects /Length 0 encrypted streams)
+     * @return IV-prefixed ciphertext; empty for empty input
      */
     public static byte[] encrypt(byte[] key, byte[] data) {
+        if (data == null || data.length == 0) return new byte[0];
+        return encryptPadded(key, data);
+    }
+
+    /**
+     * Encrypts data using AES-CBC with PKCS5 padding and a random IV, always
+     * emitting {@code IV(16) + ciphertext} — 32 bytes minimum (16-byte IV +
+     * at least one 16-byte PKCS#7-padded block) <b>even for empty input</b>.
+     * This is the object/stream encryption path: Adobe Reader rejects
+     * {@code /Length 0} encrypted streams.
+     *
+     * @param key  16 or 32 byte AES key
+     * @param data plaintext data (may be empty)
+     * @return IV-prefixed ciphertext (32 bytes minimum)
+     */
+    public static byte[] encryptPadded(byte[] key, byte[] data) {
         if (data == null) data = new byte[0];
         try {
             byte[] iv = new byte[16];

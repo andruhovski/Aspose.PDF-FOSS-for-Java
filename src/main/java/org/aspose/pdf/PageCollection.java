@@ -65,6 +65,15 @@ public class PageCollection implements Iterable<Page> {
     }
 
     /**
+     * The page-tree root dictionary this collection is backed by. May be a
+     * synthetic in-memory root (no object key) when the source catalog's
+     * {@code /Pages} was broken and the tree was recovered by scanning.
+     */
+    PdfDictionary getPagesDictionary() {
+        return pagesDict;
+    }
+
+    /**
      * Re-runs the flatten pass and refreshes {@code page.setNumber(...)} so the
      * Page's stored 1-based index reflects the current document order.
      * Called from {@link Page#getNumber()} so that callers always see an
@@ -238,13 +247,29 @@ public class PageCollection implements Iterable<Page> {
             }
             if (foreignDocument != null && foreignDocument != owningDocument) {
                 try {
+                    // Map every widget annotation that sits on an imported source
+                    // page to that page's target index. A widget's /P entry is
+                    // OPTIONAL (ISO 32000 §12.5.2): a field's page is otherwise only
+                    // known from the page's /Annots membership. Without this, fields
+                    // whose widgets omit /P could not be re-targeted and were dropped
+                    // (39201: only 191 of 1362 fields had /P).
+                    java.util.Map<PdfDictionary, Integer> widgetPages =
+                            buildWidgetPageMap(importedPages);
                     org.aspose.pdf.forms.Form targetForm = owningDocument.getForm();
                     for (org.aspose.pdf.forms.Field field : foreignDocument.getForm()) {
-                        Integer targetPageNumber = resolveImportedFieldPageNumber(field, importedPages);
+                        Integer targetPageNumber =
+                                resolveImportedFieldPageNumber(field, importedPages, widgetPages);
                         if (targetPageNumber != null && !targetForm.hasField(field.getFullName())) {
                             targetForm.add(field, field.getFullName(), targetPageNumber);
                         }
                     }
+                    // After the merge, drop dangling widget /Parent links across the
+                    // whole document. A widget whose /Parent field is not part of the
+                    // /AcroForm /Fields tree (e.g. the base document's own widgets that
+                    // were parented to a junk grouping field with no AcroForm — corpus
+                    // 36395) keeps its own /T and becomes a clean self-named field
+                    // instead of carrying the malformed parent name into the output.
+                    dropDanglingWidgetParents(owningDocument);
                 } catch (IOException e) {
                     throw new RuntimeException("Failed to import form fields from foreign document", e);
                 }
@@ -416,7 +441,8 @@ public class PageCollection implements Iterable<Page> {
     }
 
     private Integer resolveImportedFieldPageNumber(org.aspose.pdf.forms.Field field,
-                                                   java.util.Map<PdfDictionary, Integer> importedPages) {
+                                                   java.util.Map<PdfDictionary, Integer> importedPages,
+                                                   java.util.Map<PdfDictionary, Integer> widgetPages) {
         Page fieldPage = field.getPage();
         if (fieldPage != null) {
             Integer directMatch = importedPages.get(fieldPage.getPdfDictionary());
@@ -432,13 +458,25 @@ public class PageCollection implements Iterable<Page> {
                 return match;
             }
         }
+        // Resolve by /Annots membership: the field dict itself (a merged
+        // field+widget) or any of its widget kids may be an annotation on an
+        // imported page even when no /P entry is present.
+        Integer byWidget = widgetPages.get(fieldDict);
+        if (byWidget != null) {
+            return byWidget;
+        }
         PdfBase kidsRef = resolveRef(fieldDict.get(PdfName.of("Kids")));
         if (kidsRef instanceof PdfArray) {
             PdfArray kids = (PdfArray) kidsRef;
             for (int i = 0; i < kids.size(); i++) {
                 PdfBase kidRef = resolveRef(kids.get(i));
                 if (kidRef instanceof PdfDictionary) {
-                    PdfBase kidPageRef = resolveRef(((PdfDictionary) kidRef).get(PdfName.of("P")));
+                    PdfDictionary kidDict = (PdfDictionary) kidRef;
+                    Integer kidByWidget = widgetPages.get(kidDict);
+                    if (kidByWidget != null) {
+                        return kidByWidget;
+                    }
+                    PdfBase kidPageRef = resolveRef(kidDict.get(PdfName.of("P")));
                     if (kidPageRef instanceof PdfDictionary) {
                         Integer match = importedPages.get((PdfDictionary) kidPageRef);
                         if (match != null) {
@@ -449,6 +487,98 @@ public class PageCollection implements Iterable<Page> {
             }
         }
         return null;
+    }
+
+    /**
+     * Drops widget {@code /Parent} links that point to a field outside the
+     * document's {@code /AcroForm /Fields} tree. Such a parent is dangling (a
+     * source with no AcroForm, or a junk grouping field) and would otherwise
+     * surface a malformed field name. Only widgets that carry their own {@code /T}
+     * are detached, so their name is preserved; widgets without {@code /T} (e.g.
+     * radio kids, whose parent is a real form field anyway) are left untouched.
+     */
+    private void dropDanglingWidgetParents(Document doc) {
+        if (doc == null) {
+            return;
+        }
+        try {
+            java.util.Set<PdfDictionary> validFields =
+                    java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+            PdfDictionary catalog = doc.getCatalog();
+            if (catalog != null) {
+                PdfBase af = resolveRef(catalog.get(PdfName.of("AcroForm")));
+                if (af instanceof PdfDictionary) {
+                    PdfBase fields = resolveRef(((PdfDictionary) af).get(PdfName.of("Fields")));
+                    if (fields instanceof PdfArray) {
+                        collectFieldDicts((PdfArray) fields, validFields, 0);
+                    }
+                }
+            }
+            PageCollection pages = doc.getPages();
+            for (int i = 1; i <= pages.getCount(); i++) {
+                PdfBase annots = resolveRef(pages.get(i).getPdfDictionary().get(PdfName.ANNOTS));
+                if (!(annots instanceof PdfArray)) {
+                    continue;
+                }
+                PdfArray arr = (PdfArray) annots;
+                for (int j = 0; j < arr.size(); j++) {
+                    PdfBase ad = resolveRef(arr.get(j));
+                    if (!(ad instanceof PdfDictionary)) {
+                        continue;
+                    }
+                    PdfDictionary annot = (PdfDictionary) ad;
+                    if (annot.get(PdfName.of("T")) == null) {
+                        continue;
+                    }
+                    PdfBase parent = resolveRef(annot.get(PdfName.of("Parent")));
+                    if (parent instanceof PdfDictionary && !validFields.contains(parent)) {
+                        annot.remove(PdfName.of("Parent"));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // best-effort normalization; never fail the merge over it
+        }
+    }
+
+    private void collectFieldDicts(PdfArray arr, java.util.Set<PdfDictionary> out, int depth) {
+        if (depth > 50) {
+            return;
+        }
+        for (int i = 0; i < arr.size(); i++) {
+            PdfBase v = resolveRef(arr.get(i));
+            if (v instanceof PdfDictionary && out.add((PdfDictionary) v)) {
+                PdfBase kids = resolveRef(((PdfDictionary) v).get(PdfName.of("Kids")));
+                if (kids instanceof PdfArray) {
+                    collectFieldDicts((PdfArray) kids, out, depth + 1);
+                }
+            }
+        }
+    }
+
+    /**
+     * Builds an identity map from every widget-annotation dictionary that sits on
+     * an imported source page to that page's 1-based target index, by scanning
+     * each source page's {@code /Annots}. Used to resolve a form field's target
+     * page when its widget annotations carry no {@code /P} entry.
+     */
+    private java.util.Map<PdfDictionary, Integer> buildWidgetPageMap(
+            java.util.Map<PdfDictionary, Integer> importedPages) {
+        java.util.Map<PdfDictionary, Integer> map = new java.util.IdentityHashMap<>();
+        for (java.util.Map.Entry<PdfDictionary, Integer> entry : importedPages.entrySet()) {
+            PdfBase annots = resolveRef(entry.getKey().get(PdfName.of("Annots")));
+            if (!(annots instanceof PdfArray)) {
+                continue;
+            }
+            PdfArray arr = (PdfArray) annots;
+            for (int i = 0; i < arr.size(); i++) {
+                PdfBase annot = resolveRef(arr.get(i));
+                if (annot instanceof PdfDictionary) {
+                    map.put((PdfDictionary) annot, entry.getValue());
+                }
+            }
+        }
+        return map;
     }
 
     /**

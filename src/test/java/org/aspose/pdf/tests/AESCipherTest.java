@@ -19,22 +19,27 @@ public class AESCipherTest {
 
     @Test
     public void encryptDecryptRoundTrip_emptyData() {
-        // Empty plaintext under AES-CBC still produces 16-byte IV + 16-byte
-        // PKCS#7 padding block (Adobe Reader rejects /Length 0 encrypted
-        // streams). Decryption round-trips back to empty.
+        // Contract split (G1, EncryptAndDecryptEmptyArray): encrypt() short-
+        // circuits empty→empty so an empty payload round-trips as empty.
+        // The object/stream path keeps the 32-byte IV+padding minimum via
+        // encryptPadded() (Adobe rejects /Length 0 encrypted streams).
         byte[] key = new byte[16];
         byte[] result = AESCipher.encrypt(key, new byte[0]);
-        assertEquals(32, result.length, "Empty input must produce IV(16) + padding block(16)");
-        byte[] decrypted = AESCipher.decrypt(key, result);
+        assertEquals(0, result.length, "Empty input must round-trip as empty via encrypt()");
+        byte[] padded = AESCipher.encryptPadded(key, new byte[0]);
+        assertEquals(32, padded.length, "encryptPadded must keep IV(16) + padding block(16)");
+        byte[] decrypted = AESCipher.decrypt(key, padded);
         assertEquals(0, decrypted.length, "Round-trip of empty plaintext must decrypt to empty");
     }
 
     @Test
     public void encryptDecryptRoundTrip_nullData() {
-        // Null is treated as empty: produces a 32-byte IV+padding stream.
+        // Null is treated as empty: encrypt() yields empty, encryptPadded()
+        // yields the 32-byte IV+padding stream.
         byte[] key = new byte[16];
-        byte[] result = AESCipher.encrypt(key, null);
-        assertEquals(32, result.length, "Null input must produce IV(16) + padding block(16)");
+        assertEquals(0, AESCipher.encrypt(key, null).length, "Null input must encrypt to empty");
+        assertEquals(32, AESCipher.encryptPadded(key, null).length,
+                "Null input must produce IV(16) + padding block(16) via encryptPadded");
     }
 
     @Test

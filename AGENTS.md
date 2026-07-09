@@ -57,7 +57,7 @@ Tests should always be green on `main`. If a test is intentionally not yet passi
     │   ├── text/                                ← TextFragment, TextAbsorber, …
     │   ├── drawing/                             ← Color, graphics
     │   ├── devices/                             ← page rasterization (PNG, JPEG, …)
-    │   ├── engine/                              ← low-level PDF layer
+    │   ├── engine/                              ← low-level PDF-object layer
     │   │   ├── pdfobjects/                      ← PdfDictionary, PdfArray, …
     │   │   ├── parser/                          ← XRefParser, PDFParser
     │   │   ├── writer/                          ← PDFWriter
@@ -90,14 +90,14 @@ Test dependencies (JUnit) are fine, but should remain `<scope>test</scope>`.
 
 ### 2. PDF objects are the single source of truth
 
-Every public API class (e.g. `Document`, `Page`, `Annotation`, `Field`) wraps a `PdfDictionary` or `PdfArray`. Mutations go through the underlying COS object — they are not stored in separate Java fields that need to be synced.
+Every public API class (e.g. `Document`, `Page`, `Annotation`, `Field`) wraps a `PdfDictionary` or `PdfArray` (package `engine.pdfobjects`). Mutations go through the underlying PDF object — they are not stored in separate Java fields that need to be synced.
 
-When implementing a new property, write through to the COS dictionary:
+When implementing a new property, write through to the PDF dictionary:
 
 ```java
 // Good
 public void setRotate(int rotate) {
-    dict.put(PdfName.of("Rotate"), PdfInteger.of(rotate));
+    dict.set(PdfName.of("Rotate"), PdfInteger.valueOf(rotate));
 }
 
 // Bad — Java field will go out of sync with serialized PDF

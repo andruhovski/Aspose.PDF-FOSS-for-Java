@@ -80,10 +80,14 @@ public class PdfToHtmlConverter {
             "<div class=\"page\" id=\"p%d\" style=\"width:%.0fpx;height:%.0fpx;\">\n",
             pageNum, w, h));
 
+        // Ruled tables render as real <table> markup (PDFNET-39027); their
+        // text is excluded from the span/paragraph flow to avoid duplicates.
+        List<Rectangle> tableRects = appendTables(html, page, options, box);
+
         if (options.isFixedLayout()) {
-            appendFixedLayoutContent(html, page, options, box);
+            appendFixedLayoutContent(html, page, options, box, tableRects);
         } else {
-            appendReflowableContent(html, page, options, box);
+            appendReflowableContent(html, page, options, box, tableRects);
         }
 
         appendImages(html, page, options, box);
@@ -91,10 +95,67 @@ public class PdfToHtmlConverter {
         html.append("</div>\n");
     }
 
+    /**
+     * Emits every ruled table of the page (detected by {@link TableAbsorber})
+     * as an HTML {@code <table>} with one {@code <td>} per detected cell.
+     * Border-box-only regions (a single row or column) are left to the text
+     * flow. Returns the page rectangles the emitted tables cover so the
+     * caller can exclude their text from the regular flow.
+     */
+    private List<Rectangle> appendTables(StringBuilder html, Page page,
+                                         HtmlSaveOptions options, Rectangle box) {
+        List<Rectangle> covered = new ArrayList<>();
+        org.aspose.pdf.text.TableAbsorber absorber = new org.aspose.pdf.text.TableAbsorber();
+        try {
+            absorber.visit(page);
+        } catch (IOException e) {
+            LOG.warning("Table detection failed for HTML export: " + e.getMessage());
+            return covered;
+        }
+        for (org.aspose.pdf.text.AbsorbedTable table : absorber.getTableList()) {
+            List<org.aspose.pdf.text.AbsorbedRow> rows = table.getRowList();
+            if (rows.size() < 2 || rows.get(0).getCellList().size() < 2) {
+                continue;   // plain border box, not tabular content
+            }
+            Rectangle rect = table.getRectangle();
+            // Emit the bare <table> tag (Aspose does the same; PDFNET-39027
+            // checks for it literally). Cell geometry is carried by the
+            // detected structure, not inline CSS.
+            html.append("<table>\n");
+            for (org.aspose.pdf.text.AbsorbedRow row : rows) {
+                html.append("<tr>");
+                for (org.aspose.pdf.text.AbsorbedCell cell : row.getCellList()) {
+                    html.append("<td>").append(escapeHtml(cell.getText())).append("</td>");
+                }
+                html.append("</tr>\n");
+            }
+            html.append("</table>\n");
+            if (rect != null) {
+                covered.add(rect);
+            }
+        }
+        return covered;
+    }
+
+    /** Whether the text position lies inside any of the covered rectangles. */
+    private static boolean insideAny(List<Rectangle> rects, Position pos) {
+        if (pos == null || rects.isEmpty()) {
+            return false;
+        }
+        for (Rectangle r : rects) {
+            if (pos.getXIndent() >= r.getLLX() - 1 && pos.getXIndent() <= r.getURX() + 1
+                    && pos.getYIndent() >= r.getLLY() - 1 && pos.getYIndent() <= r.getURY() + 1) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     // ── Fixed Layout ──
 
     private void appendFixedLayoutContent(StringBuilder html, Page page,
-                                           HtmlSaveOptions options, Rectangle box) {
+                                           HtmlSaveOptions options, Rectangle box,
+                                           List<Rectangle> tableRects) {
         double scale = options.getScale();
         double pageH = box.getHeight();
 
@@ -107,6 +168,9 @@ public class PdfToHtmlConverter {
         }
 
         for (TextFragment tf : absorber.getTextFragments()) {
+            if (insideAny(tableRects, tf.getPosition())) {
+                continue;   // already rendered inside a <table>
+            }
             List<TextSegment> segments = tf.getSegments();
             if (segments == null || segments.isEmpty()) {
                 // Use fragment-level data
@@ -166,7 +230,8 @@ public class PdfToHtmlConverter {
     // ── Reflowable Layout ──
 
     private void appendReflowableContent(StringBuilder html, Page page,
-                                          HtmlSaveOptions options, Rectangle box) {
+                                          HtmlSaveOptions options, Rectangle box,
+                                          List<Rectangle> tableRects) {
         TextFragmentAbsorber absorber = new TextFragmentAbsorber();
         try {
             page.accept(absorber);
@@ -177,6 +242,9 @@ public class PdfToHtmlConverter {
 
         List<TextFragment> fragments = new ArrayList<>();
         for (TextFragment tf : absorber.getTextFragments()) {
+            if (insideAny(tableRects, tf.getPosition())) {
+                continue;   // already rendered inside a <table>
+            }
             fragments.add(tf);
         }
         if (fragments.isEmpty()) return;

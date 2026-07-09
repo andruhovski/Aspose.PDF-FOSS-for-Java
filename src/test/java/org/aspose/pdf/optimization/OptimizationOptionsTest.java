@@ -15,11 +15,14 @@ import static org.junit.jupiter.api.Assertions.*;
 public class OptimizationOptionsTest {
 
     @Test
-    void defaults_allDisabled() {
+    void defaults_matchAsposeCtor() {
+        // Aspose's parameterless ctor enables the three structural passes
+        // (removeUnusedObjects/removeUnusedStreams/linkDuplicateStreams);
+        // the lossy/font passes stay off (PDFNET_39956 parity).
         OptimizationOptions o = new OptimizationOptions();
-        assertFalse(o.isRemoveUnusedObjects());
-        assertFalse(o.isRemoveUnusedStreams());
-        assertFalse(o.isLinkDuplicateStreams());
+        assertTrue(o.isRemoveUnusedObjects());
+        assertTrue(o.isRemoveUnusedStreams());
+        assertTrue(o.isLinkDuplicateStreams());
         assertFalse(o.isCompressImages());
         assertFalse(o.isSubsetFonts());
         assertFalse(o.isUnembedFonts());

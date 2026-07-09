@@ -13,9 +13,13 @@ package org.aspose.pdf.optimization;
  */
 public class OptimizationOptions {
 
-    private boolean removeUnusedObjects = false;
-    private boolean removeUnusedStreams = false;
-    private boolean linkDuplicateStreams = false;
+    // Aspose parity: the parameterless OptimizationOptions() ctor enables the
+    // three structural passes by default (see Document.OptimizeResources() docs
+    // and regression test PDFNET_39956, which expects `new OptimizationOptions()`
+    // alone to shrink the file).
+    private boolean removeUnusedObjects = true;
+    private boolean removeUnusedStreams = true;
+    private boolean linkDuplicateStreams = true;
     private boolean allowReusePageContent = false;
     private boolean compressImages = false;
     private int imageQuality = 100;
@@ -24,6 +28,7 @@ public class OptimizationOptions {
     private int imageCompressionVersion = 0;
     private boolean resizeImages = false;
     private boolean removePrivateInfo = false;
+    private boolean compressObjects = false;
     private int maxResolution = 0;
 
     /** Creates options with every pass disabled. */
@@ -191,5 +196,24 @@ public class OptimizationOptions {
      */
     public void setMaxResolution(int value) {
         this.maxResolution = value;
+    }
+
+    /**
+     * @return whether objects are packed into object streams on save
+     */
+    public boolean isCompressObjects() {
+        return compressObjects;
+    }
+
+    /**
+     * Enables packing eligible objects into object streams (ISO 32000 §7.5.7)
+     * on the next save. API-compatible with Aspose's
+     * {@code OptimizationOptions.CompressObjects}; the compact rewrite already
+     * packs objects, so this flag simply requests that rewrite.
+     *
+     * @param value enable object-stream packing
+     */
+    public void setCompressObjects(boolean value) {
+        this.compressObjects = value;
     }
 }

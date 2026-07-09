@@ -34,13 +34,18 @@ public class LaunchAction extends PdfAction {
     /**
      * Returns the file path or specification.
      *
-     * @return the file path, or {@code null}
+     * @return the file path, or the empty string when the action carries no
+     *         {@code /F} entry (matches Aspose, which never returns null here —
+     *         PDFNET_51091 guarded against a NullReferenceException)
      */
     public String getFile() {
         PdfBase f = resolve(actionDict.get("F"));
         if (f instanceof PdfString) return ((PdfString) f).getString();
-        if (f instanceof PdfDictionary) return ((PdfDictionary) f).getString("F");
-        return null;
+        if (f instanceof PdfDictionary) {
+            String nested = ((PdfDictionary) f).getString("F");
+            return nested != null ? nested : "";
+        }
+        return "";
     }
 
     /**

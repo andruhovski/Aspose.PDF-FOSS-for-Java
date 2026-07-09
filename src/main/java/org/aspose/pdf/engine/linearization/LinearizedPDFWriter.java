@@ -364,6 +364,17 @@ public final class LinearizedPDFWriter {
         // file still reports true (PDFNET-54615).
         trailerCopy.remove(PdfName.of("Prev"));
         trailerCopy.remove(PdfName.of("XRefStm"));
+        // When the source used a cross-reference STREAM (PDF 1.5+, and every
+        // already-linearized file), parser.getTrailer() returns that stream's
+        // dictionary, which carries xref-stream-only keys. The linearizer emits
+        // a CLASSIC `trailer << >>` + xref table, so these keys must be stripped
+        // or the reopened trailer is a malformed hybrid (a bogus /Length, /Filter,
+        // /W on a non-stream dict) that breaks /Root resolution on reopen.
+        // ISO 32000-1 §7.5.8.2 Table 17.
+        for (String streamKey : new String[]{"Type", "Filter", "DecodeParms",
+                "Index", "W", "Length"}) {
+            trailerCopy.remove(PdfName.of(streamKey));
+        }
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         out.write("trailer\n".getBytes(StandardCharsets.US_ASCII));
@@ -390,9 +401,11 @@ public final class LinearizedPDFWriter {
      * Scans for the placeholder values and replaces them.
      */
     private void fixupLinearizationDict(byte[] data, OffsetTracker t, int hintLen) {
-        // The linearization dict is at the start of the file, within object "1 0 obj"
-        // We need to replace: /L, /H, /O, /E, /T values
-        String str = new String(data, 0, Math.min(data.length, 512), StandardCharsets.US_ASCII);
+        // The linearization dict is the first object. We replace its placeholder
+        // /L, /H, /O, /E, /T values in place, then write the fixed prefix back.
+        int window = Math.min(data.length, 512);
+        String original = new String(data, 0, window, StandardCharsets.US_ASCII);
+        String str = original;
 
         str = replaceValue(str, "/L ", String.format("%10d", data.length));
         str = replaceValue(str, "/H [ ", String.format("%d %d ]", t.hintStreamOffset, hintLen));
@@ -402,8 +415,45 @@ public final class LinearizedPDFWriter {
         str = replaceValue(str, "/E ", String.format("%10d", t.endOfFirstPage));
         str = replaceValue(str, "/T ", String.format("%10d", t.mainXrefOffset));
 
+        // The replacements change the dict's byte length (placeholders were "0").
+        // This prefix is written back over a FIXED window, so any byte-length
+        // drift would shift every object packed inside the window — corrupting
+        // the xref offsets, which were already baked during the write passes.
+        // This is invisible for normal files (their catalog sits past byte 512)
+        // but breaks already-linearized sources whose objects cluster at the
+        // start (the catalog lands in the window). Re-pad the placeholder comment
+        // so the prefix keeps its exact original length and nothing shifts.
+        str = restorePrefixLength(str, original.length());
+
         byte[] fixed = str.getBytes(StandardCharsets.US_ASCII);
-        System.arraycopy(fixed, 0, data, 0, Math.min(fixed.length, 512));
+        System.arraycopy(fixed, 0, data, 0, Math.min(fixed.length, window));
+    }
+
+    /**
+     * Restores {@code str} to {@code targetLen} characters by resizing the space
+     * run in the linearization dict's padding comment ({@code "% &lt;spaces&gt;"} just
+     * before its {@code endobj}). Keeps {@link #fixupLinearizationDict} length-
+     * neutral so baked xref offsets stay valid. Returns {@code str} unchanged if
+     * the padding comment can't absorb the delta (then the caller copies only the
+     * shorter prefix, matching the previous non-preserving behaviour).
+     */
+    private String restorePrefixLength(String str, int targetLen) {
+        int delta = str.length() - targetLen; // > 0: too long, trim padding
+        if (delta == 0) return str;
+        int eo = str.indexOf("endobj");
+        if (eo <= 0) return str;
+        int nl = str.lastIndexOf('\n', eo - 1);
+        int pct = nl > 0 ? str.lastIndexOf('%', nl) : -1;
+        if (pct < 0 || nl <= pct) return str;
+        int spaceStart = pct + 1;            // chars between '%' and the newline are all spaces
+        int curSpaces = nl - spaceStart;
+        int newSpaces = curSpaces - delta;   // trim when too long, grow when too short
+        if (newSpaces < 1) return str;       // not enough padding to absorb — give up
+        StringBuilder sb = new StringBuilder(str.length() - delta);
+        sb.append(str, 0, spaceStart);
+        for (int i = 0; i < newSpaces; i++) sb.append(' ');
+        sb.append(str, nl, str.length());
+        return sb.toString();
     }
 
     private String replaceValue(String str, String key, String newValue) {

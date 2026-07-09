@@ -54,6 +54,27 @@ public final class PDFWriter {
     /** Counter for assigning object numbers to new objects. */
     private int nextObjectNumber = 1;
 
+    /**
+     * Lower bound for newly-allocated object numbers. In an incremental update the
+     * original objects are preserved verbatim in the copied file prefix but are
+     * absent from the modified-objects map, so {@link #getMaxObjectNumber(Map)}
+     * under-counts. Without this floor a freshly-created object (e.g. a redaction
+     * content stream) could reuse a still-live original number — in particular an
+     * {@code /ObjStm} that backs compressed objects — leaving dangling type-2
+     * references that fail to load on reopen ("Invalid index 0 in object stream N").
+     * Set to the original {@code /Size} before registering orphan streams; 0 for
+     * full (non-incremental) writes, where the objects map is complete.
+     */
+    private int objectNumberFloor = 0;
+
+    /**
+     * When true, {@link #write} emits the hybrid-reference layout
+     * (ISO 32000-1 §7.5.8.4): a cross-reference stream object followed by a
+     * classic xref table whose trailer points at the stream via
+     * {@code /XRefStm}. Set by callers whose source document was hybrid.
+     */
+    private boolean preserveHybridXRef;
+
     /** Encryptor for write-side encryption (null when not encrypting). */
     private PDFEncryptor encryptor;
 
@@ -71,6 +92,18 @@ public final class PDFWriter {
     public void setEncryptor(PDFEncryptor encryptor, PdfObjectKey encryptDictKey) {
         this.encryptor = encryptor;
         this.encryptDictKey = encryptDictKey;
+    }
+
+    /**
+     * Requests the hybrid-reference layout (§7.5.8.4) from {@link #write}:
+     * classic xref table + parallel cross-reference stream, the table
+     * trailer carrying {@code /XRefStm}. Used to preserve the file shape of
+     * hybrid source documents on full rewrite.
+     *
+     * @param preserve {@code true} to emit the hybrid layout
+     */
+    public void setPreserveHybridXRef(boolean preserve) {
+        this.preserveHybridXRef = preserve;
     }
 
     /**
@@ -115,15 +148,32 @@ public final class PDFWriter {
             writeObject(entry.getKey(), entry.getValue());
         }
 
-        // 3. Write xref table
-        long xrefOffset = currentOffset;
-        writeXRefTable(objects);
-
-        // 4. Write trailer
-        PdfDictionary finalTrailer = copyDictionary(trailer);
-        finalTrailer.set(PdfName.PREV, null);
-        finalTrailer.set(PdfName.of("XRefStm"), null);
-        writeTrailer(finalTrailer, getMaxObjectNumber(objects) + 1, xrefOffset);
+        // 3./4. Cross-reference section + trailer.
+        //
+        // Hybrid-reference sources (ISO 32000-1 §7.5.8.4): when the original
+        // trailer carries /XRefStm, the file was written for both PDF 1.4-
+        // and 1.5-era readers — a classic xref table whose trailer points at
+        // a parallel cross-reference stream. Aspose preserves that shape on
+        // full rewrite (PDFNET-45599), so we emit: xref stream object (no
+        // startxref) → classic table → table trailer with /XRefStm.
+        boolean hybrid = preserveHybridXRef || trailer.get("XRefStm") != null;
+        if (hybrid) {
+            int sizeWithoutXRefStm = getMaxObjectNumber(objects) + 1;
+            long xrefStmOffset = writeXRefStreamObject(trailer, sizeWithoutXRefStm, null, false);
+            long xrefOffset = currentOffset;
+            writeXRefTable(objects);
+            PdfDictionary finalTrailer = copyDictionary(trailer);
+            finalTrailer.set(PdfName.PREV, null);
+            // /Size covers the xref stream object too (it takes number sizeWithoutXRefStm).
+            writeTrailer(finalTrailer, sizeWithoutXRefStm + 1, xrefOffset, xrefStmOffset);
+        } else {
+            long xrefOffset = currentOffset;
+            writeXRefTable(objects);
+            PdfDictionary finalTrailer = copyDictionary(trailer);
+            finalTrailer.set(PdfName.PREV, null);
+            finalTrailer.set(PdfName.of("XRefStm"), null);
+            writeTrailer(finalTrailer, getMaxObjectNumber(objects) + 1, xrefOffset);
+        }
 
         output.flush();
         LOGGER.log(Level.FINE, "PDF written: {0} bytes", currentOffset);
@@ -160,6 +210,11 @@ public final class PDFWriter {
         // Find the old xref offset from the original file (we need it for /Prev)
         long oldXrefOffset = findOldXrefOffset(original);
 
+        // Floor new object numbers at the original /Size so freshly-created
+        // objects never reuse a preserved original number (the original objects
+        // live in the copied prefix but are absent from modifiedObjects).
+        objectNumberFloor = trailerSize(trailer);
+
         // Promote orphan streams in the modified set to indirect objects
         // before writing (Bug N2 — see write(...) above for rationale).
         registerOrphanStreams(modifiedObjects, trailer);
@@ -179,10 +234,10 @@ public final class PDFWriter {
         int newMaxObj = getMaxObjectNumber(modifiedObjects);
         int newSize = Math.max(originalSize, newMaxObj + 1);
 
-        // Write new trailer with /Prev
+        // Write new trailer with /Prev. (writeTrailer strips any stream-only keys the source's
+        // cross-reference-stream dictionary may carry, keeping this table trailer valid.)
         PdfDictionary newTrailer = copyDictionary(trailer);
         newTrailer.set(PdfName.of("Prev"), PdfInteger.valueOf(oldXrefOffset));
-        newTrailer.set(PdfName.of("XRefStm"), null);
         writeTrailer(newTrailer, newSize, newXrefOffset);
 
         output.flush();
@@ -263,7 +318,7 @@ public final class PDFWriter {
             return refKey;
         }
         // Collision: another object owns refKey. Allocate fresh.
-        int next = getMaxObjectNumber(objects) + 1;
+        int next = nextFreeObjectNumber(objects);
         PdfObjectKey fresh = new PdfObjectKey(next, 0);
         s.setObjectKey(fresh);
         objects.put(fresh, s);
@@ -285,7 +340,7 @@ public final class PDFWriter {
             PdfObjectKey existing = s.getObjectKey();
             if (existing == null) {
                 // Inline orphan — assign fresh key.
-                int next = getMaxObjectNumber(objects) + 1;
+                int next = nextFreeObjectNumber(objects);
                 PdfObjectKey fresh = new PdfObjectKey(next, 0);
                 s.setObjectKey(fresh);
                 objects.put(fresh, s);
@@ -659,9 +714,31 @@ public final class PDFWriter {
      * Writes the trailer section: trailer dictionary, startxref, and %%EOF.
      */
     private void writeTrailer(PdfDictionary trailer, int size, long xrefOffset) throws IOException {
+        writeTrailer(trailer, size, xrefOffset, -1);
+    }
+
+    /**
+     * Writes the trailer section. When {@code xrefStmOffset} is non-negative
+     * the trailer is a hybrid-reference table trailer (§7.5.8.4) carrying
+     * {@code /XRefStm} — the byte offset of the parallel cross-reference
+     * stream that PDF 1.5+ readers process instead of the table.
+     */
+    private void writeTrailer(PdfDictionary trailer, int size, long xrefOffset,
+                              long xrefStmOffset) throws IOException {
         // Set /Size in trailer
         PdfDictionary trailerCopy = copyDictionary(trailer);
         trailerCopy.set(PdfName.of("Size"), PdfInteger.valueOf(size));
+        // This method always emits a plain `xref` TABLE trailer. When the source document used a
+        // cross-reference STREAM, `trailer` is that stream's dictionary and carries stream-only keys
+        // — illegal in a table trailer (ISO 32000 §7.5.5). Acrobat then reports the file as damaged
+        // (and on recovery ignores appended revisions, so filled XFA data is dropped). Strip them so
+        // BOTH the full-rewrite (write) and incremental (writeIncremental) paths stay valid.
+        for (String streamOnlyKey : new String[]{"Type", "W", "Index", "Filter", "DecodeParms", "Length", "XRefStm"}) {
+            trailerCopy.set(PdfName.of(streamOnlyKey), null);
+        }
+        if (xrefStmOffset >= 0) {
+            trailerCopy.set(PdfName.of("XRefStm"), PdfInteger.valueOf(xrefStmOffset));
+        }
         writeBytes("trailer\n".getBytes(StandardCharsets.US_ASCII));
 
         // Write trailer dictionary
@@ -712,6 +789,27 @@ public final class PDFWriter {
             }
         }
         return max;
+    }
+
+    /**
+     * Returns the next free object number for a newly-created object, never below
+     * {@link #objectNumberFloor}. In incremental updates the floor accounts for
+     * original objects that are preserved in the copied prefix but missing from
+     * {@code objects}, preventing a collision with a still-live original number.
+     */
+    private int nextFreeObjectNumber(Map<PdfObjectKey, PdfBase> objects) {
+        return Math.max(getMaxObjectNumber(objects) + 1, objectNumberFloor);
+    }
+
+    /**
+     * Reads the trailer's {@code /Size} (one greater than the highest object
+     * number per ISO 32000-1:2008 §7.5.5), or 0 when absent. Used as the
+     * allocation floor for new objects in incremental updates.
+     */
+    private int trailerSize(PdfDictionary trailer) {
+        if (trailer == null) return 0;
+        PdfBase size = trailer.get("Size");
+        return (size instanceof PdfInteger) ? ((PdfInteger) size).intValue() : 0;
     }
 
     /**
@@ -812,6 +910,9 @@ public final class PDFWriter {
 
         long oldXrefOffset = findOldXrefOffset(original);
 
+        // Floor new object numbers at the original /Size (see writeIncremental).
+        objectNumberFloor = trailerSize(trailer);
+
         // Write modified objects
         for (Map.Entry<PdfObjectKey, PdfBase> entry : modifiedObjects.entrySet()) {
             writeObject(entry.getKey(), entry.getValue());
@@ -853,10 +954,24 @@ public final class PDFWriter {
         List<Map.Entry<PdfObjectKey, PdfBase>> eligible = new ArrayList<>();
         Map<PdfObjectKey, PdfBase> nonEligible = new LinkedHashMap<>();
 
+        // maxPerStream <= 0 means "xref stream, but do NOT pack objects into any
+        // /ObjStm" — every object stays a plain "N G obj" body. Used by the
+        // optimize rewrite when CompressObjects was not requested, so downstream
+        // text greps still see object bodies (Aspose parity — PDFNET-39575).
+        boolean noPacking = maxPerStream <= 0;
+
         for (Map.Entry<PdfObjectKey, PdfBase> entry : objects.entrySet()) {
             PdfObjectKey key = entry.getKey();
             PdfBase obj = entry.getValue();
-            if (obj instanceof PdfStream || key.getGenerationNumber() > 0) {
+            if (noPacking) {
+                nonEligible.put(key, obj);
+                continue;
+            }
+            // The /Encrypt dictionary may not live inside an object stream
+            // (§7.5.7): a reader must resolve it BEFORE it can decrypt any
+            // object stream, so packing it makes the file unreadable.
+            if (obj instanceof PdfStream || key.getGenerationNumber() > 0
+                    || key.equals(encryptDictKey)) {
                 nonEligible.put(key, obj);
             } else {
                 eligible.add(entry);
@@ -933,6 +1048,20 @@ public final class PDFWriter {
      */
     private void writeXRefStream(PdfDictionary trailer, int size,
                                   Map<PdfObjectKey, int[]> compressedLocations) throws IOException {
+        writeXRefStreamObject(trailer, size, compressedLocations, true);
+    }
+
+    /**
+     * Writes the cross-reference stream object itself and returns its byte
+     * offset. With {@code emitStartxref} true this terminates the file
+     * ({@code startxref} + {@code %%EOF}) — the pure xref-stream layout.
+     * With false, the caller appends its own cross-reference section — the
+     * hybrid-reference layout (§7.5.8.4), where a classic table trailer
+     * points here via {@code /XRefStm}.
+     */
+    private long writeXRefStreamObject(PdfDictionary trailer, int size,
+                                       Map<PdfObjectKey, int[]> compressedLocations,
+                                       boolean emitStartxref) throws IOException {
 
         // Assign an object number for the xref stream itself
         int xrefObjNum = size;
@@ -940,11 +1069,21 @@ public final class PDFWriter {
 
         // Determine field widths /W = [w1 w2 w3]
         // w1: type field (1 byte: values 0, 1, 2)
-        // w2: offset or object stream number
-        // w3: generation or index within stream
+        // w2: offset (type 1) or OBJECT STREAM NUMBER (type 2) — must fit the
+        //     larger of the two; sizing for offsets alone truncates container
+        //     numbers in documents with >65535 objects (sparse numbering),
+        //     leaving the catalog unresolvable.
+        // w3: generation (type 1) or index within stream (type 2) — a single
+        //     giant object stream can push the index past 65535 as well.
         int w1 = 1;
-        int w2 = bytesNeeded(currentOffset + 4096); // estimate — allow headroom for xref stream itself
-        int w3 = 2;
+        int w2 = bytesNeeded(Math.max(currentOffset + 4096, totalSize));
+        int maxStreamIndex = 0;
+        if (compressedLocations != null) {
+            for (int[] loc : compressedLocations.values()) {
+                maxStreamIndex = Math.max(maxStreamIndex, loc[1]);
+            }
+        }
+        int w3 = Math.max(2, bytesNeeded(Math.max(65535, maxStreamIndex)));
         int entrySize = w1 + w2 + w3;
 
         // Build xref data — one entry per object number 0..xrefObjNum
@@ -992,6 +1131,14 @@ public final class PDFWriter {
         xrefDict.set(PdfName.of("Size"), PdfInteger.valueOf(totalSize));
         xrefDict.set(PdfName.PREV, null);
         xrefDict.set(PdfName.of("XRefStm"), null);
+        // When the source document itself used an xref stream, the parsed
+        // trailer IS that old stream's dictionary. Its /Index (possibly a
+        // sparse incremental-update list) and /DecodeParms (predictor) would
+        // misdescribe the entry data built above, which always covers
+        // 0..Size-1 and is plain-Flate encoded — drop both so readers fall
+        // back to the correct defaults (§7.5.8.2).
+        xrefDict.set(PdfName.of("Index"), null);
+        xrefDict.set(PdfName.of("DecodeParms"), null);
 
         PdfArray wArray = new PdfArray();
         wArray.add(PdfInteger.valueOf(w1));
@@ -1014,9 +1161,12 @@ public final class PDFWriter {
         writeBytes(compressedData);
         writeBytes("\nendstream\nendobj\n".getBytes(StandardCharsets.US_ASCII));
 
-        // startxref pointing to the xref stream
-        String startxref = "startxref\n" + xrefStreamOffset + "\n%%EOF\n";
-        writeBytes(startxref.getBytes(StandardCharsets.US_ASCII));
+        if (emitStartxref) {
+            // startxref pointing to the xref stream
+            String startxref = "startxref\n" + xrefStreamOffset + "\n%%EOF\n";
+            writeBytes(startxref.getBytes(StandardCharsets.US_ASCII));
+        }
+        return xrefStreamOffset;
     }
 
     /**

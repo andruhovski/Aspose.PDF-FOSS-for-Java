@@ -111,6 +111,27 @@ public final class PdfName extends PdfBase implements Comparable<PdfName> {
     }
 
     /**
+     * Ignored: PdfName instances are interned singletons shared across every
+     * document (see {@link #CACHE}). The base class stores the write-time
+     * object key in mutable state, but a shared singleton must never carry a
+     * per-document indirect identity — doing so leaks one document's object
+     * number into every later write of the same name. Concretely, a writer
+     * that assigned (say) {@code 14 0} to {@code /WinAnsiEncoding} while
+     * serialising document A would make document B emit {@code /Encoding 14 0 R}
+     * pointing at an object that does not exist in B, corrupting the font.
+     * <p>
+     * Names are valid as direct objects everywhere they appear (ISO 32000-1
+     * §7.3.5), so keeping a name non-indirect simply serialises it inline,
+     * which is always correct. This override makes that invariant explicit.
+     *
+     * @param key ignored
+     */
+    @Override
+    public void setObjectKey(PdfObjectKey key) {
+        // no-op: see Javadoc — interned names are always written inline.
+    }
+
+    /**
      * Decodes a PDF name token (with {@code #XX} hex escapes) to a PdfName.
      *
      * @param pdfToken the raw token from the PDF (without leading '/')

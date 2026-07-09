@@ -21,7 +21,7 @@ public class UriAction extends PdfAction {
     public UriAction(String uri) {
         this.actionDict = new PdfDictionary();
         actionDict.set(PdfName.of("S"), PdfName.of("URI"));
-        actionDict.set(PdfName.of("URI"), new PdfString(uri.getBytes(StandardCharsets.UTF_8)));
+        actionDict.set(PdfName.of("URI"), new PdfString(uri));
     }
 
     /**
@@ -58,6 +58,6 @@ public class UriAction extends PdfAction {
      * @param uri the URI
      */
     public void setUri(String uri) {
-        actionDict.set(PdfName.of("URI"), new PdfString(uri.getBytes(StandardCharsets.UTF_8)));
+        actionDict.set(PdfName.of("URI"), new PdfString(uri));
     }
 }

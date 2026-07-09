@@ -328,10 +328,63 @@ public final class ContentStreamParser {
     }
 
     /**
+     * Maximum container nesting inside a content stream. Real content never
+     * approaches this; damaged streams full of consecutive '[' bytes would
+     * otherwise recurse to StackOverflowError.
+     */
+    private static final int MAX_NESTING_DEPTH = 64;
+
+    private static PdfArray parseArray(PDFLexer lexer) throws IOException {
+        return parseArray(lexer, 0);
+    }
+
+    private static PdfDictionary parseDictionary(PDFLexer lexer) throws IOException {
+        return parseDictionary(lexer, 0);
+    }
+
+    /** Consumes tokens until the current array is balanced (recovery for over-deep nesting). */
+    private static void skipBalancedArray(PDFLexer lexer) throws IOException {
+        int depth = 1;
+        while (depth > 0) {
+            PDFLexer.Token t = lexer.nextToken();
+            if (t.getType() == PDFLexer.TokenType.EOF) {
+                return;
+            }
+            if (t.getType() == PDFLexer.TokenType.ARRAY_OPEN) {
+                depth++;
+            } else if (t.getType() == PDFLexer.TokenType.ARRAY_CLOSE) {
+                depth--;
+            }
+        }
+    }
+
+    /** Consumes tokens until the current dictionary is balanced (recovery for over-deep nesting). */
+    private static void skipBalancedDictionary(PDFLexer lexer) throws IOException {
+        int depth = 1;
+        while (depth > 0) {
+            PDFLexer.Token t = lexer.nextToken();
+            if (t.getType() == PDFLexer.TokenType.EOF) {
+                return;
+            }
+            if (t.getType() == PDFLexer.TokenType.DICT_OPEN) {
+                depth++;
+            } else if (t.getType() == PDFLexer.TokenType.DICT_CLOSE) {
+                depth--;
+            }
+        }
+    }
+
+    /**
      * Parses an array from the content stream. The opening '[' has already been consumed.
      */
-    private static PdfArray parseArray(PDFLexer lexer) throws IOException {
+    private static PdfArray parseArray(PDFLexer lexer, int depth) throws IOException {
         PdfArray array = new PdfArray();
+        if (depth > MAX_NESTING_DEPTH) {
+            LOGGER.warning("Content-stream array nesting exceeds " + MAX_NESTING_DEPTH
+                    + "; skipping over-deep contents (damaged stream)");
+            skipBalancedArray(lexer);
+            return array;
+        }
         while (true) {
             PDFLexer.Token token;
             try {
@@ -371,10 +424,10 @@ public final class ContentStreamParser {
                     array.add(hs);
                     break;
                 case ARRAY_OPEN:
-                    array.add(parseArray(lexer));
+                    array.add(parseArray(lexer, depth + 1));
                     break;
                 case DICT_OPEN:
-                    array.add(parseDictionary(lexer));
+                    array.add(parseDictionary(lexer, depth + 1));
                     break;
                 case KEYWORD:
                     // true/false/null can appear in arrays
@@ -402,8 +455,14 @@ public final class ContentStreamParser {
     /**
      * Parses a dictionary from the content stream. The opening '&lt;&lt;' has already been consumed.
      */
-    private static PdfDictionary parseDictionary(PDFLexer lexer) throws IOException {
+    private static PdfDictionary parseDictionary(PDFLexer lexer, int depth) throws IOException {
         PdfDictionary dict = new PdfDictionary();
+        if (depth > MAX_NESTING_DEPTH) {
+            LOGGER.warning("Content-stream dictionary nesting exceeds " + MAX_NESTING_DEPTH
+                    + "; skipping over-deep contents (damaged stream)");
+            skipBalancedDictionary(lexer);
+            return dict;
+        }
         while (true) {
             PDFLexer.Token keyToken = lexer.nextToken();
             if (keyToken.getType() == PDFLexer.TokenType.EOF) {
@@ -441,10 +500,10 @@ public final class ContentStreamParser {
                     value = hvs;
                     break;
                 case ARRAY_OPEN:
-                    value = parseArray(lexer);
+                    value = parseArray(lexer, depth + 1);
                     break;
                 case DICT_OPEN:
-                    value = parseDictionary(lexer);
+                    value = parseDictionary(lexer, depth + 1);
                     break;
                 case KEYWORD:
                     if ("true".equals(valToken.getValue())) {
@@ -554,11 +613,19 @@ public final class ContentStreamParser {
                 return new org.aspose.pdf.operators.BI(biOperands);
             }
 
-            // Check for whitespace + 'E' + 'I' pattern
-            if (prev1 == 'E' && b == 'I' && isWhitespaceOrStart(prev2)) {
-                // Check that next byte is whitespace, delimiter, or EOF
+            // Check for the 'E' + 'I' terminator. Producers usually delimit it
+            // with whitespace on both sides, but ISO 32000-1 §8.9.7 does not
+            // require whitespace BEFORE the keyword and real-world writers
+            // (e.g. the Philips Holter reports of PDFNEWNET-39178) butt EI
+            // directly against the last data byte. Accept that case too, but
+            // only when the bytes following EI look like a plain operator
+            // stream — compressed image data readily contains stray "EI"
+            // pairs, and the ASCII lookahead rejects those false positives.
+            if (prev1 == 'E' && b == 'I') {
                 int next = reader.peek();
-                if (next == -1 || PDFLexer.isWhitespace(next) || PDFLexer.isDelimiter(next)) {
+                boolean boundaryOk = next == -1 || PDFLexer.isWhitespace(next) || PDFLexer.isDelimiter(next);
+                if (boundaryOk
+                        && (isWhitespaceOrStart(prev2) || looksLikeOperatorStreamAhead(reader))) {
                     // Found EI marker — remove trailing whitespace + 'E' from image data
                     byte[] data = imageData.toByteArray();
                     int trimLen = data.length - 1; // remove 'E'
@@ -588,6 +655,33 @@ public final class ContentStreamParser {
      */
     private static boolean isWhitespaceOrStart(int b) {
         return b == -1 || PDFLexer.isWhitespace(b);
+    }
+
+    /**
+     * Peeks up to 24 bytes ahead and reports whether they read like a plain
+     * content-operator stream (printable ASCII and whitespace only). Used to
+     * validate an {@code EI} inline-image terminator that is NOT preceded by
+     * whitespace: genuine terminators are followed by operators, while a
+     * false "EI" inside compressed image data is almost always followed by
+     * more binary bytes. The reader position is restored before returning.
+     */
+    private static boolean looksLikeOperatorStreamAhead(RandomAccessReader reader) throws IOException {
+        long pos = reader.getPosition();
+        try {
+            for (int i = 0; i < 24; i++) {
+                int b = reader.read();
+                if (b == -1) {
+                    return true;    // EOF right after EI — valid terminator
+                }
+                boolean printable = b >= 0x20 && b < 0x7F;
+                if (!printable && !PDFLexer.isWhitespace(b)) {
+                    return false;
+                }
+            }
+            return true;
+        } finally {
+            reader.seek(pos);
+        }
     }
 
     /**

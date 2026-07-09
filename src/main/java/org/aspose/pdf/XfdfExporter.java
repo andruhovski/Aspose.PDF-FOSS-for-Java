@@ -144,6 +144,11 @@ public final class XfdfExporter {
 
                 for (Annotation annot : pageAnnots) {
                     String subtype = annot.getSubtype();
+                    if ("Popup".equals(subtype)) {
+                        // a popup is serialized as a <popup> CHILD of its markup parent
+                        // (see writeAnnotation), never as a standalone XFDF element
+                        continue;
+                    }
                     if (allowedTypes != null && !allowedTypes.contains(subtype)) {
                         continue;
                     }
@@ -305,6 +310,14 @@ public final class XfdfExporter {
                 // Rich text is XHTML; store as text content (will be escaped by DOM)
                 rtElem.setTextContent(richText);
                 elem.appendChild(rtElem);
+            }
+
+            // Redaction overlay text (round-trips via the redact element's attribute)
+            if (markup instanceof RedactionAnnotation) {
+                String overlay = ((RedactionAnnotation) markup).getOverlayText();
+                if (overlay != null && !overlay.isEmpty()) {
+                    elem.setAttribute("overlaytext", overlay);
+                }
             }
 
             // Popup child element

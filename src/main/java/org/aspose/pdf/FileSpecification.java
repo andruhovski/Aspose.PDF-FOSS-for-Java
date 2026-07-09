@@ -82,7 +82,7 @@ public class FileSpecification {
 
     /** Sets the file name (/F). */
     public void setName(String name) {
-        dict.set(PdfName.of("F"), new PdfString(name.getBytes(StandardCharsets.UTF_8)));
+        dict.set(PdfName.of("F"), new PdfString(name));
     }
 
     /** /UF — Unicode file name. */
@@ -93,7 +93,7 @@ public class FileSpecification {
 
     /** Sets the Unicode file name (/UF). */
     public void setUnicodeFileName(String name) {
-        dict.set(PdfName.of("UF"), new PdfString(name.getBytes(StandardCharsets.UTF_8)));
+        dict.set(PdfName.of("UF"), new PdfString(name));
     }
 
     /** /Desc — description. */
@@ -104,7 +104,7 @@ public class FileSpecification {
 
     /** Sets the description (/Desc). */
     public void setDescription(String desc) {
-        dict.set(PdfName.of("Desc"), new PdfString(desc.getBytes(StandardCharsets.UTF_8)));
+        dict.set(PdfName.of("Desc"), new PdfString(desc));
     }
 
     /** /AFRelationship. */

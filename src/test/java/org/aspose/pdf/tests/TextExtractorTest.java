@@ -62,6 +62,45 @@ public class TextExtractorTest {
         assertTrue(text.contains("Hello World"), "Expected 'Hello World', got: " + text);
     }
 
+    /**
+     * Decoration detection: a thin filled rule just below text → underline; a thin
+     * rule through the middle → strikeout; a large (non-thin) filled rect is NOT a
+     * rule and must not flag text; a thin rule more than one line-height below the
+     * text is out of band and must not flag it. This locks in the thin-rule filter
+     * and the bounded Y-band search added to keep {@code detectTextDecorations} off
+     * the catastrophic O(fragments × filledRects) path (corpus 57236.pdf: 18,363
+     * fragments × 5,027,972 filled rects ≈ 9×10^10 iterations, a 900s+ hang).
+     */
+    @Test
+    public void testUnderlineAndStrikeoutDetectionIgnoresNonRuleRects() throws IOException {
+        // Helvetica 12pt "Hello" at (100,700) extracts to rect ≈ [100, 697.6, 127.3, 710.7].
+        Page page = createPageWithText(
+                "BT /F1 12 Tf 100 700 Td (Hello) Tj ET\n"
+                + "100 698 40 1 re f\n"      // thin underline rule just below text
+                + "90 695 60 30 re f");       // large non-thin block over text → not a rule
+        TextExtractor extractor = new TextExtractor(null);
+        List<TextFragment> frags = extractor.extract(page);
+        assertEquals(1, frags.size());
+        TextFragment f = frags.get(0);
+        assertTrue(f.getTextState().isUnderline(), "thin rule below text should mark underline");
+        assertFalse(f.getTextState().isStrikeOut(),
+                "large non-thin block must not be treated as a strikeout rule");
+
+        // Strikeout: a thin rule through the vertical middle of the box.
+        Page page2 = createPageWithText(
+                "BT /F1 12 Tf 100 700 Td (Hello) Tj ET\n100 703 40 1 re f");
+        TextFragment f2 = new TextExtractor(null).extract(page2).get(0);
+        assertTrue(f2.getTextState().isStrikeOut(), "thin rule through middle should mark strikeout");
+
+        // Out of band: a thin rule far (>1 line-height) below the text is not its
+        // decoration and must not flag it.
+        Page page3 = createPageWithText(
+                "BT /F1 12 Tf 100 700 Td (Hello) Tj ET\n100 680 40 1 re f");
+        TextFragment f3 = new TextExtractor(null).extract(page3).get(0);
+        assertFalse(f3.getTextState().isUnderline(), "rule far below text must not mark underline");
+        assertFalse(f3.getTextState().isStrikeOut(), "rule far below text must not mark strikeout");
+    }
+
     @Test
     public void testExtractMultipleStrings() throws IOException {
         Page page = createPageWithText("BT /F1 12 Tf 100 700 Td (Hello) Tj ( World) Tj ET");

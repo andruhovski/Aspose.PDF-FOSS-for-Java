@@ -38,6 +38,22 @@ public class ContentStreamBuilder {
      */
     private final Map<String, String> imageResources = new LinkedHashMap<>();
 
+    /**
+     * Resource name (e.g. "F2") → the embedded {@code /Type0} font dictionary registered via
+     * {@link #registerEmbeddedFont}. The caller's font-merge step writes these dicts onto the page's
+     * {@code /Resources/Font} instead of a standard-14 {@code /Type1} dict.
+     */
+    private final Map<String, org.aspose.pdf.engine.pdfobjects.PdfDictionary> embeddedFontDicts
+            = new LinkedHashMap<>();
+
+    /**
+     * Resource name (e.g. "Im1") → the Image XObject stream registered via
+     * {@link #registerImage(String, org.aspose.pdf.engine.pdfobjects.PdfStream)}. The caller's
+     * resource-merge step attaches these onto the page's {@code /Resources/XObject}.
+     */
+    private final Map<String, org.aspose.pdf.engine.pdfobjects.PdfStream> imageXObjectDicts
+            = new LinkedHashMap<>();
+
     private int fontCounter = 0;
     private int imageCounter = 0;
 
@@ -307,6 +323,47 @@ public class ContentStreamBuilder {
     }
 
     /**
+     * Emits the m (move-to) operator, beginning a new subpath at {@code (x,y)}.
+     *
+     * @param x the x coordinate
+     * @param y the y coordinate
+     */
+    public void moveTo(double x, double y) {
+        emit(String.format(Locale.US, "%.2f %.2f m\n", x, y));
+    }
+
+    /**
+     * Emits the l (line-to) operator, appending a straight segment to {@code (x,y)}.
+     *
+     * @param x the x coordinate
+     * @param y the y coordinate
+     */
+    public void lineTo(double x, double y) {
+        emit(String.format(Locale.US, "%.2f %.2f l\n", x, y));
+    }
+
+    /**
+     * Emits the c (cubic Bézier) operator with two control points.
+     *
+     * @param x1 first control x
+     * @param y1 first control y
+     * @param x2 second control x
+     * @param y2 second control y
+     * @param x3 end x
+     * @param y3 end y
+     */
+    public void curveTo(double x1, double y1, double x2, double y2, double x3, double y3) {
+        emit(String.format(Locale.US, "%.2f %.2f %.2f %.2f %.2f %.2f c\n", x1, y1, x2, y2, x3, y3));
+    }
+
+    /**
+     * Emits the h (close subpath) operator.
+     */
+    public void closePath() {
+        emit("h\n");
+    }
+
+    /**
      * Emits the f (fill path) operator.
      */
     public void fill() {
@@ -325,6 +382,16 @@ public class ContentStreamBuilder {
      */
     public void fillStroke() {
         emit("B\n");
+    }
+
+    /**
+     * Emits {@code W n} — intersects the clipping path with the current path and then ends the path
+     * without painting. Use after defining a path (e.g. {@link #rectangle}) to clip subsequent marks
+     * to that region (ISO 32000-1:2008, §8.5.4). Pair with {@link #saveState}/{@link #restoreState}
+     * to scope the clip.
+     */
+    public void clip() {
+        emit("W n\n");
     }
 
     // ---- XObject operator (ISO 32000-1:2008, Section 8.8) ----
@@ -361,6 +428,41 @@ public class ContentStreamBuilder {
     }
 
     /**
+     * Registers an embedded {@code /Type0} font and returns its resource name. The font is marked as
+     * Identity-H (subsequent {@link #showText} emits 2-byte GIDs via {@code reader}), and the supplied
+     * Type0 dictionary is recorded so the caller's font-merge step can attach it to the page
+     * {@code /Resources/Font}. Re-registering the same {@code fontKey} returns the existing name.
+     *
+     * @param fontKey   a stable unique key for this font+style (e.g. {@code "arial-b"})
+     * @param type0Dict the assembled {@code /Type0} font dictionary
+     * @param reader    the TrueType reader providing Unicode→GID for encoding
+     * @return the resource name (e.g. {@code "F2"})
+     */
+    public String registerEmbeddedFont(String fontKey,
+                                       org.aspose.pdf.engine.pdfobjects.PdfDictionary type0Dict,
+                                       org.aspose.pdf.engine.font.ttf.TrueTypeReader reader) {
+        String key = fontKey != null ? fontKey : "EmbeddedFont";
+        String existing = fontResources.get(key);
+        if (existing != null) {
+            return existing;
+        }
+        fontCounter++;
+        String name = "F" + fontCounter;
+        fontResources.put(key, name);
+        embeddedFontDicts.put(name, type0Dict);
+        markFontAsType0(name, reader);
+        return name;
+    }
+
+    /**
+     * @return resource name → embedded {@code /Type0} font dictionary, for the font-merge step
+     *         (unmodifiable; empty when no embedded fonts were registered)
+     */
+    public Map<String, org.aspose.pdf.engine.pdfobjects.PdfDictionary> getEmbeddedFontDicts() {
+        return Collections.unmodifiableMap(embeddedFontDicts);
+    }
+
+    /**
      * Registers an image resource and returns its resource name.
      * If the same key was already registered, returns the existing name.
      *
@@ -380,6 +482,32 @@ public class ContentStreamBuilder {
         imageResources.put(key, name);
         LOG.fine(() -> "Registered image " + key + " as " + name);
         return name;
+    }
+
+    /**
+     * Registers an Image XObject (its stream) and returns its resource name, recording the stream so
+     * the caller's resource-merge step can attach it to the page {@code /Resources/XObject}. Paint the
+     * image with {@code q  w 0 0 h x y cm  /name Do  Q} (the {@code cm} scales the 1×1 image space to
+     * the target rectangle). Re-registering the same {@code key} returns the existing name.
+     *
+     * @param key  a stable unique key for this image (e.g. its content hash)
+     * @param xobj the assembled Image XObject stream
+     * @return the resource name (e.g. {@code "Im1"})
+     */
+    public String registerImage(String key, org.aspose.pdf.engine.pdfobjects.PdfStream xobj) {
+        String name = registerImage(key);
+        if (xobj != null) {
+            imageXObjectDicts.put(name, xobj);
+        }
+        return name;
+    }
+
+    /**
+     * @return resource name → Image XObject stream, for the resource-merge step
+     *         (unmodifiable; empty when no image streams were registered)
+     */
+    public Map<String, org.aspose.pdf.engine.pdfobjects.PdfStream> getImageXObjectDicts() {
+        return Collections.unmodifiableMap(imageXObjectDicts);
     }
 
     /**

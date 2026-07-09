@@ -138,7 +138,7 @@ public abstract class Annotation extends org.aspose.pdf.BaseParagraph {
      * @param contents the contents string, or null to remove
      */
     public void setContents(String contents) {
-        if (contents != null) dict.set(PdfName.of("Contents"), new PdfString(contents.getBytes(StandardCharsets.UTF_8)));
+        if (contents != null) dict.set(PdfName.of("Contents"), new PdfString(contents));
         else dict.remove(PdfName.of("Contents"));
     }
 
@@ -158,7 +158,7 @@ public abstract class Annotation extends org.aspose.pdf.BaseParagraph {
      * @param name the name string
      */
     public void setName(String name) {
-        if (name != null) dict.set(PdfName.of("NM"), new PdfString(name.getBytes(StandardCharsets.UTF_8)));
+        if (name != null) dict.set(PdfName.of("NM"), new PdfString(name));
     }
 
     /**
@@ -177,7 +177,7 @@ public abstract class Annotation extends org.aspose.pdf.BaseParagraph {
      * @param date the modification date string in PDF date format, or null to remove
      */
     public void setModified(String date) {
-        if (date != null) dict.set(PdfName.of("M"), new PdfString(date.getBytes(StandardCharsets.UTF_8)));
+        if (date != null) dict.set(PdfName.of("M"), new PdfString(date));
         else dict.remove(PdfName.of("M"));
     }
 

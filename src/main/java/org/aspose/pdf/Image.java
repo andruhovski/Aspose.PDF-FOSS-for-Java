@@ -22,6 +22,7 @@ public class Image extends BaseParagraph {
     private double fixHeight;
     private String imageType;
     private String title;
+    private int selectedFrame = -1;
 
     /**
      * Creates a new Image with default settings.
@@ -136,5 +137,28 @@ public class Image extends BaseParagraph {
      */
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    /**
+     * Returns the 0-based frame index to render when the source is a
+     * multi-frame image (e.g. a multi-page TIFF).
+     *
+     * @return the selected frame, or {@code -1} when unset — the document
+     *         expands a multi-frame TIFF into one page per frame on save
+     */
+    public int getSelectedFrame() {
+        return selectedFrame;
+    }
+
+    /**
+     * Selects a single frame of a multi-frame source image (e.g. a
+     * multi-page TIFF) to render. When left at the default {@code -1},
+     * saving a new document expands the multi-frame image into one page
+     * per decodable frame, matching Aspose.PDF behaviour.
+     *
+     * @param selectedFrame the 0-based frame index, or {@code -1} for all
+     */
+    public void setSelectedFrame(int selectedFrame) {
+        this.selectedFrame = selectedFrame;
     }
 }

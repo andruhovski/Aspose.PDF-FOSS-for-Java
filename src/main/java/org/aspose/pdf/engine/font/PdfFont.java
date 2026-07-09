@@ -110,6 +110,23 @@ public abstract class PdfFont {
     public abstract double getWidth(int charCode);
 
     /**
+     * Returns the factor that converts a {@link #getWidth(int)} value into a
+     * glyph advance in text space (so {@code getWidth(code) * getWidthUnitScale()
+     * * fontSize} is the advance in user space).
+     * <p>
+     * For all standard font types widths are expressed in 1/1000 of text space,
+     * so this is {@code 0.001}. Type 3 fonts declare their own /FontMatrix and
+     * their /Widths are in glyph space, so that subtype overrides this with the
+     * matrix's horizontal scale (§9.6.5).
+     * </p>
+     *
+     * @return the width-to-text-space scale factor
+     */
+    public double getWidthUnitScale() {
+        return 0.001;
+    }
+
+    /**
      * Returns the base font name (/BaseFont).
      *
      * @return the font name, or null

@@ -24,12 +24,26 @@ public class Layer {
         this.id = id;
         this.ocgDict = new PdfDictionary();
         ocgDict.set(PdfName.of("Type"), PdfName.of("OCG"));
-        ocgDict.set(PdfName.of("Name"), new PdfString(name.getBytes(StandardCharsets.UTF_8)));
+        ocgDict.set(PdfName.of("Name"), new PdfString(name));
         this.contents = new ArrayList<>();
     }
 
     /** Wraps an existing OCG dictionary. */
     public Layer(PdfDictionary ocgDict) {
+        this.ocgDict = ocgDict != null ? ocgDict : new PdfDictionary();
+        this.contents = new ArrayList<>();
+    }
+
+    /**
+     * Wraps an existing OCG dictionary read from a document, keeping the
+     * resource-property name it was referenced by (e.g. {@code oc1} for a
+     * {@code /Resources /Properties /oc1} entry).
+     *
+     * @param id      the layer id (the /Properties resource name)
+     * @param ocgDict the OCG dictionary (ISO 32000-1:2008, §8.11.2)
+     */
+    public Layer(String id, PdfDictionary ocgDict) {
+        this.id = id;
         this.ocgDict = ocgDict != null ? ocgDict : new PdfDictionary();
         this.contents = new ArrayList<>();
     }
@@ -45,7 +59,7 @@ public class Layer {
 
     /** Sets the layer name. */
     public void setName(String name) {
-        ocgDict.set(PdfName.of("Name"), new PdfString(name.getBytes(StandardCharsets.UTF_8)));
+        ocgDict.set(PdfName.of("Name"), new PdfString(name));
     }
 
     /** Returns content operators for this layer. */

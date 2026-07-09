@@ -1,6 +1,7 @@
 package org.aspose.pdf.text;
 
 import org.aspose.pdf.Document;
+import org.aspose.pdf.Operator;
 import org.aspose.pdf.Page;
 import org.aspose.pdf.Rectangle;
 import org.aspose.pdf.annotations.Annotation;
@@ -35,12 +36,21 @@ public class TextFragmentAbsorber extends TextAbsorber {
     private static final Logger LOG = Logger.getLogger(TextFragmentAbsorber.class.getName());
 
     private String searchPhrase;
+    /**
+     * /Rotate of the page currently being searched (0 when not searching or
+     * when combining multiple pages). buildSpans uses it to pick the reading
+     * axis on sideways pages — see visit(Page).
+     */
+    private int spanPageRotation;
     private final TextFragmentCollection textFragments = new TextFragmentCollection();
     private TextSearchOptions textSearchOptions;
     // Aspose convention: TextFragmentAbsorber exposes a non-null default
     // so callers can write `absorber.getTextReplaceOptions().setReplaceAdjustmentAction(...)`
     // without a null check. PdfContentEditor keeps the null default.
     private TextReplaceOptions textReplaceOptions = new TextReplaceOptions(TextReplaceOptions.Scope.REPLACE_ALL);
+    // Aspose convention: TextEditOptions is non-null by default so callers can write
+    // `absorber.getTextEditOptions().setFontReplaceBehavior(...)` without a null check.
+    private TextEditOptions textEditOptions = new TextEditOptions();
 
     /**
      * Creates a TextFragmentAbsorber that collects all text fragments (no filter).
@@ -67,6 +77,19 @@ public class TextFragmentAbsorber extends TextAbsorber {
     public TextFragmentAbsorber(String phrase, TextSearchOptions options) {
         this.searchPhrase = phrase;
         this.textSearchOptions = options;
+    }
+
+    /**
+     * Creates a TextFragmentAbsorber that collects all text fragments using the
+     * given edit options (e.g. {@link TextEditOptions.FontReplace#RemoveUnusedFonts}).
+     *
+     * @param editOptions the text edit options
+     */
+    public TextFragmentAbsorber(TextEditOptions editOptions) {
+        this.searchPhrase = null;
+        if (editOptions != null) {
+            this.textEditOptions = editOptions;
+        }
     }
 
     /**
@@ -115,10 +138,20 @@ public class TextFragmentAbsorber extends TextAbsorber {
             boolean isRegex = textSearchOptions != null && textSearchOptions.isRegularExpressionUsed();
             Rectangle areaFilter = textSearchOptions != null ? textSearchOptions.getRectangle() : null;
 
-            if (isRegex) {
-                searchRegex(allFragments, page, areaFilter);
-            } else {
-                searchExact(allFragments, page, areaFilter);
+            // PDFNEWNET_30639: on a /Rotate 90|270 page the glyph runs advance
+            // along the unrotated Y axis, so buildSpans' same-line heuristic
+            // (which keys off Y) would split one visual line into many and a
+            // multi-run phrase could never match. Tell buildSpans which axis
+            // is the reading direction for this page.
+            spanPageRotation = page.getRotate();
+            try {
+                if (isRegex) {
+                    searchRegex(allFragments, page, areaFilter);
+                } else {
+                    searchExact(allFragments, page, areaFilter);
+                }
+            } finally {
+                spanPageRotation = 0;
             }
 
             if (textSearchOptions != null && textSearchOptions.isSearchInAnnotations()) {
@@ -286,6 +319,43 @@ public class TextFragmentAbsorber extends TextAbsorber {
         this.textReplaceOptions = options;
     }
 
+    /**
+     * Returns the text edit options. Non-null by default.
+     *
+     * @return the edit options, never {@code null}
+     */
+    public TextEditOptions getTextEditOptions() {
+        if (textEditOptions == null) {
+            textEditOptions = new TextEditOptions();
+        }
+        return textEditOptions;
+    }
+
+    /**
+     * Sets the text edit options.
+     *
+     * @param options the edit options
+     */
+    public void setTextEditOptions(TextEditOptions options) {
+        this.textEditOptions = options;
+    }
+
+    /**
+     * Applies the given font to all collected text fragments in a single pass.
+     * <p>Equivalent to iterating {@link #getTextFragments()} and setting
+     * {@code fragment.getTextState().setFont(font)} on each, but performed as one
+     * "mass operation" — matching {@code Aspose.Pdf.TextFragmentAbsorber.ApplyForAllFragments}.</p>
+     *
+     * @param font the font to apply to every fragment
+     */
+    public void applyForAllFragments(Font font) {
+        for (TextFragment fragment : textFragments) {
+            if (fragment.getTextState() != null) {
+                fragment.getTextState().setFont(font);
+            }
+        }
+    }
+
     private void searchExact(List<TextFragment> fragments, Page page, Rectangle areaFilter) {
         StringBuilder fullText = new StringBuilder();
         List<FragmentSpan> spans = buildSpans(fragments, fullText);
@@ -297,6 +367,7 @@ public class TextFragmentAbsorber extends TextAbsorber {
             needle = needle.toLowerCase(Locale.ROOT);
         }
         int idx = 0;
+        int found = 0;
         while ((idx = haystack.indexOf(needle, idx)) >= 0) {
             TextFragment match = buildMatchFragment(searchPhrase, spans, idx, searchPhrase.length(), page);
             // Mirror searchRegex(): dedup equivalent matches. Without this, exact
@@ -304,9 +375,59 @@ public class TextFragmentAbsorber extends TextAbsorber {
             // (asymmetry — see Sprint 29 Bug #3).
             if (shouldIncludeMatch(match, page, areaFilter) && !containsEquivalentMatch(match)) {
                 textFragments.add(match);
+                found++;
             }
             idx += Math.max(1, needle.length());
         }
+
+        // RTL fallback (RTL2/RTL3_changeText): a multi-word RTL phrase is
+        // supplied in logical order, but the haystack lines carry the words
+        // in visual order (leftmost word first, each word already restored
+        // to logical char order by reverseRtlRuns in buildSpans). Reversing
+        // the token order of the needle maps logical → visual so the phrase
+        // can be located; matched fragments keep the caller's logical text.
+        if (found == 0) {
+            String visualNeedle = rtlVisualNeedle(needle);
+            if (visualNeedle != null) {
+                idx = 0;
+                while ((idx = haystack.indexOf(visualNeedle, idx)) >= 0) {
+                    TextFragment match = buildMatchFragment(searchPhrase, spans, idx,
+                            visualNeedle.length(), page);
+                    if (shouldIncludeMatch(match, page, areaFilter) && !containsEquivalentMatch(match)) {
+                        textFragments.add(match);
+                    }
+                    idx += Math.max(1, visualNeedle.length());
+                }
+            }
+        }
+    }
+
+    /**
+     * Maps a logical-order RTL phrase to the visual word order used by the
+     * search haystack: the space-separated tokens are emitted in reverse.
+     * Digit/Latin tokens (weak/LTR islands like {@code "777"}) keep their
+     * internal order — only their position in the line flips, matching the
+     * Unicode bidi display of an RTL paragraph.
+     *
+     * @return the visual-order needle, or {@code null} when the phrase has
+     *         no strong RTL character or reversing does not change it
+     */
+    private static String rtlVisualNeedle(String needle) {
+        boolean hasRtl = false;
+        for (int i = 0; i < needle.length() && !hasRtl; i++) {
+            hasRtl = TextAbsorber.isStrongRtl(needle.charAt(i));
+        }
+        if (!hasRtl || needle.indexOf(' ') < 0) {
+            return null;
+        }
+        String[] tokens = needle.split(" ", -1);
+        StringBuilder out = new StringBuilder(needle.length());
+        for (int i = tokens.length - 1; i >= 0; i--) {
+            out.append(tokens[i]);
+            if (i > 0) out.append(' ');
+        }
+        String visual = out.toString();
+        return visual.equals(needle) ? null : visual;
     }
 
     private void searchRegex(List<TextFragment> fragments, Page page, Rectangle areaFilter) {
@@ -560,14 +681,24 @@ public class TextFragmentAbsorber extends TextAbsorber {
 
     private List<FragmentSpan> buildSpans(List<TextFragment> fragments, StringBuilder out) {
         List<FragmentSpan> spans = new ArrayList<>(fragments.size());
+        // On a /Rotate 90|270 page the reading direction runs along the
+        // unrotated Y axis: fragments of one visual line share X and advance
+        // in Y (PDFNEWNET_30639). Swap the roles of the two coordinates so
+        // the same-line / gap heuristics keep working.
+        boolean rotated = spanPageRotation == 90 || spanPageRotation == 270;
         double lastY = Double.NaN;
         double lastEndX = Double.NaN;
         Rectangle lastRect = null;
         TextFragment lastFragment = null;
         for (TextFragment fragment : fragments) {
             Position pos = fragment.getPosition();
-            double y = pos != null ? pos.getYIndent() : Double.NaN;
-            double x = pos != null ? pos.getXIndent() : Double.NaN;
+            double rawY = pos != null ? pos.getYIndent() : Double.NaN;
+            double rawX = pos != null ? pos.getXIndent() : Double.NaN;
+            // "y" = line coordinate, "x" = advance coordinate. For /Rotate 90
+            // the advance grows with +Y, for /Rotate 270 with -Y (mirror so
+            // the "gap" comparison below stays monotonic).
+            double y = rotated ? rawX : rawY;
+            double x = !rotated ? rawX : (spanPageRotation == 90 ? rawY : -rawY);
             Rectangle rect = fragment.getRectangle();
             if (out.length() > 0 && !shouldKeepAdjacent(lastFragment, lastRect, fragment, rect)
                     && !Double.isNaN(y) && !Double.isNaN(lastY)) {
@@ -587,8 +718,12 @@ public class TextFragmentAbsorber extends TextAbsorber {
             // LTR-only text is returned unchanged.
             out.append(TextAbsorber.reverseRtlRuns(fragment.getText()));
             spans.add(new FragmentSpan(fragment, start, out.length()));
-            if (rect != null && rect.getURX() > rect.getLLX()) {
+            if (!rotated && rect != null && rect.getURX() > rect.getLLX()) {
                 lastEndX = rect.getURX();
+            } else if (rotated && rect != null && rect.getURY() > rect.getLLY()) {
+                // Advance axis is Y on a rotated page; mirror for /Rotate 270
+                // to match the mirrored advance coordinate above.
+                lastEndX = spanPageRotation == 90 ? rect.getURY() : -rect.getLLY();
             } else if (!Double.isNaN(x)) {
                 lastEndX = x + Math.max(1, fragment.getText().length()) * 5.0;
             } else {
@@ -741,11 +876,14 @@ public class TextFragmentAbsorber extends TextAbsorber {
         match.setSourceOperator(source.getSourceOperator());
         match.setLastSourceOperator(source.getLastSourceOperator());
         match.setSourceFontName(source.getSourceFontName());
+        match.setSourceFont(source.getSourceFont());
+        match.setSourceTfSize(source.getSourceTfSize());
         match.setSourceTextStart(source.getSourceTextStart() + offsetInSource);
         match.setSourceTextLength(len);
         match.setSourceOperators(source.getSourceOperators());
         match.setSourceContentStream(source.getSourceContentStream());
         match.setTextReplaceOptions(getTextReplaceOptions());
+        copyUnderlineLinkage(source, match);
         if (!match.getSegments().isEmpty()) {
             TextSegment seg = match.getSegments().get(0);
             int start = source.getSourceTextStart() + offsetInSource;
@@ -753,6 +891,27 @@ public class TextFragmentAbsorber extends TextAbsorber {
             seg.setEndCharIndex(start + Math.max(0, len) - 1);
         }
         return match;
+    }
+
+    /**
+     * Propagates source-underline operator linkage from an extracted source
+     * fragment to a match fragment so that turning the match's underline off
+     * removes the underline operators on save. For multi-span matches this is
+     * called for every participating source, so {@code match.getTextState()
+     * .setUnderline(false)} strips the underline drawn under <em>all</em> of
+     * them, not just the first segment (PDFNET_36417 / PDFNEWNET_39490).
+     */
+    private static void copyUnderlineLinkage(TextFragment source, TextFragment match) {
+        if (source == null || match == null) {
+            return;
+        }
+        List<List<Operator>> groups = source.getSourceUnderlineOpGroups();
+        if (groups == null) {
+            return;
+        }
+        for (List<Operator> group : groups) {
+            match.addSourceUnderline(group, source.getSourceUnderlineCollection());
+        }
     }
 
     private TextFragment buildMultiSpanMatch(String phrase, List<FragmentSpan> participatingSpans, int idx, int len, Page page) {
@@ -772,6 +931,7 @@ public class TextFragmentAbsorber extends TextAbsorber {
         match.setSourceOperator(firstSource.getSourceOperator());
         match.setLastSourceOperator(lastSource.getLastSourceOperator());
         match.setSourceFontName(firstSource.getSourceFontName());
+        match.setSourceTfSize(firstSource.getSourceTfSize());
         match.setSourceTextStart(firstSource.getSourceTextStart() + Math.max(0, idx - participatingSpans.get(0).start));
         match.setSourceTextLength(len);
         match.setSourceOperators(firstSource.getSourceOperators());
@@ -799,6 +959,7 @@ public class TextFragmentAbsorber extends TextAbsorber {
             segment.setStartCharIndex(source.getSourceTextStart() + localStart);
             segment.setEndCharIndex(source.getSourceTextStart() + localStart + take - 1);
             match.addSegment(segment);
+            copyUnderlineLinkage(source, match);
 
             if (firstPosition == null) {
                 firstPosition = segmentPosition;
@@ -848,6 +1009,22 @@ public class TextFragmentAbsorber extends TextAbsorber {
         }
         if (offsetInSource + len > sourceText.length()) {
             len = sourceText.length() - offsetInSource;
+        }
+        // Prefer exact per-character X boundaries captured by the extractor.
+        // These preserve true horizontal advance (per-space word spacing Tw,
+        // char spacing Tc) which proportional re-measurement below cannot
+        // reconstruct from the merged fragment text — e.g. a wide tabular gap
+        // encoded as a single Tw-stretched space (PDFNET_59697).
+        double[] charX = source.getCharXPositions();
+        if (charX != null && charX.length == sourceText.length() + 1
+                && offsetInSource + len <= sourceText.length()
+                && !(sourceRect.getHeight() > sourceRect.getWidth() * 3.0)) {
+            double sx = charX[offsetInSource];
+            double ex = charX[offsetInSource + len];
+            if (ex < sx) {
+                double t = sx; sx = ex; ex = t;
+            }
+            return new Rectangle(sx, sourceRect.getLLY(), ex, sourceRect.getURY());
         }
         if (sourceRect.getHeight() > sourceRect.getWidth() * 3.0) {
             double totalHeight = sourceRect.getHeight();

@@ -425,13 +425,19 @@ public final class PDFParser implements Closeable {
     /**
      * Returns all known object keys from the cross-reference table.
      *
-     * @return the set of all object keys
+     * <p>Returns a SNAPSHOT: {@link #getObject} may add recovered entries to
+     * the table mid-iteration (missing-object scan), so handing out the live
+     * key set makes every {@code for (key : getAllObjectKeys()) getObject(key)}
+     * loop throw {@link java.util.ConcurrentModificationException} on damaged
+     * files.</p>
+     *
+     * @return the set of all object keys known at the time of the call
      */
     public Set<PdfObjectKey> getAllObjectKeys() {
         if (xrefEntries == null) {
             return java.util.Collections.emptySet();
         }
-        return xrefEntries.keySet();
+        return new java.util.LinkedHashSet<>(xrefEntries.keySet());
     }
 
     /**
@@ -606,7 +612,17 @@ public final class PDFParser implements Closeable {
                     PDFLexer.Token rToken = lexer.peekToken();
                     if (rToken.getType() == PDFLexer.TokenType.KEYWORD && "R".equals(rToken.getValue())) {
                         lexer.nextToken(); // consume 'R'
-                        PdfObjectKey refKey = new PdfObjectKey((int) intVal, Integer.parseInt(genToken.getValue()));
+                        int genVal = Integer.parseInt(genToken.getValue());
+                        if (intVal < 0 || genVal < 0) {
+                            // Malformed reference like "-1 0 R". A strict reader
+                            // aborts; lenient readers treat it as a reference to
+                            // nothing (§7.3.10 — an undefined object is null).
+                            LOGGER.log(Level.WARNING,
+                                    "Malformed indirect reference {0} {1} R; recovering as null",
+                                    new Object[]{intVal, genVal});
+                            return PdfNull.INSTANCE;
+                        }
+                        PdfObjectKey refKey = new PdfObjectKey((int) intVal, genVal);
                         PdfObjectReference ref = new PdfObjectReference(refKey);
                         ref.setResolver(key -> {
                             try {
@@ -761,17 +777,29 @@ public final class PDFParser implements Closeable {
         loadingInProgress.add(key);
         try {
             long offset = entry.getByteOffset();
-            if (!trySeekToObj(key, offset)) {
-                // Xref offset is wrong — try scanning for the object header.
-                // FINE, not WARNING: graceful recovery from a malformed xref is
-                // expected for many real-world PDFs and was ~70% of test log noise
-                // (Sprint 24 Part B).
-                LOGGER.log(Level.WARNING, "Bad xref offset {0} for object {1}, scanning for actual position",
-                        new Object[]{entry.getByteOffset(), key});
-                long scannedOffset = scanForObject(key, offset);
-                if (scannedOffset < 0 || !trySeekToObj(key, scannedOffset)) {
-                    throw new IOException("Cannot find object " + key + " at xref offset "
-                            + entry.getByteOffset() + " or by scanning");
+            // Concatenated-revision files: the xref table was found a fixed
+            // delta after where startxref claimed, so its entry offsets are
+            // segment-relative. The delta must be tried FIRST: a raw offset can
+            // accidentally hit the same object header in the OLDEST segment
+            // (all revisions share a common layout prefix), silently resolving
+            // to a stale revision (PDFNET_51575: 4 pages instead of 13).
+            long adjustment = xrefParser.getEntryOffsetAdjustment();
+            if (adjustment != 0 && trySeekToObj(key, offset + adjustment)) {
+                LOGGER.log(Level.FINE, "Recovered object {0} at segment-adjusted offset {1}",
+                        new Object[]{key, offset + adjustment});
+            } else if (!trySeekToObj(key, offset)) {
+                {
+                    // Xref offset is wrong — try scanning for the object header.
+                    // FINE, not WARNING: graceful recovery from a malformed xref is
+                    // expected for many real-world PDFs and was ~70% of test log noise
+                    // (Sprint 24 Part B).
+                    LOGGER.log(Level.WARNING, "Bad xref offset {0} for object {1}, scanning for actual position",
+                            new Object[]{entry.getByteOffset(), key});
+                    long scannedOffset = scanForObject(key, offset);
+                    if (scannedOffset < 0 || !trySeekToObj(key, scannedOffset)) {
+                        throw new IOException("Cannot find object " + key + " at xref offset "
+                                + entry.getByteOffset() + " or by scanning");
+                    }
                 }
             }
 
@@ -902,8 +930,15 @@ public final class PDFParser implements Closeable {
     private PdfBase loadCompressedObject(PdfObjectKey key, XRefEntry entry) throws IOException {
         loadingInProgress.add(key);
         try {
-            // Load the object stream
-            PdfBase streamObj = getObject(new PdfObjectKey(entry.getObjectStreamNumber(), 0));
+            // Load the object stream. A corrupt xref can carry a garbage
+            // (negative) container number — surface it as IOException so the
+            // lenient load paths degrade to null instead of a runtime crash.
+            int objStmNum = entry.getObjectStreamNumber();
+            if (objStmNum < 0) {
+                throw new IOException("Corrupt xref: negative object stream number "
+                        + objStmNum + " for " + key);
+            }
+            PdfBase streamObj = getObject(new PdfObjectKey(objStmNum, 0));
             if (!(streamObj instanceof PdfStream)) {
                 throw new IOException("Object stream " + entry.getObjectStreamNumber() + " is not a stream");
             }
@@ -1189,11 +1224,24 @@ public final class PDFParser implements Closeable {
 
         byte[] rawData = reader.readFully(length);
 
-        // Skip to "endstream"
-        lexer.skipWhitespaceAndComments();
-        PDFLexer.Token endstream = lexer.nextToken();
-        boolean atEndstream = endstream.getType() == PDFLexer.TokenType.KEYWORD
-                && "endstream".equals(endstream.getValue());
+        // Skip to "endstream". A short /Length can leave the lexer on bytes
+        // that are not a valid token at all — e.g. the lone '>' EOD of an
+        // ASCIIHexDecode stream (PDFNET_39220: /Length 3306 vs 3309 actual)
+        // makes nextToken() throw "expected '>>'". That mismatch is exactly
+        // the case the recovery below handles, so treat a lex failure as
+        // "not at endstream" instead of failing the whole object.
+        boolean atEndstream;
+        try {
+            lexer.skipWhitespaceAndComments();
+            PDFLexer.Token endstream = lexer.nextToken();
+            atEndstream = endstream.getType() == PDFLexer.TokenType.KEYWORD
+                    && "endstream".equals(endstream.getValue());
+        } catch (IOException lexFailure) {
+            LOGGER.log(Level.FINE, "Token after stream data is unreadable ({0}); "
+                    + "falling back to endstream scan", lexFailure.getMessage());
+            lexer.clearPeek();
+            atEndstream = false;
+        }
         if (!atEndstream) {
             // The declared /Length disagrees with the stream's actual extent: the
             // bytes just read either overshot 'endstream' (capturing trailing junk

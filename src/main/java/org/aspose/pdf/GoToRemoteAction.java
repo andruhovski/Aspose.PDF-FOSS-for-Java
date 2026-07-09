@@ -8,7 +8,6 @@ import org.aspose.pdf.engine.pdfobjects.PdfInteger;
 import org.aspose.pdf.engine.pdfobjects.PdfName;
 import org.aspose.pdf.engine.pdfobjects.PdfString;
 
-import java.nio.charset.StandardCharsets;
 
 /**
  * Go-To Remote action — navigate to a destination in another PDF (ISO 32000-1:2008, §12.6.4.3).
@@ -34,7 +33,7 @@ public class GoToRemoteAction extends PdfAction {
         this.actionDict = new PdfDictionary();
         actionDict.set(PdfName.of("S"), PdfName.of("GoToR"));
         // File spec as a simple string
-        actionDict.set(PdfName.of("F"), new PdfString(file.getBytes(StandardCharsets.UTF_8)));
+        actionDict.set(PdfName.of("F"), new PdfString(file));
         // Destination: [pageIndex /Fit] — pageNumber is 1-based, PDF array is 0-based
         PdfArray dest = new PdfArray();
         dest.add(PdfInteger.valueOf(pageNumber - 1));
@@ -51,7 +50,7 @@ public class GoToRemoteAction extends PdfAction {
     public GoToRemoteAction(String file, ExplicitDestination destination) {
         this.actionDict = new PdfDictionary();
         actionDict.set(PdfName.of("S"), PdfName.of("GoToR"));
-        actionDict.set(PdfName.of("F"), new PdfString(file.getBytes(StandardCharsets.UTF_8)));
+        actionDict.set(PdfName.of("F"), new PdfString(file));
         if (destination != null) {
             actionDict.set(PdfName.of("D"), destination.toPdfArray());
         }
@@ -80,7 +79,7 @@ public class GoToRemoteAction extends PdfAction {
      * @param file the file path
      */
     public void setFile(String file) {
-        actionDict.set(PdfName.of("F"), new PdfString(file.getBytes(StandardCharsets.UTF_8)));
+        actionDict.set(PdfName.of("F"), new PdfString(file));
     }
 
     /**

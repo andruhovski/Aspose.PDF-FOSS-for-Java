@@ -265,4 +265,59 @@ public class PageCollectionMutationTest {
         dict.set(PdfName.MEDIABOX, new Rectangle(0, 0, 612, 792).toPdfArray());
         return dict;
     }
+
+    /**
+     * Regression: some malformed PDFs point the catalog's {@code /Pages} at a
+     * leaf page instead of the page-tree root (the leaf's {@code /Parent} is the
+     * real {@code /Type /Pages} node). Reading works, but {@code add()} used to
+     * mutate the leaf and the new page was silently lost on save/reopen. The
+     * document must normalize to the true root so an added page survives.
+     * Corpus repro: 33579-2.pdf.
+     */
+    @Test
+    public void catalogPagesPointingAtLeafStillPersistsAddedPage() throws java.io.IOException {
+        // Catalog /Pages -> obj 9 (a /Type /Page LEAF) whose /Parent is obj 35,
+        // the real /Type /Pages root (Kids=[9], Count 1).
+        java.io.ByteArrayOutputStream body = new java.io.ByteArrayOutputStream();
+        java.util.Map<Integer, Integer> offsets = new java.util.LinkedHashMap<>();
+        writeAscii(body, "%PDF-1.4\n");
+        offsets.put(1, body.size());
+        writeAscii(body, "1 0 obj\n<< /Type /Catalog /Pages 9 0 R >>\nendobj\n");
+        offsets.put(9, body.size());
+        writeAscii(body, "9 0 obj\n<< /Type /Page /Parent 35 0 R /MediaBox [0 0 612 792] >>\nendobj\n");
+        offsets.put(35, body.size());
+        writeAscii(body, "35 0 obj\n<< /Type /Pages /Kids [9 0 R] /Count 1 >>\nendobj\n");
+        int xrefOff = body.size();
+        StringBuilder xref = new StringBuilder("xref\n0 1\n0000000000 65535 f \n");
+        for (java.util.Map.Entry<Integer, Integer> e : offsets.entrySet()) {
+            xref.append(e.getKey()).append(" 1\n")
+                .append(String.format("%010d 00000 n \n", e.getValue()));
+        }
+        xref.append("trailer\n<< /Size 36 /Root 1 0 R >>\nstartxref\n")
+            .append(xrefOff).append("\n%%EOF\n");
+        writeAscii(body, xref.toString());
+
+        java.nio.file.Path src = java.nio.file.Files.createTempFile("leaf-root-", ".pdf");
+        java.nio.file.Path out = java.nio.file.Files.createTempFile("leaf-root-out-", ".pdf");
+        try {
+            java.nio.file.Files.write(src, body.toByteArray());
+            try (org.aspose.pdf.Document d = new org.aspose.pdf.Document(src.toString())) {
+                assertEquals(1, d.getPages().getCount(), "leaf-rooted document should read as 1 page");
+                d.getPages().add();
+                d.save(out.toString());
+            }
+            try (org.aspose.pdf.Document reopened = new org.aspose.pdf.Document(out.toString())) {
+                assertEquals(2, reopened.getPages().getCount(),
+                        "page added to a leaf-rooted document must survive save/reopen");
+            }
+        } finally {
+            java.nio.file.Files.deleteIfExists(src);
+            java.nio.file.Files.deleteIfExists(out);
+        }
+    }
+
+    private static void writeAscii(java.io.ByteArrayOutputStream out, String s) {
+        byte[] b = s.getBytes(java.nio.charset.StandardCharsets.US_ASCII);
+        out.write(b, 0, b.length);
+    }
 }

@@ -156,6 +156,20 @@ Field extends WidgetAnnotation implements Iterable<Field> {
     }
 
     /**
+     * Sets the alternate (tooltip) name (/TU entry) — the human-readable label a
+     * viewer shows for the field. {@code null} removes it.
+     *
+     * @param alternateName the tooltip text, or {@code null} to clear
+     */
+    public void setAlternateName(String alternateName) {
+        if (alternateName == null) {
+            dict.set("TU", null);
+        } else {
+            dict.set("TU", new PdfString(alternateName));
+        }
+    }
+
+    /**
      * Returns the field value (/V entry) as a string.
      * <p>
      * If /V is a {@link PdfString}, its string value is returned.
@@ -281,6 +295,19 @@ Field extends WidgetAnnotation implements Iterable<Field> {
     }
 
     /**
+     * Sets the field's text-alignment quadding ({@code /Q}, ISO 32000-1 §12.7.3.1): 0 = left-justified,
+     * 1 = centred, 2 = right-justified. Controls where the generated value appearance places the text
+     * within the widget box (e.g. a right-aligned numeric/currency column).
+     *
+     * @param quadding 0 (left), 1 (centre) or 2 (right); other values are ignored
+     */
+    public void setQuadding(int quadding) {
+        if (quadding >= 0 && quadding <= 2) {
+            dict.set(PdfName.of("Q"), PdfInteger.valueOf(quadding));
+        }
+    }
+
+    /**
      * Returns the appearance characteristics helper backed by the /MK dictionary.
      *
      * @return the appearance characteristics wrapper
@@ -330,6 +357,15 @@ Field extends WidgetAnnotation implements Iterable<Field> {
         String ft = null;
         if (ftObj instanceof PdfName) ft = ((PdfName) ftObj).getName();
         if (ft == null) ft = dict.getNameAsString("FT");
+        // A terminal field may carry its /FT on its merged widget kids rather than
+        // on the field dictionary itself (non-standard but valid — e.g. a radio
+        // group whose /FT /Btn lives on each kid widget, corpus 31735).
+        if (ft == null) {
+            for (PdfDictionary kid : kidWidgetDicts(dict)) {
+                String kft = kid.getNameAsString("FT");
+                if (kft != null) { ft = kft; break; }
+            }
+        }
         if (ft == null) ft = "";
 
         switch (ft) {
@@ -350,7 +386,7 @@ Field extends WidgetAnnotation implements Iterable<Field> {
      * Creates the appropriate button field subclass based on /Ff flags.
      */
     private static Field createButtonField(PdfDictionary dict, Page page, String fullName) {
-        int ff = dict.getInt("Ff", 0);
+        int ff = effectiveFieldFlags(dict);
         if ((ff & (1 << 16)) != 0) return new ButtonField(dict, page, fullName);
         if ((ff & (1 << 15)) != 0) return new RadioButtonField(dict, page, fullName);
         return new CheckboxField(dict, page, fullName);
@@ -360,9 +396,50 @@ Field extends WidgetAnnotation implements Iterable<Field> {
      * Creates the appropriate choice field subclass based on /Ff flags.
      */
     private static Field createChoiceField(PdfDictionary dict, Page page, String fullName) {
-        int ff = dict.getInt("Ff", 0);
+        int ff = effectiveFieldFlags(dict);
         if ((ff & (1 << 17)) != 0) return new ComboBoxField(dict, page, fullName);
         return new ListBoxField(dict, page, fullName);
+    }
+
+    /**
+     * Returns the field flags (/Ff), falling back to a kid widget's /Ff when the
+     * field dictionary itself has none — some files (e.g. corpus 31735) keep the
+     * radio/pushbutton flags on the merged widget kids instead of the parent field.
+     */
+    private static int effectiveFieldFlags(PdfDictionary dict) {
+        int ff = dict.getInt("Ff", 0);
+        if (ff != 0) return ff;
+        for (PdfDictionary kid : kidWidgetDicts(dict)) {
+            int kff = kid.getInt("Ff", 0);
+            if (kff != 0) return kff;
+        }
+        return 0;
+    }
+
+    /**
+     * Resolves the field's /Kids array to the list of kid (widget) dictionaries.
+     * Used to recover /FT and /Ff that some files place on the widget kids rather
+     * than on the field dictionary. Returns an empty list when there are no kids.
+     */
+    private static List<PdfDictionary> kidWidgetDicts(PdfDictionary dict) {
+        List<PdfDictionary> out = new ArrayList<>();
+        PdfBase kids = dict.get("Kids");
+        if (kids instanceof PdfObjectReference) {
+            try { kids = ((PdfObjectReference) kids).dereference(); }
+            catch (Exception e) { return out; }
+        }
+        if (kids instanceof PdfArray) {
+            PdfArray arr = (PdfArray) kids;
+            for (int i = 0; i < arr.size(); i++) {
+                PdfBase kid = arr.get(i);
+                if (kid instanceof PdfObjectReference) {
+                    try { kid = ((PdfObjectReference) kid).dereference(); }
+                    catch (Exception e) { continue; }
+                }
+                if (kid instanceof PdfDictionary) out.add((PdfDictionary) kid);
+            }
+        }
+        return out;
     }
 
     /**

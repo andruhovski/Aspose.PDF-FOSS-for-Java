@@ -84,16 +84,21 @@ public class FontUtilities {
     }
 
     /**
-     * Marks all fonts in the document for subsetting on save.
-     * <p>
-     * This is a hint to the PDF writer that fonts should be subsetted
-     * (only include glyphs actually used in the document) to reduce file size.
-     * Currently a no-op placeholder for API compatibility.
-     * </p>
+     * Subsets the document's embedded fonts in place: strips glyph outlines
+     * that no content stream uses from the embedded TrueType programs
+     * (Identity-encoded CID fonts; see the resource optimizer for the safe
+     * shapes handled). The change takes effect on the next save.
      */
     public void subsetFonts() {
-        // Mark fonts for subsetting — this is a flag for the writer
-        LOG.fine("Font subsetting requested");
+        if (document.getParser() == null) {
+            LOG.fine("subsetFonts: new document — fonts are embedded per use already");
+            return;
+        }
+        org.aspose.pdf.optimization.OptimizationOptions options =
+                new org.aspose.pdf.optimization.OptimizationOptions();
+        options.setSubsetFonts(true);
+        org.aspose.pdf.engine.optimization.ResourceOptimizer.optimize(
+                document.getParser(), options);
     }
 
     /**

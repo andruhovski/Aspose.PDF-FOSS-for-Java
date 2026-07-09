@@ -304,7 +304,7 @@ public class TextAbsorber {
      * {@link #reverseRtlRuns(String)} to identify runs that must be flipped
      * from PDF visual order back to logical order.
      */
-    private static boolean isStrongRtl(char c) {
+    static boolean isStrongRtl(char c) {
         return (c >= 0x0590 && c <= 0x05FF)   // Hebrew
             || (c >= 0x0600 && c <= 0x06FF)   // Arabic
             || (c >= 0x0700 && c <= 0x074F)   // Syriac

@@ -11,6 +11,9 @@ import org.aspose.pdf.engine.pdfa.PdfAValidationResult;
 import org.aspose.pdf.engine.parser.PDFParser;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -33,6 +36,15 @@ public final class FontRules implements PdfARule {
 
     /** Pattern to detect subset font names: 6 uppercase letters followed by '+'. */
     private static final Pattern SUBSET_PREFIX = Pattern.compile("^[A-Z]{6}\\+.+");
+
+    /**
+     * Hard cap on Form XObject nesting depth while scanning resources.
+     * A malformed PDF whose Form XObjects reference one another's /Resources
+     * (directly or transitively) would otherwise recurse without bound and
+     * blow the stack (PDFNET-55144). The identity guard below handles true
+     * cycles; this is a belt-and-suspenders limit for pathological chains.
+     */
+    private static final int MAX_RESOURCE_DEPTH = 64;
 
     /**
      * Creates a new font rules checker.
@@ -89,6 +101,19 @@ public final class FontRules implements PdfARule {
      */
     private void checkFonts(PdfDictionary resources, String pagePath,
                              PdfFormat format, PdfAValidationResult result) {
+        // Identity-based set guards against resource cycles (a Form XObject whose
+        // /Resources reaches back to an ancestor would recurse forever otherwise).
+        checkFonts(resources, pagePath, format, result,
+                Collections.newSetFromMap(new IdentityHashMap<>()), 0);
+    }
+
+    private void checkFonts(PdfDictionary resources, String pagePath,
+                             PdfFormat format, PdfAValidationResult result,
+                             Set<PdfDictionary> visited, int depth) {
+        if (depth > MAX_RESOURCE_DEPTH || !visited.add(resources)) {
+            LOG.log(Level.FINE, "Skipping cyclic/over-deep resources at {0}", pagePath);
+            return;
+        }
         PdfDictionary fonts = resolveDict(resources.get("Font"));
         if (fonts != null) {
             for (PdfName key : fonts.keySet()) {
@@ -114,7 +139,7 @@ public final class FontRules implements PdfARule {
                     PdfDictionary xobjResources = resolveDict(xobj.get("Resources"));
                     if (xobjResources != null) {
                         String xobjPath = pagePath + "/Resources/XObject/" + key.getName();
-                        checkFonts(xobjResources, xobjPath, format, result);
+                        checkFonts(xobjResources, xobjPath, format, result, visited, depth + 1);
                     }
                 }
             }

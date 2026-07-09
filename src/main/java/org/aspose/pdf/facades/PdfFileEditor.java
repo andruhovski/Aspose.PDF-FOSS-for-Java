@@ -48,6 +48,7 @@ public class PdfFileEditor {
     private Document document;
     private Exception lastException;
     private boolean useDiskBuffer;
+    private boolean optimizeSize;
     /**
      * Default {@code true} — historical OpenPDF behaviour was to always merge
      * outlines on concatenate (BUG-049), and several already-passing tests
@@ -198,12 +199,38 @@ public class PdfFileEditor {
 
     private void saveFacade(Document doc, String outputFile) throws IOException {
         doc.requestFullRewrite();
+        if (optimizeSize) {
+            doc.setOptimizeSize(true);
+        }
         doc.save(outputFile);
     }
 
     private void saveFacade(Document doc, OutputStream outputStream) throws IOException {
         doc.requestFullRewrite();
+        if (optimizeSize) {
+            doc.setOptimizeSize(true);
+        }
         doc.save(outputStream);
+    }
+
+    /**
+     * Returns whether facade save operations request a compact, size-optimised
+     * rewrite. API-compatible with Aspose's {@code PdfFileEditor.OptimizeSize}.
+     *
+     * @return {@code true} if compact-size saving is enabled
+     */
+    public boolean isOptimizeSize() {
+        return optimizeSize;
+    }
+
+    /**
+     * Sets whether facade save operations (concatenate, extract, ...) request a
+     * compact, size-optimised rewrite of the output document.
+     *
+     * @param optimizeSize {@code true} to enable compact-size saving
+     */
+    public void setOptimizeSize(boolean optimizeSize) {
+        this.optimizeSize = optimizeSize;
     }
 
     /**

@@ -453,6 +453,42 @@ public class LinearizationTest {
     }
 
     /**
+     * Re-linearizing an already-linearized document must not accumulate a second
+     * {@code /Linearized} dictionary. The writer emits a fresh one as the first
+     * object; the stale one carried over from the source is dropped by
+     * {@link PageObjectCollector}. The result must remain a valid, linearized,
+     * same-page-count document. Mirrors the corpus repro (29360-1.pdf).
+     */
+    @Test
+    public void reLinearizingKeepsExactlyOneLinearizationDict() throws IOException {
+        File src = createMinimalPDFFile("relin-src.pdf");
+
+        File lin1 = tempDir.resolve("relin-1.pdf").toFile();
+        try (Document d = new Document(src.getAbsolutePath())) {
+            d.save(lin1.getAbsolutePath(), new PdfSaveOptions().setLinearize(true));
+        }
+        // Reopen the (now already-linearized) output and linearize it AGAIN.
+        File lin2 = tempDir.resolve("relin-2.pdf").toFile();
+        try (Document d = new Document(lin1.getAbsolutePath())) {
+            d.save(lin2.getAbsolutePath(), new PdfSaveOptions().setLinearize(true));
+        }
+
+        byte[] bytes = java.nio.file.Files.readAllBytes(lin2.toPath());
+        String text = new String(bytes, StandardCharsets.ISO_8859_1);
+        int dicts = 0;
+        for (int i = text.indexOf("/Linearized"); i >= 0; i = text.indexOf("/Linearized", i + 1)) {
+            dicts++;
+        }
+        assertEquals(1, dicts,
+                "re-linearized file must carry exactly one /Linearized dictionary, found " + dicts);
+
+        try (Document d = new Document(lin2.getAbsolutePath())) {
+            assertEquals(1, d.getPages().getCount(), "page count must survive re-linearization");
+            assertTrue(d.isLinearized(), "re-linearized document must be detected as linearized");
+        }
+    }
+
+    /**
      * Creates a test LinearizationPlan for hint table tests.
      */
     private LinearizationPlan createTestPlan(int numPages) {

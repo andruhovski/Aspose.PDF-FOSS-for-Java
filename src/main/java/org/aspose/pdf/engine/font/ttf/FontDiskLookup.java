@@ -97,6 +97,207 @@ public final class FontDiskLookup {
         return null;
     }
 
+    /**
+     * Resolves a font by {@code family} + style, searching {@code extraDirs} first (e.g. a
+     * {@code -Dxfa.fontDir} override) then the OS font roots. Tries style-aware filename variants
+     * ({@code arial}+bold → {@code arialbd}, {@code …i}, {@code …bi}, plus {@code -Bold}/{@code -Italic}
+     * forms) and falls back to the regular face. Returns standalone TTF bytes (TTC first face
+     * unpacked) or {@code null}; never throws (a missing dir / unreadable / malformed file is skipped).
+     *
+     * @param family    the requested family, e.g. {@code "Arial"} (style words may be present)
+     * @param bold      bold requested
+     * @param italic    italic requested
+     * @param extraDirs directories to search before the OS roots ({@code null}/empty = OS roots only)
+     * @return TTF bytes or {@code null}
+     */
+    public static byte[] loadStyled(String family, boolean bold, boolean italic, String[] extraDirs) {
+        if (family == null || family.isEmpty()) {
+            return null;
+        }
+        java.util.List<String> dirs = new java.util.ArrayList<>();
+        if (extraDirs != null) {
+            for (String d : extraDirs) {
+                if (d != null && !d.isEmpty()) {
+                    dirs.add(d);
+                }
+            }
+        }
+        java.util.Collections.addAll(dirs, osFontDirs());
+        String[] basenames = styledBasenames(family, bold, italic);
+        for (String dir : dirs) {
+            Path dp = Paths.get(dir);
+            if (!Files.isDirectory(dp)) {
+                continue;
+            }
+            for (String base : basenames) {
+                for (String ext : new String[]{".ttf", ".otf", ".ttc"}) {
+                    Path p = dp.resolve(base + ext);
+                    if (!Files.isRegularFile(p)) {
+                        continue;
+                    }
+                    byte[] bytes = readAll(p);
+                    if (bytes == null) {
+                        continue;
+                    }
+                    byte[] ttf = ext.equals(".ttc") ? extractFirstFaceFromTTC(bytes) : bytes;
+                    if (ttf != null) {
+                        LOG.fine("Resolved font " + family + (bold ? " bold" : "") + (italic ? " italic" : "")
+                                + " → " + p);
+                        return ttf;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Last-resort lookup of a guaranteed Unicode-capable system font when the requested family
+     * cannot be resolved. Picks a real OS font that covers Latin Extended-A/B (Czech, Polish,
+     * Turkish, …) so non-WinAnsi text is never lost to a {@code '?'} substitution: a sans, serif or
+     * monospace face on Windows (Arial/Times New Roman/Courier New), Linux (DejaVu/Liberation) or
+     * macOS, matched to the requested category and style. Searches {@code extraDirs} then the OS
+     * roots, recursively (depth-limited) so the nested Linux font tree is covered. Returns standalone
+     * TTF bytes (TTC first face unpacked) or {@code null} if none of the well-known faces exist.
+     *
+     * @param serif     prefer a serif face (the requested family mapped to Times/serif)
+     * @param mono      prefer a monospace face (mapped to Courier/mono); takes precedence over serif
+     * @param bold      bold requested
+     * @param italic    italic requested
+     * @param extraDirs directories to search before the OS roots ({@code null}/empty = OS roots only)
+     * @return TTF bytes or {@code null}
+     */
+    public static byte[] loadFallback(boolean serif, boolean mono, boolean bold, boolean italic,
+                                      String[] extraDirs) {
+        java.util.LinkedHashSet<String> bases = new java.util.LinkedHashSet<>(
+                java.util.Arrays.asList(fallbackBasenames(serif, mono, bold, italic)));
+        java.util.List<String> dirs = new java.util.ArrayList<>();
+        if (extraDirs != null) {
+            for (String d : extraDirs) {
+                if (d != null && !d.isEmpty()) {
+                    dirs.add(d);
+                }
+            }
+        }
+        java.util.Collections.addAll(dirs, osFontDirs());
+        for (String dir : dirs) {
+            byte[] ttf = searchRecursive(Paths.get(dir), bases, 0);
+            if (ttf != null) {
+                LOG.fine("Resolved fallback Unicode font → basenames " + bases + " in " + dir);
+                return ttf;
+            }
+        }
+        return null;
+    }
+
+    /** Candidate basenames for the fallback face, most-specific (styled, Windows-first) first. */
+    private static String[] fallbackBasenames(boolean serif, boolean mono, boolean bold, boolean italic) {
+        String winShort;   // Windows short basename stem (arial/times/cour)
+        String dejavu;     // Linux DejaVu stem
+        String liberation; // Linux Liberation stem
+        if (mono) {
+            winShort = "cour";
+            dejavu = "DejaVuSansMono";
+            liberation = "LiberationMono";
+        } else if (serif) {
+            winShort = "times";
+            dejavu = "DejaVuSerif";
+            liberation = "LiberationSerif";
+        } else {
+            winShort = "arial";
+            dejavu = "DejaVuSans";
+            liberation = "LiberationSans";
+        }
+        String winSuffix = (bold && italic) ? "bi" : bold ? "bd" : italic ? "i" : "";
+        // DejaVu sans/mono use "Oblique"; DejaVu serif uses "Italic".
+        String dvObl = serif ? "Italic" : "Oblique";
+        String dvSuffix = (bold && italic) ? "-Bold" + dvObl : bold ? "-Bold" : italic ? "-" + dvObl : "";
+        String libSuffix = (bold && italic) ? "-BoldItalic" : bold ? "-Bold" : italic ? "-Italic" : "-Regular";
+        java.util.LinkedHashSet<String> out = new java.util.LinkedHashSet<>();
+        out.add(winShort + winSuffix);          // styled Windows face
+        out.add(dejavu + dvSuffix);
+        out.add(liberation + libSuffix);
+        // regular faces as the final fallback so a styled request still embeds *a* covering face
+        out.add(winShort);
+        out.add(dejavu);
+        out.add(liberation + "-Regular");
+        return out.toArray(new String[0]);
+    }
+
+    /** Depth-limited recursive search for {@code <base>.{ttf,otf,ttc}} under {@code dir}. */
+    private static byte[] searchRecursive(Path dir, java.util.Set<String> bases, int depth) {
+        if (depth > 4 || !Files.isDirectory(dir)) {
+            return null;
+        }
+        try (java.util.stream.Stream<Path> list = Files.list(dir)) {
+            java.util.List<Path> entries = list.collect(java.util.stream.Collectors.toList());
+            // files first (cheaper, and the common Windows flat case hits immediately)
+            for (Path p : entries) {
+                if (!Files.isRegularFile(p)) {
+                    continue;
+                }
+                String name = p.getFileName().toString();
+                int dot = name.lastIndexOf('.');
+                if (dot < 0) {
+                    continue;
+                }
+                String stem = name.substring(0, dot);
+                String ext = name.substring(dot).toLowerCase(Locale.ROOT);
+                if (!ext.equals(".ttf") && !ext.equals(".otf") && !ext.equals(".ttc")) {
+                    continue;
+                }
+                if (!bases.contains(stem)) {
+                    continue;
+                }
+                byte[] bytes = readAll(p);
+                if (bytes == null) {
+                    continue;
+                }
+                byte[] ttf = ext.equals(".ttc") ? extractFirstFaceFromTTC(bytes) : bytes;
+                if (ttf != null) {
+                    return ttf;
+                }
+            }
+            for (Path p : entries) {
+                if (Files.isDirectory(p)) {
+                    byte[] ttf = searchRecursive(p, bases, depth + 1);
+                    if (ttf != null) {
+                        return ttf;
+                    }
+                }
+            }
+        } catch (IOException | RuntimeException e) {
+            LOG.fine("Fallback font search skipped " + dir + ": " + e.getMessage());
+        }
+        return null;
+    }
+
+    /** Style-aware filename candidates for {@code family}: most-specific (styled) first, regular last. */
+    private static String[] styledBasenames(String family, boolean bold, boolean italic) {
+        String compact = family.toLowerCase(Locale.ROOT).replace(" ", "").replace("-", "");
+        java.util.LinkedHashSet<String> out = new java.util.LinkedHashSet<>();
+        String[] styleSuffixes;
+        if (bold && italic) {
+            styleSuffixes = new String[]{"bi", "bd_italic", "z", "bolditalic", "-bolditalic", "boldoblique", "-boldoblique"};
+        } else if (bold) {
+            styleSuffixes = new String[]{"bd", "b", "bold", "-bold"};
+        } else if (italic) {
+            styleSuffixes = new String[]{"i", "it", "italic", "-italic", "oblique", "-oblique"};
+        } else {
+            styleSuffixes = new String[]{"", "-regular", "regular"};
+        }
+        for (String s : styleSuffixes) {
+            out.add(compact + s);
+        }
+        // also the "<Family> <Style>" compact form (e.g. "arialbold") and the well-known shortcuts
+        for (String b : candidateBasenames(family)) {
+            out.add(b);
+        }
+        // last resort: the regular face by plain name (so a styled request still embeds *a* face)
+        out.add(compact);
+        return out.toArray(new String[0]);
+    }
+
     /** OS-specific font search roots, ordered most-likely first. */
     private static String[] osFontDirs() {
         String os = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);

@@ -513,8 +513,11 @@ public class PdfFileSignature implements AutoCloseable {
                 signature.setLocation(location);
             }
 
-            // Generate a unique field name
-            String fieldName = "Signature_" + System.currentTimeMillis();
+            // Generate a field name matching Aspose's convention: "Signature1",
+            // "Signature2", … — the first free "Signature<N>" not already used by
+            // an existing field. Callers such as the PDFNET-43762 regression verify
+            // by the literal name "Signature1".
+            String fieldName = nextSignatureFieldName();
 
             // Create the signature field widget (name, rect, page) — PdfSigner
             // will find this field by name and attach the /Sig dictionary to it
@@ -820,6 +823,28 @@ public class PdfFileSignature implements AutoCloseable {
         Page page = document.getPages().get(pageNumber);
         SignatureField sf = new SignatureField(fieldDict, page, fieldName);
         form.add(sf, pageNumber);
+    }
+
+    /**
+     * Returns the first free {@code "Signature<N>"} field name (N ≥ 1) not already
+     * taken by an existing form field, matching Aspose's naming convention.
+     */
+    private String nextSignatureFieldName() {
+        java.util.Set<String> used = new java.util.HashSet<>();
+        try {
+            Form form = document.getForm();
+            if (form != null) {
+                for (Field f : form.getFields()) {
+                    if (f.getFullName() != null) used.add(f.getFullName());
+                }
+            }
+        } catch (Exception e) {
+            LOG.log(Level.FINE, "Error enumerating existing field names", e);
+        }
+        for (int n = 1; ; n++) {
+            String name = "Signature" + n;
+            if (!used.contains(name)) return name;
+        }
     }
 
     private SignatureField findSignatureField(String signName) {

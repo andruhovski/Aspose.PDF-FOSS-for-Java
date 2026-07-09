@@ -93,6 +93,15 @@ public final class PdfFloat extends PdfBase {
             return Long.toString(longVal);
         }
 
+        // Adobe implementation limit (ISO 32000-1:2008 Annex C, Table C.1): the largest
+        // real number a conforming reader is guaranteed to represent is ±32767.0, and reals
+        // beyond that magnitude cannot carry meaningful fractional precision. Emitting the
+        // fractional digits of such a value (e.g. a −671088.625 clip coordinate) is both
+        // non-portable and rejected by strict validators, so round to the nearest integer.
+        if (!Double.isInfinite(value) && Math.abs(value) >= 32767.0) {
+            return Long.toString(Math.round(value));
+        }
+
         // Format with 10 decimal places for precision
         String formatted = String.format(java.util.Locale.US, "%.10f", value);
 

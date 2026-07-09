@@ -106,6 +106,15 @@ public class Document implements Closeable {
     private FontUtilities fontUtilities;
     private boolean embedStandardFonts;
     private boolean optimizeRequested;
+    /**
+     * Whether the pending optimize rewrite may pack objects into compressed
+     * object streams (/ObjStm). Set by {@link #optimizeResources} only when
+     * {@code OptimizationOptions.CompressObjects} is requested; Aspose keeps
+     * every object as a plain indirect object otherwise, which regressions rely
+     * on (PDFNET-39575 greps the output for "/Separation" and "N 0 obj").
+     */
+    private boolean optimizeUseObjectStreams;
+    private boolean optimizeSize;
     private boolean fullRewriteRequested;
     /** Set by flushDirtyPages() when a page's /Contents was edited this save. */
     private boolean editedPageContentsThisSave;
@@ -414,12 +423,61 @@ public class Document implements Closeable {
                     if (!(pagesObj instanceof PdfDictionary)) {
                         throw new IOException("Cannot find /Pages dictionary in catalog");
                     }
+                    pagesObj = normalizePagesRoot(catalog, (PdfDictionary) pagesObj);
                     pages = new PageCollection((PdfDictionary) pagesObj, parser);
                     pages.setOwningDocument(this);
                 }
             }
         }
         return pages;
+    }
+
+    /**
+     * Normalizes the page-tree root the catalog points at.
+     *
+     * <p>Some malformed PDFs set the catalog's {@code /Pages} to a leaf page (or
+     * an intermediate node) rather than the page-tree root — e.g. the catalog
+     * references a {@code /Type /Page} whose {@code /Parent} is the real
+     * {@code /Type /Pages} root. Readers tolerate this on read (the single page
+     * still resolves), but page-tree mutations ({@code add}/{@code insert})
+     * then operate on the wrong node and are silently lost on save. This climbs
+     * {@code /Parent} to the topmost {@code /Type /Pages} ancestor and, when it
+     * differs from what the catalog references, repoints {@code /Pages} at the
+     * true root so reads, edits, and the saved file all agree. ISO 32000-1
+     * §7.7.3 (the page tree is rooted at the catalog's {@code /Pages}).</p>
+     *
+     * @param catalog  the document catalog (repointed in place when needed)
+     * @param pagesObj the dictionary the catalog's {@code /Pages} currently resolves to
+     * @return the effective page-tree root to wrap in a {@link PageCollection}
+     */
+    private PdfDictionary normalizePagesRoot(PdfDictionary catalog, PdfDictionary pagesObj) {
+        PdfDictionary node = pagesObj;
+        java.util.Set<PdfDictionary> seen =
+                java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+        seen.add(node);
+        while (true) {
+            PdfBase parentRef = node.get(PdfName.PARENT);
+            if (parentRef == null) {
+                break;
+            }
+            PdfBase parent;
+            try {
+                parent = parser.resolveReference(parentRef);
+            } catch (IOException e) {
+                break; // unresolvable parent — keep what we have
+            }
+            if (!(parent instanceof PdfDictionary) || !seen.add((PdfDictionary) parent)) {
+                break; // missing parent or a /Parent cycle
+            }
+            node = (PdfDictionary) parent;
+        }
+        if (node != pagesObj && "Pages".equals(node.getNameAsString("Type"))) {
+            LOG.warning(() -> "Catalog /Pages pointed at a non-root node; "
+                    + "repointing to the true page-tree root so page edits persist");
+            catalog.set(PdfName.PAGES, node);
+            return node;
+        }
+        return pagesObj;
     }
 
     /**
@@ -886,8 +944,58 @@ public class Document implements Closeable {
             throw new IllegalArgumentException("File path must not be null");
         }
         if (optimizeRequested && parser != null) {
-            save(filePath, new PdfSaveOptions().setLinearize(true));
-            optimizeRequested = false;
+            // Optimization aims for a SMALLER file. Linearizing adds overhead (linearization
+            // dict + hint stream + duplicated first-page objects) that can outweigh the
+            // resource pruning on small documents (PDFNEWNET-30310). Emit a compact rewrite
+            // with cross-reference/object streams instead, which packs the surviving objects.
+            //
+            // Optimization must never make the file BIGGER: when the rewrite
+            // exceeds the untouched source (format overhead can dominate on
+            // tiny or already-tightly-packed files) and the document carries
+            // no other tracked modifications, the original bytes win.
+            long sourceLen = sourceByteLength();
+            boolean fallback = sourceLen > 0 && !hasTrackedModifications();
+            java.nio.file.Path sourceBackup = null;
+            if (fallback && sourcePath != null && isSameFile(filePath, sourcePath)) {
+                // Saving over the source: the inner save destroys the bytes we
+                // may need to restore, so stash them in a sibling temp file.
+                sourceBackup = java.nio.file.Files.createTempFile("aspose-opt-src", ".pdf");
+                java.nio.file.Files.copy(java.nio.file.Paths.get(sourcePath), sourceBackup,
+                        java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            }
+            try {
+                // Pack into object streams when CompressObjects was asked for,
+                // or when the source itself already used cross-reference/object
+                // streams (shape-preserving: unpacking such files bloats them).
+                // Classic/flat sources stay flat so the compact rewrite still
+                // shrinks the file but downstream text greps see the object
+                // bodies (Aspose parity — PDFNET-39575).
+                boolean useObjStreams = optimizeUseObjectStreams || sourceUsesXRefStream();
+                save(filePath, new PdfSaveOptions().setUseObjectStreams(useObjStreams).setUseXRefStream(true));
+                optimizeRequested = false;
+                optimizeUseObjectStreams = false;
+                if (fallback && new File(filePath).length() > sourceLen) {
+                    LOG.fine(() -> "Optimized output is larger than the source ("
+                            + new File(filePath).length() + " > " + sourceLen
+                            + "); keeping the original bytes");
+                    if (sourceBackup != null) {
+                        java.nio.file.Files.copy(sourceBackup, java.nio.file.Paths.get(filePath),
+                                java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                    } else {
+                        try (FileOutputStream fos = new FileOutputStream(filePath)) {
+                            writeSourceTo(fos);
+                        }
+                    }
+                }
+            } finally {
+                if (sourceBackup != null) {
+                    try {
+                        java.nio.file.Files.deleteIfExists(sourceBackup);
+                    } catch (IOException ignore) {
+                        // best-effort temp cleanup
+                    }
+                }
+            }
             return;
         }
         // Check if saving to the same file we loaded from
@@ -899,6 +1007,59 @@ public class Document implements Closeable {
                 save(fos);
             }
         }
+    }
+
+    /**
+     * Byte length of the untouched source this document was opened from, or
+     * {@code -1} for programmatically-created documents.
+     */
+    private long sourceByteLength() {
+        if (sourceBytes != null) {
+            return sourceBytes.length;
+        }
+        if (sourcePath != null) {
+            File f = new File(sourcePath);
+            return f.isFile() ? f.length() : -1;
+        }
+        return -1;
+    }
+
+    /** Streams the untouched source bytes to {@code out}. */
+    private void writeSourceTo(OutputStream out) throws IOException {
+        if (sourceBytes != null) {
+            out.write(sourceBytes);
+            return;
+        }
+        if (sourcePath != null) {
+            java.nio.file.Files.copy(java.nio.file.Paths.get(sourcePath), out);
+        }
+    }
+
+    /**
+     * Whether the document carries user modifications this API can track
+     * (edited page contents, imported pages, new outlines, XMP changes,
+     * pending encryption). Used to decide when an optimizeResources() save
+     * may fall back to the original bytes; in-place low-level COS edits are
+     * not observable here, so callers combining such edits with
+     * optimizeResources() always get the rewritten file (the fallback only
+     * replaces output that came out LARGER than the source).
+     */
+    private boolean hasTrackedModifications() {
+        if (!pendingImports.isEmpty() || pendingEncryptor != null || pendingEncDict != null
+                || metadata != null) {
+            return true;
+        }
+        if (outlines != null && outlines.getCount() > 0) {
+            return true;
+        }
+        if (pages != null) {
+            for (Page p : pages) {
+                if (p.isContentsDirty()) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -999,8 +1160,21 @@ public class Document implements Closeable {
                 // PDFNET_42759). Fall back to a full rewrite in exactly that case.
                 // Gated on content-stream edits so signing/other incremental
                 // saves (which touch dictionaries, not /Contents) are unaffected.
+                // XFA datasets edits (Form.getXFA().set(...)) modify an EXISTING packet stream, so
+                // they hit the same hybrid/xref-stream unreliability as content edits — the appended
+                // stream's xref entry is lost on reload, leaving Acrobat unable to open the filled
+                // form. Treat a dirty XFA packet like a content edit and force a full rewrite.
+                boolean xfaEdited = false;
+                if (form != null) {
+                    try {
+                        org.aspose.pdf.forms.xfa.XfaForm xf = form.getXFA();
+                        xfaEdited = xf != null && xf.hasDirtyPackets();
+                    } catch (Throwable ignore) {
+                        // no XFA / not resolvable — leave xfaEdited false
+                    }
+                }
                 boolean unreliableIncremental = !modifiedObjects.isEmpty()
-                        && editedPageContentsThisSave
+                        && (editedPageContentsThisSave || xfaEdited)
                         && sourceUsesXRefStream();
                 if (unreliableIncremental) {
                     saveFullRewrite(outputStream);
@@ -1063,6 +1237,31 @@ public class Document implements Closeable {
     }
 
     /**
+     * Gets whether the next save should favour a compact full rewrite
+     * (object streams, no orphaned objects) over an incremental append.
+     * API-compatible with Aspose's {@code Document.OptimizeSize}.
+     *
+     * @return {@code true} if compact-size saving has been requested
+     */
+    public boolean isOptimizeSize() {
+        return optimizeSize;
+    }
+
+    /**
+     * Sets whether the next save should favour a compact full rewrite.
+     * API-compatible with Aspose's {@code Document.OptimizeSize}: enabling it
+     * requests the same compact rewrite as {@link #optimize()}.
+     *
+     * @param value {@code true} to request compact-size saving
+     */
+    public void setOptimizeSize(boolean value) {
+        optimizeSize = value;
+        if (value) {
+            optimizeRequested = true;
+        }
+    }
+
+    /**
      * Requests that the next save operation performs a full rewrite even if
      * incremental save would otherwise be possible.
      */
@@ -1111,10 +1310,14 @@ public class Document implements Closeable {
      * @throws IOException if page content streams cannot be parsed
      */
     public void optimizeResources() throws IOException {
-        for (int i = 1; i <= getPages().getCount(); i++) {
-            pruneUnusedResources(getPages().get(i), new java.util.IdentityHashMap<>());
-        }
-        optimizeRequested = true;
+        // Parameterless behaviour mirrors Aspose's default OptimizationOptions:
+        // unused objects/streams removal plus duplicate-stream linking.
+        org.aspose.pdf.optimization.OptimizationOptions defaults =
+                new org.aspose.pdf.optimization.OptimizationOptions();
+        defaults.setRemoveUnusedObjects(true);
+        defaults.setRemoveUnusedStreams(true);
+        defaults.setLinkDuplicateStreams(true);
+        optimizeResources(defaults);
     }
 
     /**
@@ -1139,24 +1342,80 @@ public class Document implements Closeable {
         if (options == null) {
             return;
         }
-        if (options.isAllowReusePageContent() || options.isRemoveUnusedStreams()) {
-            for (int i = 1; i <= getPages().getCount(); i++) {
-                pruneUnusedResources(getPages().get(i), new java.util.IdentityHashMap<>());
+        if (options.isAllowReusePageContent() || options.isRemoveUnusedStreams()
+                || options.isRemoveUnusedObjects()) {
+            pruneUnusedResourcesAcrossPages();
+        }
+        // Graph-level passes (image recompression, stream recompression,
+        // duplicate-stream linking). Objects orphaned here are dropped by
+        // the compact rewrite requested below.
+        org.aspose.pdf.engine.optimization.ResourceOptimizer.Stats optStats = null;
+        if (parser != null) {
+            Map<PdfStream, double[]> imageDisplay = null;
+            if (options.isResizeImages() && options.getMaxResolution() > 0) {
+                imageDisplay = collectImageDisplaySizes();
             }
+            optStats = org.aspose.pdf.engine.optimization.ResourceOptimizer.optimize(
+                    parser, options, imageDisplay);
         }
         // A full rewrite re-serialises only the objects still reachable from the
         // trailer, which is exactly "remove unused objects/streams". Duplicate
         // streams are likewise only written once when the writer dedups, so we
         // also request the rewrite for linkDuplicateStreams.
         if (options.isRemoveUnusedObjects() || options.isRemoveUnusedStreams()
-                || options.isLinkDuplicateStreams()) {
+                || options.isLinkDuplicateStreams() || options.isCompressObjects()) {
             optimizeRequested = true;
+        }
+        // The image/recompress/subset/private-info passes REWRITE stream bytes in
+        // place. Without a full rewrite the next save appends those modified
+        // objects incrementally, leaving the ORIGINAL (larger) bytes in the file
+        // AND the new ones — the output nearly doubles (BUG-OPT-22: 35473.pdf
+        // 26.3MB -> 48.9MB with recompress on, dedup off). Force the compact
+        // rewrite whenever a content-mutating pass actually changed something, so
+        // the superseded bytes are dropped.
+        if (optStats != null
+                && (optStats.streamsRecompressed > 0 || optStats.imagesRecompressed > 0
+                        || optStats.fontsSubset > 0 || optStats.privateEntriesRemoved > 0
+                        || optStats.duplicatesLinked > 0)) {
+            optimizeRequested = true;
+        }
+        if (options.isCompressObjects()) {
+            optimizeUseObjectStreams = true;
         }
         LOG.fine(() -> "optimizeResources(options): rewrite="
                 + (options.isRemoveUnusedObjects() || options.isRemoveUnusedStreams()
                         || options.isLinkDuplicateStreams())
                 + " compressImages=" + options.isCompressImages()
                 + " subsetFonts=" + options.isSubsetFonts());
+    }
+
+    /**
+     * Collects, per image XObject stream, the largest display footprint (in
+     * points) across all its placements in the document. Used by the
+     * optimizer to compute effective resolution for downsampling.
+     */
+    private Map<PdfStream, double[]> collectImageDisplaySizes() throws IOException {
+        Map<PdfStream, double[]> sizes = new java.util.IdentityHashMap<>();
+        for (int i = 1; i <= getPages().getCount(); i++) {
+            ImagePlacementAbsorber absorber = new ImagePlacementAbsorber();
+            try {
+                absorber.visit(getPages().get(i));
+            } catch (IOException e) {
+                LOG.fine(() -> "Image placement scan failed: " + e.getMessage());
+                continue;
+            }
+            for (ImagePlacement placement : absorber.getImagePlacements()) {
+                if (placement.getImage() == null || placement.getRectangle() == null) {
+                    continue;
+                }
+                PdfStream stream = placement.getImage().getPdfStream();
+                Rectangle rect = placement.getRectangle();
+                double[] current = sizes.computeIfAbsent(stream, s -> new double[]{0, 0});
+                current[0] = Math.max(current[0], rect.getWidth());
+                current[1] = Math.max(current[1], rect.getHeight());
+            }
+        }
+        return sizes;
     }
 
     /**
@@ -1237,27 +1496,45 @@ public class Document implements Closeable {
         Map<PdfObjectKey, PdfBase> objects = new LinkedHashMap<>();
         int maxObjNum = 0;
         for (PdfObjectKey key : parser.getAllObjectKeys()) {
-            PdfBase obj = parser.getObject(key);
-            if (obj != null && !(obj instanceof PdfNull)) {
-                objects.put(key, obj);
-                maxObjNum = Math.max(maxObjNum, key.getObjectNumber());
+            try {
+                PdfBase obj = parser.getObject(key);
+                if (obj != null && !(obj instanceof PdfNull)) {
+                    objects.put(key, obj);
+                    maxObjNum = Math.max(maxObjNum, key.getObjectNumber());
+                }
+            } catch (IOException e) {
+                // Same lenient policy as saveFullRewrite: a corrupt object the
+                // xref points at (e.g. an /ObjStm container that is not a
+                // stream) must not abort the save of everything else.
+                LOG.fine(() -> "Skipping unreadable object during compressed save: "
+                        + key + " (" + e.getMessage() + ")");
             }
         }
         if (metadata != null) {
             maxObjNum = syncXmpToCatalog(parser.getCatalog(), objects, maxObjNum);
         }
+        maxObjNum = registerLiveCatalog(objects, maxObjNum);
+        maxObjNum = registerLivePageTreeRoot(objects, maxObjNum);
 
         float version = Math.max(parser.getVersion(), 1.5f);
         PDFWriter writer = new PDFWriter(outputStream, version);
         PdfDictionary trailer = new PdfDictionary(parser.getTrailer());
+        // optimizeResources(): drop everything the trailer no longer reaches —
+        // this is what actually removes unused objects and the duplicates
+        // orphaned by ResourceOptimizer's stream linking.
+        if (optimizeRequested) {
+            retainReachableObjects(objects, trailer);
+        }
         configureExistingEncryption(writer, trailer);
         maxObjNum = applyPendingEncryption(writer, trailer, objects, maxObjNum);
 
         if (options.isUseObjectStreams()) {
             writer.writeCompressed(trailer, objects, options.getObjectsPerStream());
         } else {
-            // XRef stream only, no object streams — use maxPerStream=MAX_VALUE to skip packing
-            writer.writeCompressed(trailer, objects, Integer.MAX_VALUE);
+            // XRef stream only, no object streams — maxPerStream<=0 keeps every
+            // object as a plain "N G obj" body (MAX_VALUE would instead pack them
+            // all into one giant /ObjStm).
+            writer.writeCompressed(trailer, objects, 0);
         }
     }
 
@@ -1588,13 +1865,29 @@ public class Document implements Closeable {
      * @param outputStream the output stream
      * @throws IOException if writing fails
      */
+    /**
+     * Whether an object is stale file-structure metadata that a full rewrite regenerates and must
+     * NOT emit as a body object: a cross-reference stream ({@code /Type /XRef}) or an object stream
+     * ({@code /Type /ObjStm}). The parser exposes these as ordinary objects (and decompresses ObjStm
+     * members into their own keys), so writing the containers too would leave an orphaned XRef-stream
+     * object — carrying the source's {@code /Prev} offset — which strict viewers (Acrobat/Chrome)
+     * report as "damaged, but can be repaired".
+     */
+    private static boolean isStaleFileStructure(PdfBase obj) {
+        if (obj instanceof PdfDictionary) {
+            String type = ((PdfDictionary) obj).getNameAsString("Type");
+            return "XRef".equals(type) || "ObjStm".equals(type);
+        }
+        return false;
+    }
+
     private void saveFullRewrite(OutputStream outputStream) throws IOException {
         Map<PdfObjectKey, PdfBase> objects = new LinkedHashMap<>();
         int maxObjNum = 0;
         for (PdfObjectKey key : parser.getAllObjectKeys()) {
             try {
                 PdfBase obj = parser.getObject(key);
-                if (obj != null && !(obj instanceof PdfNull)) {
+                if (obj != null && !(obj instanceof PdfNull) && !isStaleFileStructure(obj)) {
                     objects.put(key, obj);
                     maxObjNum = Math.max(maxObjNum, key.getObjectNumber());
                 }
@@ -1608,6 +1901,8 @@ public class Document implements Closeable {
             objects.put(e.getKey(), e.getValue());
             maxObjNum = Math.max(maxObjNum, e.getKey().getObjectNumber());
         }
+        maxObjNum = registerLiveCatalog(objects, maxObjNum);
+        maxObjNum = registerLivePageTreeRoot(objects, maxObjNum);
         // Register new outline items that were added programmatically (e.g. from another document)
         if (outlines != null && outlines.getCount() > 0) {
             PdfDictionary outlinesDict = outlines.getPdfDictionary();
@@ -1631,6 +1926,9 @@ public class Document implements Closeable {
         }
         PDFWriter writer = new PDFWriter(outputStream, parser.getVersion());
         PdfDictionary trailer = new PdfDictionary(parser.getTrailer());
+        // Hybrid-reference source (§7.5.8.4): preserve the classic-table +
+        // /XRefStm shape on full rewrite, like Aspose (PDFNET-45599).
+        writer.setPreserveHybridXRef(trailer.get(PdfName.of("XRefStm")) != null);
         trailer.remove(PdfName.of("Prev"));
         trailer.remove(PdfName.of("XRefStm"));
         configureExistingEncryption(writer, trailer);
@@ -2511,14 +2809,21 @@ public class Document implements Closeable {
             return;
         }
         PdfBase encryptRef = trailer.get(PdfName.of("Encrypt"));
-        if (!(encryptRef instanceof PdfObjectReference)) {
-            return;
+        PdfObjectKey encryptDictKey = null;
+        PdfBase encryptObj;
+        if (encryptRef instanceof PdfObjectReference) {
+            encryptObj = parser.resolveReference(encryptRef);
+            encryptDictKey = ((PdfObjectReference) encryptRef).getKey();
+        } else {
+            // Legacy files may inline the encryption dictionary directly in
+            // the trailer. Skipping the encryptor here would write plaintext
+            // bodies under a trailer that still advertises /Encrypt — readers
+            // would then "decrypt" the plaintext into garbage.
+            encryptObj = encryptRef;
         }
-        PdfBase encryptObj = parser.resolveReference(encryptRef);
         if (!(encryptObj instanceof PdfDictionary)) {
             return;
         }
-        PdfObjectKey encryptDictKey = ((PdfObjectReference) encryptRef).getKey();
         PDFEncryptionDict encDict = new PDFEncryptionDict((PdfDictionary) encryptObj);
         if (decryptor.getCustomHandler() != null) {
             writer.setEncryptor(new PDFEncryptor(decryptor.getEncryptionKey(), encDict, decryptor.getCustomHandler()),
@@ -2759,12 +3064,118 @@ public void decrypt() throws IOException {
         if (pdfaCompliant && options.getFormat() != null) {
             pdfFormat = options.getFormat();
         }
+        if (options.getFormat() != null && options.getFormat().isPdfA()) {
+            isolatePageGraphicsState();
+            materializeInheritedPageResources();
+            // PDF/A (ISO 19005) forbids a hybrid-reference cross-reference: the
+            // file must use either a single classic xref table or a single xref
+            // stream, never a table whose trailer points at a parallel /XRefStm.
+            // A hybrid source would otherwise have its /XRefStm shape preserved on
+            // full rewrite (PDFNET-45599); clearing it here keeps the converted
+            // document compliant (PDFNET-58212).
+            PdfDictionary convTrailer = parser.getTrailer();
+            if (convTrailer != null) {
+                convTrailer.remove(PdfName.of("XRefStm"));
+            }
+        }
+        if (options.getFormat() == PdfFormat.PDF_UA_1) {
+            normalizeStructureRootToDocument();
+        }
         PdfBase metadataRef = parser.getCatalog().get(PdfName.of("Metadata"));
         PdfBase metadataObject = parser.resolveReference(metadataRef);
         if (metadataObject instanceof PdfStream) {
             metadata = new XmpMetadata(((PdfStream) metadataObject).getDecodedData());
         }
         return pdfaCompliant;
+    }
+
+    /**
+     * Wraps every page's content in a balanced {@code q}/{@code Q} (save/restore
+     * graphics state) pair as part of PDF/A conversion.
+     * <p>
+     * A page whose content stream opens with state-changing operators (e.g. a
+     * leading {@code cm}) without first saving the graphics state leaks that
+     * state; PDF/A processors expect each page's content to leave the graphics
+     * state as it found it. Prepending {@code q} and appending {@code Q} isolates
+     * the page content, adding exactly two operators per page. This mirrors
+     * Aspose's conversion behaviour (PDFNET-42549, PDFNET-42676).
+     * </p>
+     */
+    private void isolatePageGraphicsState() throws IOException {
+        for (Page page : getPages()) {
+            try {
+                OperatorCollection ops = page.getContents();
+                if (ops == null || ops.size() == 0) {
+                    continue;
+                }
+                ops.addAt(0, new org.aspose.pdf.operators.GSave());
+                ops.add(new org.aspose.pdf.operators.GRestore());
+                page.markContentsDirty();
+            } catch (IOException e) {
+                LOG.warning(() -> "isolatePageGraphicsState: could not wrap page content: "
+                        + e.getMessage());
+            }
+        }
+    }
+
+    /**
+     * Writes each page's EFFECTIVE (possibly tree-inherited, §7.7.3.4)
+     * {@code /Resources} directly into the page dictionary as part of PDF/A
+     * conversion, mirroring Aspose (PDFNET_49802: after conversion every page
+     * must carry its own /Resources entry).
+     */
+    private void materializeInheritedPageResources() {
+        try {
+            for (Page page : getPages()) {
+                PdfDictionary pd = page.getPdfDictionary();
+                if (pd.get("Resources") != null) {
+                    continue;
+                }
+                Resources effective = page.getResources();
+                PdfDictionary resDict = effective != null ? effective.getPdfDictionary() : null;
+                pd.set(PdfName.of("Resources"), resDict != null ? resDict : new PdfDictionary());
+            }
+        } catch (IOException | RuntimeException e) {
+            LOG.warning(() -> "materializeInheritedPageResources failed: " + e.getMessage());
+        }
+    }
+
+    /**
+     * PDF/UA-1 (ISO 14289-1 §7.1) requires the logical structure to be rooted at a single
+     * top-level {@code Document} structure element. A tagged source may instead root its tree
+     * at a grouping element such as {@code Part} (a legal PDF structure type, but not the
+     * conventional PDF/UA document root). When converting to PDF/UA, retype a lone non-Document
+     * root grouping element to {@code Document}, mirroring Adobe/Aspose conversion. No-op when
+     * the root is already {@code Document} or there is no struct tree.
+     */
+    private void normalizeStructureRootToDocument() {
+        try {
+            PdfBase str = parser.resolveReference(parser.getCatalog().get(PdfName.of("StructTreeRoot")));
+            if (!(str instanceof PdfDictionary)) {
+                return;
+            }
+            PdfBase k = parser.resolveReference(((PdfDictionary) str).get(PdfName.of("K")));
+            PdfDictionary root = null;
+            if (k instanceof PdfDictionary) {
+                root = (PdfDictionary) k;
+            } else if (k instanceof PdfArray && ((PdfArray) k).size() == 1) {
+                // a single top-level element wrapped in a one-entry /K array
+                PdfBase only = parser.resolveReference(((PdfArray) k).get(0));
+                if (only instanceof PdfDictionary) {
+                    root = (PdfDictionary) only;
+                }
+            }
+            if (root == null) {
+                return;
+            }
+            PdfBase s = root.get(PdfName.of("S"));
+            String type = s instanceof PdfName ? ((PdfName) s).getName() : null;
+            if (type != null && !"Document".equals(type)) {
+                root.set(PdfName.of("S"), PdfName.of("Document"));
+            }
+        } catch (RuntimeException | IOException e) {
+            LOG.warning(() -> "normalizeStructureRootToDocument: " + e.getMessage());
+        }
     }
 
     private void ensurePdfaMetadataForNewDocument(PdfFormat format) throws IOException {
@@ -2887,6 +3298,12 @@ public void decrypt() throws IOException {
                 continue;
             }
 
+            Paragraphs expanded = expandMultiFrameImages(paragraphs);
+            if (expanded != paragraphs) {
+                page.setParagraphs(expanded);
+                paragraphs = expanded;
+            }
+
             List<Paragraphs> chunks = splitParagraphsAcrossPages(page, paragraphs);
             if (chunks.size() <= 1) {
                 currentIndex++;
@@ -2903,6 +3320,92 @@ public void decrypt() throws IOException {
         }
     }
 
+    /**
+     * Expands every multi-frame image paragraph (multi-page TIFF) into one
+     * {@link Image} per decodable frame, so pagination emits one page per
+     * frame — matching Aspose.PDF, which turns a 20-frame TIFF added as a
+     * single Image into a 20-page document (PDFNET-38363). Frames after the
+     * first are marked {@link BaseParagraph#setInNewPage(boolean) InNewPage}.
+     * Images with an explicit {@link Image#getSelectedFrame() selected frame}
+     * are left untouched. Returns the original collection when nothing
+     * needed expanding.
+     */
+    private Paragraphs expandMultiFrameImages(Paragraphs paragraphs) {
+        Paragraphs expanded = null;
+        int index = 0;
+        for (BaseParagraph paragraph : paragraphs) {
+            index++;
+            if (!(paragraph instanceof Image) || ((Image) paragraph).getSelectedFrame() >= 0) {
+                if (expanded != null) expanded.add(paragraph);
+                continue;
+            }
+            Image image = (Image) paragraph;
+            byte[] raw = readImageParagraphBytes(image);
+            int[] frames = raw == null ? new int[0]
+                    : org.aspose.pdf.engine.layout.LayoutEngine.getDecodableImageFrames(raw);
+            if (frames.length <= 1) {
+                if (expanded != null) expanded.add(paragraph);
+                continue;
+            }
+            if (expanded == null) {
+                // Copy the paragraphs processed so far, untouched.
+                expanded = new Paragraphs();
+                int copied = 0;
+                for (BaseParagraph earlier : paragraphs) {
+                    if (++copied >= index) break;
+                    expanded.add(earlier);
+                }
+            }
+            for (int i = 0; i < frames.length; i++) {
+                Image frameImage = cloneImageForFrame(image, raw, frames[i]);
+                if (i > 0) frameImage.setInNewPage(true);
+                expanded.add(frameImage);
+            }
+        }
+        return expanded != null ? expanded : paragraphs;
+    }
+
+    /** Reads an Image paragraph's source bytes (file path or stream) without consuming the original stream twice. */
+    private byte[] readImageParagraphBytes(Image image) {
+        try {
+            if (image.getFile() != null) {
+                return java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(image.getFile()));
+            }
+            if (image.getImageStream() != null) {
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+                byte[] buf = new byte[8192];
+                int n;
+                while ((n = image.getImageStream().read(buf)) > 0) out.write(buf, 0, n);
+                byte[] raw = out.toByteArray();
+                // The stream is consumed; replace it so a later layout pass
+                // (single-frame case) can still read the bytes.
+                image.setImageStream(new java.io.ByteArrayInputStream(raw));
+                return raw;
+            }
+        } catch (IOException e) {
+            // fall through — undecodable sources keep the placeholder path
+        }
+        return null;
+    }
+
+    /** Clones an Image paragraph for one frame of its multi-frame source. */
+    private Image cloneImageForFrame(Image source, byte[] raw, int frame) {
+        Image copy = new Image();
+        if (source.getFile() != null) {
+            copy.setFile(source.getFile());
+        } else {
+            copy.setImageStream(new java.io.ByteArrayInputStream(raw));
+        }
+        copy.setSelectedFrame(frame);
+        copy.setFixWidth(source.getFixWidth());
+        copy.setFixHeight(source.getFixHeight());
+        copy.setImageType(source.getImageType());
+        copy.setTitle(source.getTitle());
+        copy.setMargin(copyMarginInfo(source.getMargin()));
+        copy.setHorizontalAlignment(source.getHorizontalAlignment());
+        return copy;
+    }
+
     private List<Paragraphs> splitParagraphsAcrossPages(Page page, Paragraphs originalParagraphs) {
         PageInfo pageInfo = page.getPageInfo() != null ? page.getPageInfo() : getPageInfo();
         PageInfo.MarginInfo pageMargins = pageInfo != null && pageInfo.getMargin() != null
@@ -2917,8 +3420,10 @@ public void decrypt() throws IOException {
 
         BaseParagraph previousParagraph = null;
         for (BaseParagraph paragraph : originalParagraphs) {
-            if (shouldStartNewPageAfter(previousParagraph, paragraph) && !chunks.get(chunks.size() - 1).isEmpty()) {
+            if ((paragraph.isInNewPage() || shouldStartNewPageAfter(previousParagraph, paragraph))
+                    && !chunks.get(chunks.size() - 1).isEmpty()) {
                 chunks.add(new Paragraphs());
+                currentChunk = chunks.get(chunks.size() - 1);
                 remainingHeight = availableHeight;
             }
             if (paragraph instanceof TextFragment) {
@@ -3447,11 +3952,121 @@ public void decrypt() throws IOException {
         if (pages == null) return;
         for (Page p : pages) {
             p.flushPageInfoIfNeeded();
+            persistNewLayers(p);
             if (p.isContentsDirty()) {
                 editedPageContentsThisSave = true;
             }
             p.flushContentsIfDirty();
         }
+    }
+
+    /**
+     * Serialises layers the user added through {@link Page#getLayers()} /
+     * {@link Page#setLayers(java.util.List)} into the document
+     * (ISO 32000-1:2008, §8.11): registers the OCG dictionary as an indirect
+     * object, references it from the page's {@code /Resources /Properties}
+     * under the layer id, lists it in the catalog's
+     * {@code /OCProperties /OCGs} (+ {@code /D /Order}), and wraps the layer's
+     * operators into an {@code /OC /id BDC … EMC} block appended to the page
+     * content. Layers whose id already appears in {@code /Properties} (i.e.
+     * layers read from the file, or already persisted by a previous save)
+     * are left untouched, so the method is idempotent.
+     */
+    private void persistNewLayers(Page p) {
+        java.util.List<Layer> layers = p.peekLayers();
+        if (layers == null || layers.isEmpty()) return;
+        for (Layer layer : layers) {
+            String id = layer.getId();
+            if (id == null || id.isEmpty()) continue;
+            try {
+                PdfDictionary pageDict = p.getPdfDictionary();
+                PdfBase resVal = deref(pageDict.get("Resources"));
+                PdfDictionary res;
+                if (resVal instanceof PdfDictionary) {
+                    res = (PdfDictionary) resVal;
+                } else {
+                    res = new PdfDictionary();
+                    pageDict.set(PdfName.of("Resources"), res);
+                }
+                PdfBase propsVal = deref(res.get("Properties"));
+                PdfDictionary props;
+                if (propsVal instanceof PdfDictionary) {
+                    props = (PdfDictionary) propsVal;
+                } else {
+                    props = new PdfDictionary();
+                    res.set(PdfName.of("Properties"), props);
+                }
+                if (props.get(id) != null) continue; // from file / already saved
+
+                PdfObjectReference ocgRef = registerImportedObject(layer.getPdfDictionary());
+                props.set(PdfName.of(id), ocgRef);
+                registerLayerInOcProperties(ocgRef);
+
+                if (!layer.getContents().isEmpty()) {
+                    OperatorCollection ops = p.getContents();
+                    ops.add(new org.aspose.pdf.operators.BDC("OC", PdfName.of(id)));
+                    for (Operator op : layer.getContents()) {
+                        ops.add(op);
+                    }
+                    ops.add(new org.aspose.pdf.operators.EMC());
+                    p.markContentsDirty();
+                }
+            } catch (IOException e) {
+                LOG.warning(() -> "Failed to persist layer '" + id + "': " + e.getMessage());
+            }
+        }
+    }
+
+    /** Adds an OCG reference to the catalog's /OCProperties (§8.11.4.2). */
+    private void registerLayerInOcProperties(PdfObjectReference ocgRef) throws IOException {
+        PdfDictionary catalog = getCatalog();
+        if (catalog == null) return;
+        PdfBase ocpVal = deref(catalog.get("OCProperties"));
+        PdfDictionary ocp;
+        if (ocpVal instanceof PdfDictionary) {
+            ocp = (PdfDictionary) ocpVal;
+        } else {
+            ocp = new PdfDictionary();
+            catalog.set(PdfName.of("OCProperties"), ocp);
+        }
+        PdfBase ocgsVal = deref(ocp.get("OCGs"));
+        PdfArray ocgs;
+        if (ocgsVal instanceof PdfArray) {
+            ocgs = (PdfArray) ocgsVal;
+        } else {
+            ocgs = new PdfArray();
+            ocp.set(PdfName.of("OCGs"), ocgs);
+        }
+        ocgs.add(ocgRef);
+        PdfBase dVal = deref(ocp.get("D"));
+        PdfDictionary d;
+        if (dVal instanceof PdfDictionary) {
+            d = (PdfDictionary) dVal;
+        } else {
+            d = new PdfDictionary();
+            ocp.set(PdfName.of("D"), d);
+        }
+        PdfBase orderVal = deref(d.get("Order"));
+        PdfArray order;
+        if (orderVal instanceof PdfArray) {
+            order = (PdfArray) orderVal;
+        } else {
+            order = new PdfArray();
+            d.set(PdfName.of("Order"), order);
+        }
+        order.add(ocgRef);
+    }
+
+    /** Dereferences an indirect reference, returning null on failure. */
+    private static PdfBase deref(PdfBase value) {
+        if (value instanceof PdfObjectReference) {
+            try {
+                return ((PdfObjectReference) value).dereference();
+            } catch (IOException e) {
+                return null;
+            }
+        }
+        return value;
     }
 
     /**
@@ -3469,6 +4084,95 @@ public void decrypt() throws IOException {
         return type instanceof PdfName && "XRef".equals(((PdfName) type).getName());
     }
 
+    /**
+     * Ensures the LIVE page-tree root (the dictionary {@link #getPages()} is
+     * actually backed by) is reachable from the catalog before a full rewrite.
+     * <p>
+     * When the source file's catalog {@code /Pages} reference is broken, the
+     * page tree is recovered by scanning
+     * ({@link #recoverPagesDictionaryFromObjects()}); that synthetic root
+     * exists only in memory while the catalog still holds the dangling
+     * reference. A compact rewrite that walks the trailer
+     * (optimizeResources' remove-unused-objects pass) would then reach no
+     * page tree at all and silently drop every page object. Registering the
+     * root as an indirect object and repointing the catalog makes the saved
+     * file self-consistent. No-op for healthy documents.
+     * </p>
+     *
+     * @param objects   the object map being assembled for the rewrite
+     * @param maxObjNum the current maximum object number
+     * @return the possibly-incremented maximum object number
+     */
+    private int registerLivePageTreeRoot(Map<PdfObjectKey, PdfBase> objects, int maxObjNum) {
+        if (pages == null || parser == null) {
+            return maxObjNum;
+        }
+        PdfDictionary root = pages.getPagesDictionary();
+        if (root == null) {
+            return maxObjNum;
+        }
+        if (root.getObjectKey() == null) {
+            PdfObjectKey key = new PdfObjectKey(++maxObjNum, 0);
+            root.setObjectKey(key);
+            objects.put(key, root);
+            try {
+                // Serialized as "N 0 R" because the dict now carries a key.
+                parser.getCatalog().set(PdfName.PAGES, root);
+            } catch (IOException e) {
+                LOG.fine(() -> "Cannot repoint catalog /Pages at recovered root: " + e.getMessage());
+            }
+        } else if (!objects.containsKey(root.getObjectKey())) {
+            objects.put(root.getObjectKey(), root);
+        }
+        return maxObjNum;
+    }
+
+    /**
+     * Ensures the LIVE catalog (what {@link PDFParser#getCatalog()} actually
+     * resolves, possibly recovered by scanning when the trailer's
+     * {@code /Root} was corrupt) is present in the object map under a key the
+     * trailer references. Companion to {@link #registerLivePageTreeRoot}: a
+     * rewrite that copies the broken trailer verbatim produces a file whose
+     * {@code /Root} points at nothing even though the source document opened
+     * fine through recovery. Mutates the parser trailer so every subsequent
+     * copy inherits the repaired reference. No-op for healthy documents.
+     */
+    private int registerLiveCatalog(Map<PdfObjectKey, PdfBase> objects, int maxObjNum) {
+        if (parser == null) {
+            return maxObjNum;
+        }
+        PdfDictionary catalog;
+        try {
+            catalog = parser.getCatalog();
+        } catch (IOException e) {
+            return maxObjNum; // no catalog recoverable at all — nothing to repair
+        }
+        if (catalog == null) {
+            return maxObjNum;
+        }
+        PdfObjectKey key = catalog.getObjectKey();
+        if (key == null) {
+            key = new PdfObjectKey(++maxObjNum, 0);
+            catalog.setObjectKey(key);
+        }
+        if (objects.get(key) != catalog) {
+            // Also covers a corrupt xref where the /Root key resolved to junk:
+            // the recovered catalog wins the slot.
+            objects.put(key, catalog);
+        }
+        PdfDictionary trailer = parser.getTrailer();
+        if (trailer != null) {
+            PdfBase rootRef = trailer.get(PdfName.of("Root"));
+            PdfObjectKey rootKey = rootRef instanceof PdfObjectReference
+                    ? ((PdfObjectReference) rootRef).getKey() : null;
+            if (!key.equals(rootKey)) {
+                // Serialized as "N 0 R" because the dict carries a key.
+                trailer.set(PdfName.of("Root"), catalog);
+            }
+        }
+        return maxObjNum;
+    }
+
     private void retainReachableObjects(Map<PdfObjectKey, PdfBase> objects, PdfDictionary trailer) {
         Set<PdfObjectKey> reachable = new LinkedHashSet<>();
         java.util.IdentityHashMap<PdfBase, Boolean> visited = new java.util.IdentityHashMap<>();
@@ -3476,109 +4180,235 @@ public void decrypt() throws IOException {
         objects.keySet().retainAll(reachable);
     }
 
-    private void collectReachableFromCos(PdfBase value, Map<PdfObjectKey, PdfBase> objects,
+    private void collectReachableFromCos(PdfBase root, Map<PdfObjectKey, PdfBase> objects,
                                          Set<PdfObjectKey> reachable,
                                          java.util.IdentityHashMap<PdfBase, Boolean> visited) {
-        PdfBase resolved = resolveCosBase(value, objects);
-        if (resolved == null || visited.put(resolved, Boolean.TRUE) != null) {
+        // Iterative DFS: object graphs can be legitimately deep (a linked
+        // chain of thousands of nodes) — recursion overflows the stack.
+        java.util.ArrayDeque<PdfBase> stack = new java.util.ArrayDeque<>();
+        if (root == null) {
             return;
         }
-
-        PdfObjectKey key = resolved.getObjectKey();
-        if (key != null && objects.containsKey(key)) {
-            reachable.add(key);
-        }
-
-        if (value instanceof PdfObjectReference) {
-            PdfObjectKey refKey = ((PdfObjectReference) value).getObjectKey();
-            if (refKey != null && objects.containsKey(refKey)) {
-                reachable.add(refKey);
+        stack.push(root);
+        while (!stack.isEmpty()) {
+            PdfBase value = stack.pop();
+            if (value instanceof PdfObjectReference) {
+                PdfObjectKey refKey = ((PdfObjectReference) value).getKey();
+                if (refKey != null && objects.containsKey(refKey)) {
+                    reachable.add(refKey);
+                }
             }
-        }
-
-        if (resolved instanceof PdfDictionary) {
-            for (Map.Entry<PdfName, PdfBase> entry : (PdfDictionary) resolved) {
-                collectReachableFromCos(entry.getValue(), objects, reachable, visited);
+            PdfBase resolved = resolveCosBase(value, objects);
+            if (resolved == null || visited.put(resolved, Boolean.TRUE) != null) {
+                continue;
             }
-        } else if (resolved instanceof PdfArray) {
-            for (PdfBase item : (PdfArray) resolved) {
-                collectReachableFromCos(item, objects, reachable, visited);
+            PdfObjectKey key = resolved.getObjectKey();
+            if (key != null && objects.containsKey(key)) {
+                reachable.add(key);
+            }
+            if (resolved instanceof PdfDictionary) {
+                for (Map.Entry<PdfName, PdfBase> entry : (PdfDictionary) resolved) {
+                    if (entry.getValue() != null) {
+                        stack.push(entry.getValue());
+                    }
+                }
+            } else if (resolved instanceof PdfArray) {
+                for (PdfBase item : (PdfArray) resolved) {
+                    if (item != null) {
+                        stack.push(item);
+                    }
+                }
             }
         }
     }
 
-    private void pruneUnusedResources(Page page, java.util.IdentityHashMap<PdfDictionary, Boolean> visited)
-            throws IOException {
-        if (page == null) {
+    /**
+     * Prunes unused entries from page resource dictionaries.
+     * <p>
+     * Resource dictionaries may be SHARED between pages (§7.8.3) — commonly a
+     * single {@code /Resources} referenced by every page (LibreOffice/Writer
+     * output). A dictionary is therefore pruned exactly once, against the
+     * UNION of the usage of every page that references it; pruning with a
+     * single page's usage would drop entries that sibling pages still paint
+     * (that bug blanked every image in multi-page shared-resources files).
+     * A page whose content fails to parse marks its dictionary unprunable —
+     * without its usage the union would be incomplete.
+     * </p>
+     */
+    private void pruneUnusedResourcesAcrossPages() throws IOException {
+        // Aspose semantics, established by the C# regression tests:
+        //  - Declared-but-unused NON-STREAM resource entries survive
+        //    OptimizeResources — PDFNET-48122 keeps a /ColorSpace entry (Cs6)
+        //    the content never selects, PDFNET-48125 keeps unused /Font
+        //    entries. So /Font, /ColorSpace, /ExtGState, /Pattern, /Shading
+        //    and /Properties are NEVER pruned by default.
+        //  - RemoveUnusedStreams DOES drop STREAM-valued resources no content
+        //    paints: /XObject entries never referenced by a Do operator and
+        //    /Pattern entries never selected (PDFNET-35187 asserts the exact
+        //    surviving pattern count per extracted page). That is where the
+        //    corpus-scale size wins come from (a page extracted from a large
+        //    document typically drags the whole document's /XObject map with
+        //    it).
+        // -Dopenpdf.prune.entries=all restores aggressive all-category
+        // pruning; =off disables entry pruning entirely.
+        String pruneMode = System.getProperty("openpdf.prune.entries", "xobject");
+        if ("off".equals(pruneMode)) {
             return;
         }
-        Resources resources = page.getResources();
-        if (resources == null) {
-            return;
-        }
-        PdfDictionary resourcesDict = resources.getPdfDictionary();
-        if (resourcesDict == null || visited.put(resourcesDict, Boolean.TRUE) != null) {
-            return;
+        final boolean pruneAllCategories = "all".equals(pruneMode) || "on".equals(pruneMode);
+        java.util.IdentityHashMap<PdfDictionary, ResourceUsage> unions =
+                new java.util.IdentityHashMap<>();
+        for (int i = 1; i <= getPages().getCount(); i++) {
+            Page page = getPages().get(i);
+            if (page == null) {
+                continue;
+            }
+            Resources resources = page.getResources();
+            PdfDictionary resourcesDict = resources == null ? null : resources.getPdfDictionary();
+            if (resourcesDict == null) {
+                continue;
+            }
+            ResourceUsage pageUsage = new ResourceUsage();
+            try {
+                pageUsage = collectResourceUsage(page.getContents());
+            } catch (Exception e) {
+                pageUsage.unsafe = true;
+                LOG.fine(() -> "Content parse failed; resources kept unpruned: " + e.getMessage());
+            }
+            ResourceUsage union = unions.get(resourcesDict);
+            if (union == null) {
+                unions.put(resourcesDict, pageUsage);
+            } else {
+                union.merge(pageUsage);
+            }
         }
 
-        ResourceUsage usage = collectResourceUsage(page.getContents());
-        pruneSubDictionary(resourcesDict, PdfName.of("Font"), usage.fonts);
-        pruneSubDictionary(resourcesDict, PdfName.of("ExtGState"), usage.extGState);
-        pruneSubDictionary(resourcesDict, PdfName.of("ColorSpace"), usage.colorSpaces);
-        pruneSubDictionary(resourcesDict, PdfName.of("Pattern"), usage.patterns);
-        pruneSubDictionary(resourcesDict, PdfName.of("Shading"), usage.shadings);
-        pruneSubDictionary(resourcesDict, PdfName.of("Properties"), usage.properties);
+        // Category sub-dictionaries (/XObject, /Font, ...) are frequently
+        // SHARED between different resources dictionaries — e.g. a page and a
+        // form XObject both pointing at the same indirect /XObject map. Usage
+        // must therefore be unioned PER SUB-DICTIONARY IDENTITY before any
+        // entry is removed; pruning a shared sub-dict against one consumer's
+        // usage blanks the other consumer's content. Phase 1 accumulates the
+        // unions while discovering used form XObjects breadth-first; phase 2
+        // prunes each sub-dict exactly once.
+        java.util.Map<String, java.util.IdentityHashMap<PdfDictionary, Set<String>>> subUnions =
+                new LinkedHashMap<>();
+        java.util.Set<PdfDictionary> unprunable =
+                java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+        java.util.Set<PdfStream> formsSeen =
+                java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+        // Queue entries: [form stream, resources dict of the CONTEXT the form
+        // is painted in]. A form without its own /Resources inherits its
+        // consumer's dictionary (§8.10.1), so its usage must be merged there.
+        java.util.ArrayDeque<Object[]> formQueue = new java.util.ArrayDeque<>();
 
-        PdfDictionary xObjects = resolveDictionary(resourcesDict.get(PdfName.of("XObject")));
-        if (xObjects != null) {
-            for (PdfName name : new java.util.ArrayList<>(xObjects.keySet())) {
-                if (!usage.xObjects.contains(name.getName())) {
-                    xObjects.remove(name);
+        for (java.util.Map.Entry<PdfDictionary, ResourceUsage> e : unions.entrySet()) {
+            accumulateSubDictUsage(e.getKey(), e.getValue(), subUnions, unprunable, formQueue, formsSeen);
+        }
+        while (!formQueue.isEmpty()) {
+            Object[] entry = formQueue.poll();
+            PdfStream form = (PdfStream) entry[0];
+            PdfDictionary parentResources = (PdfDictionary) entry[1];
+            PdfDictionary formResources = resolveDictionary(form.get(PdfName.RESOURCES));
+            if (formResources == null) {
+                formResources = parentResources;
+            }
+            if (formResources == null) {
+                continue;
+            }
+            ResourceUsage formUsage = new ResourceUsage();
+            try {
+                formUsage = collectResourceUsage(
+                        org.aspose.pdf.engine.parser.ContentStreamParser.parseToCollection(form));
+            } catch (Exception ex) {
+                formUsage.unsafe = true;
+                LOG.fine(() -> "Form content parse failed; resources kept unpruned: " + ex.getMessage());
+            }
+            accumulateSubDictUsage(formResources, formUsage, subUnions, unprunable, formQueue, formsSeen);
+        }
+
+        for (java.util.Map.Entry<String, java.util.IdentityHashMap<PdfDictionary, Set<String>>> cat
+                : subUnions.entrySet()) {
+            if (!pruneAllCategories && !"XObject".equals(cat.getKey())
+                    && !"Pattern".equals(cat.getKey())) {
+                continue;
+            }
+            for (java.util.Map.Entry<PdfDictionary, Set<String>> sub : cat.getValue().entrySet()) {
+                PdfDictionary subDict = sub.getKey();
+                if (unprunable.contains(subDict)) {
                     continue;
                 }
-                PdfBase value = xObjects.get(name);
-                PdfStream xObject = resolveStream(value);
-                if (xObject != null && "Form".equals(xObject.getSubtype())) {
-                    pruneUnusedFormResources(xObject, visited);
+                Set<String> used = sub.getValue();
+                for (PdfName name : new java.util.ArrayList<>(subDict.keySet())) {
+                    if (!used.contains(name.getName())) {
+                        subDict.remove(name);
+                    }
                 }
-            }
-            if (xObjects.isEmpty()) {
-                resourcesDict.remove(PdfName.of("XObject"));
+                // An emptied sub-dict stays in place: its parent key may be
+                // shared by resources dictionaries we know nothing about, and
+                // an empty /XObject dict is spec-legal and harmless.
             }
         }
     }
 
-    private void pruneUnusedFormResources(PdfStream formXObject, java.util.IdentityHashMap<PdfDictionary, Boolean> visited)
-            throws IOException {
-        PdfDictionary resourcesDict = resolveDictionary(formXObject.get(PdfName.RESOURCES));
-        if (resourcesDict == null || visited.put(resourcesDict, Boolean.TRUE) != null) {
+    /**
+     * Merges one consumer's usage into the per-sub-dictionary unions and
+     * enqueues the form XObjects that consumer actually paints.
+     */
+    private void accumulateSubDictUsage(PdfDictionary resourcesDict, ResourceUsage usage,
+            java.util.Map<String, java.util.IdentityHashMap<PdfDictionary, Set<String>>> subUnions,
+            java.util.Set<PdfDictionary> unprunable,
+            java.util.ArrayDeque<Object[]> formQueue,
+            java.util.Set<PdfStream> formsSeen) {
+        if (resourcesDict == null) {
             return;
         }
-        OperatorCollection operators = org.aspose.pdf.engine.parser.ContentStreamParser
-                .parseToCollection(formXObject);
-        ResourceUsage usage = collectResourceUsage(operators);
-        pruneSubDictionary(resourcesDict, PdfName.of("Font"), usage.fonts);
-        pruneSubDictionary(resourcesDict, PdfName.of("ExtGState"), usage.extGState);
-        pruneSubDictionary(resourcesDict, PdfName.of("ColorSpace"), usage.colorSpaces);
-        pruneSubDictionary(resourcesDict, PdfName.of("Pattern"), usage.patterns);
-        pruneSubDictionary(resourcesDict, PdfName.of("Shading"), usage.shadings);
-        pruneSubDictionary(resourcesDict, PdfName.of("Properties"), usage.properties);
-
+        String[] categories = {"Font", "ExtGState", "ColorSpace", "Pattern", "Shading", "Properties"};
+        Set<?>[] usageSets = {
+                usage.fonts, usage.extGState, usage.colorSpaces,
+                usage.patterns, usage.shadings, usage.properties,
+        };
+        for (int c = 0; c < categories.length; c++) {
+            String category = categories[c];
+            PdfDictionary sub = resolveDictionary(resourcesDict.get(PdfName.of(category)));
+            if (sub == null) {
+                continue;
+            }
+            if (usage.unsafe) {
+                unprunable.add(sub);
+            } else {
+                @SuppressWarnings("unchecked")
+                Set<String> names = (Set<String>) usageSets[c];
+                subUnions.computeIfAbsent(category, k -> new java.util.IdentityHashMap<>())
+                        .computeIfAbsent(sub, k -> new LinkedHashSet<>())
+                        .addAll(names);
+            }
+        }
         PdfDictionary xObjects = resolveDictionary(resourcesDict.get(PdfName.of("XObject")));
-        if (xObjects != null) {
+        if (xObjects == null) {
+            return;
+        }
+        if (usage.unsafe) {
+            unprunable.add(xObjects);
+            // Every form child may still be painted — walk them all so their
+            // own resources are still pruned against their own usage.
             for (PdfName name : new java.util.ArrayList<>(xObjects.keySet())) {
-                if (!usage.xObjects.contains(name.getName())) {
-                    xObjects.remove(name);
-                    continue;
-                }
-                PdfStream nested = resolveStream(xObjects.get(name));
-                if (nested != null && "Form".equals(nested.getSubtype())) {
-                    pruneUnusedFormResources(nested, visited);
-                }
+                enqueueForm(resolveStream(xObjects.get(name)), resourcesDict, formQueue, formsSeen);
             }
-            if (xObjects.isEmpty()) {
-                resourcesDict.remove(PdfName.of("XObject"));
-            }
+            return;
+        }
+        subUnions.computeIfAbsent("XObject", k -> new java.util.IdentityHashMap<>())
+                .computeIfAbsent(xObjects, k -> new LinkedHashSet<>())
+                .addAll(usage.xObjects);
+        for (String used : usage.xObjects) {
+            enqueueForm(resolveStream(xObjects.get(PdfName.of(used))), resourcesDict, formQueue, formsSeen);
+        }
+    }
+
+    private void enqueueForm(PdfStream candidate, PdfDictionary parentResources,
+            java.util.ArrayDeque<Object[]> formQueue, java.util.Set<PdfStream> formsSeen) {
+        if (candidate != null && "Form".equals(candidate.getSubtype()) && formsSeen.add(candidate)) {
+            formQueue.add(new Object[]{candidate, parentResources});
         }
     }
 
@@ -3636,21 +4466,6 @@ public void decrypt() throws IOException {
         }
     }
 
-    private void pruneSubDictionary(PdfDictionary resourcesDict, PdfName key, Set<String> usedNames) {
-        PdfDictionary subDict = resolveDictionary(resourcesDict.get(key));
-        if (subDict == null) {
-            return;
-        }
-        for (PdfName name : new java.util.ArrayList<>(subDict.keySet())) {
-            if (!usedNames.contains(name.getName())) {
-                subDict.remove(name);
-            }
-        }
-        if (subDict.isEmpty()) {
-            resourcesDict.remove(key);
-        }
-    }
-
     private PdfDictionary resolveDictionary(PdfBase base) {
         PdfBase resolved = resolveCosBase(base, java.util.Collections.emptyMap());
         return resolved instanceof PdfDictionary ? (PdfDictionary) resolved : null;
@@ -3663,7 +4478,11 @@ public void decrypt() throws IOException {
 
     private PdfBase resolveCosBase(PdfBase base, Map<PdfObjectKey, PdfBase> objects) {
         if (base instanceof PdfObjectReference) {
-            PdfObjectKey key = ((PdfObjectReference) base).getObjectKey();
+            // A reference's TARGET is getKey(); getObjectKey() is the (usually
+            // null) identity of the reference value itself. Parsed trailers
+            // carry resolver-less references, so the map lookup must come
+            // first or reachability dies at the root (optimizeResources).
+            PdfObjectKey key = ((PdfObjectReference) base).getKey();
             if (key != null && objects.containsKey(key)) {
                 return objects.get(key);
             }
@@ -3685,6 +4504,19 @@ public void decrypt() throws IOException {
         private final Set<String> patterns = new LinkedHashSet<>();
         private final Set<String> shadings = new LinkedHashSet<>();
         private final Set<String> properties = new LinkedHashSet<>();
+        /** When true the owning dict must not be pruned (a user's content failed to parse). */
+        private boolean unsafe;
+
+        void merge(ResourceUsage other) {
+            fonts.addAll(other.fonts);
+            xObjects.addAll(other.xObjects);
+            extGState.addAll(other.extGState);
+            colorSpaces.addAll(other.colorSpaces);
+            patterns.addAll(other.patterns);
+            shadings.addAll(other.shadings);
+            properties.addAll(other.properties);
+            unsafe |= other.unsafe;
+        }
     }
 
     /**

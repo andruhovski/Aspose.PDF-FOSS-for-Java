@@ -149,23 +149,23 @@ public class PdfSigner {
 
         if (reason != null) {
             sigDict.set(PdfName.of("Reason"),
-                    new PdfString(reason.getBytes(StandardCharsets.UTF_8)));
+                    new PdfString(reason));
         }
         if (contact != null) {
             sigDict.set(PdfName.of("ContactInfo"),
-                    new PdfString(contact.getBytes(StandardCharsets.UTF_8)));
+                    new PdfString(contact));
         }
         if (location != null) {
             sigDict.set(PdfName.of("Location"),
-                    new PdfString(location.getBytes(StandardCharsets.UTF_8)));
+                    new PdfString(location));
         }
         String signerName = certificate.getSubjectX500Principal().getName();
         sigDict.set(PdfName.of("Name"),
-                new PdfString(signerName.getBytes(StandardCharsets.UTF_8)));
+                new PdfString(signerName));
 
         SimpleDateFormat sdf = new SimpleDateFormat("'D:'yyyyMMddHHmmssZ");
         sigDict.set(PdfName.of("M"),
-                new PdfString(sdf.format(new Date()).getBytes(StandardCharsets.UTF_8)));
+                new PdfString(sdf.format(new Date())));
 
         // ByteRange placeholder — will be overwritten after serialization
         // Use large placeholder values to ensure enough space for actual offsets
@@ -207,7 +207,7 @@ public class PdfSigner {
             PdfDictionary fieldDict = new PdfDictionary();
             fieldDict.set(PdfName.of("FT"), PdfName.of("Sig"));
             fieldDict.set(PdfName.of("T"),
-                    new PdfString(name.getBytes(StandardCharsets.UTF_8)));
+                    new PdfString(name));
             // Invisible annotation rect
             PdfArray rect = new PdfArray();
             rect.add(PdfInteger.valueOf(0)); rect.add(PdfInteger.valueOf(0));

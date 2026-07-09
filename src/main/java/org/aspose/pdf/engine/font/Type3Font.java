@@ -92,6 +92,19 @@ public class Type3Font extends PdfFont {
     }
 
     /**
+     * Type 3 /Widths are in glyph space; the advance in text space is obtained
+     * by scaling with the font's /FontMatrix horizontal factor rather than the
+     * fixed 1/1000 of other font types (§9.6.5). This mirrors the renderer's
+     * {@code wGlyph * FontMatrix.a} advance in {@code TextRenderer}.
+     *
+     * @return the /FontMatrix horizontal scale
+     */
+    @Override
+    public double getWidthUnitScale() {
+        return getFontMatrix().getA();
+    }
+
+    /**
      * Returns the /FontMatrix mapping glyph space to text space (§9.6.5).
      * Unlike all other font types (fixed 1/1000 scale), Type3 declares its
      * own matrix — glyph coordinates AND /Widths values are in glyph space
