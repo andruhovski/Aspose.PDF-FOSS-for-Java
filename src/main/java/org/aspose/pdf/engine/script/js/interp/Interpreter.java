@@ -104,15 +104,37 @@ public final class Interpreter {
      */
     public Object run(Node.Program program) {
         steps = 0; // fresh execution budget per top-level script
-        hoist(program.body, realm.globalObject, globalScope);
-        Object last = UNDEF;
-        for (Node stmt : program.body) {
-            Object v = execStmt(stmt, globalScope);
-            if (v != null) {
-                last = v;
+        try {
+            hoist(program.body, realm.globalObject, globalScope);
+            Object last = UNDEF;
+            for (Node stmt : program.body) {
+                Object v = execStmt(stmt, globalScope);
+                if (v != null) {
+                    last = v;
+                }
             }
+            return last;
+        } catch (StackOverflowError e) {
+            throw hostStackExhausted();
         }
-        return last;
+    }
+
+    /**
+     * Converts a JVM {@link StackOverflowError} into the controlled execution
+     * abort. The MAX_CALL_DEPTH guard caps <em>script</em> recursion, but a
+     * script that keeps recursing from inside {@code catch} blocks stacks a
+     * fresh Java frame layer per caught RangeError, so on hosts with a small
+     * thread stack the JVM can overflow before the step budget triggers. At
+     * this point the stack has already unwound to the top-level entry, so
+     * mapping the error to {@link JsExecutionLimitError} is safe and keeps the
+     * host contract: scripts terminate with a RuntimeException, never an Error.
+     *
+     * @return the limit error to throw (never returns normally)
+     */
+    private JsExecutionLimitError hostStackExhausted() {
+        callDepth = 0; // finally-based unwinding may have been skipped mid-overflow
+        return new JsExecutionLimitError(
+                "Maximum call stack size exceeded (host thread stack exhausted)");
     }
 
     /**
@@ -140,6 +162,8 @@ public final class Interpreter {
                 }
             }
             return last;
+        } catch (StackOverflowError e) {
+            throw hostStackExhausted();
         } finally {
             thisStack.pop();
         }
