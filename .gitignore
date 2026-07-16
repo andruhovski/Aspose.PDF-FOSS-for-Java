@@ -1,0 +1,4 @@
+target/
+*.asc
+.secrets
+.env.act
