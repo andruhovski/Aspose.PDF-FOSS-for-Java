@@ -7,33 +7,25 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.logging.Logger;
 
-/**
- * RunLengthDecode filter (§7.4.5, ISO 32000-1:2008).
- * <p>
- * Simple run-length encoding. A length byte controls interpretation:
- * <ul>
- *   <li>0–127: copy the next (length + 1) bytes literally</li>
- *   <li>129–255: repeat the next byte (257 − length) times</li>
- *   <li>128: end of data (EOD)</li>
- * </ul>
- * </p>
- */
+/// RunLengthDecode filter (§7.4.5, ISO 32000-1:2008).
+///
+/// Simple run-length encoding. A length byte controls interpretation:
+///
+///   - 0–127: copy the next (length + 1) bytes literally
+///   - 129–255: repeat the next byte (257 − length) times
+///   - 128: end of data (EOD)
 public final class RunLengthFilter implements PdfFilter {
 
     private static final Logger LOG = Logger.getLogger(RunLengthFilter.class.getName());
 
     private static final int EOD = 128;
 
-    /**
-     * Creates a RunLengthFilter instance.
-     */
+    /// Creates a RunLengthFilter instance.
     public RunLengthFilter() {
         // Stateless
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /// {@inheritDoc}
     @Override
     public byte[] decode(byte[] encoded, PdfDictionary params) throws IOException {
         if (encoded == null || encoded.length == 0) {
@@ -80,9 +72,7 @@ public final class RunLengthFilter implements PdfFilter {
         return out.toByteArray();
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /// {@inheritDoc}
     @Override
     public byte[] encode(byte[] decoded, PdfDictionary params) throws IOException {
         if (decoded == null || decoded.length == 0) {
@@ -134,9 +124,7 @@ public final class RunLengthFilter implements PdfFilter {
         return out.toByteArray();
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /// {@inheritDoc}
     @Override
     public PdfName getName() {
         return PdfName.RUN_LENGTH_DECODE;

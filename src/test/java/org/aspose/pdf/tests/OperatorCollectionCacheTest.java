@@ -21,14 +21,12 @@ import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for the per-Page {@link OperatorCollection} cache introduced to fix
- * sub-bug (e): operator mutations (e.g. {@code TextFragment.setText}) must be
- * flushed back into {@code /Contents} on save.
- */
+/// Tests for the per-Page [OperatorCollection] cache introduced to fix
+/// sub-bug (e): operator mutations (e.g. `TextFragment.setText`) must be
+/// flushed back into `/Contents` on save.
 public class OperatorCollectionCacheTest {
 
-    /** Builds a standalone Page with a simple content stream and F1=Helvetica. */
+    /// Builds a standalone Page with a simple content stream and F1=Helvetica.
     private static Page createPageWithText(String contentStreamText) {
         PdfDictionary fontDict = new PdfDictionary();
         fontDict.set(PdfName.TYPE, PdfName.of("Font"));
@@ -53,11 +51,9 @@ public class OperatorCollectionCacheTest {
         return new Page(pageDict, null);
     }
 
-    /**
-     * Builds a Document containing a single page whose content stream shows
-     * {@code body} once via {@code Tj}. Round-trips via byte array so callers
-     * can reopen and verify persistence.
-     */
+    /// Builds a Document containing a single page whose content stream shows
+    /// `body` once via `Tj`. Round-trips via byte array so callers
+    /// can reopen and verify persistence.
     private static byte[] buildDocBytesWithText(String body) throws IOException {
         Document doc = new Document();
         Page page = doc.getPages().add();
@@ -83,10 +79,8 @@ public class OperatorCollectionCacheTest {
         return baos.toByteArray();
     }
 
-    /**
-     * Builds a Document whose single page has {@code count} {@code Tj} operators
-     * each rendering the same {@code marker} text.
-     */
+    /// Builds a Document whose single page has `count``Tj` operators
+    /// each rendering the same `marker` text.
     private static byte[] buildDocBytesWithRepeatedText(String marker, int count) throws IOException {
         Document doc = new Document();
         Page page = doc.getPages().add();

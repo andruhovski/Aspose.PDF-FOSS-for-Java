@@ -11,11 +11,9 @@ import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link JBIG2DecodeFilter} and {@link ArithmeticDecoder}.
- * Covers arithmetic decoding, generic regions, symbol dictionaries,
- * text regions, global segments, and edge cases.
- */
+/// Tests for [JBIG2DecodeFilter] and [ArithmeticDecoder].
+/// Covers arithmetic decoding, generic regions, symbol dictionaries,
+/// text regions, global segments, and edge cases.
 public class JBIG2DecodeFilterTest {
 
     private final JBIG2DecodeFilter filter = new JBIG2DecodeFilter();

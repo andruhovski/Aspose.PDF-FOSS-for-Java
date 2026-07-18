@@ -4,29 +4,25 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.logging.Logger;
 
-/**
- * Handles byte range computation and PKCS#7 signature embedding in PDF files
- * (ISO 32000-1:2008, §12.8.1).
- * <p>
- * The /ByteRange array specifies which bytes of the PDF are covered by the
- * signature. It excludes the /Contents hex value so that the signature can
- * be embedded after the digest is computed.
- * </p>
- */
+/// Handles byte range computation and PKCS#7 signature embedding in PDF files
+/// (ISO 32000-1:2008, §12.8.1).
+///
+/// The /ByteRange array specifies which bytes of the PDF are covered by the
+/// signature. It excludes the /Contents hex value so that the signature can
+/// be embedded after the digest is computed.
+///
 final class PdfSignatureEmbedder {
 
     private static final Logger LOG = Logger.getLogger(PdfSignatureEmbedder.class.getName());
 
     private PdfSignatureEmbedder() {}
 
-    /**
-     * Finds the start offset of the /Contents hex string value in the PDF bytes.
-     * Searches for the pattern {@code /Contents <} and returns the offset of the
-     * first hex digit after the opening angle bracket.
-     *
-     * @param pdfBytes the serialized PDF
-     * @return the offset, or -1 if not found
-     */
+    /// Finds the start offset of the /Contents hex string value in the PDF bytes.
+    /// Searches for the pattern `/Contents <` and returns the offset of the
+    /// first hex digit after the opening angle bracket.
+    ///
+    /// @param pdfBytes the serialized PDF
+    /// @return the offset, or -1 if not found
     static int findContentsHexStart(byte[] pdfBytes) {
         byte[] pattern = "/Contents <".getBytes(StandardCharsets.US_ASCII);
         for (int i = 0; i < pdfBytes.length - pattern.length; i++) {
@@ -44,13 +40,11 @@ final class PdfSignatureEmbedder {
         return -1;
     }
 
-    /**
-     * Finds the end of the /Contents hex string (the closing angle bracket).
-     *
-     * @param pdfBytes the serialized PDF
-     * @param hexStart the start offset of hex digits
-     * @return the offset of '>', or -1 if not found
-     */
+    /// Finds the end of the /Contents hex string (the closing angle bracket).
+    ///
+    /// @param pdfBytes the serialized PDF
+    /// @param hexStart the start offset of hex digits
+    /// @return the offset of '>', or -1 if not found
     static int findContentsHexEnd(byte[] pdfBytes, int hexStart) {
         for (int i = hexStart; i < pdfBytes.length; i++) {
             if (pdfBytes[i] == '>') return i;
@@ -58,19 +52,16 @@ final class PdfSignatureEmbedder {
         return -1;
     }
 
-    /**
-     * Computes the byte range from the saved PDF.
-     * <p>
-     * The byte range consists of two intervals: [0, before_contents) and
-     * (after_contents, EOF]. The /Contents hex value (including angle brackets)
-     * is excluded from the signed data.
-     * </p>
-     *
-     * @param pdfBytes        the serialized PDF
-     * @param contentsHexStart offset of first hex digit in /Contents
-     * @param contentsHexEnd   offset of closing '>' in /Contents
-     * @return int[4]: {offset1, length1, offset2, length2}
-     */
+    /// Computes the byte range from the saved PDF.
+    ///
+    /// The byte range consists of two intervals: [0, before\_contents) and
+    /// (after\_contents, EOF]. The /Contents hex value (including angle brackets)
+    /// is excluded from the signed data.
+    ///
+    /// @param pdfBytes        the serialized PDF
+    /// @param contentsHexStart offset of first hex digit in /Contents
+    /// @param contentsHexEnd   offset of closing '>' in /Contents
+    /// @return int[4]: {offset1, length1, offset2, length2}
     static int[] computeByteRange(byte[] pdfBytes, int contentsHexStart, int contentsHexEnd) {
         // The '<' is at contentsHexStart - 1, so the signed region before is [0, contentsHexStart - 1)
         int beforeEnd = contentsHexStart - 1; // offset of '<'
@@ -81,14 +72,12 @@ final class PdfSignatureEmbedder {
         return new int[]{0, beforeEnd, afterStart, afterLen};
     }
 
-    /**
-     * Extracts the signed bytes from a PDF based on the byte range.
-     * Concatenates the two signed regions.
-     *
-     * @param pdfBytes  the serialized PDF
-     * @param byteRange the 4-element byte range array
-     * @return the concatenated signed bytes
-     */
+    /// Extracts the signed bytes from a PDF based on the byte range.
+    /// Concatenates the two signed regions.
+    ///
+    /// @param pdfBytes  the serialized PDF
+    /// @param byteRange the 4-element byte range array
+    /// @return the concatenated signed bytes
     static byte[] extractSignedBytes(byte[] pdfBytes, int[] byteRange) {
         int totalLen = byteRange[1] + byteRange[3];
         byte[] result = new byte[totalLen];
@@ -99,16 +88,14 @@ final class PdfSignatureEmbedder {
         return result;
     }
 
-    /**
-     * Embeds a PKCS#7 signature into the /Contents hex placeholder.
-     * The signature bytes are hex-encoded and zero-padded to fill the placeholder.
-     *
-     * @param pdfBytes         the mutable PDF byte array
-     * @param contentsHexStart offset of first hex digit
-     * @param hexSize          total hex characters available
-     * @param pkcs7Bytes       the DER-encoded PKCS#7 signature
-     * @throws IOException if the signature is too large for the placeholder
-     */
+    /// Embeds a PKCS#7 signature into the /Contents hex placeholder.
+    /// The signature bytes are hex-encoded and zero-padded to fill the placeholder.
+    ///
+    /// @param pdfBytes         the mutable PDF byte array
+    /// @param contentsHexStart offset of first hex digit
+    /// @param hexSize          total hex characters available
+    /// @param pkcs7Bytes       the DER-encoded PKCS#7 signature
+    /// @throws IOException if the signature is too large for the placeholder
     static void embedSignature(byte[] pdfBytes, int contentsHexStart, int hexSize,
                                byte[] pkcs7Bytes) throws IOException {
         if (pkcs7Bytes.length * 2 > hexSize) {
@@ -126,14 +113,12 @@ final class PdfSignatureEmbedder {
         System.arraycopy(hexBytes, 0, pdfBytes, contentsHexStart, hexSize);
     }
 
-    /**
-     * Updates the /ByteRange array in the PDF bytes with actual values.
-     * Searches for the placeholder {@code /ByteRange [0 0 0 0]} pattern
-     * and replaces it with the actual values.
-     *
-     * @param pdfBytes  the mutable PDF byte array
-     * @param byteRange the 4-element byte range array
-     */
+    /// Updates the /ByteRange array in the PDF bytes with actual values.
+    /// Searches for the placeholder `/ByteRange [0 0 0 0]` pattern
+    /// and replaces it with the actual values.
+    ///
+    /// @param pdfBytes  the mutable PDF byte array
+    /// @param byteRange the 4-element byte range array
     static void updateByteRange(byte[] pdfBytes, int[] byteRange) {
         // Find the /ByteRange array in the PDF
         byte[] brPattern = "/ByteRange [".getBytes(StandardCharsets.US_ASCII);

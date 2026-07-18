@@ -1,42 +1,37 @@
 package org.aspose.pdf.forms;
 
-import org.aspose.pdf.*;
+import org.aspose.pdf.Page;
+import org.aspose.pdf.Rectangle;
 import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.util.logging.Logger;
 
-/**
- * Signature field (/FT /Sig) (ISO 32000-1:2008, §12.7.4.5).
- * <p>
- * Represents a digital signature field in an interactive form.
- * Provides access to the signature dictionary (/V) and its entries
- * such as /Reason, /Location, /Name, /M, /ByteRange, and /Contents.
- * </p>
- */
+/// Signature field (/FT /Sig) (ISO 32000-1:2008, §12.7.4.5).
+///
+/// Represents a digital signature field in an interactive form.
+/// Provides access to the signature dictionary (/V) and its entries
+/// such as /Reason, /Location, /Name, /M, /ByteRange, and /Contents.
+///
 public class SignatureField extends Field {
 
     private static final Logger LOG = Logger.getLogger(SignatureField.class.getName());
 
-    /**
-     * Constructs a signature field from an existing PDF dictionary.
-     *
-     * @param dict     the PDF dictionary backing this field
-     * @param page     the page this field belongs to (may be null)
-     * @param fullName the fully-qualified dotted name
-     */
+    /// Constructs a signature field from an existing PDF dictionary.
+    ///
+    /// @param dict     the PDF dictionary backing this field
+    /// @param page     the page this field belongs to (may be null)
+    /// @param fullName the fully-qualified dotted name
     public SignatureField(PdfDictionary dict, Page page, String fullName) {
         super(dict, page, fullName);
     }
 
-    /**
-     * Creates a new, unsigned signature field on the given page at the given
-     * rectangle. The field has no value ({@code /V}) until a signing operation
-     * populates it.
-     *
-     * @param page the page on which the field's widget annotation appears
-     * @param rect the field's bounding rectangle in page coordinates
-     * @throws IllegalArgumentException if {@code page} or {@code rect} is null
-     */
+    /// Creates a new, unsigned signature field on the given page at the given
+    /// rectangle. The field has no value (`/V`) until a signing operation
+    /// populates it.
+    ///
+    /// @param page the page on which the field's widget annotation appears
+    /// @param rect the field's bounding rectangle in page coordinates
+    /// @throws IllegalArgumentException if `page` or `rect` is null
     public SignatureField(Page page, Rectangle rect) {
         super(new PdfDictionary(), page, "");
         if (page == null) throw new IllegalArgumentException("page must not be null");
@@ -47,23 +42,18 @@ public class SignatureField extends Field {
         setRectLenient(rect);
     }
 
-    /**
-     * Returns whether this signature field has been signed.
-     * <p>
-     * A field is considered signed if it has a /V entry (signature dictionary).
-     * </p>
-     *
-     * @return true if the field is signed
-     */
+    /// Returns whether this signature field has been signed.
+    ///
+    /// A field is considered signed if it has a /V entry (signature dictionary).
+    ///
+    /// @return true if the field is signed
     public boolean isSigned() {
         return dict.get("V") != null;
     }
 
-    /**
-     * Returns the signature dictionary (/V entry).
-     *
-     * @return the signature dictionary, or null if not signed
-     */
+    /// Returns the signature dictionary (/V entry).
+    ///
+    /// @return the signature dictionary, or null if not signed
     public PdfDictionary getSignatureDictionary() {
         PdfBase v = dict.get("V");
         if (v instanceof PdfObjectReference) {
@@ -76,60 +66,48 @@ public class SignatureField extends Field {
         return (v instanceof PdfDictionary) ? (PdfDictionary) v : null;
     }
 
-    /**
-     * Sets the signature dictionary (/V entry).
-     *
-     * @param sigDict the signature dictionary
-     */
+    /// Sets the signature dictionary (/V entry).
+    ///
+    /// @param sigDict the signature dictionary
     public void setSignatureDictionary(PdfDictionary sigDict) {
         dict.set(PdfName.of("V"), sigDict);
     }
 
-    /**
-     * Returns the signing reason from the signature dictionary.
-     *
-     * @return the reason string, or null
-     */
+    /// Returns the signing reason from the signature dictionary.
+    ///
+    /// @return the reason string, or null
     public String getReason() {
         PdfDictionary sig = getSignatureDictionary();
         return sig != null ? getStringFromDict(sig, "Reason") : null;
     }
 
-    /**
-     * Returns the signing location from the signature dictionary.
-     *
-     * @return the location string, or null
-     */
+    /// Returns the signing location from the signature dictionary.
+    ///
+    /// @return the location string, or null
     public String getLocation() {
         PdfDictionary sig = getSignatureDictionary();
         return sig != null ? getStringFromDict(sig, "Location") : null;
     }
 
-    /**
-     * Returns the signer name from the signature dictionary (/Name).
-     *
-     * @return the signer name, or null
-     */
+    /// Returns the signer name from the signature dictionary (/Name).
+    ///
+    /// @return the signer name, or null
     public String getSignerName() {
         PdfDictionary sig = getSignatureDictionary();
         return sig != null ? getStringFromDict(sig, "Name") : null;
     }
 
-    /**
-     * Returns the signing date from the signature dictionary (/M).
-     *
-     * @return the date string in PDF format, or null
-     */
+    /// Returns the signing date from the signature dictionary (/M).
+    ///
+    /// @return the date string in PDF format, or null
     public String getDate() {
         PdfDictionary sig = getSignatureDictionary();
         return sig != null ? getStringFromDict(sig, "M") : null;
     }
 
-    /**
-     * Returns the byte range array from the signature dictionary.
-     *
-     * @return int[4] of byte range values, or null
-     */
+    /// Returns the byte range array from the signature dictionary.
+    ///
+    /// @return int[4] of byte range values, or null
     public int[] getByteRange() {
         PdfDictionary sig = getSignatureDictionary();
         if (sig == null) return null;
@@ -140,11 +118,9 @@ public class SignatureField extends Field {
         return new int[]{arr.getInt(0, 0), arr.getInt(1, 0), arr.getInt(2, 0), arr.getInt(3, 0)};
     }
 
-    /**
-     * Returns the PKCS#7 signature bytes from /Contents.
-     *
-     * @return the raw signature bytes, or null
-     */
+    /// Returns the PKCS#7 signature bytes from /Contents.
+    ///
+    /// @return the raw signature bytes, or null
     public byte[] getSignatureBytes() {
         PdfDictionary sig = getSignatureDictionary();
         if (sig == null) return null;
@@ -155,22 +131,18 @@ public class SignatureField extends Field {
         return null;
     }
 
-    /**
-     * Returns the signature filter name (/Filter).
-     *
-     * @return the filter name (e.g. "Adobe.PPKLite"), or null
-     */
+    /// Returns the signature filter name (/Filter).
+    ///
+    /// @return the filter name (e.g. "Adobe.PPKLite"), or null
     public String getFilter() {
         PdfDictionary sig = getSignatureDictionary();
         if (sig == null) return null;
         return sig.getNameAsString("Filter");
     }
 
-    /**
-     * Returns the signature sub-filter name (/SubFilter).
-     *
-     * @return the sub-filter name (e.g. "adbe.pkcs7.detached"), or null
-     */
+    /// Returns the signature sub-filter name (/SubFilter).
+    ///
+    /// @return the sub-filter name (e.g. "adbe.pkcs7.detached"), or null
     public String getSubFilter() {
         PdfDictionary sig = getSignatureDictionary();
         if (sig == null) return null;

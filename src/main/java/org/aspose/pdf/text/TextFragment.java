@@ -1,47 +1,28 @@
 package org.aspose.pdf.text;
 
-import org.aspose.pdf.BaseParagraph;
-import org.aspose.pdf.Operator;
-import org.aspose.pdf.OperatorCollection;
-import org.aspose.pdf.Page;
-import org.aspose.pdf.Rectangle;
-import org.aspose.pdf.engine.layout.TextLayoutHelper;
-import org.aspose.pdf.engine.text.TextExtractor;
+import org.aspose.pdf.*;
 import org.aspose.pdf.engine.font.PdfFont;
-import org.aspose.pdf.engine.pdfobjects.PdfArray;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfFloat;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfStream;
-import org.aspose.pdf.engine.pdfobjects.PdfString;
-import org.aspose.pdf.operators.BT;
-import org.aspose.pdf.operators.ET;
-import org.aspose.pdf.operators.MoveToNextLineShowText;
-import org.aspose.pdf.operators.SelectFont;
-import org.aspose.pdf.operators.SetGlyphsPositionShowText;
-import org.aspose.pdf.operators.SetSpacingMoveToNextLineShowText;
-import org.aspose.pdf.operators.ShowText;
+import org.aspose.pdf.engine.layout.TextLayoutHelper;
+import org.aspose.pdf.engine.pdfobjects.*;
+import org.aspose.pdf.engine.text.TextExtractor;
+import org.aspose.pdf.operators.*;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
-/**
- * Represents a fragment of text extracted from a PDF page.
- * <p>
- * A text fragment has a text value, position, bounding rectangle, and one or
- * more {@link TextSegment}s that may have different formatting. The text state
- * of the fragment is delegated to its first segment.
- * </p>
- * <p>
- * When a fragment was extracted from a page via {@link TextFragmentAbsorber},
- * calling {@link #setText(String)} will update the underlying content stream
- * so that the change is reflected when the document is saved.
- * </p>
- */
+/// Represents a fragment of text extracted from a PDF page.
+///
+/// A text fragment has a text value, position, bounding rectangle, and one or
+/// more [TextSegment]s that may have different formatting. The text state
+/// of the fragment is delegated to its first segment.
+///
+/// When a fragment was extracted from a page via [TextFragmentAbsorber],
+/// calling [#setText(String)] will update the underlying content stream
+/// so that the change is reflected when the document is saved.
+///
 public class TextFragment extends BaseParagraph {
 
     private static final Logger LOG = Logger.getLogger(TextFragment.class.getName());
@@ -68,8 +49,8 @@ public class TextFragment extends BaseParagraph {
     private PdfFont sourceFont;
 
     // Raw /Tf operand size of the source show operator. TextState.getFontSize()
-    // reports the EFFECTIVE size (Tf × Tm scale, matching Aspose), but content-
-    // stream math — the TJ compensation in replaceTextOp — works in unscaled
+    // reports the EFFECTIVE size (Tf × Tm scale, matching Aspose),
+    // but content-stream math — the TJ compensation in replaceTextOp — works in unscaled
     // text space where only the raw Tf size is correct (character spacing does
     // not cancel out of n = Δadv·1000/Tfs). ≤0 when unknown.
     private double sourceTfSize = -1;
@@ -106,11 +87,9 @@ public class TextFragment extends BaseParagraph {
     private java.util.List<java.util.List<Operator>> sourceUnderlineOpGroups;
     private OperatorCollection sourceUnderlineCollection;
 
-    /**
-     * Creates a TextFragment with the given text.
-     *
-     * @param text the fragment text
-     */
+    /// Creates a TextFragment with the given text.
+    ///
+    /// @param text the fragment text
     public TextFragment(String text) {
         this.text = text != null ? text : "";
         this.segments = new ArrayList<>();
@@ -118,32 +97,25 @@ public class TextFragment extends BaseParagraph {
         this.segments.add(new TextSegment(this.text));
     }
 
-    /**
-     * Creates an empty TextFragment.
-     */
+    /// Creates an empty TextFragment.
     public TextFragment() {
         this("");
     }
 
-    /**
-     * Returns the text content.
-     *
-     * @return the text
-     */
+    /// Returns the text content.
+    ///
+    /// @return the text
     public String getText() {
         return text;
     }
 
-    /**
-     * Sets the text content.
-     * <p>
-     * If this fragment was extracted from a page (via {@code TextFragmentAbsorber}),
-     * this method also updates the underlying content stream operator so the change
-     * is reflected when the document is saved.
-     * </p>
-     *
-     * @param text the new text value
-     */
+    /// Sets the text content.
+    ///
+    /// If this fragment was extracted from a page (via `TextFragmentAbsorber`),
+    /// this method also updates the underlying content stream operator so the change
+    /// is reflected when the document is saved.
+    ///
+    /// @param text the new text value
     public void setText(String text) {
         String oldText = this.text != null ? this.text : "";
         this.text = text != null ? text : "";
@@ -277,23 +249,20 @@ public class TextFragment extends BaseParagraph {
         return fontName;
     }
 
-    /**
-     * Updates the content stream operator(s) that produced this fragment.
-     * <p>
-     * Mutates the page's cached {@link OperatorCollection} in place and then
-     * marks the page dirty so {@link Page#flushContentsIfDirty()} serialises
-     * the change back into {@code /Contents} during the next save.
-     * </p>
-     * <p>
-     * If the fragment spans a range of adjacent text-showing operators
-     * (kerning-split Tj/TJ within a single BT..ET), the range is tracked via
-     * {@link #getLastSourceOperatorIndex()}. The first operator is replaced
-     * with the new text; intermediate text-showing operators have their text
-     * cleared so they no longer re-assemble into the original phrase on
-     * reload. Non-text-showing ops (Td, Tm, Tf, ...) within the range are
-     * left untouched so positioning is preserved.
-     * </p>
-     */
+    /// Updates the content stream operator(s) that produced this fragment.
+    ///
+    /// Mutates the page's cached [OperatorCollection] in place and then
+    /// marks the page dirty so [Page#flushContentsIfDirty()] serialises
+    /// the change back into `/Contents` during the next save.
+    ///
+    /// If the fragment spans a range of adjacent text-showing operators
+    /// (kerning-split Tj/TJ within a single BT..ET), the range is tracked via
+    /// [#getLastSourceOperatorIndex()]. The first operator is replaced
+    /// with the new text; intermediate text-showing operators have their text
+    /// cleared so they no longer re-assemble into the original phrase on
+    /// reload. Non-text-showing ops (Td, Tm, Tf, ...) within the range are
+    /// left untouched so positioning is preserved.
+    ///
     private void updateContentStream(String oldText, String newText) throws IOException {
         OperatorCollection ops = sourceOperators != null
                 ? sourceOperators
@@ -372,7 +341,7 @@ public class TextFragment extends BaseParagraph {
         }
     }
 
-    /** Returns the 0-based index of {@code op} in {@code ops} by reference, or -1. */
+    /// Returns the 0-based index of `op` in `ops` by reference, or -1.
     private static int indexOfByIdentity(OperatorCollection ops, Operator op) {
         if (op == null) return -1;
         for (int i = 0; i < ops.size(); i++) {
@@ -381,14 +350,12 @@ public class TextFragment extends BaseParagraph {
         return -1;
     }
 
-    /**
-     * Inserts a copy of the currently active {@code Tf} (font selection)
-     * operator immediately after {@code textShowIdx}. Walks backwards within
-     * the enclosing {@code BT..ET} block to find the most recent SelectFont
-     * and clones its font name + size. No-op if none is found (e.g. the
-     * modified op sits outside a text object, which would be a malformed
-     * content stream).
-     */
+    /// Inserts a copy of the currently active `Tf` (font selection)
+    /// operator immediately after `textShowIdx`. Walks backwards within
+    /// the enclosing `BT..ET` block to find the most recent SelectFont
+    /// and clones its font name + size. No-op if none is found (e.g. the
+    /// modified op sits outside a text object, which would be a malformed
+    /// content stream).
     private static int insertFontRestoreAfter(OperatorCollection ops, int textShowIdx) {
         if (textShowIdx < 0 || textShowIdx + 1 > ops.size()) {
             return -1;
@@ -445,22 +412,19 @@ public class TextFragment extends BaseParagraph {
         return replaceTextOp(ops, idx, replaced);
     }
 
-    /**
-     * Replaces {@code oldText} with {@code newText} inside a single text-showing
-     * operator while keeping any text that follows the replaced run on the same
-     * line in its original position (TextReplaceOptions.AdjustSpaceWidth).
-     * <p>
-     * The operator is rewritten as a {@code TJ} array
-     * {@code [(prefix+newText) adj (suffix)]} where {@code adj} is a numeric
-     * displacement, in thousandths of a text-space unit, equal to the exact
-     * glyph-advance difference between the old and new text measured in the
-     * embedded font. Because the renderer applies the same glyph metrics, the
-     * total advance of the operator is left unchanged, so the suffix — and every
-     * operator positioned relative to the end of this one — stays put.
-     * </p>
-     *
-     * @return {@code true} if the operator was rewritten
-     */
+    /// Replaces `oldText` with `newText` inside a single text-showing
+    /// operator while keeping any text that follows the replaced run on the same
+    /// line in its original position (TextReplaceOptions.AdjustSpaceWidth).
+    ///
+    /// The operator is rewritten as a `TJ` array
+    /// `[(prefix+newText) adj (suffix)]` where `adj` is a numeric
+    /// displacement, in thousandths of a text-space unit, equal to the exact
+    /// glyph-advance difference between the old and new text measured in the
+    /// embedded font. Because the renderer applies the same glyph metrics, the
+    /// total advance of the operator is left unchanged, so the suffix — and every
+    /// operator positioned relative to the end of this one — stays put.
+    ///
+    /// @return `true` if the operator was rewritten
     private boolean replaceTextInSingleOpAdjustSpace(OperatorCollection ops, int idx,
                                                      String oldText, String newText) {
         if (sourceFont == null) {
@@ -518,12 +482,10 @@ public class TextFragment extends BaseParagraph {
         return true;
     }
 
-    /**
-     * Sums the text-space glyph advances (in Tf-size units) of {@code text} in
-     * {@link #sourceFont}, including character spacing and word spacing, using
-     * the ISO-8859-1 byte codes that {@link #replaceTextOp} writes to the
-     * content stream so the measurement matches what the renderer will consume.
-     */
+    /// Sums the text-space glyph advances (in Tf-size units) of `text` in
+    /// [#sourceFont], including character spacing and word spacing, using
+    /// the ISO-8859-1 byte codes that [#replaceTextOp] writes to the
+    /// content stream so the measurement matches what the renderer will consume.
     private double glyphAdvanceTextSpace(String text, double tfs, double tc, double tw) {
         double total = 0;
         double unitScale = sourceFont.getWidthUnitScale();
@@ -599,7 +561,7 @@ public class TextFragment extends BaseParagraph {
         return null;
     }
 
-    /** Replaces the text payload of the op at {@code idx} with {@code newText}. */
+    /// Replaces the text payload of the op at `idx` with `newText`.
     private boolean replaceTextOp(OperatorCollection ops, int idx, String newText) {
         Operator op = ops.getAt(idx);
         if (op instanceof ShowText) {
@@ -645,27 +607,23 @@ public class TextFragment extends BaseParagraph {
         return false;
     }
 
-    /**
-     * Encodes replacement text as the show-operator payload for this
-     * fragment's source font.
-     * <p>
-     * Simple fonts keep the historical ISO-8859-1 byte mapping. Composite
-     * (Type0/CID) fonts get the full RTL write pipeline
-     * (RTL2/RTL3_changeText):
-     * </p>
-     * <ol>
-     *   <li>contextually shape plain Arabic letters into presentation forms
-     *       ({@link ArabicShaper}) — the form the surrounding document text
-     *       is stored in;</li>
-     *   <li>reverse strong-RTL runs into visual order, matching how RTL
-     *       producers store glyphs in the content stream (the extractor
-     *       applies the inverse via {@code TextAbsorber.reverseRtlRuns});</li>
-     *   <li>map each character to a 2-byte code through the font's reverse
-     *       ToUnicode CMap, falling back to the character's own codepoint as
-     *       the CID — the decode pipeline mirrors that fallback, so the text
-     *       round-trips even for glyphs absent from the subset.</li>
-     * </ol>
-     */
+    /// Encodes replacement text as the show-operator payload for this
+    /// fragment's source font.
+    ///
+    /// Simple fonts keep the historical ISO-8859-1 byte mapping. Composite
+    /// (Type0/CID) fonts get the full RTL write pipeline
+    /// (RTL2/RTL3\_changeText):
+    ///
+    ///   1. contextually shape plain Arabic letters into presentation forms
+    ///     ([ArabicShaper]) — the form the surrounding document text
+    ///     is stored in;
+    ///   2. reverse strong-RTL runs into visual order, matching how RTL
+    ///     producers store glyphs in the content stream (the extractor
+    ///     applies the inverse via `TextAbsorber.reverseRtlRuns`);
+    ///   3. map each character to a 2-byte code through the font's reverse
+    ///     ToUnicode CMap, falling back to the character's own codepoint as
+    ///     the CID — the decode pipeline mirrors that fallback, so the text
+    ///     round-trips even for glyphs absent from the subset.
     private PdfString encodeReplacementText(String newText) {
         if (sourceFont == null || !sourceFont.isComposite()) {
             return new PdfString(newText.getBytes(StandardCharsets.ISO_8859_1));
@@ -692,7 +650,7 @@ public class TextFragment extends BaseParagraph {
         return new PdfString(bytes);
     }
 
-    /** Clears the text payload of a text-showing op at {@code idx}. */
+    /// Clears the text payload of a text-showing op at `idx`.
     private static boolean clearTextOp(OperatorCollection ops, int idx) {
         Operator op = ops.getAt(idx);
         if (op instanceof ShowText) {
@@ -730,40 +688,32 @@ public class TextFragment extends BaseParagraph {
         return false;
     }
 
-    /**
-     * Returns the list of text segments.
-     *
-     * @return the segments (mutable list, matching Aspose.PDF API)
-     */
+    /// Returns the list of text segments.
+    ///
+    /// @return the segments (mutable list, matching Aspose.PDF API)
     public List<TextSegment> getSegments() {
         return segments;
     }
 
-    /**
-     * Adds a text segment.
-     *
-     * @param segment the segment to add
-     */
+    /// Adds a text segment.
+    ///
+    /// @param segment the segment to add
     public void addSegment(TextSegment segment) {
         if (segment != null) {
             segments.add(segment);
         }
     }
 
-    /**
-     * Returns the position on the page where this fragment begins.
-     *
-     * @return the position, or null
-     */
+    /// Returns the position on the page where this fragment begins.
+    ///
+    /// @return the position, or null
     public Position getPosition() {
         return position;
     }
 
-    /**
-     * Sets the position.
-     *
-     * @param position the position
-     */
+    /// Sets the position.
+    ///
+    /// @param position the position
     public void setPosition(Position position) {
         this.position = position;
         // Propagate position to segments that don't have their own
@@ -774,11 +724,9 @@ public class TextFragment extends BaseParagraph {
         }
     }
 
-    /**
-     * Returns the bounding rectangle of this fragment on the page.
-     *
-     * @return the rectangle, or null
-     */
+    /// Returns the bounding rectangle of this fragment on the page.
+    ///
+    /// @return the rectangle, or null
     public Rectangle getRectangle() {
         if (rectangle != null) {
             return rectangle;
@@ -800,87 +748,69 @@ public class TextFragment extends BaseParagraph {
         return new Rectangle(0, 0, width, fontSize);
     }
 
-    /**
-     * Returns the text baseline rotation in device space, quantized to one of
-     * {@code 0, 90, 180, 270}. {@code 0} is ordinary horizontal text.
-     *
-     * @return the rotation in degrees
-     */
+    /// Returns the text baseline rotation in device space, quantized to one of
+    /// `0, 90, 180, 270`. `0` is ordinary horizontal text.
+    ///
+    /// @return the rotation in degrees
     public int getRotation() {
         return rotation;
     }
 
-    /**
-     * Sets the text baseline rotation (quantized to {@code 0/90/180/270}).
-     *
-     * @param rotation the rotation in degrees
-     */
+    /// Sets the text baseline rotation (quantized to `0/90/180/270`).
+    ///
+    /// @param rotation the rotation in degrees
     public void setRotation(int rotation) {
         this.rotation = rotation;
     }
 
-    /**
-     * Returns the exact per-character X boundaries, or {@code null} if the
-     * extractor could not provide them for this fragment.
-     *
-     * @return the character X positions, or {@code null}
-     */
+    /// Returns the exact per-character X boundaries, or `null` if the
+    /// extractor could not provide them for this fragment.
+    ///
+    /// @return the character X positions, or `null`
     public double[] getCharXPositions() {
         return charXPositions;
     }
 
-    /**
-     * Sets the exact per-character X boundaries (extractor use).
-     *
-     * @param charXPositions array of length {@code text.length()+1}, or {@code null}
-     */
+    /// Sets the exact per-character X boundaries (extractor use).
+    ///
+    /// @param charXPositions array of length `text.length()+1`, or `null`
     public void setCharXPositions(double[] charXPositions) {
         this.charXPositions = charXPositions;
     }
 
-    /**
-     * Returns the engine font that rendered this fragment, or {@code null}.
-     *
-     * @return the source font, or {@code null}
-     */
+    /// Returns the engine font that rendered this fragment, or `null`.
+    ///
+    /// @return the source font, or `null`
     public PdfFont getSourceFont() {
         return sourceFont;
     }
 
-    /**
-     * Sets the engine font that rendered this fragment (extractor use).
-     *
-     * @param sourceFont the source font
-     */
-    /**
-     * Records the raw {@code /Tf} operand size of the source show operator
-     * (internal, set by the extractor). See {@link #sourceTfSize}.
-     *
-     * @param tfSize the raw Tf size, or ≤0 when unknown
-     */
+    /// Records the raw `/Tf` operand size of the source show operator
+    /// (internal, set by the extractor). See [#sourceTfSize].
+    ///
+    /// @param tfSize the raw Tf size, or ≤0 when unknown
     public void setSourceTfSize(double tfSize) {
         this.sourceTfSize = tfSize;
     }
 
-    /**
-     * Returns the raw {@code /Tf} operand size of the source show operator,
-     * or ≤0 when unknown. See {@link #sourceTfSize}.
-     *
-     * @return the raw Tf size
-     */
+    /// Returns the raw `/Tf` operand size of the source show operator,
+    /// or ≤0 when unknown. See [#sourceTfSize].
+    ///
+    /// @return the raw Tf size
     public double getSourceTfSize() {
         return sourceTfSize;
     }
 
+    /// Sets the engine font that rendered this fragment (extractor use).
+    ///
+    /// @param sourceFont the source font
     public void setSourceFont(PdfFont sourceFont) {
         this.sourceFont = sourceFont;
     }
 
-    /**
-     * Sets the bounding rectangle.
-     *
-     * @param rectangle the rectangle
-     */
+    /// Sets the bounding rectangle.
+    ///
+    /// @param rectangle the rectangle
     public void setRectangle(Rectangle rectangle) {
         this.rectangle = rectangle;
         // Propagate rectangle to segments that don't have their own
@@ -891,29 +821,23 @@ public class TextFragment extends BaseParagraph {
         }
     }
 
-    /**
-     * Returns the page this fragment was extracted from.
-     *
-     * @return the page, or null
-     */
+    /// Returns the page this fragment was extracted from.
+    ///
+    /// @return the page, or null
     public Page getPage() {
         return page;
     }
 
-    /**
-     * Sets the source page.
-     *
-     * @param page the page
-     */
+    /// Sets the source page.
+    ///
+    /// @param page the page
     public void setPage(Page page) {
         this.page = page;
     }
 
-    /**
-     * Returns the text state of the first segment (convenience accessor).
-     *
-     * @return the text state
-     */
+    /// Returns the text state of the first segment (convenience accessor).
+    ///
+    /// @return the text state
     public TextState getTextState() {
         if (!segments.isEmpty()) {
             return segments.get(0).getTextState();
@@ -921,16 +845,13 @@ public class TextFragment extends BaseParagraph {
         return new TextState();
     }
 
-    /**
-     * Replaces the text state of the first segment (convenience setter).
-     * <p>
-     * Mirrors the Aspose.PDF C# API where {@code TextFragment.TextState = new TextState(...)}
-     * applies to the first/primary segment of the fragment. If the fragment has
-     * no segments yet, a default segment is created so the state can be stored.
-     * </p>
-     *
-     * @param state the text state to apply (null is silently ignored)
-     */
+    /// Replaces the text state of the first segment (convenience setter).
+    ///
+    /// Mirrors the Aspose.PDF C# API where `TextFragment.TextState = new TextState(...)`
+    /// applies to the first/primary segment of the fragment. If the fragment has
+    /// no segments yet, a default segment is created so the state can be stored.
+    ///
+    /// @param state the text state to apply (null is silently ignored)
     public void setTextState(TextState state) {
         if (state == null) return;
         if (segments.isEmpty()) {
@@ -939,55 +860,44 @@ public class TextFragment extends BaseParagraph {
         segments.get(0).setTextState(state);
     }
 
-    /**
-     * Returns the index of the content stream operator that produced this fragment.
-     * A value of {@code -1} means no source is tracked.
-     *
-     * @return the operator index, or -1
-     */
+    /// Returns the index of the content stream operator that produced this fragment.
+    /// A value of `-1` means no source is tracked.
+    ///
+    /// @return the operator index, or -1
     public int getSourceOperatorIndex() {
         return sourceOperatorIndex;
     }
 
-    /**
-     * Sets the index of the content stream operator that produced this fragment.
-     *
-     * @param index the operator index
-     */
+    /// Sets the index of the content stream operator that produced this fragment.
+    ///
+    /// @param index the operator index
     public void setSourceOperatorIndex(int index) {
         this.sourceOperatorIndex = index;
     }
 
-    /**
-     * Returns the last operator index in this fragment's source span.
-     * <p>
-     * A fragment may span multiple adjacent Tj/TJ operators within a single
-     * BT..ET text object (e.g. letters split for kerning). The range
-     * {@code [sourceOperatorIndex .. lastSourceOperatorIndex]} covers every
-     * text-showing op whose strings concatenate to the fragment's text.
-     * </p>
-     *
-     * @return the last operator index in the fragment's source span, or -1
-     */
+    /// Returns the last operator index in this fragment's source span.
+    ///
+    /// A fragment may span multiple adjacent Tj/TJ operators within a single
+    /// BT..ET text object (e.g. letters split for kerning). The range
+    /// `[sourceOperatorIndex .. lastSourceOperatorIndex]` covers every
+    /// text-showing op whose strings concatenate to the fragment's text.
+    ///
+    /// @return the last operator index in the fragment's source span, or -1
     public int getLastSourceOperatorIndex() {
         return lastSourceOperatorIndex;
     }
 
-    /**
-     * Sets the last operator index in this fragment's source span.
-     *
-     * @param index the last operator index
-     */
+    /// Sets the last operator index in this fragment's source span.
+    ///
+    /// @param index the last operator index
     public void setLastSourceOperatorIndex(int index) {
         this.lastSourceOperatorIndex = index;
     }
 
-    /**
-     * Sprint 36: store source operator by identity. After a sibling fragment
-     * mutates the shared {@link OperatorCollection} (e.g. inserts a
-     * font-restore op), our cached {@code sourceOperatorIndex} would be stale;
-     * the reference lets us re-derive the current index before each mutation.
-     */
+    /// Sprint 36: store source operator by identity. After a sibling fragment
+    /// mutates the shared [OperatorCollection] (e.g. inserts a
+    /// font-restore op), our cached `sourceOperatorIndex` would be stale;
+    /// the reference lets us re-derive the current index before each mutation.
     public void setSourceOperator(Operator op) {
         this.sourceOperator = op;
     }
@@ -1004,89 +914,72 @@ public class TextFragment extends BaseParagraph {
         return lastSourceOperator;
     }
 
-    /**
-     * Returns the name of the font used to render this fragment.
-     *
-     * @return the font resource name, or null
-     */
+    /// Returns the name of the font used to render this fragment.
+    ///
+    /// @return the font resource name, or null
     public String getSourceFontName() {
         return sourceFontName;
     }
 
-    /**
-     * Sets the font resource name used to render this fragment.
-     *
-     * @param fontName the font name
-     */
+    /// Sets the font resource name used to render this fragment.
+    ///
+    /// @param fontName the font name
     public void setSourceFontName(String fontName) {
         this.sourceFontName = fontName;
     }
 
-    /**
-     * Returns the start offset of this fragment within the source text-showing operator text.
-     *
-     * @return the zero-based character offset
-     */
+    /// Returns the start offset of this fragment within the source text-showing operator text.
+    ///
+    /// @return the zero-based character offset
     public int getSourceTextStart() {
         return sourceTextStart;
     }
 
-    /**
-     * Sets the start offset of this fragment within the source text-showing operator text.
-     *
-     * @param sourceTextStart the zero-based character offset
-     */
+    /// Sets the start offset of this fragment within the source text-showing operator text.
+    ///
+    /// @param sourceTextStart the zero-based character offset
     public void setSourceTextStart(int sourceTextStart) {
         this.sourceTextStart = Math.max(0, sourceTextStart);
     }
 
-    /**
-     * Returns the original length of this fragment inside the source text-showing operator text.
-     *
-     * @return the original source text length, or {@code -1} when unknown
-     */
+    /// Returns the original length of this fragment inside the source text-showing operator text.
+    ///
+    /// @return the original source text length, or `-1` when unknown
     public int getSourceTextLength() {
         return sourceTextLength;
     }
 
-    /**
-     * Sets the original length of this fragment inside the source text-showing operator text.
-     *
-     * @param sourceTextLength the original source text length
-     */
+    /// Sets the original length of this fragment inside the source text-showing operator text.
+    ///
+    /// @param sourceTextLength the original source text length
     public void setSourceTextLength(int sourceTextLength) {
         this.sourceTextLength = sourceTextLength;
     }
 
-    /**
-     * Returns the operator collection that originally produced this fragment.
-     *
-     * @return the source operators, or null
-     */
+    /// Returns the operator collection that originally produced this fragment.
+    ///
+    /// @return the source operators, or null
     public OperatorCollection getSourceOperators() {
         return sourceOperators;
     }
 
-    /**
-     * Sets the operator collection that originally produced this fragment.
-     *
-     * @param sourceOperators the source operators
-     */
+    /// Sets the operator collection that originally produced this fragment.
+    ///
+    /// @param sourceOperators the source operators
     public void setSourceOperators(OperatorCollection sourceOperators) {
         this.sourceOperators = sourceOperators;
     }
 
 
-    /**
-     * Associates a group of source content-stream operators that draw an underline
-     * beneath this fragment, and arms the fragment so that turning the underline off
-     * ({@code getTextState().setUnderline(false)}) removes those operators on save.
-     * <p>Called by the text-extraction engine when underline detection is enabled
-     * via {@code TextEditOptions.ToAttemptGetUnderlineFromSource}.</p>
-     *
-     * @param ops  the operators that draw the underline (re/m/l + paint operator)
-     * @param coll the operator collection that owns {@code ops}
-     */
+    /// Associates a group of source content-stream operators that draw an underline
+    /// beneath this fragment, and arms the fragment so that turning the underline off
+    /// (`getTextState().setUnderline(false)`) removes those operators on save.
+    ///
+    /// Called by the text-extraction engine when underline detection is enabled
+    /// via `TextEditOptions.ToAttemptGetUnderlineFromSource`.
+    ///
+    /// @param ops  the operators that draw the underline (re/m/l + paint operator)
+    /// @param coll the operator collection that owns `ops`
     public void addSourceUnderline(java.util.List<Operator> ops, OperatorCollection coll) {
         if (ops == null || ops.isEmpty() || coll == null) {
             return;
@@ -1101,30 +994,24 @@ public class TextFragment extends BaseParagraph {
         getTextState().addUnderlineRemovalHook(this::removeSourceUnderlineFromContent);
     }
 
-    /**
-     * Returns the underline operator groups associated with this fragment, or
-     * {@code null} if none. Used to propagate underline linkage to match fragments.
-     *
-     * @return the underline operator groups, or {@code null}
-     */
+    /// Returns the underline operator groups associated with this fragment, or
+    /// `null` if none. Used to propagate underline linkage to match fragments.
+    ///
+    /// @return the underline operator groups, or `null`
     java.util.List<java.util.List<Operator>> getSourceUnderlineOpGroups() {
         return sourceUnderlineOpGroups;
     }
 
-    /**
-     * Returns the operator collection that owns this fragment's underline operators.
-     *
-     * @return the collection, or {@code null}
-     */
+    /// Returns the operator collection that owns this fragment's underline operators.
+    ///
+    /// @return the collection, or `null`
     OperatorCollection getSourceUnderlineCollection() {
         return sourceUnderlineCollection;
     }
 
-    /**
-     * Removes the previously {@linkplain #addSourceUnderline associated} underline
-     * operators from the content stream and re-serialises so the change persists on
-     * save. Idempotent: subsequent calls are no-ops.
-     */
+    /// Removes the previously [associated][#addSourceUnderline] underline
+    /// operators from the content stream and re-serialises so the change persists on
+    /// save. Idempotent: subsequent calls are no-ops.
     void removeSourceUnderlineFromContent() {
         if (sourceUnderlineOpGroups == null || sourceUnderlineCollection == null) {
             return;
@@ -1148,74 +1035,58 @@ public class TextFragment extends BaseParagraph {
         }
     }
 
-    /**
-     * Returns the form/content stream that owns {@link #getSourceOperators()}.
-     *
-     * @return the source content stream, or null for page-level cached content
-     */
+    /// Returns the form/content stream that owns [#getSourceOperators()].
+    ///
+    /// @return the source content stream, or null for page-level cached content
     public PdfStream getSourceContentStream() {
         return sourceContentStream;
     }
 
-    /**
-     * Sets the form/content stream that owns {@link #getSourceOperators()}.
-     *
-     * @param sourceContentStream the source content stream
-     */
+    /// Sets the form/content stream that owns [#getSourceOperators()].
+    ///
+    /// @param sourceContentStream the source content stream
     public void setSourceContentStream(PdfStream sourceContentStream) {
         this.sourceContentStream = sourceContentStream;
     }
 
-    /**
-     * Returns the text replacement options associated with this fragment.
-     *
-     * @return the replacement options, or {@code null}
-     */
+    /// Returns the text replacement options associated with this fragment.
+    ///
+    /// @return the replacement options, or `null`
     public TextReplaceOptions getTextReplaceOptions() {
         return textReplaceOptions;
     }
 
-    /**
-     * Sets the text replacement options associated with this fragment.
-     *
-     * @param textReplaceOptions the replacement options
-     */
+    /// Sets the text replacement options associated with this fragment.
+    ///
+    /// @param textReplaceOptions the replacement options
     public void setTextReplaceOptions(TextReplaceOptions textReplaceOptions) {
         this.textReplaceOptions = textReplaceOptions;
     }
 
-    /**
-     * Gets the footnote associated with this text fragment.
-     *
-     * @return the footnote, or {@code null} if none
-     */
+    /// Gets the footnote associated with this text fragment.
+    ///
+    /// @return the footnote, or `null` if none
     public org.aspose.pdf.Note getFootNote() {
         return footNote;
     }
 
-    /**
-     * Sets the footnote associated with this text fragment.
-     *
-     * @param footNote the footnote to associate
-     */
+    /// Sets the footnote associated with this text fragment.
+    ///
+    /// @param footNote the footnote to associate
     public void setFootNote(org.aspose.pdf.Note footNote) {
         this.footNote = footNote;
     }
 
-    /**
-     * Gets the endnote associated with this text fragment.
-     *
-     * @return the endnote, or {@code null} if none
-     */
+    /// Gets the endnote associated with this text fragment.
+    ///
+    /// @return the endnote, or `null` if none
     public org.aspose.pdf.Note getEndNote() {
         return endNote;
     }
 
-    /**
-     * Sets the endnote associated with this text fragment.
-     *
-     * @param endNote the endnote to associate
-     */
+    /// Sets the endnote associated with this text fragment.
+    ///
+    /// @param endNote the endnote to associate
     public void setEndNote(org.aspose.pdf.Note endNote) {
         this.endNote = endNote;
     }

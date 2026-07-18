@@ -2,23 +2,17 @@ package org.aspose.pdf.engine.script.js.lexer;
 
 import org.aspose.pdf.engine.script.js.parser.JSSyntaxError;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-/**
- * Hand-written lexer for the ECMAScript 3 lexical grammar (ECMA-262 3rd ed., sec 7).
- *
- * <p>Produces the complete token list in one pass. Regular-expression literals
- * are disambiguated from the division operator using the previous significant
- * token (sec 7.8.5 note): a {@code /} begins a regex unless the previous token
- * is one after which division is legal (an operand: identifier, literal,
- * {@code )}, {@code ]}, {@code }} or {@code this}).</p>
- *
- * <p>This lexer is independent of {@code engine.parser.PDFLexer}.</p>
- */
+/// Hand-written lexer for the ECMAScript 3 lexical grammar (ECMA-262 3rd ed., sec 7).
+///
+/// Produces the complete token list in one pass. Regular-expression literals
+/// are disambiguated from the division operator using the previous significant
+/// token (sec 7.8.5 note): a `/` begins a regex unless the previous token
+/// is one after which division is legal (an operand: identifier, literal,
+/// `)`, `]`, ``} or `this`).
+///
+/// This lexer is independent of `engine.parser.PDFLexer`.
 public final class Lexer {
 
     private static final int ZWNJ = 0x200C;
@@ -51,22 +45,18 @@ public final class Lexer {
     private int col = 1;
     private boolean pendingNewline;
 
-    /**
-     * Creates a lexer over the given source.
-     *
-     * @param source ECMAScript 3 source text (must not be {@code null})
-     */
+    /// Creates a lexer over the given source.
+    ///
+    /// @param source ECMAScript 3 source text (must not be `null`)
     public Lexer(String source) {
         this.src = source == null ? "" : source;
         this.n = this.src.length();
     }
 
-    /**
-     * Tokenizes the entire source.
-     *
-     * @return list of tokens terminated by a single {@link TokenType#EOF} token
-     * @throws JSSyntaxError on a lexical error
-     */
+    /// Tokenizes the entire source.
+    ///
+    /// @return list of tokens terminated by a single [TokenType#EOF] token
+    /// @throws JSSyntaxError on a lexical error
     public List<Token> tokenize() {
         List<Token> out = new ArrayList<>();
         Token prev = null;

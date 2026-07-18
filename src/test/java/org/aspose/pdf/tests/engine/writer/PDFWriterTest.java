@@ -20,14 +20,10 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link PDFWriter} — PDF serialization.
- */
+/// Tests for [PDFWriter] — PDF serialization.
 public class PDFWriterTest {
 
-    /**
-     * Test 1: Write a simple PDF with 3 objects and verify structure.
-     */
+    /// Test 1: Write a simple PDF with 3 objects and verify structure.
     @Test
     public void testWriteSimplePDF() throws IOException {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -77,9 +73,7 @@ public class PDFWriterTest {
         assertTrue(pdf.contains("%%EOF"));
     }
 
-    /**
-     * Test 2: Header format is correct.
-     */
+    /// Test 2: Header format is correct.
     @Test
     public void testHeaderFormat() throws IOException {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -105,9 +99,7 @@ public class PDFWriterTest {
         }
     }
 
-    /**
-     * Test 3: XRef offsets are correct — each entry is exactly 20 bytes.
-     */
+    /// Test 3: XRef offsets are correct — each entry is exactly 20 bytes.
     @Test
     public void testXrefEntrySize() throws IOException {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -133,9 +125,7 @@ public class PDFWriterTest {
         assertTrue(entry0.startsWith("0000000000 65535 f "));
     }
 
-    /**
-     * Test 5: Round-trip: write → parse → verify objects.
-     */
+    /// Test 5: Round-trip: write → parse → verify objects.
     @Test
     public void testRoundTrip() throws IOException {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -178,9 +168,7 @@ public class PDFWriterTest {
         assertEquals("Catalog", ((PdfName) type).getValue());
     }
 
-    /**
-     * Test 6: Large number of objects — offsets don't drift.
-     */
+    /// Test 6: Large number of objects — offsets don't drift.
     @Test
     public void testManyObjects() throws IOException {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -204,17 +192,13 @@ public class PDFWriterTest {
         assertTrue(pdf.contains("0 101")); // 0 through 100
     }
 
-    /**
-     * Test: Constructor rejects null output.
-     */
+    /// Test: Constructor rejects null output.
     @Test
     public void testConstructorRejectsNull() {
         assertThrows(IllegalArgumentException.class, () -> new PDFWriter(null, 1.7f));
     }
 
-    /**
-     * Test: allocateObjectNumber increments.
-     */
+    /// Test: allocateObjectNumber increments.
     @Test
     public void testAllocateObjectNumber() {
         PDFWriter writer = new PDFWriter(new ByteArrayOutputStream(), 1.7f);

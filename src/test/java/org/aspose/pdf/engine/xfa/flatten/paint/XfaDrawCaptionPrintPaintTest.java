@@ -17,17 +17,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * C2-PAINTFIX coverage on synthetic fixtures:
- * <ul>
- *   <li><b>FIX.1</b> — a text {@code <draw>} (a label) with x/y but NO w/h auto-sizes and IS
- *       painted (previously skipped because its rect had zero area → ~12/13 labels never showed).</li>
- *   <li><b>FIX.3</b> — an auto-width draw places its text at the LEFT edge (its x), not shifted left
- *       by the text width (the right-anchor-at-x mispositioning).</li>
- *   <li><b>FIX.4</b> — {@code relevant="-print"} objects (buttons, on-screen hints) are NOT painted
- *       in the print/flatten output; {@code printSkipped} counts them.</li>
- * </ul>
- */
+/// C2-PAINTFIX coverage on synthetic fixtures:
+///
+///   - **FIX.1** — a text `<draw>` (a label) with x/y but NO w/h auto-sizes and IS
+///     painted (previously skipped because its rect had zero area → \~12/13 labels never showed).
+///   - **FIX.3** — an auto-width draw places its text at the LEFT edge (its x), not shifted left
+///     by the text width (the right-anchor-at-x mispositioning).
+///   - **FIX.4** — `relevant="-print"` objects (buttons, on-screen hints) are NOT painted
+///     in the print/flatten output; `printSkipped` counts them.
 public class XfaDrawCaptionPrintPaintTest {
 
     private static final String TPL = XfaNode.TEMPLATE_NS;

@@ -1,39 +1,35 @@
 package org.aspose.pdf.engine.colorspace;
 
-/**
- * Display-oriented DeviceCMYK → sRGB conversion (ISO 32000-1:2008, §8.6.4.4).
- * <p>
- * Real viewers (Adobe Acrobat, Chrome, print drivers) render DeviceCMYK so that
- * it looks like ink on paper, which differs visibly from the naive algebraic
- * {@code (1-C)(1-K)} formula: print-neutral grays (C &gt; M ≈ Y) come out neutral
- * instead of greenish, and solid inks are muted (pure process cyan ≈
- * {@code rgb(0,174,239)}, rich black ≈ {@code rgb(35,31,32)}).
- * </p>
- * <p>
- * This class reproduces that look with a small <b>analytical ink-mixing
- * formula</b> — <b>no external data, no binary resource, no third-party
- * profile</b>. Each ink is given its standard published <i>process-color</i>
- * solid appearance in sRGB, and inks combine by a per-channel multiplicative
- * (subtractive, Beer–Lambert-style) transmittance:
- * </p>
- * <pre>
- *   channel = 255 · ∏<sub>ink∈{C,M,Y,K}</sub> ( 1 − amount<sub>ink</sub> · a<sub>ink,channel</sub> )
- *   where a<sub>ink,channel</sub> = 1 − solid<sub>ink,channel</sub> / 255
- * </pre>
- * <p>
- * The solid appearances are the well-known process primaries (the same values
- * cited in general references for the CMYK process colors), so no ink amount of
- * zero changes a channel and white maps to white exactly. By construction the
- * four solid primaries, paper white and registration black are reproduced
- * exactly; mixtures are a physically-motivated approximation.
- * </p>
- * <p>
- * NOTE: this is the <b>rendering</b> conversion. The public-API conversion
- * {@link DeviceCMYK#toRGBInt(double, double, double, double)} keeps the
- * algebraic formula — Aspose.PDF compatibility tests pin pure C/M/Y/K to exact
- * RGB primaries there.
- * </p>
- */
+/// Display-oriented DeviceCMYK → sRGB conversion (ISO 32000-1:2008, §8.6.4.4).
+///
+/// Real viewers (Adobe Acrobat, Chrome, print drivers) render DeviceCMYK so that
+/// it looks like ink on paper, which differs visibly from the naive algebraic
+/// `(1-C)(1-K)` formula: print-neutral grays (C > M ≈ Y) come out neutral
+/// instead of greenish, and solid inks are muted (pure process cyan ≈
+/// `rgb(0,174,239)`, rich black ≈ `rgb(35,31,32)`).
+///
+/// This class reproduces that look with a small **analytical ink-mixing
+/// formula** — **no external data, no binary resource, no third-party
+/// profile**. Each ink is given its standard published _process-color_
+/// solid appearance in sRGB, and inks combine by a per-channel multiplicative
+/// (subtractive, Beer–Lambert-style) transmittance:
+///
+/// <pre>
+///   channel = 255 · ∏<sub>ink∈{C,M,Y,K}</sub> ( 1 − amount<sub>ink</sub> · a<sub>ink,channel</sub> )
+///   where a<sub>ink,channel</sub> = 1 − solid<sub>ink,channel</sub> / 255
+/// </pre>
+///
+/// The solid appearances are the well-known process primaries (the same values
+/// cited in general references for the CMYK process colors), so no ink amount of
+/// zero changes a channel and white maps to white exactly. By construction the
+/// four solid primaries, paper white and registration black are reproduced
+/// exactly; mixtures are a physically-motivated approximation.
+///
+/// NOTE: this is the **rendering** conversion. The public-API conversion
+/// [DeviceCMYK#toRGBInt(double, double, double, double)] keeps the
+/// algebraic formula — Aspose.PDF compatibility tests pin pure C/M/Y/K to exact
+/// RGB primaries there.
+///
 public final class CmykDisplay {
 
     // Standard process-color solid appearances in sRGB (R,G,B). These are the
@@ -57,16 +53,14 @@ public final class CmykDisplay {
         return new double[]{1 - solid[0] / 255.0, 1 - solid[1] / 255.0, 1 - solid[2] / 255.0};
     }
 
-    /**
-     * Converts CMYK components (each 0..1) to a packed ARGB int using the
-     * analytical process-ink mixing model described in the class doc.
-     *
-     * @param c cyan (0..1)
-     * @param m magenta (0..1)
-     * @param y yellow (0..1)
-     * @param k black (0..1)
-     * @return packed ARGB int (alpha=0xFF)
-     */
+    /// Converts CMYK components (each 0..1) to a packed ARGB int using the
+    /// analytical process-ink mixing model described in the class doc.
+    ///
+    /// @param c cyan (0..1)
+    /// @param m magenta (0..1)
+    /// @param y yellow (0..1)
+    /// @param k black (0..1)
+    /// @return packed ARGB int (alpha=0xFF)
     public static int toRGBInt(double c, double m, double y, double k) {
         double cc = clamp01(c), mm = clamp01(m), yy = clamp01(y), kk = clamp01(k);
         int rgb = 0xFF000000;
@@ -80,7 +74,7 @@ public final class CmykDisplay {
         return rgb;
     }
 
-    /** Array variant for the {@link ColorSpaceBase#toRGBInt(double[])} pipeline. */
+    /// Array variant for the [ColorSpaceBase#toRGBInt(double\[\])] pipeline.
     public static int toRGBInt(double[] comps) {
         if (comps == null || comps.length < 4) return 0xFF000000;
         return toRGBInt(comps[0], comps[1], comps[2], comps[3]);

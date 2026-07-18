@@ -11,11 +11,9 @@ import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Sprint 30 Part A — {@link Operator#writeTo} must serialize operands byte-for-byte,
- * unlike {@link Operator#toString()} which routes through US-ASCII and corrupts
- * bytes &ge; 0x80 (CID/Identity-H glyph codes, non-Latin literals).
- */
+/// Sprint 30 Part A — [Operator#writeTo] must serialize operands byte-for-byte,
+/// unlike [Operator#toString()] which routes through US-ASCII and corrupts
+/// bytes ≥ 0x80 (CID/Identity-H glyph codes, non-Latin literals).
 public class OperatorWriteToTest {
 
     private static byte[] serialize(Operator op) throws Exception {

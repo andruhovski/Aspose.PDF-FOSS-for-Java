@@ -5,25 +5,21 @@ import org.aspose.pdf.engine.pdfobjects.PdfBase;
 
 import java.util.List;
 
-/**
- * Set text matrix operator (Tm).
- * <p>
- * Sets the text matrix and the text line matrix to the specified values. Unlike other
- * text positioning operators, this operator does not concatenate with the existing matrix
- * but replaces it entirely.
- * See ISO 32000-1:2008, §9.4.2, Table 108.
- * </p>
- */
+/// Set text matrix operator (Tm).
+///
+/// Sets the text matrix and the text line matrix to the specified values. Unlike other
+/// text positioning operators, this operator does not concatenate with the existing matrix
+/// but replaces it entirely.
+/// See ISO 32000-1:2008, §9.4.2, Table 108.
+///
 public class SetTextMatrix extends TextPlaceOperator {
 
     private final Matrix matrix;
 
-    /**
-     * Creates a SetTextMatrix (Tm) operator with the specified matrix.
-     *
-     * @param matrix the text matrix to set
-     * @throws IllegalArgumentException if matrix is null
-     */
+    /// Creates a SetTextMatrix (Tm) operator with the specified matrix.
+    ///
+    /// @param matrix the text matrix to set
+    /// @throws IllegalArgumentException if matrix is null
     public SetTextMatrix(Matrix matrix) {
         super("Tm", matrixToOperands(matrix));
         if (matrix == null) {
@@ -32,14 +28,11 @@ public class SetTextMatrix extends TextPlaceOperator {
         this.matrix = matrix;
     }
 
-    /**
-     * Creates a SetTextMatrix (Tm) operator from parsed operands.
-     * <p>
-     * Expects six numeric operands: a, b, c, d, e, f.
-     * </p>
-     *
-     * @param operands the operands from the content stream parser
-     */
+    /// Creates a SetTextMatrix (Tm) operator from parsed operands.
+    ///
+    /// Expects six numeric operands: a, b, c, d, e, f.
+    ///
+    /// @param operands the operands from the content stream parser
     public SetTextMatrix(List<PdfBase> operands) {
         super("Tm", operands);
         if (operands != null && operands.size() >= 6) {
@@ -56,11 +49,9 @@ public class SetTextMatrix extends TextPlaceOperator {
         }
     }
 
-    /**
-     * Returns the text matrix.
-     *
-     * @return the matrix
-     */
+    /// Returns the text matrix.
+    ///
+    /// @return the matrix
     public Matrix getMatrix() {
         return matrix;
     }

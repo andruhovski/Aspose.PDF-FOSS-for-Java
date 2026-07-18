@@ -6,9 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link PageDevice} base class (via PngDevice).
- */
+/// Tests for [PageDevice] base class (via PngDevice).
 public class PageDeviceTest {
 
     @Test

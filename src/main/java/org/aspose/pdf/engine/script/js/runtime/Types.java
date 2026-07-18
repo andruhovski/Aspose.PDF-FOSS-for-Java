@@ -1,17 +1,15 @@
 package org.aspose.pdf.engine.script.js.runtime;
 
-/**
- * Pure ECMAScript abstract operations that do not require calling user code:
- * {@code typeof}, ToBoolean, primitive coercions and strict equality
- * (ECMA-262 3rd ed., sec 9, 11.9.6). Operations that may invoke
- * {@code valueOf}/{@code toString} (ToPrimitive, ToNumber/ToString of objects,
- * abstract {@code ==}) live on the interpreter.
- */
+/// Pure ECMAScript abstract operations that do not require calling user code:
+/// `typeof`, ToBoolean, primitive coercions and strict equality
+/// (ECMA-262 3rd ed., sec 9, 11.9.6). Operations that may invoke
+/// `valueOf`/`toString` (ToPrimitive, ToNumber/ToString of objects,
+/// abstract `==`) live on the interpreter.
 public final class Types {
 
     private Types() { }
 
-    /** The {@code typeof} operator (sec 11.4.3). */
+    /// The `typeof` operator (sec 11.4.3).
     public static String typeOf(Object v) {
         if (v == Undefined.INSTANCE) {
             return "undefined";
@@ -34,7 +32,7 @@ public final class Types {
         return "object";
     }
 
-    /** ToBoolean (sec 9.2). */
+    /// ToBoolean (sec 9.2).
     public static boolean toBoolean(Object v) {
         if (v == Undefined.INSTANCE || v == JSNull.NULL) {
             return false;
@@ -58,12 +56,12 @@ public final class Types {
         return true;
     }
 
-    /** @return {@code true} if the value is a callable function object. */
+    /// @return `true` if the value is a callable function object.
     public static boolean isCallable(Object v) {
         return v instanceof JSFunction;
     }
 
-    /** Primitive-only ToString (no object coercion). */
+    /// Primitive-only ToString (no object coercion).
     public static String primitiveToString(Object v) {
         if (v == Undefined.INSTANCE) {
             return "undefined";
@@ -83,7 +81,7 @@ public final class Types {
         return v.toString();
     }
 
-    /** Primitive-only ToNumber; objects yield {@code NaN} (caller coerces). */
+    /// Primitive-only ToNumber; objects yield `NaN` (caller coerces).
     public static double toNumberPrimitiveOrNaN(Object v) {
         if (v == Undefined.INSTANCE) {
             return Double.NaN;
@@ -103,7 +101,7 @@ public final class Types {
         return Double.NaN;
     }
 
-    /** Strict equality {@code ===} (sec 11.9.6). */
+    /// Strict equality `===` (sec 11.9.6).
     public static boolean strictEquals(Object a, Object b) {
         if (a == Undefined.INSTANCE && b == Undefined.INSTANCE) {
             return true;
@@ -125,12 +123,12 @@ public final class Types {
         return a == b; // object identity (and the singletons)
     }
 
-    /** Convenience: wrap a Java boolean as a JS value. */
+    /// Convenience: wrap a Java boolean as a JS value.
     public static Object bool(boolean b) {
         return b ? Boolean.TRUE : Boolean.FALSE;
     }
 
-    /** Convenience: wrap a Java double as a JS value. */
+    /// Convenience: wrap a Java double as a JS value.
     public static Object num(double d) {
         return d;
     }

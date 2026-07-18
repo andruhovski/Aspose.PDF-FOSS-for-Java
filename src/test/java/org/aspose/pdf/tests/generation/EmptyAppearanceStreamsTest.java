@@ -19,13 +19,11 @@ import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Bug R — no Form XObject in any saved PDF may have {@code /BBox [0 0 0 0]}
- * (degenerate appearance) or {@code /Length 0} (Adobe Reader rejects empty
- * encrypted streams). Earlier versions of {@link RadioButtonField#addOption}
- * created such placeholder Form XObjects; this test guards against the
- * regression.
- */
+/// Bug R — no Form XObject in any saved PDF may have `/BBox [0 0 0 0]`
+/// (degenerate appearance) or `/Length 0` (Adobe Reader rejects empty
+/// encrypted streams). Earlier versions of [RadioButtonField#addOption]
+/// created such placeholder Form XObjects; this test guards against the
+/// regression.
 class EmptyAppearanceStreamsTest {
 
     @TempDir Path tempDir;

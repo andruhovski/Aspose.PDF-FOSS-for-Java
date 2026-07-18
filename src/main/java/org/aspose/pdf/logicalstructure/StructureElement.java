@@ -1,72 +1,57 @@
 package org.aspose.pdf.logicalstructure;
 
-import org.aspose.pdf.engine.pdfobjects.PdfArray;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfInteger;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
-import org.aspose.pdf.engine.pdfobjects.PdfString;
 import org.aspose.pdf.engine.parser.PDFParser;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Represents a structure element in the logical structure tree
- * (ISO 32000-1:2008, §14.7.2, Table 323).
- *
- * <p>Key dictionary entries:</p>
- * <ul>
- *   <li>/S — structure type (e.g., P, H1, Table)</li>
- *   <li>/P — parent structure element or StructTreeRoot</li>
- *   <li>/K — children: StructElem dicts, MCR dicts, OBJR dicts, or integers (MCIDs)</li>
- *   <li>/Pg — default page for this element's content</li>
- *   <li>/T — title, /Lang — language, /Alt — alternate description</li>
- *   <li>/ActualText — replacement text, /E — expanded form</li>
- *   <li>/ID — unique identifier, /A — attributes</li>
- * </ul>
- */
+/// Represents a structure element in the logical structure tree
+/// (ISO 32000-1:2008, §14.7.2, Table 323).
+///
+/// Key dictionary entries:
+///
+///   - /S — structure type (e.g., P, H1, Table)
+///   - /P — parent structure element or StructTreeRoot
+///   - /K — children: StructElem dicts, MCR dicts, OBJR dicts, or integers (MCIDs)
+///   - /Pg — default page for this element's content
+///   - /T — title, /Lang — language, /Alt — alternate description
+///   - /ActualText — replacement text, /E — expanded form
+///   - /ID — unique identifier, /A — attributes
 public class StructureElement {
 
     private final PdfDictionary dict;
     private final PDFParser parser;
 
-    /**
-     * Creates a structure element wrapping the given dictionary.
-     *
-     * @param dict   the /StructElem dictionary
-     * @param parser the PDF parser for resolving references (may be null)
-     */
+    /// Creates a structure element wrapping the given dictionary.
+    ///
+    /// @param dict   the /StructElem dictionary
+    /// @param parser the PDF parser for resolving references (may be null)
     public StructureElement(PdfDictionary dict, PDFParser parser) {
         this.dict = dict;
         this.parser = parser;
     }
 
-    /** Returns the underlying PDF dictionary. */
+    /// Returns the underlying PDF dictionary.
     public PdfDictionary getPdfDictionary() { return dict; }
 
     // ═══════════════════════════════════════════════════════════════
     //  Structure Type
     // ═══════════════════════════════════════════════════════════════
 
-    /**
-     * Returns the structure type (e.g., P, H1, Table, Div).
-     *
-     * @return the type, or {@code null} if /S is missing
-     */
+    /// Returns the structure type (e.g., P, H1, Table, Div).
+    ///
+    /// @return the type, or `null` if /S is missing
     public StructureTypeStandard getStructureType() {
         String s = dict.getNameAsString("S");
         return s != null ? StructureTypeStandard.fromName(s) : null;
     }
 
-    /**
-     * Sets the structure type.
-     *
-     * @param type the structure type
-     */
+    /// Sets the structure type.
+    ///
+    /// @param type the structure type
     public void setStructureType(StructureTypeStandard type) {
         dict.set(PdfName.of("S"), PdfName.of(type.getName()));
     }
@@ -75,13 +60,13 @@ public class StructureElement {
     //  Metadata
     // ═══════════════════════════════════════════════════════════════
 
-    /** Returns the title (/T). */
+    /// Returns the title (/T).
     public String getTitle() { return dict.getString("T"); }
 
-    /** Sets the title (/T). */
+    /// Sets the title (/T).
     public void setTitle(String title) { dict.setString("T", title); }
 
-    /** Returns the language (/Lang). */
+    /// Returns the language (/Lang).
     public String getLanguage() {
         PdfBase lang = dict.get("Lang");
         if (lang instanceof PdfString) return ((PdfString) lang).getString();
@@ -89,44 +74,42 @@ public class StructureElement {
         return null;
     }
 
-    /** Sets the language (/Lang). */
+    /// Sets the language (/Lang).
     public void setLanguage(String lang) {
         dict.set(PdfName.of("Lang"), new PdfString(lang));
     }
 
-    /** Returns the alternate description (/Alt). */
+    /// Returns the alternate description (/Alt).
     public String getAlternateDescription() { return dict.getString("Alt"); }
 
-    /** Sets the alternate description (/Alt). */
+    /// Sets the alternate description (/Alt).
     public void setAlternateDescription(String alt) { dict.setString("Alt", alt); }
 
-    /** Returns the actual text (/ActualText). */
+    /// Returns the actual text (/ActualText).
     public String getActualText() { return dict.getString("ActualText"); }
 
-    /** Sets the actual text (/ActualText). */
+    /// Sets the actual text (/ActualText).
     public void setActualText(String text) { dict.setString("ActualText", text); }
 
-    /** Returns the expanded form (/E). */
+    /// Returns the expanded form (/E).
     public String getExpandedForm() { return dict.getString("E"); }
 
-    /** Sets the expanded form (/E). */
+    /// Sets the expanded form (/E).
     public void setExpandedForm(String expanded) { dict.setString("E", expanded); }
 
-    /** Returns the element ID (/ID). */
+    /// Returns the element ID (/ID).
     public String getID() { return dict.getString("ID"); }
 
-    /** Sets the element ID (/ID). */
+    /// Sets the element ID (/ID).
     public void setID(String id) { dict.setString("ID", id); }
 
     // ═══════════════════════════════════════════════════════════════
     //  Children
     // ═══════════════════════════════════════════════════════════════
 
-    /**
-     * Returns only StructureElement children (filters out MCR, OBJR, integers).
-     *
-     * @return the child structure elements
-     */
+    /// Returns only StructureElement children (filters out MCR, OBJR, integers).
+    ///
+    /// @return the child structure elements
     public ElementList getChildElements() {
         List<StructureElement> children = new ArrayList<>();
         PdfBase k = resolve(dict.get("K"));
@@ -154,12 +137,10 @@ public class StructureElement {
         }
     }
 
-    /**
-     * Returns ALL child items: StructureElements, MarkedContentReferences,
-     * ObjectReferences, and bare MCIDs.
-     *
-     * @return list of mixed child objects
-     */
+    /// Returns ALL child items: StructureElements, MarkedContentReferences,
+    /// ObjectReferences, and bare MCIDs.
+    ///
+    /// @return list of mixed child objects
     public List<Object> getAllKids() {
         List<Object> kids = new ArrayList<>();
         PdfBase k = resolve(dict.get("K"));
@@ -197,11 +178,9 @@ public class StructureElement {
         return kids;
     }
 
-    /**
-     * Appends a child structure element.
-     *
-     * @param child the child element to append
-     */
+    /// Appends a child structure element.
+    ///
+    /// @param child the child element to append
     public void appendChild(StructureElement child) {
         child.dict.set(PdfName.of("P"), dict);
         PdfBase k = dict.get("K");
@@ -217,12 +196,10 @@ public class StructureElement {
         }
     }
 
-    /**
-     * Appends a marked content reference (MCID) as a child.
-     *
-     * @param mcid the marked content identifier
-     * @param page the page dictionary (may be null)
-     */
+    /// Appends a marked content reference (MCID) as a child.
+    ///
+    /// @param mcid the marked content identifier
+    /// @param page the page dictionary (may be null)
     public void appendMarkedContent(int mcid, PdfDictionary page) {
         PdfDictionary mcr = new PdfDictionary();
         mcr.set(PdfName.of("Type"), PdfName.of("MCR"));
@@ -246,11 +223,9 @@ public class StructureElement {
     //  Parent
     // ═══════════════════════════════════════════════════════════════
 
-    /**
-     * Returns the parent element, or {@code null} for root-level elements.
-     *
-     * @return the parent structure element, or null
-     */
+    /// Returns the parent element, or `null` for root-level elements.
+    ///
+    /// @return the parent structure element, or null
     public StructureElement getParent() {
         PdfBase p = resolve(dict.get("P"));
         if (p instanceof PdfDictionary) {

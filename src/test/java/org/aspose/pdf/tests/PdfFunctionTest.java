@@ -13,9 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for PDF functions (§7.10).
- */
+/// Tests for PDF functions (§7.10).
 public class PdfFunctionTest {
 
     // ═══════════════════════════════════════════════════════════════
@@ -241,11 +239,9 @@ public class PdfFunctionTest {
         assertEquals(2.0, f.evaluate(new double[]{0.8})[0], 1e-6);
     }
 
-    /**
-     * The exact DeviceN [Cyan Magenta] -> CMYK tint transform from corpus
-     * 29077.pdf (llPDFLib): expected output is [c, m, 0, 0]. With roll
-     * unimplemented the result degenerated to [1,1,1,1] = black label.
-     */
+    /// The exact DeviceN [Cyan Magenta] -> CMYK tint transform from corpus
+    /// 29077.pdf (llPDFLib): expected output is [c, m, 0, 0]. With roll
+    /// unimplemented the result degenerated to [1,1,1,1] = black label.
     @org.junit.jupiter.api.Test
     public void postScript29077TintTransform() {
         String prog = "{1 index 1.000000 cvr exch sub 3 1 roll 0 index 1.000000 cvr exch sub "

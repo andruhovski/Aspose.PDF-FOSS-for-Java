@@ -15,11 +15,9 @@ import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for write-side O/U hash generation (Algorithms 3, 4, 5).
- * The gold test: generate O and U, then verify with the existing read-side
- * StandardSecurityHandler.authenticate(). If it passes, the hashes are correct.
- */
+/// Tests for write-side O/U hash generation (Algorithms 3, 4, 5).
+/// The gold test: generate O and U, then verify with the existing read-side
+/// StandardSecurityHandler.authenticate(). If it passes, the hashes are correct.
 public class PDFKeyGenerationTest {
 
     private static final SecureRandom RANDOM = new SecureRandom();
@@ -210,11 +208,9 @@ public class PDFKeyGenerationTest {
 
     // ── Helpers ──
 
-    /**
-     * The core gold test pattern: generate O and U, build an encryption dict,
-     * and verify that StandardSecurityHandler.authenticate() accepts both
-     * user and owner passwords, and rejects a wrong password.
-     */
+    /// The core gold test pattern: generate O and U, build an encryption dict,
+    /// and verify that StandardSecurityHandler.authenticate() accepts both
+    /// user and owner passwords, and rejects a wrong password.
     private void verifyGenerateAndAuthenticate(byte[] userPw, byte[] ownerPw,
                                                 int V, int R, int keyLenBytes,
                                                 int P, byte[] documentId) {
@@ -261,9 +257,7 @@ public class PDFKeyGenerationTest {
                 "Wrong password should NOT authenticate");
     }
 
-    /**
-     * Builds a PDFEncryptionDict from raw parameters using a manual PdfDictionary.
-     */
+    /// Builds a PDFEncryptionDict from raw parameters using a manual PdfDictionary.
     private PDFEncryptionDict buildEncDict(int V, int R, int lengthBits,
                                             int P, byte[] O, byte[] U) {
         PdfDictionary dict = new PdfDictionary();

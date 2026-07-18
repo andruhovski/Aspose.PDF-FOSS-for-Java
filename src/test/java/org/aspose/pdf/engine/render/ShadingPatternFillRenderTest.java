@@ -13,16 +13,14 @@ import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * Renderer regression test: a fill with a shading Pattern (PatternType 2,
- * §8.7.4.3) must paint the gradient inside the path, not fall back to a solid
- * colour. The renderer previously handled only tiling patterns (PatternType 1)
- * and dropped shading-pattern fills to the current fill colour — black for the
- * gradient-built reaction emoji of corpus 59149.
- */
+/// Renderer regression test: a fill with a shading Pattern (PatternType 2,
+/// §8.7.4.3) must paint the gradient inside the path, not fall back to a solid
+/// colour. The renderer previously handled only tiling patterns (PatternType 1)
+/// and dropped shading-pattern fills to the current fill colour — black for the
+/// gradient-built reaction emoji of corpus 59149.
 public class ShadingPatternFillRenderTest {
 
-    /** A page that fills the rect [50,50 100x60] with a red→blue axial shading pattern. */
+    /// A page that fills the rect [50,50 100x60] with a red→blue axial shading pattern.
     private static byte[] pdfWithShadingPattern() {
         String content = "/Pattern cs /P1 scn 50 50 100 60 re f";
         String pattern =
@@ -53,7 +51,7 @@ public class ShadingPatternFillRenderTest {
         return body.toString().getBytes(StandardCharsets.ISO_8859_1);
     }
 
-    /** Average [r,g,b] over a PDF-space box (origin bottom-left). */
+    /// Average [r,g,b] over a PDF-space box (origin bottom-left).
     private static int[] avg(BufferedImage img, int x0, int y0pdf, int w, int h) {
         long r = 0, g = 0, b = 0, n = 0;
         int y0 = img.getHeight() - y0pdf - h;

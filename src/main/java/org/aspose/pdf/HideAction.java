@@ -1,33 +1,23 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.pdfobjects.PdfArray;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfString;
+import org.aspose.pdf.engine.pdfobjects.*;
 
-/**
- * Hide action — shows or hides annotations (ISO 32000-1:2008, §12.6.4.10).
- * /T identifies annotations by name (string) or array of names/references.
- * /H = true means hide (default), false means show.
- */
+/// Hide action — shows or hides annotations (ISO 32000-1:2008, §12.6.4.10).
+/// /T identifies annotations by name (string) or array of names/references.
+/// /H = true means hide (default), false means show.
 public class HideAction extends PdfAction {
 
-    /**
-     * Parses a HideAction from an existing dictionary.
-     *
-     * @param dict the action dictionary
-     */
+    /// Parses a HideAction from an existing dictionary.
+    ///
+    /// @param dict the action dictionary
     public HideAction(PdfDictionary dict) {
         this.actionDict = dict;
     }
 
-    /**
-     * Creates a HideAction targeting a single annotation by name.
-     *
-     * @param annotationName the annotation field name
-     * @param hide           {@code true} to hide, {@code false} to show
-     */
+    /// Creates a HideAction targeting a single annotation by name.
+    ///
+    /// @param annotationName the annotation field name
+    /// @param hide`true` to hide, `false` to show
     public HideAction(String annotationName, boolean hide) {
         this.actionDict = new PdfDictionary();
         actionDict.set(PdfName.of("S"), PdfName.of("Hide"));
@@ -35,12 +25,10 @@ public class HideAction extends PdfAction {
         actionDict.setBoolean("H", hide);
     }
 
-    /**
-     * Creates a HideAction targeting multiple annotations by name.
-     *
-     * @param annotationNames the annotation field names
-     * @param hide            {@code true} to hide, {@code false} to show
-     */
+    /// Creates a HideAction targeting multiple annotations by name.
+    ///
+    /// @param annotationNames the annotation field names
+    /// @param hide`true` to hide, `false` to show
     public HideAction(String[] annotationNames, boolean hide) {
         this.actionDict = new PdfDictionary();
         actionDict.set(PdfName.of("S"), PdfName.of("Hide"));
@@ -52,29 +40,23 @@ public class HideAction extends PdfAction {
         actionDict.setBoolean("H", hide);
     }
 
-    /**
-     * Returns whether this action hides annotations (default {@code true}).
-     *
-     * @return {@code true} if hiding, {@code false} if showing
-     */
+    /// Returns whether this action hides annotations (default `true`).
+    ///
+    /// @return `true` if hiding, `false` if showing
     public boolean isHide() {
         return actionDict.getBoolean("H", true);
     }
 
-    /**
-     * Sets whether this action hides or shows annotations.
-     *
-     * @param hide {@code true} to hide, {@code false} to show
-     */
+    /// Sets whether this action hides or shows annotations.
+    ///
+    /// @param hide`true` to hide, `false` to show
     public void setHide(boolean hide) {
         actionDict.setBoolean("H", hide);
     }
 
-    /**
-     * Returns the annotation name(s) targeted by this action.
-     *
-     * @return array of annotation names (may be empty)
-     */
+    /// Returns the annotation name(s) targeted by this action.
+    ///
+    /// @return array of annotation names (may be empty)
     public String[] getAnnotationNames() {
         PdfBase t = resolve(actionDict.get("T"));
         if (t instanceof PdfString) {

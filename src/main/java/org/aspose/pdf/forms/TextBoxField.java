@@ -1,39 +1,35 @@
 package org.aspose.pdf.forms;
 
-import org.aspose.pdf.*;
+import org.aspose.pdf.Document;
+import org.aspose.pdf.Page;
+import org.aspose.pdf.Rectangle;
 import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Text input field (/FT /Tx) (ISO 32000-1:2008, §12.7.4.3).
- * <p>
- * Represents a single-line or multi-line text input field in an interactive form.
- * </p>
- */
+/// Text input field (/FT /Tx) (ISO 32000-1:2008, §12.7.4.3).
+///
+/// Represents a single-line or multi-line text input field in an interactive form.
+///
 public class TextBoxField extends Field {
 
     private static final int COMB_FLAG = 1 << 24;
 
-    /**
-     * Constructs a text box field from an existing PDF dictionary.
-     *
-     * @param dict     the PDF dictionary backing this field
-     * @param page     the page this field belongs to (may be null)
-     * @param fullName the fully-qualified dotted name
-     */
+    /// Constructs a text box field from an existing PDF dictionary.
+    ///
+    /// @param dict     the PDF dictionary backing this field
+    /// @param page     the page this field belongs to (may be null)
+    /// @param fullName the fully-qualified dotted name
     public TextBoxField(PdfDictionary dict, Page page, String fullName) {
         super(dict, page, fullName);
     }
 
-    /**
-     * Constructs a new text box field on the given page with the specified rectangle.
-     *
-     * @param page the page
-     * @param rect the field rectangle
-     */
+    /// Constructs a new text box field on the given page with the specified rectangle.
+    ///
+    /// @param page the page
+    /// @param rect the field rectangle
     public TextBoxField(Page page, Rectangle rect) {
         super(new PdfDictionary(), page, "");
         dict.set(PdfName.of("Type"), PdfName.of("Annot"));
@@ -50,28 +46,23 @@ public class TextBoxField extends Field {
         }
     }
 
-    /**
-     * Constructs a new text box field associated with the first page of the document.
-     * Useful for Aspose-compatible code paths that create a field from a document first.
-     *
-     * @param document the owning document
-     * @param rect the field rectangle
-     */
+    /// Constructs a new text box field associated with the first page of the document.
+    /// Useful for Aspose-compatible code paths that create a field from a document first.
+    ///
+    /// @param document the owning document
+    /// @param rect the field rectangle
     public TextBoxField(Document document, Rectangle rect) {
         this(document != null ? firstPage(document) : null, rect);
     }
 
-    /**
-     * Constructs a new text box field on the given page with multiple rectangles.
-     * <p>
-     * This creates a single field with multiple widget annotations (one per rectangle),
-     * stored as /Kids entries. This is useful when the same field needs to appear
-     * at multiple locations on a page or across pages.
-     * </p>
-     *
-     * @param page  the page
-     * @param rects the array of rectangles for the field's widgets
-     */
+    /// Constructs a new text box field on the given page with multiple rectangles.
+    ///
+    /// This creates a single field with multiple widget annotations (one per rectangle),
+    /// stored as /Kids entries. This is useful when the same field needs to appear
+    /// at multiple locations on a page or across pages.
+    ///
+    /// @param page  the page
+    /// @param rects the array of rectangles for the field's widgets
     public TextBoxField(Page page, Rectangle[] rects) {
         super(new PdfDictionary(), page, "");
         dict.set(PdfName.of("Type"), PdfName.of("Annot"));
@@ -99,66 +90,52 @@ public class TextBoxField extends Field {
         }
     }
 
-    /**
-     * Returns whether this text field is multiline (/Ff bit 13).
-     *
-     * @return true if multiline
-     */
+    /// Returns whether this text field is multiline (/Ff bit 13).
+    ///
+    /// @return true if multiline
     public boolean isMultiline() {
         return (getFieldFlags() & (1 << 12)) != 0;
     }
 
-    /**
-     * Sets whether this text field is multiline (/Ff bit 13).
-     *
-     * @param ml true to enable multiline
-     */
+    /// Sets whether this text field is multiline (/Ff bit 13).
+    ///
+    /// @param ml true to enable multiline
     public void setMultiline(boolean ml) {
         int ff = getFieldFlags();
         setFieldFlags(ml ? (ff | (1 << 12)) : (ff & ~(1 << 12)));
     }
 
-    /**
-     * Returns whether this text field is a password field (/Ff bit 14).
-     *
-     * @return true if password
-     */
+    /// Returns whether this text field is a password field (/Ff bit 14).
+    ///
+    /// @return true if password
     public boolean isPassword() {
         return (getFieldFlags() & (1 << 13)) != 0;
     }
 
-    /**
-     * Returns the maximum length of text (/MaxLen entry).
-     *
-     * @return the max length, or 0 if not set
-     */
+    /// Returns the maximum length of text (/MaxLen entry).
+    ///
+    /// @return the max length, or 0 if not set
     public int getMaxLen() {
         return dict.getInt("MaxLen", 0);
     }
 
-    /**
-     * Sets the maximum length of text (/MaxLen entry).
-     *
-     * @param maxLen the maximum length
-     */
+    /// Sets the maximum length of text (/MaxLen entry).
+    ///
+    /// @param maxLen the maximum length
     public void setMaxLen(int maxLen) {
         dict.set(PdfName.of("MaxLen"), PdfInteger.valueOf(maxLen));
     }
 
-    /**
-     * Returns whether comb formatting is enabled (/Ff bit 25).
-     *
-     * @return true if comb formatting is enabled
-     */
+    /// Returns whether comb formatting is enabled (/Ff bit 25).
+    ///
+    /// @return true if comb formatting is enabled
     public boolean isForceCombs() {
         return (getFieldFlags() & COMB_FLAG) != 0;
     }
 
-    /**
-     * Sets whether comb formatting is enabled (/Ff bit 25).
-     *
-     * @param value true to enable comb formatting
-     */
+    /// Sets whether comb formatting is enabled (/Ff bit 25).
+    ///
+    /// @param value true to enable comb formatting
     public void setForceCombs(boolean value) {
         int flags = getFieldFlags();
         setFieldFlags(value ? (flags | COMB_FLAG) : (flags & ~COMB_FLAG));
@@ -175,22 +152,20 @@ public class TextBoxField extends Field {
         }
     }
 
-    /**
-     * Sets the field value and rebuilds the {@code /AP /N} appearance stream
-     * so that downstream readers (and renderers) see the new text at the right
-     * font size.
-     *
-     * <p>If the field's effective default-appearance string ({@code /DA}) has
-     * an explicit font size, that size is used. If the {@code /DA} size is
-     * {@code 0} (auto-shrink), this method computes a size that fits the new
-     * value in the widget rectangle using a Helvetica-average advance width
-     * estimate (≈ 0.467 × {@code size}) and a 2pt horizontal padding. The
-     * computed size is clamped to {@code [0.5, 12]}.</p>
-     *
-     * <p>Closes BUG-058: previously {@code setValue} only updated {@code /V},
-     * leaving stale glyphs in {@code /AP /N} and causing renderers to skip the
-     * field entirely when looking for the per-field font size.</p>
-     */
+    /// Sets the field value and rebuilds the `/AP /N` appearance stream
+    /// so that downstream readers (and renderers) see the new text at the right
+    /// font size.
+    ///
+    /// If the field's effective default-appearance string (`/DA`) has
+    /// an explicit font size, that size is used. If the `/DA` size is
+    /// `0` (auto-shrink), this method computes a size that fits the new
+    /// value in the widget rectangle using a Helvetica-average advance width
+    /// estimate (≈ 0.467 × `size`) and a 2pt horizontal padding. The
+    /// computed size is clamped to `[0.5, 12]`.
+    ///
+    /// Closes BUG-058: previously `setValue` only updated `/V`,
+    /// leaving stale glyphs in `/AP /N` and causing renderers to skip the
+    /// field entirely when looking for the per-field font size.
     @Override
     public void setValue(String value) {
         super.setValue(value);
@@ -202,16 +177,14 @@ public class TextBoxField extends Field {
         }
     }
 
-    /**
-     * Rebuilds {@code /AP /N} from the current {@code /V}, {@code /Rect} and
-     * default-appearance. Exposed for tests and the rare case where callers
-     * mutate {@code /V} via a sibling API and want appearance to catch up.
-     *
-     * <p>If the field has child widget annotations under {@code /Kids}, an
-     * appearance stream is generated for each kid (using the kid's own
-     * {@code /Rect}). The same stream is also mirrored on the parent field so
-     * callers reading {@code field.getNormalAppearance()} see it.</p>
-     */
+    /// Rebuilds `/AP /N` from the current `/V`, `/Rect` and
+    /// default-appearance. Exposed for tests and the rare case where callers
+    /// mutate `/V` via a sibling API and want appearance to catch up.
+    ///
+    /// If the field has child widget annotations under `/Kids`, an
+    /// appearance stream is generated for each kid (using the kid's own
+    /// `/Rect`). The same stream is also mirrored on the parent field so
+    /// callers reading `field.getNormalAppearance()` see it.
     public void regenerateAppearance() {
         String text = getValue();
         if (text == null) text = "";
@@ -343,7 +316,7 @@ public class TextBoxField extends Field {
         return null;
     }
 
-    /** Returns the field's /DA, walking through the field hierarchy when absent. */
+    /// Returns the field's /DA, walking through the field hierarchy when absent.
     private String getEffectiveDA() {
         String da = getDefaultAppearance();
         if (da != null && !da.isEmpty()) return da;
@@ -351,7 +324,7 @@ public class TextBoxField extends Field {
         return "/Helv 0 Tf 0 g";
     }
 
-    /** The effective {@code /Q} quadding for the appearance — the widget's, else the field's, else 0. */
+    /// The effective `/Q` quadding for the appearance — the widget's, else the field's, else 0.
     private int effectiveQuadding(PdfDictionary widgetDict) {
         int q = quaddingOf(widgetDict);
         if (q < 0) {
@@ -372,7 +345,7 @@ public class TextBoxField extends Field {
         return v instanceof PdfInteger ? ((PdfInteger) v).intValue() : -1;
     }
 
-    /** Width of {@code text} at {@code size} pt in Helvetica, from the standard AFM metrics (1/1000 em). */
+    /// Width of `text` at `size` pt in Helvetica, from the standard AFM metrics (1/1000 em).
     private static double helveticaWidth(String text, double size) {
         int[] w = org.aspose.pdf.engine.font.StandardFonts.getWidths("Helvetica");
         if (w == null) {
@@ -404,7 +377,7 @@ public class TextBoxField extends Field {
         return resources;
     }
 
-    /** Parses {@code /DA} → font name + size + leading color-setting tokens. */
+    /// Parses `/DA` → font name + size + leading color-setting tokens.
     private static DAInfo parseDA(String da) {
         DAInfo info = new DAInfo();
         if (da == null) return info;

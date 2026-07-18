@@ -1,44 +1,37 @@
 package org.aspose.pdf.engine.render;
 
-import java.awt.AlphaComposite;
-import java.awt.Composite;
-import java.awt.CompositeContext;
-import java.awt.RenderingHints;
+import java.awt.*;
 import java.awt.image.ColorModel;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
 import java.util.logging.Logger;
 
-/**
- * Separable blend-mode composite for PDF /BM (ISO 32000-1:2008, §11.3.5).
- * <p>
- * Java2D ships only Porter-Duff composites; PDF content (notably Highlight
- * annotation appearance streams, corpus 30894) relies on the Multiply blend
- * mode so the markup darkens the page instead of covering it. Only Multiply
- * is implemented — other separable modes fall back to normal SRC_OVER at the
- * {@link #fillComposite} level.
- * </p>
- */
+/// Separable blend-mode composite for PDF /BM (ISO 32000-1:2008, §11.3.5).
+///
+/// Java2D ships only Porter-Duff composites; PDF content (notably Highlight
+/// annotation appearance streams, corpus 30894) relies on the Multiply blend
+/// mode so the markup darkens the page instead of covering it. Only Multiply
+/// is implemented — other separable modes fall back to normal SRC\_OVER at the
+/// [#fillComposite] level.
+///
 public final class BlendComposite implements Composite {
 
     private static final Logger LOG = Logger.getLogger(BlendComposite.class.getName());
 
-    /** Constant alpha (the PDF /ca value) applied on top of the blend. */
+    /// Constant alpha (the PDF /ca value) applied on top of the blend.
     private final float alpha;
 
     private BlendComposite(float alpha) {
         this.alpha = Math.max(0f, Math.min(1f, alpha));
     }
 
-    /**
-     * Returns the composite for a non-stroking paint op under the given
-     * graphics state: a Multiply blender when /BM is Multiply (or the
-     * equivalent Darken on white-ish backdrops would differ — only Multiply
-     * is special-cased), otherwise plain SRC_OVER with the /ca alpha.
-     *
-     * @param state the current graphics state
-     * @return the composite to install on the Graphics2D
-     */
+    /// Returns the composite for a non-stroking paint op under the given
+    /// graphics state: a Multiply blender when /BM is Multiply (or the
+    /// equivalent Darken on white-ish backdrops would differ — only Multiply
+    /// is special-cased), otherwise plain SRC\_OVER with the /ca alpha.
+    ///
+    /// @param state the current graphics state
+    /// @return the composite to install on the Graphics2D
     public static Composite fillComposite(GraphicsState state) {
         float ca = state.getNonStrokingAlpha();
         if ("Multiply".equals(state.getBlendMode())) {
@@ -56,10 +49,8 @@ public final class BlendComposite implements Composite {
         return new MultiplyContext(alpha);
     }
 
-    /**
-     * Multiply: C = Cs × Cb (per channel), then standard source-over with
-     * the source alpha × constant alpha (§11.3.5.2, B(Cb, Cs) = Cb × Cs).
-     */
+    /// Multiply: C = Cs × Cb (per channel), then standard source-over with
+    /// the source alpha × constant alpha (§11.3.5.2, B(Cb, Cs) = Cb × Cs).
     private static final class MultiplyContext implements CompositeContext {
         private final float alpha;
 

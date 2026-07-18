@@ -8,11 +8,9 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Unit tests for the extended RadioButtonField/RadioButtonOptionField API:
- * setValue/getValue/getOptions on the field, and per-option getStyle/setStyle
- * + getCharacteristics on the option.
- */
+/// Unit tests for the extended RadioButtonField/RadioButtonOptionField API:
+/// setValue/getValue/getOptions on the field, and per-option getStyle/setStyle
+/// + getCharacteristics on the option.
 public class RadioButtonFieldExtendedTests {
 
     @Test

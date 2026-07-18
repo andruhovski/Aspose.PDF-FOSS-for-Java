@@ -10,9 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link Resources}.
- */
+/// Tests for [Resources].
 public class ResourcesTest {
 
     @Test

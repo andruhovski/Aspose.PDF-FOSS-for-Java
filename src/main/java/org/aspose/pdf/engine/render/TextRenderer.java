@@ -1,24 +1,16 @@
 package org.aspose.pdf.engine.render;
 
 import org.aspose.pdf.Matrix;
-import org.aspose.pdf.Resources;
-import org.aspose.pdf.engine.pdfobjects.PdfArray;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfFloat;
-import org.aspose.pdf.engine.pdfobjects.PdfInteger;
-import org.aspose.pdf.engine.pdfobjects.PdfString;
 import org.aspose.pdf.OperatorCollection;
+import org.aspose.pdf.Resources;
 import org.aspose.pdf.engine.font.FontRepository;
 import org.aspose.pdf.engine.font.PdfFont;
 import org.aspose.pdf.engine.font.Type3Font;
 import org.aspose.pdf.engine.parser.ContentStreamParser;
 import org.aspose.pdf.engine.parser.PDFParser;
-import org.aspose.pdf.engine.pdfobjects.PdfStream;
+import org.aspose.pdf.engine.pdfobjects.*;
 
-import java.awt.AlphaComposite;
-import java.awt.Font;
-import java.awt.Graphics2D;
+import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.awt.geom.AffineTransform;
 import java.io.IOException;
@@ -26,52 +18,46 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
-/**
- * Renders text glyphs onto a {@link Graphics2D} context (ISO 32000-1:2008, §9.4).
- */
+/// Renders text glyphs onto a [Graphics2D] context (ISO 32000-1:2008, §9.4).
 public class TextRenderer {
 
     private static final Logger LOG = Logger.getLogger(TextRenderer.class.getName());
 
     private final FontRepository fontRepo = new FontRepository();
 
-    /**
-     * Executes a Type 3 glyph-description content stream (ISO 32000 §9.6.5).
-     * Implemented by {@link PdfPageRenderer}, which owns the operator
-     * machinery; the glyph state's CTM is already set to
-     * {@code FontMatrix × textState × Tm × CTM}.
-     */
+    /// Executes a Type 3 glyph-description content stream (ISO 32000 §9.6.5).
+    /// Implemented by [PdfPageRenderer], which owns the operator
+    /// machinery; the glyph state's CTM is already set to
+    /// `FontMatrix × textState × Tm × CTM`.
     public interface Type3GlyphExecutor {
-        /**
-         * @param g2d        target graphics
-         * @param glyphState graphics state for the glyph (pre-multiplied CTM)
-         * @param ops        the parsed glyph content stream
-         * @param resources  resources for the glyph stream (font's own or page's)
-         * @param parser     parser for resolving indirect objects (may be null)
-         */
+        /// @param g2d        target graphics
+        /// @param glyphState graphics state for the glyph (pre-multiplied CTM)
+        /// @param ops        the parsed glyph content stream
+        /// @param resources  resources for the glyph stream (font's own or page's)
+        /// @param parser     parser for resolving indirect objects (may be null)
         void execute(Graphics2D g2d, GraphicsState glyphState,
                      OperatorCollection ops, Resources resources, PDFParser parser);
     }
 
-    /** Callback into the page renderer for Type 3 glyph streams (null = Type3 skipped). */
+    /// Callback into the page renderer for Type 3 glyph streams (null = Type3 skipped).
     private Type3GlyphExecutor type3Executor;
 
-    /** Parsed-glyph cache: CharProc stream identity → operator list. */
+    /// Parsed-glyph cache: CharProc stream identity → operator list.
     private final Map<PdfStream, OperatorCollection> type3GlyphCache = new java.util.IdentityHashMap<>();
 
-    /** Wires the Type 3 glyph-stream executor (called by the page renderer). */
+    /// Wires the Type 3 glyph-stream executor (called by the page renderer).
     public void setType3Executor(Type3GlyphExecutor executor) {
         this.type3Executor = executor;
     }
 
-    /** FRC for measuring JDK glyph widths (outline metrics, no hinting bias). */
+    /// FRC for measuring JDK glyph widths (outline metrics, no hinting bias).
     private static final FontRenderContext MEASURE_FRC =
             new FontRenderContext(null, true, true);
 
-    /** Cache: scaled JDK fonts keyed by PDF base font name. */
+    /// Cache: scaled JDK fonts keyed by PDF base font name.
     private final Map<String, Font> scaledFontCache = new HashMap<>();
 
-    /** Cache for JDK font substitutions keyed by PDF base font name. */
+    /// Cache for JDK font substitutions keyed by PDF base font name.
     private static final Map<String, String> FONT_SUBSTITUTION = new HashMap<>();
     static {
         FONT_SUBSTITUTION.put("Helvetica", "SansSerif");
@@ -94,9 +80,7 @@ public class TextRenderer {
         FONT_SUBSTITUTION.put("ZapfDingbats", "SansSerif");
     }
 
-    /**
-     * Renders a text string (Tj operator).
-     */
+    /// Renders a text string (Tj operator).
     public void renderText(Graphics2D g2d, GraphicsState state,
                            byte[] rawBytes, Resources resources, PDFParser parser) {
         if (rawBytes == null || rawBytes.length == 0) return;
@@ -113,9 +97,7 @@ public class TextRenderer {
         drawTextGlyphs(g2d, state, text, rawBytes, pdfFont, jdkFont);
     }
 
-    /**
-     * Renders a TJ array (interleaved strings and positioning adjustments).
-     */
+    /// Renders a TJ array (interleaved strings and positioning adjustments).
     public void renderTJArray(Graphics2D g2d, GraphicsState state,
                               PdfArray tjArray, Resources resources, PDFParser parser) {
         if (tjArray == null) return;
@@ -143,15 +125,13 @@ public class TextRenderer {
         }
     }
 
-    /**
-     * Renders text set in a Type 3 font (ISO 32000 §9.6.5): each character
-     * code maps via /Encoding(/Differences) to a glyph-description content
-     * stream in /CharProcs, which is executed with the CTM set to
-     * {@code FontMatrix × textState × Tm × CTM} (§9.4.4 with the font's own
-     * glyph-space matrix instead of the implicit 1/1000 scale). The advance
-     * uses /Widths values, which are in glyph space and therefore also pass
-     * through FontMatrix — NOT the 1/1000 convention of other font types.
-     */
+    /// Renders text set in a Type 3 font (ISO 32000 §9.6.5): each character
+    /// code maps via /Encoding(/Differences) to a glyph-description content
+    /// stream in /CharProcs, which is executed with the CTM set to
+    /// `FontMatrix × textState × Tm × CTM` (§9.4.4 with the font's own
+    /// glyph-space matrix instead of the implicit 1/1000 scale). The advance
+    /// uses /Widths values, which are in glyph space and therefore also pass
+    /// through FontMatrix — NOT the 1/1000 convention of other font types.
     private void renderType3Text(Graphics2D g2d, GraphicsState state, byte[] rawBytes,
                                  Type3Font font, Resources resources, PDFParser parser) {
         double fontSize = state.getFontSize();
@@ -211,15 +191,13 @@ public class TextRenderer {
         }
     }
 
-    /**
-     * Draws decoded text character by character, positioning each glyph via the
-     * full Text Rendering Matrix (Trm) per ISO 32000 §9.4.4.
-     * <p>
-     * A horizontally-scaled unit JDK font is used so that glyphs fit within the
-     * PDF advance width with natural sidebearing gaps. The advance stays strictly
-     * based on PDF font metrics — no accumulation error.
-     * </p>
-     */
+    /// Draws decoded text character by character, positioning each glyph via the
+    /// full Text Rendering Matrix (Trm) per ISO 32000 §9.4.4.
+    ///
+    /// A horizontally-scaled unit JDK font is used so that glyphs fit within the
+    /// PDF advance width with natural sidebearing gaps. The advance stays strictly
+    /// based on PDF font metrics — no accumulation error.
+    ///
     private void drawTextGlyphs(Graphics2D g2d, GraphicsState state, String text,
                                 byte[] rawBytes, PdfFont pdfFont, Font jdkFont) {
         // Code-keyed subset, CID-glyph and embedded-outline fonts draw per glyph
@@ -371,25 +349,22 @@ public class TextRenderer {
         }
     }
 
-    /**
-     * Remaps characters into the U+F000–U+F0FF private-use range for symbolic
-     * TrueType fonts whose only cmap subtable is (3,0) Microsoft Symbol.
-     * <p>
-     * ISO 32000 §9.6.6.4: glyph lookup in a symbolic TrueType font tries the
-     * (3,0) cmap with the character code directly, then with {@code 0xF000 + code}.
-     * Subset fonts produced by symbol-era tools map their glyphs only at
-     * F000+code, so Java's {@code drawString} resolves the decoded Unicode
-     * ('A' = U+0041) to .notdef. When the font cannot display the decoded
-     * character but can display its PUA twin, substitute the PUA character.
-     * Fonts with a working Unicode cmap pass {@code canDisplay} and are
-     * returned unchanged.
-     * </p>
-     *
-     * @param font     the JDK font the text will be drawn with
-     * @param ch       the decoded character (single code point as a String)
-     * @param charCode the raw character code from the content stream
-     * @return the character to draw — {@code ch}, or its U+F0xx substitute
-     */
+    /// Remaps characters into the U+F000–U+F0FF private-use range for symbolic
+    /// TrueType fonts whose only cmap subtable is (3,0) Microsoft Symbol.
+    ///
+    /// ISO 32000 §9.6.6.4: glyph lookup in a symbolic TrueType font tries the
+    /// (3,0) cmap with the character code directly, then with `0xF000 + code`.
+    /// Subset fonts produced by symbol-era tools map their glyphs only at
+    /// F000+code, so Java's `drawString` resolves the decoded Unicode
+    /// ('A' = U+0041) to .notdef. When the font cannot display the decoded
+    /// character but can display its PUA twin, substitute the PUA character.
+    /// Fonts with a working Unicode cmap pass `canDisplay` and are
+    /// returned unchanged.
+    ///
+    /// @param font     the JDK font the text will be drawn with
+    /// @param ch       the decoded character (single code point as a String)
+    /// @param charCode the raw character code from the content stream
+    /// @return the character to draw — `ch`, or its U+F0xx substitute
     public static String remapForSymbolicCmap(Font font, String ch, int charCode) {
         if (font == null || ch == null || ch.length() != 1 || charCode > 0xFF) {
             return ch;
@@ -404,23 +379,21 @@ public class TextRenderer {
         return ch;
     }
 
-    /**
-     * Returns true when glyph selection for this font must use the RAW
-     * character code instead of the ToUnicode-decoded character.
-     * <p>
-     * Office-suite subset fonts (e.g. {@code EAAAAA+TimesNewRomanPSMT} in
-     * corpus 30151) are symbolic TrueType fonts without /Encoding whose
-     * embedded cmap is keyed by the PDF character codes (1, 2, 3, …) — not
-     * by Unicode. Drawing the decoded character through such a cmap picks an
-     * unrelated glyph: code 0x48 ('H' decoded) hits whatever subset glyph
-     * happens to sit at 0x48, and {@code canDisplay} can't catch it because
-     * the lookup "succeeds". ISO 32000-1:2008 §9.6.6.4 mandates code-based
-     * lookup for symbolic TrueType fonts; apply it whenever the embedded
-     * program ships no true-Unicode cmap subtable and the glyphs are drawn
-     * with the embedded font itself (a substituted system font is
-     * Unicode-keyed, so decoded text is correct there).
-     * </p>
-     */
+    /// Returns true when glyph selection for this font must use the RAW
+    /// character code instead of the ToUnicode-decoded character.
+    ///
+    /// Office-suite subset fonts (e.g. `EAAAAA+TimesNewRomanPSMT` in
+    /// corpus 30151) are symbolic TrueType fonts without /Encoding whose
+    /// embedded cmap is keyed by the PDF character codes (1, 2, 3, …) — not
+    /// by Unicode. Drawing the decoded character through such a cmap picks an
+    /// unrelated glyph: code 0x48 ('H' decoded) hits whatever subset glyph
+    /// happens to sit at 0x48, and `canDisplay` can't catch it because
+    /// the lookup "succeeds". ISO 32000-1:2008 §9.6.6.4 mandates code-based
+    /// lookup for symbolic TrueType fonts; apply it whenever the embedded
+    /// program ships no true-Unicode cmap subtable and the glyphs are drawn
+    /// with the embedded font itself (a substituted system font is
+    /// Unicode-keyed, so decoded text is correct there).
+    ///
     private static org.aspose.pdf.engine.font.ttf.TrueTypeReader codeKeyedReaderFor(
             PdfFont pdfFont, Font jdkFont) {
         if (!(pdfFont instanceof org.aspose.pdf.engine.font.TrueTypeFont) || jdkFont == null) {
@@ -444,12 +417,10 @@ public class TextRenderer {
         return reader;
     }
 
-    /**
-     * Returns the descendant CIDFont when this composite font's CIDs can be
-     * drawn as glyph ids with the embedded program: Identity-H/V encoding,
-     * CIDFontType2 descendant (CID → GID via /CIDToGIDMap), and the glyphs
-     * are actually drawn with the embedded font. Null otherwise.
-     */
+    /// Returns the descendant CIDFont when this composite font's CIDs can be
+    /// drawn as glyph ids with the embedded program: Identity-H/V encoding,
+    /// CIDFontType2 descendant (CID → GID via /CIDToGIDMap), and the glyphs
+    /// are actually drawn with the embedded font. Null otherwise.
     private static org.aspose.pdf.engine.font.CIDFont compositeGidFontFor(
             PdfFont pdfFont, Font jdkFont) {
         if (!(pdfFont instanceof org.aspose.pdf.engine.font.Type0Font) || jdkFont == null) {
@@ -466,17 +437,15 @@ public class TextRenderer {
         return descendant;
     }
 
-    /**
-     * Returns the simple {@link org.aspose.pdf.engine.font.TrueTypeFont} when its
-     * glyphs should be drawn from the embedded program by outline: a parsed
-     * embedded TrueType program is present and the glyphs are actually drawn with
-     * it (not a substituted system font). Null otherwise.
-     * <p>
-     * Outline drawing sidesteps {@code java.awt.Font}, which renders the default
-     * ".notdef" box for subset programs whose {@code cmap} it mishandles even
-     * when {@code canDisplay} returns true (corpus 46679). A substituted system
-     * font is Unicode-keyed and reliable, so it keeps the {@code drawString} path.
-     */
+    /// Returns the simple [org.aspose.pdf.engine.font.TrueTypeFont] when its
+    /// glyphs should be drawn from the embedded program by outline: a parsed
+    /// embedded TrueType program is present and the glyphs are actually drawn with
+    /// it (not a substituted system font). Null otherwise.
+    ///
+    /// Outline drawing sidesteps `java.awt.Font`, which renders the default
+    /// ".notdef" box for subset programs whose `cmap` it mishandles even
+    /// when `canDisplay` returns true (corpus 46679). A substituted system
+    /// font is Unicode-keyed and reliable, so it keeps the `drawString` path.
     private static org.aspose.pdf.engine.font.TrueTypeFont embeddedTrueTypeFor(
             PdfFont pdfFont, Font jdkFont) {
         if (!(pdfFont instanceof org.aspose.pdf.engine.font.TrueTypeFont) || jdkFont == null) {
@@ -492,19 +461,17 @@ public class TextRenderer {
         return tt;
     }
 
-    /**
-     * Returns the charcode→gid map for a simple (non-composite) font whose
-     * outlines come from an embedded CFF ({@code FontFile3}) and that is being
-     * drawn with that embedded program — otherwise {@code null}.
-     * <p>
-     * Such fonts otherwise reach {@code drawString}, which resolves the decoded
-     * Unicode through the synthetic OTF cmap and renders {@code .notdef} boxes
-     * for custom {@code /Differences} encodings (Arabic Hacen subsets in
-     * PDFNEWNET_38043). The map lets the per-glyph loop draw by glyph id
-     * instead — but only as a fallback when {@code java.awt.Font#canDisplay}
-     * reports the decoded char unavailable, so Latin CFF fonts that already
-     * render correctly keep their {@code drawString} path unchanged.
-     */
+    /// Returns the charcode→gid map for a simple (non-composite) font whose
+    /// outlines come from an embedded CFF (`FontFile3`) and that is being
+    /// drawn with that embedded program — otherwise `null`.
+    ///
+    /// Such fonts otherwise reach `drawString`, which resolves the decoded
+    /// Unicode through the synthetic OTF cmap and renders `.notdef` boxes
+    /// for custom `/Differences` encodings (Arabic Hacen subsets in
+    /// PDFNEWNET\_38043). The map lets the per-glyph loop draw by glyph id
+    /// instead — but only as a fallback when `java.awt.Font#canDisplay`
+    /// reports the decoded char unavailable, so Latin CFF fonts that already
+    /// render correctly keep their `drawString` path unchanged.
     private static int[] cffSimpleCodeToGidFor(PdfFont pdfFont, Font jdkFont) {
         if (pdfFont == null || jdkFont == null || pdfFont.isComposite()) return null;
         if (org.aspose.pdf.engine.font.cff.CFFFontLoader.load(pdfFont) != jdkFont) {
@@ -513,11 +480,9 @@ public class TextRenderer {
         return org.aspose.pdf.engine.font.cff.CFFFontLoader.simpleCffCodeToGid(pdfFont);
     }
 
-    /**
-     * Whole-string variant of {@link #remapForSymbolicCmap(Font, String, int)}
-     * for the single-run path, where {@code text.length() == rawBytes.length}
-     * is guaranteed by {@link #canDrawAsSingleRun}.
-     */
+    /// Whole-string variant of [#remapForSymbolicCmap(Font, String, int)]
+    /// for the single-run path, where `text.length() == rawBytes.length`
+    /// is guaranteed by [#canDrawAsSingleRun].
     private static String remapForSymbolicCmap(Font font, String text, byte[] rawBytes) {
         StringBuilder sb = null;
         for (int i = 0; i < text.length(); i++) {
@@ -539,12 +504,10 @@ public class TextRenderer {
         return sb != null ? sb.toString() : text;
     }
 
-    /**
-     * True if {@code jdkFont} cannot display at least one code point of
-     * {@code text} — the signal that a simple CFF font's custom encoding would
-     * make {@code drawString} emit a {@code .notdef} box, so the per-glyph
-     * draw-by-id path should be used instead.
-     */
+    /// True if `jdkFont` cannot display at least one code point of
+    /// `text` — the signal that a simple CFF font's custom encoding would
+    /// make `drawString` emit a `.notdef` box, so the per-glyph
+    /// draw-by-id path should be used instead.
     private static boolean hasUndisplayableChar(Font jdkFont, String text) {
         if (jdkFont == null || text == null) return false;
         for (int i = 0; i < text.length(); ) {
@@ -647,26 +610,22 @@ public class TextRenderer {
         }
     }
 
-    /**
-     * Maps a PDF font to a JDK substitute font, horizontally scaled to match
-     * the PDF font's glyph widths.
-     * <p>
-     * Computes the average width ratio (PDF / JDK) across ASCII printable chars
-     * and applies it as a horizontal scale via {@link Font#deriveFont(AffineTransform)}.
-     * This makes JDK glyphs fit within the PDF advance slots with natural gaps,
-     * while the advance stays strictly based on PDF metrics (no accumulation error).
-     * </p>
-     */
+    /// Maps a PDF font to a JDK substitute font, horizontally scaled to match
+    /// the PDF font's glyph widths.
+    ///
+    /// Computes the average width ratio (PDF / JDK) across ASCII printable chars
+    /// and applies it as a horizontal scale via [Font#deriveFont(AffineTransform)].
+    /// This makes JDK glyphs fit within the PDF advance slots with natural gaps,
+    /// while the advance stays strictly based on PDF metrics (no accumulation error).
+    ///
     private Font mapToJdkFont(PdfFont pdfFont) {
         return mapToJdkFont(pdfFont, null);
     }
 
-    /**
-     * @param fallbackName the font name from /Tf when {@code pdfFont} is null
-     *                     (e.g. an annotation appearance stream referencing a
-     *                     font like /Verdana that isn't in the form's empty
-     *                     /Resources). Used to look up a system font by name.
-     */
+    /// @param fallbackName the font name from /Tf when `pdfFont` is null
+    ///                     (e.g. an annotation appearance stream referencing a
+    ///                     font like /Verdana that isn't in the form's empty
+    ///                     /Resources). Used to look up a system font by name.
     private Font mapToJdkFont(PdfFont pdfFont, String fallbackName) {
         // Cache key: font-dict identity. Two PdfFont instances can share a
         // base-font NAME (e.g. T1_0 Type1C and TT0 TrueType in 31836 both name
@@ -762,12 +721,10 @@ public class TextRenderer {
         return result;
     }
 
-    /**
-     * Computes the horizontal scale factor to apply to a JDK font so that its
-     * average glyph width matches the PDF font's average glyph width.
-     *
-     * @return scale factor (PDF_avg / JDK_avg), or 1.0 if not computable
-     */
+    /// Computes the horizontal scale factor to apply to a JDK font so that its
+    /// average glyph width matches the PDF font's average glyph width.
+    ///
+    /// @return scale factor (PDF\_avg / JDK\_avg), or 1.0 if not computable
     private double computeWidthScale(PdfFont pdfFont, Font jdkFont) {
         if (pdfFont == null) return 1.0;
 
@@ -796,7 +753,7 @@ public class TextRenderer {
         return 1.0;
     }
 
-    /** Cache of system font family names (lowercased) → canonical family string. */
+    /// Cache of system font family names (lowercased) → canonical family string.
     private static volatile java.util.Map<String, String> SYS_FONT_INDEX;
 
     private static java.util.Map<String, String> systemFontIndex() {
@@ -819,11 +776,9 @@ public class TextRenderer {
         return idx;
     }
 
-    /**
-     * Resolves a PDF base font name to a system font family if one matches.
-     * Strips trailing weight/style suffixes ("-Bold", ",Italic" etc.) before
-     * looking up.
-     */
+    /// Resolves a PDF base font name to a system font family if one matches.
+    /// Strips trailing weight/style suffixes ("-Bold", ",Italic" etc.) before
+    /// looking up.
     private static String resolveSystemFontName(String baseName) {
         if (baseName == null || baseName.isEmpty()) return null;
         String stripped = baseName.replaceAll("[-,].*$", "");

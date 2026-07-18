@@ -11,9 +11,7 @@ import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link FontRepository}.
- */
+/// Tests for [FontRepository].
 public class FontRepositoryTest {
 
     @Test

@@ -13,9 +13,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for Tagged PDF logical structure (§14.7, §14.8).
- */
+/// Tests for Tagged PDF logical structure (§14.7, §14.8).
 public class TaggedPdfTest {
 
     // ═══════════════════════════════════════════════════════════════

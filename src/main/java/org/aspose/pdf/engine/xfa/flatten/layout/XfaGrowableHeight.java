@@ -6,43 +6,37 @@ import org.aspose.pdf.engine.xfa.model.XfaMeasurement;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
-/**
- * Computes the height of a growable XFA leaf (field / draw) from its bound data
- * (Stage C, sprint L1.2).
- *
- * <p>XFA height resolution (XFA 3.0 §"Sizing of Objects"): an object with a fixed
- * {@code h} is exactly that tall. An object with no {@code h} is <b>growable</b> — it
- * sizes to its content between {@code minH} (default 0) and {@code maxH} (default
- * unbounded). For a text-bearing object the content height is the number of wrapped
- * lines of its value times the line height, plus the top/bottom margin insets.</p>
- *
- * <p>Line breaking, text measurement and line height all come from
- * {@link TextLayoutHelper} (the repo's existing layout primitive) — there is no second
- * line-breaker here. The font typeface/size are read from the object's {@code <font>}
- * and mapped to a standard-14 base font (the same mapping the C2 painter uses), so the
- * measured width matches what is ultimately painted.</p>
- */
+/// Computes the height of a growable XFA leaf (field / draw) from its bound data
+/// (Stage C, sprint L1.2).
+///
+/// XFA height resolution (XFA 3.0 §"Sizing of Objects"): an object with a fixed
+/// `h` is exactly that tall. An object with no `h` is **growable** — it
+/// sizes to its content between `minH` (default 0) and `maxH` (default
+/// unbounded). For a text-bearing object the content height is the number of wrapped
+/// lines of its value times the line height, plus the top/bottom margin insets.
+///
+/// Line breaking, text measurement and line height all come from
+/// [TextLayoutHelper] (the repo's existing layout primitive) — there is no second
+/// line-breaker here. The font typeface/size are read from the object's `<font>`
+/// and mapped to a standard-14 base font (the same mapping the C2 painter uses), so the
+/// measured width matches what is ultimately painted.
 public final class XfaGrowableHeight {
 
     private XfaGrowableHeight() {
     }
 
-    /**
-     * @param el a field/draw element
-     * @return {@code true} if the object is growable vertically (no fixed {@code h})
-     */
+    /// @param el a field/draw element
+    /// @return `true` if the object is growable vertically (no fixed `h`)
     public static boolean isGrowable(Element el) {
         return el != null && !hasMeasure(el, "h");
     }
 
-    /**
-     * Resolves the height of a leaf object placed at the given box width.
-     *
-     * @param el        the field/draw element
-     * @param value     the bound display value (may be {@code null}/empty)
-     * @param boxWidth  the object's box width in points (its column width in the flow)
-     * @return the resolved height in points
-     */
+    /// Resolves the height of a leaf object placed at the given box width.
+    ///
+    /// @param el        the field/draw element
+    /// @param value     the bound display value (may be `null`/empty)
+    /// @param boxWidth  the object's box width in points (its column width in the flow)
+    /// @return the resolved height in points
     public static double height(Element el, String value, double boxWidth) {
         // Fixed height wins outright.
         double h = measure(el, "h");
@@ -82,19 +76,15 @@ public final class XfaGrowableHeight {
         return clamp(content, minH(el), maxH(el));
     }
 
-    /**
-     * @param el a field/draw element
-     * @return its lower height bound {@code minH} in points (0 if absent)
-     */
+    /// @param el a field/draw element
+    /// @return its lower height bound `minH` in points (0 if absent)
     public static double minH(Element el) {
         double v = measure(el, "minH");
         return Double.isNaN(v) ? 0.0 : v;
     }
 
-    /**
-     * @param el a field/draw element
-     * @return its upper height bound {@code maxH} in points ({@link Double#POSITIVE_INFINITY} if absent)
-     */
+    /// @param el a field/draw element
+    /// @return its upper height bound `maxH` in points ([Double#POSITIVE\_INFINITY] if absent)
     public static double maxH(Element el) {
         double v = measure(el, "maxH");
         return Double.isNaN(v) ? Double.POSITIVE_INFINITY : v;
@@ -113,7 +103,7 @@ public final class XfaGrowableHeight {
         return !Double.isNaN(measure(el, name));
     }
 
-    /** A measurement attribute in points, or {@link Double#NaN} if absent/relative. */
+    /// A measurement attribute in points, or [Double#NaN] if absent/relative.
     private static double measure(Element el, String name) {
         if (el == null || !el.hasAttribute(name)) {
             return Double.NaN;
@@ -127,7 +117,7 @@ public final class XfaGrowableHeight {
         return pts == 0.0 && m.getValue() != 0.0 ? Double.NaN : pts;
     }
 
-    /** The {@code <margin>} left/top/right/bottom insets in points (0 if absent). */
+    /// The `<margin>` left/top/right/bottom insets in points (0 if absent).
     static double[] insets(Element el) {
         Element m = firstChild(el, "margin");
         if (m == null) {
@@ -145,7 +135,7 @@ public final class XfaGrowableHeight {
         return Double.isNaN(v) ? 0.0 : v;
     }
 
-    /** The object's font size in points (default 10pt, the XFA caption/value default). */
+    /// The object's font size in points (default 10pt, the XFA caption/value default).
     static double fontSize(Element el) {
         Element font = descendFont(el);
         if (font != null && font.hasAttribute("size")) {
@@ -157,7 +147,7 @@ public final class XfaGrowableHeight {
         return 10.0;
     }
 
-    /** Maps the object's {@code <font>} typeface/weight/posture to a standard-14 base font. */
+    /// Maps the object's `<font>` typeface/weight/posture to a standard-14 base font.
     static String fontName(Element el) {
         Element font = descendFont(el);
         boolean bold = font != null && "bold".equalsIgnoreCase(attr(font, "weight"));
@@ -182,7 +172,7 @@ public final class XfaGrowableHeight {
         return v == null || v.isEmpty() ? null : v;
     }
 
-    /** {@code <font>} on the object or one level down (e.g. under {@code <value>}/{@code <caption>}). */
+    /// `<font>` on the object or one level down (e.g. under `<value>`/`<caption>`).
     private static Element descendFont(Element el) {
         Element f = firstChild(el, "font");
         if (f != null) {
@@ -199,13 +189,13 @@ public final class XfaGrowableHeight {
         return null;
     }
 
-    /** Whether {@code el}'s value is a {@code <line>} vector shape (a rule, sized by its w/h, not text). */
+    /// Whether `el`'s value is a `<line>` vector shape (a rule, sized by its w/h, not text).
     private static boolean isLineValue(Element el) {
         Element value = firstChild(el, "value");
         return value != null && firstChild(value, "line") != null;
     }
 
-    /** The object's static {@code <value><text>} (a draw label), or {@code null}. */
+    /// The object's static `<value><text>` (a draw label), or `null`.
     private static String staticText(Element el) {
         Element value = firstChild(el, "value");
         Element text = value == null ? null : firstChild(value, "text");

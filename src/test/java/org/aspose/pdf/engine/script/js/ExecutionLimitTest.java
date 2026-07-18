@@ -8,12 +8,10 @@ import org.junit.jupiter.api.Timeout;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Bounded-execution guard (DoS hardening): an untrusted script containing
- * {@code while(true){}} or unbounded recursion must abort within the step budget
- * as a reported script failure — never hang the thread or escape as an uncaught
- * crash of the host. Normal scripts run to completion unaffected.
- */
+/// Bounded-execution guard (DoS hardening): an untrusted script containing
+/// `while(true){}` or unbounded recursion must abort within the step budget
+/// as a reported script failure — never hang the thread or escape as an uncaught
+/// crash of the host. Normal scripts run to completion unaffected.
 public class ExecutionLimitTest {
 
     private String savedMaxSteps;

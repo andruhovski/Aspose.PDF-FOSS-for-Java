@@ -11,9 +11,7 @@ import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link XImage}.
- */
+/// Tests for [XImage].
 public class XImageTest {
 
     @Test

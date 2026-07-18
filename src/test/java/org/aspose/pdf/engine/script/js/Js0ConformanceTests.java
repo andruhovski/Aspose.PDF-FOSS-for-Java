@@ -5,14 +5,12 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * The JS-0 acceptance gate: end-to-end ECMAScript 3 behaviour exercised through
- * {@link Engine#eval(String)}. Each test asserts an observable result of
- * evaluating a small program.
- *
- * <p>Deliberately-unsupported ES3 corners are noted inline. ES5+ features are
- * out of scope (see {@code docs/xfa-dev/JS0_FINDINGS.md}).</p>
- */
+/// The JS-0 acceptance gate: end-to-end ECMAScript 3 behaviour exercised through
+/// [Engine#eval(String)]. Each test asserts an observable result of
+/// evaluating a small program.
+///
+/// Deliberately-unsupported ES3 corners are noted inline. ES5+ features are
+/// out of scope (see `docs/xfa-dev/JS0_FINDINGS.md`).
 public class Js0ConformanceTests {
 
     private static Object run(String s) {

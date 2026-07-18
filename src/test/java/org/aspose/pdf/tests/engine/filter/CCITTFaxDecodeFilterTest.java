@@ -12,9 +12,7 @@ import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link CCITTFaxDecodeFilter}.
- */
+/// Tests for [CCITTFaxDecodeFilter].
 public class CCITTFaxDecodeFilterTest {
 
     private final CCITTFaxDecodeFilter filter = new CCITTFaxDecodeFilter();
@@ -248,7 +246,7 @@ public class CCITTFaxDecodeFilterTest {
 
     // ─── Helpers ──────────────────────────────────────────────────
 
-    /** Converts a Huffman code value to its MSB-first bit string of the given length. */
+    /// Converts a Huffman code value to its MSB-first bit string of the given length.
     private static String codeStr(int code, int bits) {
         StringBuilder sb = new StringBuilder(bits);
         for (int i = bits - 1; i >= 0; i--) {

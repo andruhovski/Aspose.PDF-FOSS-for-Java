@@ -14,12 +14,10 @@ import java.nio.charset.StandardCharsets;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * B2 — FormCalc engine (lexer/parser/evaluator + routing). Asserts the spec worked-example results
- * (objective oracle: the FormCalc spec gives exact outputs), the SOM-bridged aggregates over real
- * data, and the contentType routing (FormCalc→FormCalc engine, JS→JS-0; the FormCalc-as-JS
- * SyntaxError cleared).
- */
+/// B2 — FormCalc engine (lexer/parser/evaluator + routing). Asserts the spec worked-example results
+/// (objective oracle: the FormCalc spec gives exact outputs), the SOM-bridged aggregates over real
+/// data, and the contentType routing (FormCalc→FormCalc engine, JS→JS-0; the FormCalc-as-JS
+/// SyntaxError cleared).
 public class FormCalcEngineTest {
 
     private static final String TPL = XfaNode.TEMPLATE_NS;
@@ -167,7 +165,7 @@ public class FormCalcEngineTest {
 
     /* ------------------------------ helpers ------------------------------ */
 
-    /** Evaluates a pure FormCalc expression against a throwaway one-field form. */
+    /// Evaluates a pure FormCalc expression against a throwaway one-field form.
     private static Object fc(String expr) {
         try {
             FormDom dom = merge(form(numField("dummy", null)), null);

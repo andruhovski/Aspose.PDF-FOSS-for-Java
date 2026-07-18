@@ -11,9 +11,7 @@ import java.util.GregorianCalendar;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link DocumentInfo}.
- */
+/// Tests for [DocumentInfo].
 public class DocumentInfoTest {
 
     @Test

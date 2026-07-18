@@ -1,21 +1,14 @@
 package org.aspose.pdf.engine.script.js.builtins;
 
-import org.aspose.pdf.engine.script.js.runtime.JSArray;
-import org.aspose.pdf.engine.script.js.runtime.JSNull;
-import org.aspose.pdf.engine.script.js.runtime.JSObject;
-import org.aspose.pdf.engine.script.js.runtime.JSRegExp;
-import org.aspose.pdf.engine.script.js.runtime.NativeFunction;
-import org.aspose.pdf.engine.script.js.runtime.Undefined;
+import org.aspose.pdf.engine.script.js.runtime.*;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-/**
- * Installs RegExp and RegExp.prototype (ECMA-262 3rd ed., sec 15.10):
- * {@code exec}, {@code test} and {@code toString}, with global
- * {@code lastIndex} statefulness.
- */
+/// Installs RegExp and RegExp.prototype (ECMA-262 3rd ed., sec 15.10):
+/// `exec`, `test` and `toString`, with global
+/// `lastIndex` statefulness.
 final class RegExpBuiltins {
 
     private static final Object UNDEF = Undefined.INSTANCE;
@@ -89,10 +82,8 @@ final class RegExpBuiltins {
         throw r.typeError("Method called on a non-RegExp object");
     }
 
-    /**
-     * RegExp.prototype.exec core (sec 15.10.6.2): honours global lastIndex and
-     * returns a match array (with {@code index}/{@code input}) or {@code null}.
-     */
+    /// RegExp.prototype.exec core (sec 15.10.6.2): honours global lastIndex and
+    /// returns a match array (with `index`/`input`) or `null`.
     static Object exec(Realm r, JSRegExp re, String s) {
         int start = re.global ? re.lastIndex() : 0;
         if (start < 0 || start > s.length()) {

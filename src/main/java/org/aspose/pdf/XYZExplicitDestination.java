@@ -3,28 +3,24 @@ package org.aspose.pdf;
 import org.aspose.pdf.engine.pdfobjects.PdfArray;
 import org.aspose.pdf.engine.pdfobjects.PdfName;
 
-/**
- * XYZ explicit destination (ISO 32000-1:2008, Table 151).
- * <p>
- * Display the page with coordinates (left, top) at the upper-left corner
- * and the page magnified by factor zoom. A null (NaN) value for any parameter
- * means to use the current value.
- * </p>
- */
+/// XYZ explicit destination (ISO 32000-1:2008, Table 151).
+///
+/// Display the page with coordinates (left, top) at the upper-left corner
+/// and the page magnified by factor zoom. A null (NaN) value for any parameter
+/// means to use the current value.
+///
 public class XYZExplicitDestination extends ExplicitDestination {
 
     private final double left;
     private final double top;
     private final double zoom;
 
-    /**
-     * Creates an XYZ destination targeting a page.
-     *
-     * @param page the target page
-     * @param left the left coordinate (NaN = unchanged)
-     * @param top  the top coordinate (NaN = unchanged)
-     * @param zoom the zoom factor (0 or NaN = unchanged)
-     */
+    /// Creates an XYZ destination targeting a page.
+    ///
+    /// @param page the target page
+    /// @param left the left coordinate (NaN = unchanged)
+    /// @param top  the top coordinate (NaN = unchanged)
+    /// @param zoom the zoom factor (0 or NaN = unchanged)
     public XYZExplicitDestination(Page page, double left, double top, double zoom) {
         super(page);
         this.left = left;
@@ -39,15 +35,13 @@ public class XYZExplicitDestination extends ExplicitDestination {
         this.zoom = zoom;
     }
 
-    /**
-     * Creates an XYZ destination by page number (no page object yet known).
-     * Useful when constructing destinations before pages exist or by index.
-     *
-     * @param pageNumber 1-based page number
-     * @param left       the left coordinate (NaN = unchanged)
-     * @param top        the top coordinate (NaN = unchanged)
-     * @param zoom       the zoom factor (0 or NaN = unchanged)
-     */
+    /// Creates an XYZ destination by page number (no page object yet known).
+    /// Useful when constructing destinations before pages exist or by index.
+    ///
+    /// @param pageNumber 1-based page number
+    /// @param left       the left coordinate (NaN = unchanged)
+    /// @param top        the top coordinate (NaN = unchanged)
+    /// @param zoom       the zoom factor (0 or NaN = unchanged)
     public XYZExplicitDestination(int pageNumber, double left, double top, double zoom) {
         super(pageNumber);
         this.left = left;
@@ -55,13 +49,13 @@ public class XYZExplicitDestination extends ExplicitDestination {
         this.zoom = zoom;
     }
 
-    /** Returns the left coordinate, or NaN if unspecified. */
+    /// Returns the left coordinate, or NaN if unspecified.
     public double getLeft() { return left; }
 
-    /** Returns the top coordinate, or NaN if unspecified. */
+    /// Returns the top coordinate, or NaN if unspecified.
     public double getTop() { return top; }
 
-    /** Returns the zoom factor (0 = unchanged). */
+    /// Returns the zoom factor (0 = unchanged).
     public double getZoom() { return Double.isNaN(zoom) ? 0.0 : zoom; }
 
     @Override

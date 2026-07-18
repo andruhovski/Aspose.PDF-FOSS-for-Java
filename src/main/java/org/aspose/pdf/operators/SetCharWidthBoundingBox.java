@@ -6,14 +6,12 @@ import org.aspose.pdf.engine.pdfobjects.PdfBase;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * Set char width and bounding box operator for Type 3 fonts (d1).
- * <p>
- * Sets the glyph width and bounding box in a Type 3 font glyph description.
- * The operands are wx, wy (displacement vector) and llx, lly, urx, ury (bounding box).
- * See ISO 32000-1:2008, §9.6.5, Table 113.
- * </p>
- */
+/// Set char width and bounding box operator for Type 3 fonts (d1).
+///
+/// Sets the glyph width and bounding box in a Type 3 font glyph description.
+/// The operands are wx, wy (displacement vector) and llx, lly, urx, ury (bounding box).
+/// See ISO 32000-1:2008, §9.6.5, Table 113.
+///
 public class SetCharWidthBoundingBox extends Operator {
 
     private final double wx;
@@ -23,16 +21,14 @@ public class SetCharWidthBoundingBox extends Operator {
     private final double urx;
     private final double ury;
 
-    /**
-     * Creates a SetCharWidthBoundingBox (d1) operator with the specified values.
-     *
-     * @param wx  the horizontal displacement
-     * @param wy  the vertical displacement
-     * @param llx the lower-left x of the bounding box
-     * @param lly the lower-left y of the bounding box
-     * @param urx the upper-right x of the bounding box
-     * @param ury the upper-right y of the bounding box
-     */
+    /// Creates a SetCharWidthBoundingBox (d1) operator with the specified values.
+    ///
+    /// @param wx  the horizontal displacement
+    /// @param wy  the vertical displacement
+    /// @param llx the lower-left x of the bounding box
+    /// @param lly the lower-left y of the bounding box
+    /// @param urx the upper-right x of the bounding box
+    /// @param ury the upper-right y of the bounding box
     public SetCharWidthBoundingBox(double wx, double wy, double llx, double lly, double urx, double ury) {
         super("d1", Arrays.asList(num(wx), num(wy), num(llx), num(lly), num(urx), num(ury)));
         this.wx = wx;
@@ -43,14 +39,11 @@ public class SetCharWidthBoundingBox extends Operator {
         this.ury = ury;
     }
 
-    /**
-     * Creates a SetCharWidthBoundingBox (d1) operator from parsed operands.
-     * <p>
-     * Expects six numeric operands: wx, wy, llx, lly, urx, ury.
-     * </p>
-     *
-     * @param operands the operands from the content stream parser
-     */
+    /// Creates a SetCharWidthBoundingBox (d1) operator from parsed operands.
+    ///
+    /// Expects six numeric operands: wx, wy, llx, lly, urx, ury.
+    ///
+    /// @param operands the operands from the content stream parser
     public SetCharWidthBoundingBox(List<PdfBase> operands) {
         super("d1", operands);
         this.wx  = (operands != null && operands.size() > 0) ? getNumber(operands.get(0)) : 0;
@@ -61,45 +54,33 @@ public class SetCharWidthBoundingBox extends Operator {
         this.ury = (operands != null && operands.size() > 5) ? getNumber(operands.get(5)) : 0;
     }
 
-    /**
-     * Returns the horizontal displacement component.
-     *
-     * @return wx
-     */
+    /// Returns the horizontal displacement component.
+    ///
+    /// @return wx
     public double getWx() { return wx; }
 
-    /**
-     * Returns the vertical displacement component.
-     *
-     * @return wy
-     */
+    /// Returns the vertical displacement component.
+    ///
+    /// @return wy
     public double getWy() { return wy; }
 
-    /**
-     * Returns the lower-left x of the bounding box.
-     *
-     * @return llx
-     */
+    /// Returns the lower-left x of the bounding box.
+    ///
+    /// @return llx
     public double getLlx() { return llx; }
 
-    /**
-     * Returns the lower-left y of the bounding box.
-     *
-     * @return lly
-     */
+    /// Returns the lower-left y of the bounding box.
+    ///
+    /// @return lly
     public double getLly() { return lly; }
 
-    /**
-     * Returns the upper-right x of the bounding box.
-     *
-     * @return urx
-     */
+    /// Returns the upper-right x of the bounding box.
+    ///
+    /// @return urx
     public double getUrx() { return urx; }
 
-    /**
-     * Returns the upper-right y of the bounding box.
-     *
-     * @return ury
-     */
+    /// Returns the upper-right y of the bounding box.
+    ///
+    /// @return ury
     public double getUry() { return ury; }
 }

@@ -8,9 +8,7 @@ import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link ASCIIHexFilter}.
- */
+/// Tests for [ASCIIHexFilter].
 public class ASCIIHexFilterTest {
 
     private final ASCIIHexFilter filter = new ASCIIHexFilter();

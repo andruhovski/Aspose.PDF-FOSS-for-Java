@@ -10,9 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TimeZone;
 
-/**
- * Per-signer information within a PKCS#7 SignedData structure (RFC 2315 §9.2).
- */
+/// Per-signer information within a PKCS#7 SignedData structure (RFC 2315 §9.2).
 public class SignerInfo {
 
     private byte[] issuerDER;
@@ -27,7 +25,7 @@ public class SignerInfo {
         this.authenticatedAttributes = new HashMap<>();
     }
 
-    /** Parses a SignerInfo from a DER SEQUENCE node. */
+    /// Parses a SignerInfo from a DER SEQUENCE node.
     static SignerInfo parse(DERNode seq) throws Exception {
         SignerInfo si = new SignerInfo();
         int idx = 0;
@@ -94,12 +92,12 @@ public class SignerInfo {
     public Map<String, byte[]> getAuthenticatedAttributes() { return authenticatedAttributes; }
     public byte[] getAuthenticatedAttributesRaw() { return authenticatedAttributesRaw; }
 
-    /** Returns the digest algorithm as JCA name. */
+    /// Returns the digest algorithm as JCA name.
     public String getDigestAlgorithm() {
         return OIDs.toJCADigest(digestAlgorithmOID);
     }
 
-    /** Returns the signing time from authenticated attributes. */
+    /// Returns the signing time from authenticated attributes.
     public Date getSigningTime() {
         byte[] timeBytes = authenticatedAttributes.get(OIDs.SIGNING_TIME);
         if (timeBytes == null) return null;
@@ -113,7 +111,7 @@ public class SignerInfo {
         }
     }
 
-    /** Returns the message digest from authenticated attributes. */
+    /// Returns the message digest from authenticated attributes.
     public byte[] getMessageDigest() {
         return authenticatedAttributes.get(OIDs.MESSAGE_DIGEST);
     }

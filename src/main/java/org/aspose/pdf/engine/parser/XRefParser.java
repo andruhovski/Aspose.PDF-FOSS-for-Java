@@ -1,7 +1,8 @@
 package org.aspose.pdf.engine.parser;
 
-import org.aspose.pdf.engine.pdfobjects.*;
+import org.aspose.pdf.engine.filter.FilterFactory;
 import org.aspose.pdf.engine.io.RandomAccessReader;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -10,16 +11,12 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.aspose.pdf.engine.filter.FilterFactory;
-
-/**
- * Parser for PDF cross-reference tables and streams as defined in
- * ISO 32000-1:2008, §7.5.4 (text xref tables) and §7.5.8 (xref streams).
- *
- * <p>Supports incremental updates by following the {@code /Prev} chain in trailer
- * dictionaries. Earlier entries do NOT overwrite later ones (the most recent
- * version of an object takes precedence).</p>
- */
+/// Parser for PDF cross-reference tables and streams as defined in
+/// ISO 32000-1:2008, §7.5.4 (text xref tables) and §7.5.8 (xref streams).
+///
+/// Supports incremental updates by following the `/Prev` chain in trailer
+/// dictionaries. Earlier entries do NOT overwrite later ones (the most recent
+/// version of an object takes precedence).
 public final class XRefParser {
 
     private static final Logger LOGGER = Logger.getLogger(XRefParser.class.getName());
@@ -29,23 +26,19 @@ public final class XRefParser {
 
     private final Map<PdfObjectKey, XRefEntry> entries = new LinkedHashMap<>();
 
-    /**
-     * Non-zero when the xref table was recovered by scanning and sits this
-     * many bytes AFTER the position startxref claimed: the file is a chain of
-     * appended whole-file revisions whose offsets are segment-relative
-     * (PDFNET_51575). Object loaders should retry a failed entry offset with
-     * this delta added before falling back to a full object scan.
-     */
+    /// Non-zero when the xref table was recovered by scanning and sits this
+    /// many bytes AFTER the position startxref claimed: the file is a chain of
+    /// appended whole-file revisions whose offsets are segment-relative
+    /// (PDFNET\_51575). Object loaders should retry a failed entry offset with
+    /// this delta added before falling back to a full object scan.
     private long entryOffsetAdjustment;
     private final java.util.Set<Long> visitedOffsets = new java.util.HashSet<>();
     private PdfDictionary trailerDictionary;
 
-    /**
-     * Constructs an XRefParser.
-     *
-     * @param reader the random-access reader for the PDF file
-     * @param lexer  the lexer to use for tokenization
-     */
+    /// Constructs an XRefParser.
+    ///
+    /// @param reader the random-access reader for the PDF file
+    /// @param lexer  the lexer to use for tokenization
     public XRefParser(RandomAccessReader reader, PDFLexer lexer) {
         if (reader == null) {
             throw new IllegalArgumentException("reader must not be null");
@@ -57,22 +50,19 @@ public final class XRefParser {
         this.lexer = lexer;
     }
 
-    /**
-     * Clamps a malformed generation number read from an xref table or stream into the
-     * legal range [0, 65535] required by {@link PdfObjectKey}.
-     * <p>
-     * Many real-world PDFs (including some produced by widely-used tools) write a wrong
-     * generation number for the free-list head — most commonly 65536 instead of 65535 —
-     * or otherwise out-of-range values in xref entries. ISO 32000-1:2008 §7.5.4 restricts
-     * generations to the range above, and {@link PdfObjectKey} enforces that range,
-     * so the parser must sanitize input before constructing a key. A WARNING is emitted
-     * for every clamp to keep downstream issues traceable.
-     * </p>
-     *
-     * @param objectNumber  the object number whose generation is being sanitized (for logging)
-     * @param rawGeneration the raw value read from the xref entry
-     * @return the sanitized generation in [0, 65535]
-     */
+    /// Clamps a malformed generation number read from an xref table or stream into the
+    /// legal range [0, 65535] required by [PdfObjectKey].
+    ///
+    /// Many real-world PDFs (including some produced by widely-used tools) write a wrong
+    /// generation number for the free-list head — most commonly 65536 instead of 65535 —
+    /// or otherwise out-of-range values in xref entries. ISO 32000-1:2008 §7.5.4 restricts
+    /// generations to the range above, and [PdfObjectKey] enforces that range,
+    /// so the parser must sanitize input before constructing a key. A WARNING is emitted
+    /// for every clamp to keep downstream issues traceable.
+    ///
+    /// @param objectNumber  the object number whose generation is being sanitized (for logging)
+    /// @param rawGeneration the raw value read from the xref entry
+    /// @return the sanitized generation in [0, 65535]
     static int sanitizeGeneration(int objectNumber, int rawGeneration) {
         if (rawGeneration >= 0 && rawGeneration <= 65535) {
             return rawGeneration;
@@ -86,13 +76,11 @@ public final class XRefParser {
         return clamped;
     }
 
-    /**
-     * Parses the cross-reference starting at the given startxref position.
-     * Follows the {@code /Prev} chain for incremental updates.
-     *
-     * @param startxrefPosition the byte offset of the xref section
-     * @throws IOException if parsing fails
-     */
+    /// Parses the cross-reference starting at the given startxref position.
+    /// Follows the `/Prev` chain for incremental updates.
+    ///
+    /// @param startxrefPosition the byte offset of the xref section
+    /// @throws IOException if parsing fails
     public void parse(long startxrefPosition) throws IOException {
         LOGGER.log(Level.FINE, "Parsing xref at position {0}", startxrefPosition);
         if (!visitedOffsets.add(startxrefPosition)) {
@@ -272,42 +260,34 @@ public final class XRefParser {
         }
     }
 
-    /**
-     * Returns all cross-reference entries parsed so far.
-     *
-     * @return an unmodifiable view of the entries map
-     */
+    /// Returns all cross-reference entries parsed so far.
+    ///
+    /// @return an unmodifiable view of the entries map
     public Map<PdfObjectKey, XRefEntry> getEntries() {
         return entries;
     }
 
-    /**
-     * Returns the trailer dictionary.
-     *
-     * @return the trailer dictionary, or null if not yet parsed
-     */
+    /// Returns the trailer dictionary.
+    ///
+    /// @return the trailer dictionary, or null if not yet parsed
     public PdfDictionary getTrailerDictionary() {
         return trailerDictionary;
     }
 
-    /**
-     * Returns the delta to retry entry offsets with when the xref table was
-     * relocated by scanning (see {@link #entries} doc), or 0.
-     *
-     * @return the entry-offset adjustment in bytes
-     */
+    /// Returns the delta to retry entry offsets with when the xref table was
+    /// relocated by scanning (see [#entries] doc), or 0.
+    ///
+    /// @return the entry-offset adjustment in bytes
     public long getEntryOffsetAdjustment() {
         return entryOffsetAdjustment;
     }
 
-    /**
-     * Finds the startxref position by searching backward from the end of the file.
-     * Looks for the "startxref" keyword followed by a number.
-     *
-     * @param reader the random-access reader for the PDF file
-     * @return the xref offset value
-     * @throws IOException if startxref cannot be found
-     */
+    /// Finds the startxref position by searching backward from the end of the file.
+    /// Looks for the "startxref" keyword followed by a number.
+    ///
+    /// @param reader the random-access reader for the PDF file
+    /// @return the xref offset value
+    /// @throws IOException if startxref cannot be found
     public static long findStartxref(RandomAccessReader reader) throws IOException {
         // Search for "startxref" backward from end of file
         byte[] pattern = "startxref".getBytes(StandardCharsets.US_ASCII);
@@ -410,13 +390,11 @@ public final class XRefParser {
         }
     }
 
-    /**
-     * Scans the file for the "xref" keyword or an xref stream object.
-     * Used as fallback when startxref points to an invalid location.
-     *
-     * @return the byte offset of the xref, or -1 if not found
-     * @throws IOException if an I/O error occurs
-     */
+    /// Scans the file for the "xref" keyword or an xref stream object.
+    /// Used as fallback when startxref points to an invalid location.
+    ///
+    /// @return the byte offset of the xref, or -1 if not found
+    /// @throws IOException if an I/O error occurs
     private long scanForXref() throws IOException {
         byte[] pattern = "xref".getBytes(StandardCharsets.US_ASCII);
         long searchFrom = reader.getLength();
@@ -440,19 +418,17 @@ public final class XRefParser {
         }
     }
 
-    /**
-     * Last-resort xref recovery: walks the entire file looking for indirect
-     * object headers ({@code N G obj}) and synthesises an in-use xref entry
-     * for each one. Then constructs a minimal trailer dictionary by locating
-     * the catalog (an indirect object whose body contains
-     * {@code /Type /Catalog}) and stamping it as {@code /Root} so downstream
-     * parsing can proceed against a truncated or trailer-less file.
-     *
-     * <p>Used when the file is corrupt enough that neither the regular xref
-     * table nor an xref stream can be parsed (truncated PDFs, missing
-     * trailer, mid-stream EOF). Mirrors the &quot;rebuild xref&quot; recovery
-     * mode of Acrobat / pdf.js / Aspose.</p>
-     */
+    /// Last-resort xref recovery: walks the entire file looking for indirect
+    /// object headers (`N G obj`) and synthesises an in-use xref entry
+    /// for each one. Then constructs a minimal trailer dictionary by locating
+    /// the catalog (an indirect object whose body contains
+    /// `/Type /Catalog`) and stamping it as `/Root` so downstream
+    /// parsing can proceed against a truncated or trailer-less file.
+    ///
+    /// Used when the file is corrupt enough that neither the regular xref
+    /// table nor an xref stream can be parsed (truncated PDFs, missing
+    /// trailer, mid-stream EOF). Mirrors the "rebuild xref" recovery
+    /// mode of Acrobat / pdf.js / Aspose.
     private void rebuildFromObjectScan() throws IOException {
         // Read the file in slabs to avoid loading the entire body when very
         // large; 4 MiB slab + 64-byte overlap to catch headers that straddle
@@ -567,7 +543,7 @@ public final class XRefParser {
         return isWhite(b) || b == '<' || b == '>' || b == '[' || b == ']'
                 || b == '(' || b == ')' || b == '{' || b == '}' || b == '/' || b == '%';
     }
-    /** True if the byte may be part of a PDF identifier — used to reject "objX" prefix matches. */
+    /// True if the byte may be part of a PDF identifier — used to reject "objX" prefix matches.
     private static boolean isObjectIdChar(byte b) {
         return (b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') || (b >= '0' && b <= '9') || b == '_';
     }
@@ -576,7 +552,7 @@ public final class XRefParser {
         for (int i = start; i < end; i++) v = v * 10 + (buf[i] - '0');
         return v;
     }
-    /** Looks for "/Type /Catalog" or "/Type/Catalog" within the first 512 bytes of an obj body. */
+    /// Looks for "/Type /Catalog" or "/Type/Catalog" within the first 512 bytes of an obj body.
     private static boolean looksLikeCatalog(byte[] buf, int from) {
         int end = Math.min(buf.length, from + 512);
         // Cheap sequential search — both whitespace variants.
@@ -596,10 +572,8 @@ public final class XRefParser {
         return -1;
     }
 
-    /**
-     * Scans nearby a given position for an indirect object header (N M obj).
-     * Returns the position of the object number, or -1 if not found.
-     */
+    /// Scans nearby a given position for an indirect object header (N M obj).
+    /// Returns the position of the object number, or -1 if not found.
     private long scanForObjNear(long position, int range) throws IOException {
         long start = Math.max(0, position - range);
         long end = Math.min(reader.getLength(), position + range);
@@ -704,19 +678,17 @@ public final class XRefParser {
         return -1;
     }
 
-    /**
-     * Parses a text-format cross-reference table (§7.5.4).
-     * Format:
-     * <pre>
-     * xref
-     * 0 6
-     * 0000000000 65535 f \r\n
-     * 0000000010 00000 n \r\n
-     * ...
-     * trailer
-     * &lt;&lt; /Size 6 /Root 1 0 R &gt;&gt;
-     * </pre>
-     */
+    /// Parses a text-format cross-reference table (§7.5.4).
+    /// Format:
+    /// <pre>
+    /// xref
+    /// 0 6
+    /// 0000000000 65535 f \r\n
+    /// 0000000010 00000 n \r\n
+    /// ...
+    /// trailer
+    /// &lt;&lt; /Size 6 /Root 1 0 R &gt;&gt;
+    /// </pre>
     private void parseTableFormat() throws IOException {
         // Consume "xref" keyword (may be "xref" or "xrefN M" in non-conforming PDFs)
         PDFLexer.Token token = lexer.nextToken();
@@ -838,11 +810,9 @@ public final class XRefParser {
                 trailerDictionary.size());
     }
 
-    /**
-     * Parses a cross-reference stream (§7.5.8).
-     * The xref stream is an indirect object containing a stream
-     * with /Type /XRef in its dictionary.
-     */
+    /// Parses a cross-reference stream (§7.5.8).
+    /// The xref stream is an indirect object containing a stream
+    /// with /Type /XRef in its dictionary.
     private void parseStreamFormat(long position) throws IOException {
         reader.seek(position);
         lexer.clearPeek();
@@ -932,10 +902,8 @@ public final class XRefParser {
         trailerDictionary = streamDict;
     }
 
-    /**
-     * Decodes stream data by applying filters specified in the stream dictionary
-     * using FilterFactory. Supports /DecodeParms including /Predictor.
-     */
+    /// Decodes stream data by applying filters specified in the stream dictionary
+    /// using FilterFactory. Supports /DecodeParms including /Predictor.
     private byte[] decodeStreamData(byte[] data, PdfDictionary streamDict) throws IOException {
         PdfBase filterObj = streamDict.get(PdfName.of("Filter"));
         if (filterObj == null) {
@@ -977,12 +945,10 @@ public final class XRefParser {
         return FilterFactory.decodeChain(data, filters, params);
     }
 
-    /**
-     * Parses cross-reference stream entries from decoded stream data (§7.5.8.3).
-     *
-     * @param data       the decoded stream data
-     * @param streamDict the stream dictionary containing /W, /Size, and optionally /Index
-     */
+    /// Parses cross-reference stream entries from decoded stream data (§7.5.8.3).
+    ///
+    /// @param data       the decoded stream data
+    /// @param streamDict the stream dictionary containing /W, /Size, and optionally /Index
     private void parseXRefStreamEntries(byte[] data, PdfDictionary streamDict) throws IOException {
         // Read /W array: [w1 w2 w3] — field widths
         PdfBase wObj = streamDict.get(PdfName.of("W"));
@@ -1074,9 +1040,7 @@ public final class XRefParser {
         LOGGER.log(Level.FINE, "Parsed {0} xref stream entries", entries.size());
     }
 
-    /**
-     * Reads a big-endian integer field from the data.
-     */
+    /// Reads a big-endian integer field from the data.
     private int readFieldValue(byte[] data, int offset, int width) {
         if (width == 0) {
             return 0;
@@ -1088,9 +1052,7 @@ public final class XRefParser {
         return value;
     }
 
-    /**
-     * Reads a big-endian long field from the data.
-     */
+    /// Reads a big-endian long field from the data.
     private long readFieldValueLong(byte[] data, int offset, int width) {
         if (width == 0) {
             return 0;
@@ -1102,9 +1064,7 @@ public final class XRefParser {
         return value;
     }
 
-    /**
-     * Parses a trailer dictionary. Expects the current position to be at '&lt;&lt;'.
-     */
+    /// Parses a trailer dictionary. Expects the current position to be at '<<'.
     private PdfDictionary parseTrailerDictionary() throws IOException {
         PDFLexer.Token token = lexer.nextToken();
         if (token.getType() != PDFLexer.TokenType.DICT_OPEN) {
@@ -1113,10 +1073,8 @@ public final class XRefParser {
         return parseDictionaryContents();
     }
 
-    /**
-     * Parses dictionary contents after '&lt;&lt;' has been consumed.
-     * Reads key-value pairs until '&gt;&gt;' is encountered.
-     */
+    /// Parses dictionary contents after '<<' has been consumed.
+    /// Reads key-value pairs until '>>' is encountered.
     private PdfDictionary parseDictionaryContents() throws IOException {
         PdfDictionary dict = new PdfDictionary();
 
@@ -1152,10 +1110,8 @@ public final class XRefParser {
         return dict;
     }
 
-    /**
-     * Parses a single PDF object from the current lexer position.
-     * Used for trailer dictionary values and xref stream dictionary values.
-     */
+    /// Parses a single PDF object from the current lexer position.
+    /// Used for trailer dictionary values and xref stream dictionary values.
     PdfBase parseObject() throws IOException {
         PDFLexer.Token token = lexer.peekToken();
 

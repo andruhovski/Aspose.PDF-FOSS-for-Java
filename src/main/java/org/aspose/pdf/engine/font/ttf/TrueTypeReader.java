@@ -5,23 +5,19 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
-/**
- * Reads TrueType/OpenType font files (sfnt format).
- * <p>
- * Parses the following tables:
- * <ul>
- *   <li>{@code head} - global font metrics (unitsPerEm)</li>
- *   <li>{@code cmap} - character to glyph mapping (formats 4, 6, 12)</li>
- *   <li>{@code hmtx} - horizontal metrics (advance widths per glyph)</li>
- *   <li>{@code maxp} - maximum profile (numGlyphs)</li>
- *   <li>{@code name} - name records (optional, for debugging)</li>
- *   <li>{@code post} - PostScript names (optional)</li>
- *   <li>{@code OS/2} - additional metrics (optional)</li>
- * </ul>
- * </p>
- *
- * @see <a href="https://docs.microsoft.com/en-us/typography/opentype/spec/">OpenType spec</a>
- */
+/// Reads TrueType/OpenType font files (sfnt format).
+///
+/// Parses the following tables:
+///
+///   - `head` - global font metrics (unitsPerEm)
+///   - `cmap` - character to glyph mapping (formats 4, 6, 12)
+///   - `hmtx` - horizontal metrics (advance widths per glyph)
+///   - `maxp` - maximum profile (numGlyphs)
+///   - `name` - name records (optional, for debugging)
+///   - `post` - PostScript names (optional)
+///   - `OS/2` - additional metrics (optional)
+///
+/// @see  <a href="https://docs.microsoft.com/en-us/typography/opentype/spec/">OpenType spec</a>
 public class TrueTypeReader {
 
     private static final Logger LOG = Logger.getLogger(TrueTypeReader.class.getName());
@@ -33,33 +29,29 @@ public class TrueTypeReader {
     private int[] advanceWidths;     // indexed by glyph ID
     private Map<Integer, Integer> cmapTable;
     private Map<Integer, Integer> reverseCmapTable;
-    /**
-     * GID → Unicode reverse map populated ONLY from true-Unicode cmap subtables
-     * (platform 3 / encoding 1 or 10, and platform 0). Mac (platform 1) subtables
-     * carry platform-specific code points (e.g. Mac Roman 0xA4 == section sign)
-     * that must NOT be treated as Unicode, so they are excluded here. Used by the
-     * CID-font extraction path which needs an unambiguous Unicode value.
-     */
+    /// GID → Unicode reverse map populated ONLY from true-Unicode cmap subtables
+    /// (platform 3 / encoding 1 or 10, and platform 0). Mac (platform 1) subtables
+    /// carry platform-specific code points (e.g. Mac Roman 0xA4 == section sign)
+    /// that must NOT be treated as Unicode, so they are excluded here. Used by the
+    /// CID-font extraction path which needs an unambiguous Unicode value.
     private Map<Integer, Integer> unicodeReverseCmap;
-    /** Set per-subtable during {@link #parseCmap}; true for true-Unicode platforms. */
+    /// Set per-subtable during [#parseCmap]; true for true-Unicode platforms.
     private boolean currentSubtableIsUnicode;
     private String fontName;
-    /** Glyph names indexed by glyph ID (from /post table). null until parsePost runs. */
+    /// Glyph names indexed by glyph ID (from /post table). null until parsePost runs.
     private String[] glyphNames;
 
-    /** {@code head.indexToLocFormat}: 0 = short (uint16×2) offsets, 1 = long (uint32). */
+    /// `head.indexToLocFormat`: 0 = short (uint16×2) offsets, 1 = long (uint32).
     private int indexToLocFormat;
-    /** Byte offset of each glyph into the {@code glyf} table; length numGlyphs+1. Null if no outlines. */
+    /// Byte offset of each glyph into the `glyf` table; length numGlyphs+1. Null if no outlines.
     private int[] loca;
-    /** Absolute byte offset of the {@code glyf} table, or -1 when absent. */
+    /// Absolute byte offset of the `glyf` table, or -1 when absent.
     private int glyfOffset = -1;
 
-    /**
-     * Creates a TrueTypeReader from raw font data.
-     *
-     * @param data the raw sfnt/TrueType font bytes
-     * @throws IOException if the font data is invalid
-     */
+    /// Creates a TrueTypeReader from raw font data.
+    ///
+    /// @param data the raw sfnt/TrueType font bytes
+    /// @throws IOException if the font data is invalid
     public TrueTypeReader(byte[] data) throws IOException {
         if (data == null || data.length < 12) {
             throw new IOException("Invalid TrueType font data: too short");
@@ -68,89 +60,75 @@ public class TrueTypeReader {
         parse();
     }
 
-    /**
-     * Returns the font's unitsPerEm value from the head table.
-     *
-     * @return unitsPerEm (typically 1000 or 2048)
-     */
+    /// Returns the font's unitsPerEm value from the head table.
+    ///
+    /// @return unitsPerEm (typically 1000 or 2048)
     public int getUnitsPerEm() {
         return unitsPerEm;
     }
 
-    /**
-     * Returns the number of glyphs in the font.
-     *
-     * @return numGlyphs
-     */
+    /// Returns the number of glyphs in the font.
+    ///
+    /// @return numGlyphs
     public int getNumGlyphs() {
         return numGlyphs;
     }
 
-    /**
-     * Maps a character code to a glyph ID using the cmap table.
-     *
-     * @param charCode the character code (Unicode)
-     * @return the glyph ID, or 0 (.notdef) if not found
-     */
+    /// Maps a character code to a glyph ID using the cmap table.
+    ///
+    /// @param charCode the character code (Unicode)
+    /// @return the glyph ID, or 0 (.notdef) if not found
     public int getGlyphId(int charCode) {
         if (cmapTable == null) return 0;
         Integer gid = cmapTable.get(charCode);
         return gid != null ? gid : 0;
     }
 
-    /**
-     * Returns the first Unicode code point mapped to the given glyph ID.
-     *
-     * @param glyphId the glyph ID
-     * @return the Unicode code point, or 0 if unknown
-     */
+    /// Returns the first Unicode code point mapped to the given glyph ID.
+    ///
+    /// @param glyphId the glyph ID
+    /// @return the Unicode code point, or 0 if unknown
     public int getUnicodeForGlyphId(int glyphId) {
         if (reverseCmapTable == null) return 0;
         Integer unicode = reverseCmapTable.get(glyphId);
         return unicode != null ? unicode : 0;
     }
 
-    /**
-     * Returns the Unicode code point for the given glyph ID using ONLY the
-     * true-Unicode cmap subtables (see {@link #unicodeReverseCmap}). Prefer this
-     * over {@link #getUnicodeForGlyphId(int)} when an unambiguous Unicode value
-     * is required, because the general reverse map can be polluted by Mac
-     * platform code points that collide with unrelated Unicode characters.
-     *
-     * @param glyphId the glyph ID
-     * @return the Unicode code point, or 0 if no Unicode subtable maps it
-     */
+    /// Returns the Unicode code point for the given glyph ID using ONLY the
+    /// true-Unicode cmap subtables (see [#unicodeReverseCmap]). Prefer this
+    /// over [#getUnicodeForGlyphId(int)] when an unambiguous Unicode value
+    /// is required, because the general reverse map can be polluted by Mac
+    /// platform code points that collide with unrelated Unicode characters.
+    ///
+    /// @param glyphId the glyph ID
+    /// @return the Unicode code point, or 0 if no Unicode subtable maps it
     public int getUnicodeForGlyphIdPreferUnicode(int glyphId) {
         if (unicodeReverseCmap == null) return 0;
         Integer unicode = unicodeReverseCmap.get(glyphId);
         return unicode != null ? unicode : 0;
     }
 
-    /**
-     * Returns true if the font ships at least one true-Unicode cmap subtable
-     * (platform 3 encoding 1/10, or platform 0). Subset fonts produced by
-     * office suites often carry only a code-keyed (1,0)/(3,0) subtable whose
-     * keys are the PDF character codes, not Unicode — glyph selection for
-     * those must go through the raw code (ISO 32000-1:2008, §9.6.6.4).
-     *
-     * @return true if a Unicode cmap subtable was parsed
-     */
+    /// Returns true if the font ships at least one true-Unicode cmap subtable
+    /// (platform 3 encoding 1/10, or platform 0). Subset fonts produced by
+    /// office suites often carry only a code-keyed (1,0)/(3,0) subtable whose
+    /// keys are the PDF character codes, not Unicode — glyph selection for
+    /// those must go through the raw code (ISO 32000-1:2008, §9.6.6.4).
+    ///
+    /// @return true if a Unicode cmap subtable was parsed
     public boolean hasUnicodeCmap() {
         return unicodeReverseCmap != null && !unicodeReverseCmap.isEmpty();
     }
 
-    /**
-     * Returns the PostScript name for the glyph from the {@code /post} table,
-     * or {@code null} if the post table was missing, used a format we don't
-     * parse, or the glyph id is out of range. Used as a fall-back for subset
-     * fonts that don't ship a {@code /ToUnicode} CMap and have a useless cmap
-     * (charCode == glyphId): the glyph name resolves through the Adobe Glyph
-     * List to a Unicode codepoint.
-     *
-     * @param glyphId zero-based glyph id
-     * @return the glyph's PostScript name (e.g. {@code "C"}, {@code "germandbls"}),
-     *         or {@code null}
-     */
+    /// Returns the PostScript name for the glyph from the `/post` table,
+    /// or `null` if the post table was missing, used a format we don't
+    /// parse, or the glyph id is out of range. Used as a fall-back for subset
+    /// fonts that don't ship a `/ToUnicode` CMap and have a useless cmap
+    /// (charCode == glyphId): the glyph name resolves through the Adobe Glyph
+    /// List to a Unicode codepoint.
+    ///
+    /// @param glyphId zero-based glyph id
+    /// @return the glyph's PostScript name (e.g. `"C"`, `"germandbls"`),
+    ///         or `null`
     public String getGlyphName(int glyphId) {
         if (glyphNames == null || glyphId < 0 || glyphId >= glyphNames.length) {
             return null;
@@ -158,12 +136,10 @@ public class TrueTypeReader {
         return glyphNames[glyphId];
     }
 
-    /**
-     * Returns the advance width for the given glyph ID, in font units.
-     *
-     * @param glyphId the glyph ID
-     * @return the advance width
-     */
+    /// Returns the advance width for the given glyph ID, in font units.
+    ///
+    /// @param glyphId the glyph ID
+    /// @return the advance width
     public int getAdvanceWidth(int glyphId) {
         if (advanceWidths == null || advanceWidths.length == 0) return 0;
         if (glyphId < advanceWidths.length) {
@@ -172,23 +148,19 @@ public class TrueTypeReader {
         return advanceWidths[advanceWidths.length - 1];
     }
 
-    /**
-     * Returns the font name from the name table (if available).
-     *
-     * @return the font name, or null
-     */
+    /// Returns the font name from the name table (if available).
+    ///
+    /// @return the font name, or null
     public String getFontName() {
         return fontName;
     }
 
-    /**
-     * Returns an unmodifiable view of the Unicode-to-glyph cmap as a map.
-     * Used by the writer side ({@code Type0FontBuilder}) to enumerate the
-     * codepoints supported by the font when emitting a {@code /ToUnicode}
-     * CMap and a {@code /W} width array.
-     *
-     * @return the cmap entries; empty map if the cmap table was absent
-     */
+    /// Returns an unmodifiable view of the Unicode-to-glyph cmap as a map.
+    /// Used by the writer side (`Type0FontBuilder`) to enumerate the
+    /// codepoints supported by the font when emitting a `/ToUnicode`
+    /// CMap and a `/W` width array.
+    ///
+    /// @return the cmap entries; empty map if the cmap table was absent
     public java.util.Map<Integer, Integer> getCmapEntries() {
         if (cmapTable == null) return java.util.Collections.emptyMap();
         return java.util.Collections.unmodifiableMap(cmapTable);
@@ -504,14 +476,12 @@ public class TrueTypeReader {
         }
     }
 
-    /**
-     * Parses the {@code /post} table to populate {@link #glyphNames} indexed
-     * by glyph id. Supports formats 1.0 (Mac standard names only), 2.0
-     * (numGlyphs indices into Mac standard + Pascal-string custom names) and
-     * 3.0 (no glyph names — leaves {@link #glyphNames} null).
-     *
-     * @see <a href="https://docs.microsoft.com/en-us/typography/opentype/spec/post">OpenType post table</a>
-     */
+    /// Parses the `/post` table to populate [#glyphNames] indexed
+    /// by glyph id. Supports formats 1.0 (Mac standard names only), 2.0
+    /// (numGlyphs indices into Mac standard + Pascal-string custom names) and
+    /// 3.0 (no glyph names — leaves [#glyphNames] null).
+    ///
+    /// @see <a href="https://docs.microsoft.com/en-us/typography/opentype/spec/post">OpenType post table</a>
     private void parsePost(int offset, int length) {
         if (offset + 32 > data.length) return;
         int version = readInt32(offset);
@@ -564,10 +534,8 @@ public class TrueTypeReader {
         // (deprecated 2.5) is rarely used and intentionally not supported.
     }
 
-    /**
-     * The 258 Macintosh standard PostScript glyph names referenced by
-     * {@code post} table format 1.0 and as a base by format 2.0.
-     */
+    /// The 258 Macintosh standard PostScript glyph names referenced by
+    /// `post` table format 1.0 and as a base by format 2.0.
     private static final String[] MAC_STANDARD_NAMES = {
             ".notdef", ".null", "nonmarkingreturn", "space", "exclam", "quotedbl",
             "numbersign", "dollar", "percent", "ampersand", "quotesingle", "parenleft",
@@ -621,21 +589,19 @@ public class TrueTypeReader {
         this.loca = arr;
     }
 
-    /**
-     * Returns the outline of a glyph as a {@link java.awt.geom.GeneralPath} in
-     * em-normalised coordinates (font units divided by {@code unitsPerEm}), with
-     * the TrueType Y-up orientation preserved. Empty path for blank glyphs (e.g.
-     * space); {@code null} when the font has no {@code glyf}/{@code loca} tables,
-     * the glyph id is out of range, or the data is malformed.
-     * <p>
-     * Drawing by outline bypasses {@code java.awt.Font}, which silently
-     * substitutes the default physical font when an embedded subset program
-     * lacks a usable {@code cmap} (ISO 32000-1:2008 §9.7.4 CIDFontType2 programs
-     * are addressed purely by glyph id and frequently ship no cmap).
-     *
-     * @param gid the glyph id
-     * @return the em-normalised, Y-up outline, or {@code null}
-     */
+    /// Returns the outline of a glyph as a [java.awt.geom.GeneralPath] in
+    /// em-normalised coordinates (font units divided by `unitsPerEm`), with
+    /// the TrueType Y-up orientation preserved. Empty path for blank glyphs (e.g.
+    /// space); `null` when the font has no `glyf`/`loca` tables,
+    /// the glyph id is out of range, or the data is malformed.
+    ///
+    /// Drawing by outline bypasses `java.awt.Font`, which silently
+    /// substitutes the default physical font when an embedded subset program
+    /// lacks a usable `cmap` (ISO 32000-1:2008 §9.7.4 CIDFontType2 programs
+    /// are addressed purely by glyph id and frequently ship no cmap).
+    ///
+    /// @param gid the glyph id
+    /// @return the em-normalised, Y-up outline, or `null`
     public java.awt.geom.GeneralPath getGlyphPath(int gid) {
         if (loca == null || glyfOffset < 0 || gid < 0 || gid + 1 >= loca.length) {
             return null;
@@ -654,11 +620,9 @@ public class TrueTypeReader {
         return path;
     }
 
-    /**
-     * Appends one glyph's contours (in raw font units, through {@code xf}) to
-     * {@code path}. Recurses for composite glyphs. Returns false on malformed
-     * data so the caller can fall back.
-     */
+    /// Appends one glyph's contours (in raw font units, through `xf`) to
+    /// `path`. Recurses for composite glyphs. Returns false on malformed
+    /// data so the caller can fall back.
     private boolean appendGlyph(int gid, java.awt.geom.GeneralPath path,
                                 java.awt.geom.AffineTransform xf, int depth) {
         if (depth > 8 || gid < 0 || gid + 1 >= loca.length) return false;
@@ -738,11 +702,9 @@ public class TrueTypeReader {
         return true;
     }
 
-    /**
-     * Emits one closed contour, converting TrueType quadratic on/off-curve
-     * points (with implicit midpoints between consecutive off-curve points)
-     * into {@code quadTo} segments.
-     */
+    /// Emits one closed contour, converting TrueType quadratic on/off-curve
+    /// points (with implicit midpoints between consecutive off-curve points)
+    /// into `quadTo` segments.
     private void buildContour(java.awt.geom.GeneralPath path,
                               java.awt.geom.AffineTransform xf,
                               int[] xs, int[] ys, byte[] flags, int s, int e) {
@@ -840,7 +802,7 @@ public class TrueTypeReader {
         return true;
     }
 
-    /** Reads an F2Dot14 fixed-point value (signed 2.14) as a double. */
+    /// Reads an F2Dot14 fixed-point value (signed 2.14) as a double.
     private double f2dot14(int offset) {
         return readInt16(offset) / 16384.0;
     }

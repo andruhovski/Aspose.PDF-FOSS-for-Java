@@ -1,13 +1,7 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.pdfobjects.PdfArray;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
-import org.aspose.pdf.engine.pdfobjects.PdfString;
-import org.aspose.pdf.engine.pdfobjects.NameTree;
 import org.aspose.pdf.engine.parser.PDFParser;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -16,19 +10,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
-/**
- * Provides access to named destinations in a PDF document
- * (ISO 32000-1:2008, §12.3.2.3).
- *
- * <p>Named destinations are resolved from two possible locations:</p>
- * <ol>
- *   <li>{@code /Dests} dictionary in the catalog (PDF 1.1, deprecated but common)</li>
- *   <li>{@code /Names → /Dests} name tree in the catalog (PDF 1.2+)</li>
- * </ol>
- *
- * <p>The name-tree path delegates to {@link NameTree}, so {@code /Limits}
- * pruning works for both lookup and enumeration.</p>
- */
+/// Provides access to named destinations in a PDF document
+/// (ISO 32000-1:2008, §12.3.2.3).
+///
+/// Named destinations are resolved from two possible locations:
+///
+///   1. `/Dests` dictionary in the catalog (PDF 1.1, deprecated but common)
+///   2. `/Names → /Dests` name tree in the catalog (PDF 1.2+)
+///
+/// The name-tree path delegates to [NameTree], so `/Limits`
+/// pruning works for both lookup and enumeration.
 public class NamedDestinations {
 
     private static final Logger LOG = Logger.getLogger(NamedDestinations.class.getName());
@@ -37,27 +28,23 @@ public class NamedDestinations {
     private final Document doc;
     private final PDFParser parser;
 
-    /**
-     * Creates a NamedDestinations accessor.
-     *
-     * @param catalog the document catalog dictionary
-     * @param doc     the document for page resolution
-     * @param parser  the PDF parser for resolving references
-     */
+    /// Creates a NamedDestinations accessor.
+    ///
+    /// @param catalog the document catalog dictionary
+    /// @param doc     the document for page resolution
+    /// @param parser  the PDF parser for resolving references
     public NamedDestinations(PdfDictionary catalog, Document doc, PDFParser parser) {
         this.catalog = catalog;
         this.doc = doc;
         this.parser = parser;
     }
 
-    /**
-     * Resolves a named destination to an explicit destination.
-     * Searches {@code /Names→/Dests} name tree first, then {@code /Dests} dictionary.
-     *
-     * @param name the destination name
-     * @return the resolved destination, or {@code null} if not found
-     * @throws IOException if resolution fails
-     */
+    /// Resolves a named destination to an explicit destination.
+    /// Searches `/Names→/Dests` name tree first, then `/Dests` dictionary.
+    ///
+    /// @param name the destination name
+    /// @return the resolved destination, or `null` if not found
+    /// @throws IOException if resolution fails
     public ExplicitDestination get(String name) throws IOException {
         if (name == null) return null;
 
@@ -70,14 +57,12 @@ public class NamedDestinations {
         return resolveDestValue(dest);
     }
 
-    /**
-     * Returns all named destination names from both sources, deduplicated and
-     * in insertion order ({@code /Names → /Dests} entries first, then any
-     * extra keys from the legacy {@code /Dests} dictionary).
-     *
-     * @return list of destination names
-     * @throws IOException if resolution fails
-     */
+    /// Returns all named destination names from both sources, deduplicated and
+    /// in insertion order (`/Names → /Dests` entries first, then any
+    /// extra keys from the legacy `/Dests` dictionary).
+    ///
+    /// @return list of destination names
+    /// @throws IOException if resolution fails
     public List<String> getNames() throws IOException {
         LinkedHashSet<String> names = new LinkedHashSet<>();
 
@@ -98,47 +83,39 @@ public class NamedDestinations {
         return new ArrayList<>(names);
     }
 
-    /**
-     * Returns the total number of named destinations.
-     *
-     * @return the count
-     * @throws IOException if resolution fails
-     */
+    /// Returns the total number of named destinations.
+    ///
+    /// @return the count
+    /// @throws IOException if resolution fails
     public int getCount() throws IOException {
         return getNames().size();
     }
 
-    /**
-     * Alias for {@link #getCount()} matching the C# Aspose {@code .Count} property.
-     *
-     * @return the count
-     * @throws IOException if resolution fails
-     */
+    /// Alias for [#getCount()] matching the C# Aspose `.Count` property.
+    ///
+    /// @return the count
+    /// @throws IOException if resolution fails
     public int size() throws IOException {
         return getCount();
     }
 
-    /**
-     * Returns all named destination names as an array. Mirrors the C# Aspose
-     * {@code NamedDestinations.Names} property.
-     *
-     * @return array of names (never null; empty if no destinations exist)
-     * @throws IOException if resolution fails
-     */
+    /// Returns all named destination names as an array. Mirrors the C# Aspose
+    /// `NamedDestinations.Names` property.
+    ///
+    /// @return array of names (never null; empty if no destinations exist)
+    /// @throws IOException if resolution fails
     public String[] getNamesArray() throws IOException {
         return getNames().toArray(new String[0]);
     }
 
-    /**
-     * Adds (or replaces) a named destination via the catalog's
-     * {@code /Names→/Dests} name tree (PDF 1.2+). Creates the
-     * {@code /Names} dictionary and {@code /Dests} subtree if they are
-     * missing.
-     *
-     * @param name        the destination name (must not be null)
-     * @param destination the explicit destination (must not be null)
-     * @throws IOException if the name tree cannot be updated
-     */
+    /// Adds (or replaces) a named destination via the catalog's
+    /// `/Names→/Dests` name tree (PDF 1.2+). Creates the
+    /// `/Names` dictionary and `/Dests` subtree if they are
+    /// missing.
+    ///
+    /// @param name        the destination name (must not be null)
+    /// @param destination the explicit destination (must not be null)
+    /// @throws IOException if the name tree cannot be updated
     public void add(String name, ExplicitDestination destination) throws IOException {
         if (name == null) throw new IllegalArgumentException("name must not be null");
         if (destination == null) throw new IllegalArgumentException("destination must not be null");
@@ -159,26 +136,22 @@ public class NamedDestinations {
         tree.put(name, destination.toPdfArray());
     }
 
-    /**
-     * Sets a named destination — semantically identical to
-     * {@link #add(String, ExplicitDestination)}; the name tree's
-     * {@code put} replaces any existing value.
-     *
-     * @param name        the destination name
-     * @param destination the explicit destination
-     * @throws IOException if the name tree cannot be updated
-     */
+    /// Sets a named destination — semantically identical to
+    /// [#add(String, ExplicitDestination)]; the name tree's
+    /// `put` replaces any existing value.
+    ///
+    /// @param name        the destination name
+    /// @param destination the explicit destination
+    /// @throws IOException if the name tree cannot be updated
     public void set(String name, ExplicitDestination destination) throws IOException {
         add(name, destination);
     }
 
-    /**
-     * Removes a named destination if it exists.
-     *
-     * @param name the destination name to remove
-     * @return {@code true} if a destination was removed
-     * @throws IOException if the name tree cannot be updated
-     */
+    /// Removes a named destination if it exists.
+    ///
+    /// @param name the destination name to remove
+    /// @return `true` if a destination was removed
+    /// @throws IOException if the name tree cannot be updated
     public boolean remove(String name) throws IOException {
         if (name == null) return false;
         NameTree tree = openNameTree();
@@ -228,11 +201,9 @@ public class NamedDestinations {
     //  Destination value resolution
     // ═══════════════════════════════════════════════════════════════
 
-    /**
-     * Resolves a destination value which can be:
-     * - PdfArray → explicit destination
-     * - PdfDictionary with /D → destination dictionary (§12.3.2.3)
-     */
+    /// Resolves a destination value which can be:
+    /// - PdfArray → explicit destination
+    /// - PdfDictionary with /D → destination dictionary (§12.3.2.3)
     private ExplicitDestination resolveDestValue(PdfBase dest) throws IOException {
         dest = resolve(dest);
         if (dest instanceof PdfArray) {

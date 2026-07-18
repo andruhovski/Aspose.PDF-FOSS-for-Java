@@ -26,22 +26,16 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link Document}.
- */
+/// Tests for [Document].
 public class DocumentTest {
 
-    /**
-     * Creates a minimal valid PDF as a byte array using PDFWriter.
-     * Structure: Catalog -> Pages -> Page (with MediaBox)
-     */
+    /// Creates a minimal valid PDF as a byte array using PDFWriter.
+    /// Structure: Catalog -> Pages -> Page (with MediaBox)
     private static byte[] createMinimalPdf() throws IOException {
         return createMinimalPdf(null);
     }
 
-    /**
-     * Creates a minimal valid PDF with optional /Info dictionary.
-     */
+    /// Creates a minimal valid PDF with optional /Info dictionary.
     private static byte[] createMinimalPdf(PdfDictionary infoDict) throws IOException {
         // Build PDF objects
         // Object 1: Catalog

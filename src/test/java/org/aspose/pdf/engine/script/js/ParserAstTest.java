@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** P2 parser tests: AST shape assertions and syntax-error reporting. */
+/// P2 parser tests: AST shape assertions and syntax-error reporting.
 public class ParserAstTest {
 
     private static Node first(String s) {

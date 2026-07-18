@@ -3,17 +3,15 @@ package org.aspose.pdf.engine.xfa.namespace;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Canonicalises XFA namespace URIs to their version-independent family.
- *
- * <p>XFA producers emit namespace URIs carrying the minor version they wrote,
- * e.g. {@code .../xfa-template/2.8/}, {@code .../xfa-template/3.3/}. This
- * library's typed element/attribute vocabulary targets the XFA 3.0 family; to
- * recognise elements across real-world XFA versions, name matching compares
- * the version-stripped family
- * ({@code http://www.xfa.org/schema/xfa-template/}). This is a deliberate,
- * documented tolerance. No schema files are bundled with this library.</p>
- */
+/// Canonicalises XFA namespace URIs to their version-independent family.
+///
+/// XFA producers emit namespace URIs carrying the minor version they wrote,
+/// e.g. `.../xfa-template/2.8/`, `.../xfa-template/3.3/`. This
+/// library's typed element/attribute vocabulary targets the XFA 3.0 family; to
+/// recognise elements across real-world XFA versions, name matching compares
+/// the version-stripped family
+/// (`http://www.xfa.org/schema/xfa-template/`). This is a deliberate,
+/// documented tolerance. No schema files are bundled with this library.
 public final class XfaNamespaces {
 
     private static final Pattern XFA_VERSIONED =
@@ -21,13 +19,11 @@ public final class XfaNamespaces {
 
     private XfaNamespaces() { }
 
-    /**
-     * Returns the version-independent family of an XFA namespace, or the input
-     * unchanged for non-XFA namespaces.
-     *
-     * @param ns a namespace URI (may be {@code null})
-     * @return the canonical family URI ({@code ""} for {@code null})
-     */
+    /// Returns the version-independent family of an XFA namespace, or the input
+    /// unchanged for non-XFA namespaces.
+    ///
+    /// @param ns a namespace URI (may be `null`)
+    /// @return the canonical family URI (`""` for `null`)
     public static String canonical(String ns) {
         if (ns == null) {
             return "";

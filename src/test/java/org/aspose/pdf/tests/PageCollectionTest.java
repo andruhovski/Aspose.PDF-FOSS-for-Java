@@ -15,9 +15,7 @@ import java.util.Iterator;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link PageCollection}.
- */
+/// Tests for [PageCollection].
 public class PageCollectionTest {
 
     private static PdfArray makeBox(double llx, double lly, double urx, double ury) {

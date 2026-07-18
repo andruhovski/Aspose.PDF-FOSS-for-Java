@@ -18,13 +18,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * B3.5.1 / B3.5.2 — the <b>absent node</b> (null-object for unresolved SOM) and the node
- * sub-property accessors. Objective fixtures: an unresolved {@code resolveNode}/{@code item} returns
- * an absent node (not {@code undefined}) whose value reads are benign empties and that is
- * <i>falsy</i> (so guards terminate), and the real-node {@code access}/{@code isNull} accessors
- * read/write the model.
- */
+/// B3.5.1 / B3.5.2 — the **absent node** (null-object for unresolved SOM) and the node
+/// sub-property accessors. Objective fixtures: an unresolved `resolveNode`/`item` returns
+/// an absent node (not `undefined`) whose value reads are benign empties and that is
+/// _falsy_ (so guards terminate), and the real-node `access`/`isNull` accessors
+/// read/write the model.
 public class XfaAbsentNodeTest {
 
     private static final String TPL = XfaNode.TEMPLATE_NS;

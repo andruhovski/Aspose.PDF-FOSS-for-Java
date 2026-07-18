@@ -9,9 +9,7 @@ import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for form (AcroForm) classes.
- */
+/// Tests for form (AcroForm) classes.
 public class FormTest {
 
     // ── Helper: build a minimal AcroForm dict ──

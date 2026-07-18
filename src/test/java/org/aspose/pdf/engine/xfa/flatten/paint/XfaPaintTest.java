@@ -18,10 +18,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * C2 — box-model + text paint, B oracle (painted ops land at the C1 rect) and C oracle
- * (presence=hidden produces no marks; within bounds; deterministic re-paint).
- */
+/// C2 — box-model + text paint, B oracle (painted ops land at the C1 rect) and C oracle
+/// (presence=hidden produces no marks; within bounds; deterministic re-paint).
 public class XfaPaintTest {
 
     private static final String TPL = XfaNode.TEMPLATE_NS;

@@ -19,15 +19,13 @@ import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Recovery-path tests for {@link XRefParser}: malformed xref entries that the
- * parser must tolerate by clamping into the legal range required by
- * {@link PdfObjectKey}, while still emitting a WARNING for traceability.
- *
- * <p>The trigger case in production is the free-list head written with
- * {@code gen=65536} (one over the spec maximum of 65535) — a quirk produced
- * by various non-conforming writers. See REG-1 in the regression notes.</p>
- */
+/// Recovery-path tests for [XRefParser]: malformed xref entries that the
+/// parser must tolerate by clamping into the legal range required by
+/// [PdfObjectKey], while still emitting a WARNING for traceability.
+///
+/// The trigger case in production is the free-list head written with
+/// `gen=65536` (one over the spec maximum of 65535) — a quirk produced
+/// by various non-conforming writers. See REG-1 in the regression notes.
 public class XRefParserRecoveryTest {
 
     @Test

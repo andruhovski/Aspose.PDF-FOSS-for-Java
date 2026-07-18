@@ -15,10 +15,8 @@ import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * BUG-059 — HTML {@code <a href="…">} elements must produce {@link LinkAnnotation}
- * objects on the rendered page with a {@link GoToURIAction} carrying the href.
- */
+/// BUG-059 — HTML `<a href="…">` elements must produce [LinkAnnotation]
+/// objects on the rendered page with a [GoToURIAction] carrying the href.
 class HtmlAnchorToLinkAnnotationTest {
 
     @Test

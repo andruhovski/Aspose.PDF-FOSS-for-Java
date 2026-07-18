@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** A4-EXCL: an exclGroup surfaces its bound selection value + chosen option; no double-count. */
+/// A4-EXCL: an exclGroup surfaces its bound selection value + chosen option; no double-count.
 public class ExclGroupSurfacingTest {
 
     private static final String TPL = XfaNode.TEMPLATE_NS;
@@ -26,7 +26,7 @@ public class ExclGroupSurfacingTest {
           + "<field name='o2'><value><text>nein</text></value></field>"
           + "<field name='o3'><value><text>vielleicht</text></value></field>";
 
-    /** data selects option 2 (nein) -> exclGroup reports nein and identifies option index 1. */
+    /// data selects option 2 (nein) -> exclGroup reports nein and identifies option index 1.
     @Test
     void exclGroupSurfacesSelectedValueAndOption() throws Exception {
         Template tpl = tpl("<template xmlns='" + TPL + "'><subform name='form1'><subform name='TF_Haus'>"
@@ -43,7 +43,7 @@ public class ExclGroupSurfacingTest {
         assertEquals(1, g.getSelectedItemIndex(), "option 2 (nein) chosen");
     }
 
-    /** no data -> no value, no phantom selection. */
+    /// no data -> no value, no phantom selection.
     @Test
     void exclGroupWithNoDataReportsNoSelection() throws Exception {
         Template tpl = tpl("<template xmlns='" + TPL + "'><subform name='form1'><subform name='TF_Haus'>"
@@ -56,7 +56,7 @@ public class ExclGroupSurfacingTest {
         assertEquals(FormField.BindingKind.UNBOUND, g.getKind());
     }
 
-    /** template default selection + no data -> reports the default. */
+    /// template default selection + no data -> reports the default.
     @Test
     void exclGroupReportsTemplateDefaultWhenNoData() throws Exception {
         Template tpl = tpl("<template xmlns='" + TPL + "'><subform name='form1'><subform name='TF_Haus'>"
@@ -68,7 +68,7 @@ public class ExclGroupSurfacingTest {
         assertEquals(0, g.getSelectedItemIndex(), "default maps to option 1 (ja)");
     }
 
-    /** enumeration: exclGroup + 3 option fields -> ONE selectable value, not four. */
+    /// enumeration: exclGroup + 3 option fields -> ONE selectable value, not four.
     @Test
     void exclGroupDoesNotDoubleCountOptions() throws Exception {
         Template tpl = tpl("<template xmlns='" + TPL + "'><subform name='form1'><subform name='TF_Haus'>"
@@ -87,7 +87,7 @@ public class ExclGroupSurfacingTest {
         assertEquals(1, dom.getFields().size(), "exactly one selectable value total");
     }
 
-    /** the option structure is kept intact in the Form DOM (for A5 radio mapping). */
+    /// the option structure is kept intact in the Form DOM (for A5 radio mapping).
     @Test
     void exclGroupKeepsOptionChildrenInFormDom() throws Exception {
         Template tpl = tpl("<template xmlns='" + TPL + "'><subform name='form1'><subform name='TF_Haus'>"

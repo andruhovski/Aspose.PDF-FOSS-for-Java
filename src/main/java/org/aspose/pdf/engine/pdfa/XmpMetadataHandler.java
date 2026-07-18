@@ -1,15 +1,14 @@
 package org.aspose.pdf.engine.pdfa;
 
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
-import org.aspose.pdf.engine.pdfobjects.PdfStream;
+import org.aspose.pdf.engine.pdfobjects.*;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -20,26 +19,17 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-
-/**
- * Reads and writes XMP metadata packets for PDF/A compliance.
- * <p>
- * XMP (Extensible Metadata Platform) is stored in a PDF as an unfiltered XML stream
- * referenced by the catalog's {@code /Metadata} entry. PDF/A requires specific XMP
- * properties including the {@code pdfaid:part} and {@code pdfaid:conformance} identifiers.
- * </p>
- * <p>
- * This handler supports both reading XMP from an existing catalog and creating new XMP
- * packets with the required namespaces: dc, xmp, pdf, pdfaid, rdf, pdfaExtension,
- * pdfaSchema, and pdfaProperty.
- * </p>
- *
- * @see <a href="https://www.iso.org/standard/51502.html">ISO 19005 (PDF/A)</a>
- */
+/// Reads and writes XMP metadata packets for PDF/A compliance.
+///
+/// XMP (Extensible Metadata Platform) is stored in a PDF as an unfiltered XML stream
+/// referenced by the catalog's `/Metadata` entry. PDF/A requires specific XMP
+/// properties including the `pdfaid:part` and `pdfaid:conformance` identifiers.
+///
+/// This handler supports both reading XMP from an existing catalog and creating new XMP
+/// packets with the required namespaces: dc, xmp, pdf, pdfaid, rdf, pdfaExtension,
+/// pdfaSchema, and pdfaProperty.
+///
+/// @see <a href="https://www.iso.org/standard/51502.html">ISO 19005 (PDF/A)</a>
 public final class XmpMetadataHandler {
 
     private static final Logger LOG = Logger.getLogger(XmpMetadataHandler.class.getName());
@@ -58,30 +48,25 @@ public final class XmpMetadataHandler {
     private static final String XPACKET_END = "<?xpacket end=\"w\"?>";
     private static final int MIN_PACKET_SIZE = 2048;
 
-    /** Parsed properties in the form "namespace#localName" -> value. */
+    /// Parsed properties in the form "namespace#localName" -> value.
     private final Map<String, String> properties;
 
-    /**
-     * Private constructor; use factory methods.
-     *
-     * @param properties the parsed XMP properties
-     */
+    /// Private constructor; use factory methods.
+    ///
+    /// @param properties the parsed XMP properties
     private XmpMetadataHandler(Map<String, String> properties) {
         this.properties = properties != null ? new LinkedHashMap<>(properties) : new LinkedHashMap<>();
     }
 
-    /**
-     * Reads XMP metadata from a PDF catalog dictionary.
-     * <p>
-     * Locates the {@code /Metadata} stream in the catalog, extracts the raw (unfiltered)
-     * XML bytes, and parses properties from the RDF structure.
-     * </p>
-     *
-     * @param catalog the document catalog dictionary
-     * @return an {@code XmpMetadataHandler} with parsed properties, or an empty handler
-     *         if no metadata stream is found
-     * @throws IllegalArgumentException if catalog is {@code null}
-     */
+    /// Reads XMP metadata from a PDF catalog dictionary.
+    ///
+    /// Locates the `/Metadata` stream in the catalog, extracts the raw (unfiltered)
+    /// XML bytes, and parses properties from the RDF structure.
+    ///
+    /// @param catalog the document catalog dictionary
+    /// @return an `XmpMetadataHandler` with parsed properties, or an empty handler
+    ///         if no metadata stream is found
+    /// @throws IllegalArgumentException if catalog is `null`
     public static XmpMetadataHandler readFromCatalog(PdfDictionary catalog) {
         if (catalog == null) {
             throw new IllegalArgumentException("catalog must not be null");
@@ -107,9 +92,7 @@ public final class XmpMetadataHandler {
         }
     }
 
-    /**
-     * Parses XMP properties from raw XML bytes.
-     */
+    /// Parses XMP properties from raw XML bytes.
     private static XmpMetadataHandler parseXmpBytes(byte[] xmlBytes) {
         Map<String, String> props = new LinkedHashMap<>();
         try {
@@ -135,9 +118,7 @@ public final class XmpMetadataHandler {
         return new XmpMetadataHandler(props);
     }
 
-    /**
-     * Extracts properties from an rdf:Description element.
-     */
+    /// Extracts properties from an rdf:Description element.
     private static void parseDescription(Element desc, Map<String, String> props) {
         // Check attributes for simple properties
         for (int a = 0; a < desc.getAttributes().getLength(); a++) {
@@ -204,9 +185,7 @@ public final class XmpMetadataHandler {
         }
     }
 
-    /**
-     * Returns the first child element with the given namespace and local name, or null.
-     */
+    /// Returns the first child element with the given namespace and local name, or null.
     private static Element getFirstChildElement(Element parent, String ns, String localName) {
         NodeList children = parent.getChildNodes();
         for (int i = 0; i < children.getLength(); i++) {
@@ -220,9 +199,7 @@ public final class XmpMetadataHandler {
         return null;
     }
 
-    /**
-     * Gets the x-default value from an rdf:Alt element.
-     */
+    /// Gets the x-default value from an rdf:Alt element.
     private static String getAltDefaultValue(Element alt) {
         NodeList items = alt.getElementsByTagNameNS(NS_RDF, "li");
         for (int i = 0; i < items.getLength(); i++) {
@@ -239,9 +216,7 @@ public final class XmpMetadataHandler {
         return null;
     }
 
-    /**
-     * Gets the first value from an rdf:Seq or rdf:Bag element.
-     */
+    /// Gets the first value from an rdf:Seq or rdf:Bag element.
     private static String getFirstSeqValue(Element seqOrBag) {
         NodeList items = seqOrBag.getElementsByTagNameNS(NS_RDF, "li");
         if (items.getLength() > 0) {
@@ -250,9 +225,7 @@ public final class XmpMetadataHandler {
         return null;
     }
 
-    /**
-     * Returns the direct text content of an element, trimmed.
-     */
+    /// Returns the direct text content of an element, trimmed.
     private static String getTextContent(Element elem) {
         StringBuilder sb = new StringBuilder();
         NodeList children = elem.getChildNodes();
@@ -265,18 +238,15 @@ public final class XmpMetadataHandler {
         return sb.toString().trim();
     }
 
-    /**
-     * Creates an XMP metadata byte array suitable for embedding in a PDF stream.
-     * <p>
-     * The resulting bytes include the xpacket processing instructions and are padded
-     * to at least {@value MIN_PACKET_SIZE} bytes.
-     * </p>
-     *
-     * @param properties     additional properties as namespace#name to value mappings
-     * @param pdfaPart       the PDF/A part number (1, 2, or 3), or 0 to omit pdfaid
-     * @param pdfaConformance the PDF/A conformance level ("A", "B", "U"), or null
-     * @return the XMP packet bytes in UTF-8
-     */
+    /// Creates an XMP metadata byte array suitable for embedding in a PDF stream.
+    ///
+    /// The resulting bytes include the xpacket processing instructions and are padded
+    /// to at least {@value MIN_PACKET_SIZE} bytes.
+    ///
+    /// @param properties     additional properties as namespace#name to value mappings
+    /// @param pdfaPart       the PDF/A part number (1, 2, or 3), or 0 to omit pdfaid
+    /// @param pdfaConformance the PDF/A conformance level ("A", "B", "U"), or null
+    /// @return the XMP packet bytes in UTF-8
     public byte[] createXmpBytes(Map<String, String> properties, int pdfaPart, String pdfaConformance) {
         StringBuilder xmp = new StringBuilder();
         xmp.append(XPACKET_BEGIN);
@@ -342,41 +312,33 @@ public final class XmpMetadataHandler {
         return xmp.toString().getBytes(StandardCharsets.UTF_8);
     }
 
-    /**
-     * Returns a property value by namespace URI and local name.
-     *
-     * @param namespace the XMP namespace URI (e.g. "http://purl.org/dc/elements/1.1/")
-     * @param name      the local property name (e.g. "title")
-     * @return the value, or {@code null} if not found
-     */
+    /// Returns a property value by namespace URI and local name.
+    ///
+    /// @param namespace the XMP namespace URI (e.g. "http://purl.org/dc/elements/1.1/")
+    /// @param name      the local property name (e.g. "title")
+    /// @return the value, or `null` if not found
     public String getProperty(String namespace, String name) {
         return properties.get(namespace + name);
     }
 
-    /**
-     * Returns an unmodifiable map of all parsed properties.
-     * Keys are in the form "namespaceURI" + "localName".
-     *
-     * @return all properties
-     */
+    /// Returns an unmodifiable map of all parsed properties.
+    /// Keys are in the form "namespaceURI" + "localName".
+    ///
+    /// @return all properties
     public Map<String, String> getAllProperties() {
         return Collections.unmodifiableMap(properties);
     }
 
-    /**
-     * Returns {@code true} if the XMP metadata contains a {@code pdfaid:part} property.
-     *
-     * @return true if PDF/A identification is present
-     */
+    /// Returns `true` if the XMP metadata contains a `pdfaid:part` property.
+    ///
+    /// @return true if PDF/A identification is present
     public boolean hasPdfAId() {
         return properties.containsKey(NS_PDFAID + "part");
     }
 
-    /**
-     * Returns the PDF/A part number from the XMP metadata, or 0 if not present.
-     *
-     * @return the pdfaid:part value (1, 2, 3, ...) or 0
-     */
+    /// Returns the PDF/A part number from the XMP metadata, or 0 if not present.
+    ///
+    /// @return the pdfaid:part value (1, 2, 3, ...) or 0
     public int getPdfAPart() {
         String val = properties.get(NS_PDFAID + "part");
         if (val == null) {
@@ -390,26 +352,21 @@ public final class XmpMetadataHandler {
         }
     }
 
-    /**
-     * Returns the PDF/A conformance level from the XMP metadata, or {@code null} if not present.
-     *
-     * @return the pdfaid:conformance value ("A", "B", "U") or null
-     */
+    /// Returns the PDF/A conformance level from the XMP metadata, or `null` if not present.
+    ///
+    /// @return the pdfaid:conformance value ("A", "B", "U") or null
     public String getPdfAConformance() {
         return properties.get(NS_PDFAID + "conformance");
     }
 
-    /**
-     * Converts a PDF date string to XMP date format.
-     * <p>
-     * PDF dates have the form {@code D:YYYYMMDDHHmmSSOHH'mm'} and are converted to
-     * ISO 8601 format {@code YYYY-MM-DDTHH:mm:ss+HH:mm}.
-     * </p>
-     *
-     * @param pdfDate the PDF date string (e.g. "D:20040408152500+02'00'")
-     * @return the XMP date string (e.g. "2004-04-08T15:25:00+02:00"), or the original
-     *         string if parsing fails
-     */
+    /// Converts a PDF date string to XMP date format.
+    ///
+    /// PDF dates have the form `D:YYYYMMDDHHmmSSOHH'mm'` and are converted to
+    /// ISO 8601 format `YYYY-MM-DDTHH:mm:ss+HH:mm`.
+    ///
+    /// @param pdfDate the PDF date string (e.g. "D:20040408152500+02'00'")
+    /// @return the XMP date string (e.g. "2004-04-08T15:25:00+02:00"), or the original
+    ///         string if parsing fails
     public static String pdfDateToXmpDate(String pdfDate) {
         if (pdfDate == null || pdfDate.isEmpty()) {
             return pdfDate;
@@ -467,26 +424,23 @@ public final class XmpMetadataHandler {
         }
     }
 
-    /**
-     * Builds a complete XMP packet with all standard namespaces for PDF/A compliance.
-     * <p>
-     * The packet includes Dublin Core (dc), XMP basic (xmp), Adobe PDF (pdf), and
-     * PDF/A identification (pdfaid) namespaces. The result is wrapped in xpacket
-     * processing instructions and padded to at least {@value MIN_PACKET_SIZE} bytes.
-     * </p>
-     *
-     * @param dcTitle          the document title (may be {@code null})
-     * @param dcCreator        the document creator/author (may be {@code null})
-     * @param dcDescription    the document description (may be {@code null})
-     * @param pdfKeywords      PDF keywords (may be {@code null})
-     * @param xmpCreatorTool   the creating application name (may be {@code null})
-     * @param pdfProducer      the PDF producer (may be {@code null})
-     * @param xmpCreateDate    creation date in XMP format (may be {@code null})
-     * @param xmpModifyDate    modification date in XMP format (may be {@code null})
-     * @param pdfaPart         the PDF/A part number (1, 2, 3), or 0 to omit
-     * @param pdfaConformance  the PDF/A conformance level ("A", "B", "U"), or null
-     * @return the complete XMP packet as UTF-8 bytes
-     */
+    /// Builds a complete XMP packet with all standard namespaces for PDF/A compliance.
+    ///
+    /// The packet includes Dublin Core (dc), XMP basic (xmp), Adobe PDF (pdf), and
+    /// PDF/A identification (pdfaid) namespaces. The result is wrapped in xpacket
+    /// processing instructions and padded to at least {@value MIN_PACKET_SIZE} bytes.
+    ///
+    /// @param dcTitle          the document title (may be `null`)
+    /// @param dcCreator        the document creator/author (may be `null`)
+    /// @param dcDescription    the document description (may be `null`)
+    /// @param pdfKeywords      PDF keywords (may be `null`)
+    /// @param xmpCreatorTool   the creating application name (may be `null`)
+    /// @param pdfProducer      the PDF producer (may be `null`)
+    /// @param xmpCreateDate    creation date in XMP format (may be `null`)
+    /// @param xmpModifyDate    modification date in XMP format (may be `null`)
+    /// @param pdfaPart         the PDF/A part number (1, 2, 3), or 0 to omit
+    /// @param pdfaConformance  the PDF/A conformance level ("A", "B", "U"), or null
+    /// @return the complete XMP packet as UTF-8 bytes
     public static byte[] buildXmpPacket(String dcTitle, String dcCreator, String dcDescription,
                                         String pdfKeywords, String xmpCreatorTool, String pdfProducer,
                                         String xmpCreateDate, String xmpModifyDate,
@@ -575,19 +529,15 @@ public final class XmpMetadataHandler {
         return xmp.toString().getBytes(StandardCharsets.UTF_8);
     }
 
-    /**
-     * Checks whether the given property key represents a structured property
-     * (rdf:Alt or rdf:Seq) that cannot be expressed as a simple XML attribute.
-     */
+    /// Checks whether the given property key represents a structured property
+    /// (rdf:Alt or rdf:Seq) that cannot be expressed as a simple XML attribute.
     private static boolean isStructuredProperty(String key) {
         return key.equals(NS_DC + "title")
                 || key.equals(NS_DC + "creator")
                 || key.equals(NS_DC + "description");
     }
 
-    /**
-     * Emits structured properties (dc:title, dc:creator, dc:description) as child elements.
-     */
+    /// Emits structured properties (dc:title, dc:creator, dc:description) as child elements.
     private static void emitStructuredProperties(StringBuilder xmp, Map<String, String> properties) {
         String title = properties.get(NS_DC + "title");
         if (title != null) {
@@ -617,9 +567,7 @@ public final class XmpMetadataHandler {
         }
     }
 
-    /**
-     * Returns the XMP namespace prefix for a given property key, or null if unknown.
-     */
+    /// Returns the XMP namespace prefix for a given property key, or null if unknown.
     private static String prefixFor(String key) {
         if (key.startsWith(NS_DC)) return "dc";
         if (key.startsWith(NS_XMP)) return "xmp";
@@ -631,9 +579,7 @@ public final class XmpMetadataHandler {
         return null;
     }
 
-    /**
-     * Extracts the local name from a "namespaceURI + localName" key.
-     */
+    /// Extracts the local name from a "namespaceURI + localName" key.
     private static String localNameOf(String key) {
         // Namespace URIs end with / or #
         int idx = key.lastIndexOf('/');
@@ -645,9 +591,7 @@ public final class XmpMetadataHandler {
         return key;
     }
 
-    /**
-     * Escapes XML special characters in text content.
-     */
+    /// Escapes XML special characters in text content.
     private static String escapeXml(String text) {
         if (text == null) {
             return "";
@@ -672,9 +616,7 @@ public final class XmpMetadataHandler {
         return sb.toString();
     }
 
-    /**
-     * Escapes XML special characters in attribute values.
-     */
+    /// Escapes XML special characters in attribute values.
     private static String escapeXmlAttr(String text) {
         if (text == null) {
             return "";

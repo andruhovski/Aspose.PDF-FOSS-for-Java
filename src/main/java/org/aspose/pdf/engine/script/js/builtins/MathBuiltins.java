@@ -3,10 +3,8 @@ package org.aspose.pdf.engine.script.js.builtins;
 import org.aspose.pdf.engine.script.js.runtime.JSObject;
 import org.aspose.pdf.engine.script.js.runtime.Undefined;
 
-/**
- * Installs the Math object (ECMA-262 3rd ed., sec 15.8): all ES3 constants and
- * functions. Delegates to {@link java.lang.Math}.
- */
+/// Installs the Math object (ECMA-262 3rd ed., sec 15.8): all ES3 constants and
+/// functions. Delegates to [java.lang.Math].
 final class MathBuiltins {
 
     private static final Object UNDEF = Undefined.INSTANCE;

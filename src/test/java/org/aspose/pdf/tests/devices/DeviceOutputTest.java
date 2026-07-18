@@ -16,9 +16,7 @@ import java.io.ByteArrayOutputStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for PngDevice, JpegDevice, BmpDevice output formats.
- */
+/// Tests for PngDevice, JpegDevice, BmpDevice output formats.
 public class DeviceOutputTest {
 
     private Page createEmptyPage() {

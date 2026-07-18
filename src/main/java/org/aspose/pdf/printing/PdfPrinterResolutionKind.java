@@ -1,17 +1,15 @@
 package org.aspose.pdf.printing;
 
-/**
- * Specifies a printer resolution kind.
- */
+/// Specifies a printer resolution kind.
 public enum PdfPrinterResolutionKind {
-    /** Custom resolution. */
+    /// Custom resolution.
     Custom,
-    /** Low resolution. */
+    /// Low resolution.
     Low,
-    /** Medium resolution. */
+    /// Medium resolution.
     Medium,
-    /** High resolution. */
+    /// High resolution.
     High,
-    /** Draft quality. */
+    /// Draft quality.
     Draft
 }

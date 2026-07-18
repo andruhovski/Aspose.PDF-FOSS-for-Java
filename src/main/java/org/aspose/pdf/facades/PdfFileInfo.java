@@ -2,30 +2,24 @@ package org.aspose.pdf.facades;
 
 import org.aspose.pdf.Document;
 import org.aspose.pdf.DocumentInfo;
-import org.aspose.pdf.engine.pdfobjects.PdfArray;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfString;
 import org.aspose.pdf.engine.parser.PDFParser;
+import org.aspose.pdf.engine.pdfobjects.*;
 import org.aspose.pdf.engine.security.PDFEncryptionDict;
 import org.aspose.pdf.engine.security.StandardSecurityHandler;
 import org.aspose.pdf.security.EncryptionParameters;
 import org.aspose.pdf.security.ICustomSecurityHandler;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.Closeable;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Provides read-only access to PDF document metadata and properties
- * such as title, author, page count, and encryption status.
- */
+/// Provides read-only access to PDF document metadata and properties
+/// such as title, author, page count, and encryption status.
 public class PdfFileInfo implements Closeable {
 
     private static final Logger LOG = Logger.getLogger(PdfFileInfo.class.getName());
@@ -37,102 +31,84 @@ public class PdfFileInfo implements Closeable {
     private boolean hasEditPassword;
     private String openedPassword;
     private ICustomSecurityHandler openedCustomHandler;
-    /**
-     * Sticky flag set when {@link #bindPdf(String)} (or its overloads) detects
-     * that the underlying PDF is encrypted but no usable password was provided.
-     * In that case {@link #document} stays {@code null}, but
-     * {@link #isEncrypted()} should still return {@code true} so callers can
-     * distinguish "not a PDF" from "PDF is locked".
-     */
+    /// Sticky flag set when [#bindPdf(String)] (or its overloads) detects
+    /// that the underlying PDF is encrypted but no usable password was provided.
+    /// In that case [#document] stays `null`, but
+    /// [#isEncrypted()] should still return `true` so callers can
+    /// distinguish "not a PDF" from "PDF is locked".
     private boolean encryptedButLocked;
 
-    /**
-     * Creates a new empty {@code PdfFileInfo} instance.
-     * Call {@link #bindPdf(String)} or {@link #bindPdf(InputStream)} before
-     * accessing properties.
-     */
+    /// Creates a new empty `PdfFileInfo` instance.
+    /// Call [#bindPdf(String)] or [#bindPdf(InputStream)] before
+    /// accessing properties.
     public PdfFileInfo() {
     }
 
-    /**
-     * Creates a {@code PdfFileInfo} by opening the specified PDF file.
-     *
-     * @param inputFile path to the PDF file
-     */
+    /// Creates a `PdfFileInfo` by opening the specified PDF file.
+    ///
+    /// @param inputFile path to the PDF file
     public PdfFileInfo(String inputFile) {
         bindPdf(inputFile);
     }
 
-    /**
-     * Creates a {@code PdfFileInfo} by opening the specified encrypted PDF file
-     * using the provided password.
-     *
-     * @param inputFile path to the PDF file
-     * @param password password used to open the document
-     */
+    /// Creates a `PdfFileInfo` by opening the specified encrypted PDF file
+    /// using the provided password.
+    ///
+    /// @param inputFile path to the PDF file
+    /// @param password password used to open the document
     public PdfFileInfo(String inputFile, String password) {
         bindPdf(inputFile, password);
     }
 
-    /**
-     * Creates a {@code PdfFileInfo} for an encrypted PDF using a custom security handler.
-     *
-     * @param inputFile path to the PDF file
-     * @param password password used to open the document
-     * @param customHandler custom security handler
-     */
+    /// Creates a `PdfFileInfo` for an encrypted PDF using a custom security handler.
+    ///
+    /// @param inputFile path to the PDF file
+    /// @param password password used to open the document
+    /// @param customHandler custom security handler
     public PdfFileInfo(String inputFile, String password, ICustomSecurityHandler customHandler) {
         bindPdf(inputFile, password, customHandler);
     }
 
-    /**
-     * Creates a {@code PdfFileInfo} by reading from the specified input stream.
-     *
-     * @param stream input stream containing PDF data
-     */
+    /// Creates a `PdfFileInfo` by reading from the specified input stream.
+    ///
+    /// @param stream input stream containing PDF data
     public PdfFileInfo(InputStream stream) {
         bindPdf(stream);
     }
 
-    /**
-     * Creates a {@code PdfFileInfo} by reading from the specified encrypted input
-     * stream using the provided password.
-     *
-     * @param stream input stream containing PDF data
-     * @param password password used to open the document
-     */
+    /// Creates a `PdfFileInfo` by reading from the specified encrypted input
+    /// stream using the provided password.
+    ///
+    /// @param stream input stream containing PDF data
+    /// @param password password used to open the document
     public PdfFileInfo(InputStream stream, String password) {
         bindPdf(stream, password);
     }
 
-    /**
-     * Creates a {@code PdfFileInfo} by reading an encrypted input stream using
-     * a custom security handler.
-     *
-     * @param stream input stream containing PDF data
-     * @param password password used to open the document
-     * @param customHandler custom security handler
-     */
+    /// Creates a `PdfFileInfo` by reading an encrypted input stream using
+    /// a custom security handler.
+    ///
+    /// @param stream input stream containing PDF data
+    /// @param password password used to open the document
+    /// @param customHandler custom security handler
     public PdfFileInfo(InputStream stream, String password, ICustomSecurityHandler customHandler) {
         bindPdf(stream, password, customHandler);
     }
 
-    /** Creates a {@code PdfFileInfo} bound to an already-loaded document. */
+    /// Creates a `PdfFileInfo` bound to an already-loaded document.
     public PdfFileInfo(Document document) {
         bindPdf(document);
     }
 
-    /** Returns the bound document, or {@code null}. Mirrors C# {@code PdfFileInfo.Document}. */
+    /// Returns the bound document, or `null`. Mirrors C# `PdfFileInfo.Document`.
     public Document getDocument() {
         return document;
     }
 
-    /**
-     * Binds an already opened document instance to this info reader.
-     *
-     * @param document the document to inspect
-     * @return {@code true} if the document is non-null
-     */
+    /// Binds an already opened document instance to this info reader.
+    ///
+    /// @param document the document to inspect
+    /// @return `true` if the document is non-null
     public boolean bindPdf(Document document) {
         this.document = document;
         this.pdfFile = document != null;
@@ -142,12 +118,10 @@ public class PdfFileInfo implements Closeable {
         return this.pdfFile;
     }
 
-    /**
-     * Binds a PDF file to this info reader.
-     *
-     * @param inputFile path to the PDF file
-     * @return {@code true} on success
-     */
+    /// Binds a PDF file to this info reader.
+    ///
+    /// @param inputFile path to the PDF file
+    /// @return `true` on success
     public boolean bindPdf(String inputFile) {
         try {
             this.document = new Document(inputFile);
@@ -185,14 +159,12 @@ public class PdfFileInfo implements Closeable {
         }
     }
 
-    /**
-     * Binds an encrypted PDF file to this info reader using the provided
-     * password.
-     *
-     * @param inputFile path to the PDF file
-     * @param password password used to open the document
-     * @return {@code true} on success
-     */
+    /// Binds an encrypted PDF file to this info reader using the provided
+    /// password.
+    ///
+    /// @param inputFile path to the PDF file
+    /// @param password password used to open the document
+    /// @return `true` on success
     public boolean bindPdf(String inputFile, String password) {
         try {
             this.document = new Document(inputFile, password);
@@ -208,12 +180,10 @@ public class PdfFileInfo implements Closeable {
         }
     }
 
-    /**
-     * Binds a PDF from an input stream.
-     *
-     * @param inputStream the input stream containing PDF data
-     * @return {@code true} on success
-     */
+    /// Binds a PDF from an input stream.
+    ///
+    /// @param inputStream the input stream containing PDF data
+    /// @return `true` on success
     public boolean bindPdf(InputStream inputStream) {
         try {
             this.document = new Document(inputStream);
@@ -229,13 +199,11 @@ public class PdfFileInfo implements Closeable {
         }
     }
 
-    /**
-     * Binds an encrypted PDF from an input stream using the provided password.
-     *
-     * @param inputStream the input stream containing PDF data
-     * @param password password used to open the document
-     * @return {@code true} on success
-     */
+    /// Binds an encrypted PDF from an input stream using the provided password.
+    ///
+    /// @param inputStream the input stream containing PDF data
+    /// @param password password used to open the document
+    /// @return `true` on success
     public boolean bindPdf(InputStream inputStream, String password) {
         try {
             this.document = new Document(inputStream, password);
@@ -251,14 +219,12 @@ public class PdfFileInfo implements Closeable {
         }
     }
 
-    /**
-     * Binds an encrypted PDF file using a custom security handler.
-     *
-     * @param inputFile path to the PDF file
-     * @param password password used to open the document
-     * @param customHandler custom security handler
-     * @return {@code true} on success
-     */
+    /// Binds an encrypted PDF file using a custom security handler.
+    ///
+    /// @param inputFile path to the PDF file
+    /// @param password password used to open the document
+    /// @param customHandler custom security handler
+    /// @return `true` on success
     public boolean bindPdf(String inputFile, String password, ICustomSecurityHandler customHandler) {
         try {
             this.document = new Document(inputFile, password, customHandler);
@@ -274,14 +240,12 @@ public class PdfFileInfo implements Closeable {
         }
     }
 
-    /**
-     * Binds an encrypted PDF stream using a custom security handler.
-     *
-     * @param inputStream PDF bytes
-     * @param password password used to open the document
-     * @param customHandler custom security handler
-     * @return {@code true} on success
-     */
+    /// Binds an encrypted PDF stream using a custom security handler.
+    ///
+    /// @param inputStream PDF bytes
+    /// @param password password used to open the document
+    /// @param customHandler custom security handler
+    /// @return `true` on success
     public boolean bindPdf(InputStream inputStream, String password, ICustomSecurityHandler customHandler) {
         try {
             this.document = new Document(inputStream, password, customHandler);
@@ -297,129 +261,101 @@ public class PdfFileInfo implements Closeable {
         }
     }
 
-    /**
-     * Returns the document title.
-     *
-     * @return the title, or {@code null} if unavailable
-     */
+    /// Returns the document title.
+    ///
+    /// @return the title, or `null` if unavailable
     public String getTitle() {
         return getInfoSafe() != null ? getInfoSafe().getTitle() : null;
     }
 
-    /**
-     * Returns the document author.
-     *
-     * @return the author, or {@code null} if unavailable
-     */
+    /// Returns the document author.
+    ///
+    /// @return the author, or `null` if unavailable
     public String getAuthor() {
         return getInfoSafe() != null ? getInfoSafe().getAuthor() : null;
     }
 
-    /**
-     * Returns the document subject.
-     *
-     * @return the subject, or {@code null} if unavailable
-     */
+    /// Returns the document subject.
+    ///
+    /// @return the subject, or `null` if unavailable
     public String getSubject() {
         return getInfoSafe() != null ? getInfoSafe().getSubject() : null;
     }
 
-    /**
-     * Returns the document keywords.
-     *
-     * @return the keywords, or {@code null} if unavailable
-     */
+    /// Returns the document keywords.
+    ///
+    /// @return the keywords, or `null` if unavailable
     public String getKeywords() {
         return getInfoSafe() != null ? getInfoSafe().getKeywords() : null;
     }
 
-    /**
-     * Returns the document creator application.
-     *
-     * @return the creator, or {@code null} if unavailable
-     */
+    /// Returns the document creator application.
+    ///
+    /// @return the creator, or `null` if unavailable
     public String getCreator() {
         return getInfoSafe() != null ? getInfoSafe().getCreator() : null;
     }
 
-    /**
-     * Returns the PDF producer.
-     *
-     * @return the producer, or {@code null} if unavailable
-     */
+    /// Returns the PDF producer.
+    ///
+    /// @return the producer, or `null` if unavailable
     public String getProducer() {
         return getInfoSafe() != null ? getInfoSafe().getProducer() : null;
     }
 
-    /**
-     * Returns the document creation date.
-     *
-     * @return the creation date, or {@code null} if unavailable
-     */
+    /// Returns the document creation date.
+    ///
+    /// @return the creation date, or `null` if unavailable
     public Date getCreationDate() {
         return getInfoSafe() != null ? getInfoSafe().getCreationDate() : null;
     }
 
-    /**
-     * Returns the document modification date.
-     *
-     * @return the modification date, or {@code null} if unavailable
-     */
+    /// Returns the document modification date.
+    ///
+    /// @return the modification date, or `null` if unavailable
     public Date getModDate() {
         return getInfoSafe() != null ? getInfoSafe().getModDate() : null;
     }
 
-    /**
-     * Returns whether the document is encrypted.
-     *
-     * @return {@code true} if the document is encrypted
-     */
+    /// Returns whether the document is encrypted.
+    ///
+    /// @return `true` if the document is encrypted
     public boolean isEncrypted() {
         if (encryptedButLocked) return true;
         return document != null && document.isEncrypted();
     }
 
-    /**
-     * Returns whether the bound file is a valid PDF.
-     *
-     * @return {@code true} if the file was successfully parsed as PDF
-     */
+    /// Returns whether the bound file is a valid PDF.
+    ///
+    /// @return `true` if the file was successfully parsed as PDF
     public boolean isPdfFile() {
         return pdfFile;
     }
 
-    /**
-     * Returns whether the encrypted document has an open password entry.
-     *
-     * @return {@code true} if an open password is present
-     */
+    /// Returns whether the encrypted document has an open password entry.
+    ///
+    /// @return `true` if an open password is present
     public boolean hasOpenPassword() {
         return hasOpenPassword;
     }
 
-    /**
-     * Returns whether the encrypted document has an edit password entry.
-     *
-     * @return {@code true} if an edit password is present
-     */
+    /// Returns whether the encrypted document has an edit password entry.
+    ///
+    /// @return `true` if an edit password is present
     public boolean hasEditPassword() {
         return hasEditPassword;
     }
 
-    /**
-     * Returns the role of the password used to open the document.
-     *
-     * @return the password type
-     */
+    /// Returns the role of the password used to open the document.
+    ///
+    /// @return the password type
     public PasswordType getPasswordType() {
         return passwordType;
     }
 
-    /**
-     * Returns the total number of pages.
-     *
-     * @return the page count, or 0 on error
-     */
+    /// Returns the total number of pages.
+    ///
+    /// @return the page count, or 0 on error
     public int getNumberOfPages() {
         try {
             return document != null ? document.getPages().getCount() : 0;
@@ -429,13 +365,11 @@ public class PdfFileInfo implements Closeable {
         }
     }
 
-    /**
-     * Returns the page width in points (1/72 inch) for the given 1-based page
-     * number, taken from the page's MediaBox.
-     *
-     * @param pageNumber 1-based page index
-     * @return page width in points, or 0 if the page is unavailable
-     */
+    /// Returns the page width in points (1/72 inch) for the given 1-based page
+    /// number, taken from the page's MediaBox.
+    ///
+    /// @param pageNumber 1-based page index
+    /// @return page width in points, or 0 if the page is unavailable
     public double getPageWidth(int pageNumber) {
         try {
             if (document == null) return 0;
@@ -447,13 +381,11 @@ public class PdfFileInfo implements Closeable {
         }
     }
 
-    /**
-     * Returns the page height in points (1/72 inch) for the given 1-based page
-     * number, taken from the page's MediaBox.
-     *
-     * @param pageNumber 1-based page index
-     * @return page height in points, or 0 if the page is unavailable
-     */
+    /// Returns the page height in points (1/72 inch) for the given 1-based page
+    /// number, taken from the page's MediaBox.
+    ///
+    /// @param pageNumber 1-based page index
+    /// @return page height in points, or 0 if the page is unavailable
     public double getPageHeight(int pageNumber) {
         try {
             if (document == null) return 0;
@@ -465,11 +397,9 @@ public class PdfFileInfo implements Closeable {
         }
     }
 
-    /**
-     * Returns document permissions as a facade-compatible privilege object.
-     *
-     * @return current document privilege, or {@code null} if unavailable
-     */
+    /// Returns document permissions as a facade-compatible privilege object.
+    ///
+    /// @return current document privilege, or `null` if unavailable
     public DocumentPrivilege getDocumentPrivilege() {
         if (document == null) {
             return null;
@@ -490,18 +420,15 @@ public class PdfFileInfo implements Closeable {
         }
     }
 
-    /**
-     * Adds (or overwrites) a custom entry in the document's /Info dictionary.
-     * Mirrors the C# {@code PdfFileInfo.SetMetaInfo(string, string)} overload.
-     * <p>
-     * Standard keys (Title, Author, Subject, Keywords, Creator, Producer,
-     * CreationDate, ModDate) are still respected — passing one of them here
-     * has the same effect as calling the typed setter.
-     * </p>
-     *
-     * @param name  the metadata key (becomes a /Name in /Info)
-     * @param value the metadata value, written as a UTF-8 PDF string
-     */
+    /// Adds (or overwrites) a custom entry in the document's /Info dictionary.
+    /// Mirrors the C# `PdfFileInfo.SetMetaInfo(string, string)` overload.
+    ///
+    /// Standard keys (Title, Author, Subject, Keywords, Creator, Producer,
+    /// CreationDate, ModDate) are still respected — passing one of them here
+    /// has the same effect as calling the typed setter.
+    ///
+    /// @param name  the metadata key (becomes a /Name in /Info)
+    /// @param value the metadata value, written as a UTF-8 PDF string
     public void setMetaInfo(String name, String value) {
         if (document == null || name == null || name.isEmpty()) {
             return;
@@ -521,13 +448,11 @@ public class PdfFileInfo implements Closeable {
         }
     }
 
-    /**
-     * Saves the bound document — together with any {@link #setMetaInfo} edits —
-     * to {@code outputFile}. Mirrors C# {@code PdfFileInfo.SaveNewInfo(string)}.
-     *
-     * @param outputFile path to the output PDF
-     * @return {@code true} on success
-     */
+    /// Saves the bound document — together with any [#setMetaInfo] edits —
+    /// to `outputFile`. Mirrors C# `PdfFileInfo.SaveNewInfo(string)`.
+    ///
+    /// @param outputFile path to the output PDF
+    /// @return `true` on success
     public boolean saveNewInfo(String outputFile) {
         if (document == null) {
             LOG.warning("saveNewInfo: no document bound");
@@ -542,12 +467,10 @@ public class PdfFileInfo implements Closeable {
         }
     }
 
-    /**
-     * Stream variant of {@link #saveNewInfo(String)}.
-     *
-     * @param outputStream destination stream
-     * @return {@code true} on success
-     */
+    /// Stream variant of [#saveNewInfo(String)].
+    ///
+    /// @param outputStream destination stream
+    /// @return `true` on success
     public boolean saveNewInfo(OutputStream outputStream) {
         if (document == null) {
             LOG.warning("saveNewInfo: no document bound");
@@ -562,9 +485,7 @@ public class PdfFileInfo implements Closeable {
         }
     }
 
-    /**
-     * Clears the standard document metadata entries from the bound document.
-     */
+    /// Clears the standard document metadata entries from the bound document.
     public void clearInfo() {
         DocumentInfo info = getInfoSafe();
         if (info != null) {
@@ -572,9 +493,7 @@ public class PdfFileInfo implements Closeable {
         }
     }
 
-    /**
-     * Closes this info reader and releases the bound document.
-     */
+    /// Closes this info reader and releases the bound document.
     public void close() {
         if (document != null) {
             try {
@@ -592,9 +511,7 @@ public class PdfFileInfo implements Closeable {
         pdfFile = false;
     }
 
-    /**
-     * Safely retrieves the DocumentInfo, returning {@code null} on any error.
-     */
+    /// Safely retrieves the DocumentInfo, returning `null` on any error.
     private DocumentInfo getInfoSafe() {
         try {
             return document != null ? document.getInfo() : null;

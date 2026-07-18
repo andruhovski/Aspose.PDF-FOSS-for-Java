@@ -1,122 +1,119 @@
 package org.aspose.pdf.engine.xfa.model.template;
 
 import org.aspose.pdf.engine.xfa.model.XfaNode;
-import org.aspose.pdf.engine.xfa.model.XfaMeasurement;
 import org.w3c.dom.Element;
 
-/**
- * Typed XFA template element <code>desc</code>. Attribute and child
- * accessors are typed; unknown attributes/children round-trip via the DOM.
- */
+/// Typed XFA template element `desc`. Attribute and child
+/// accessors are typed; unknown attributes/children round-trip via the DOM.
 public final class Desc extends XfaNode {
 
-    /** Wraps a backing <code>desc</code> element. */
+    /// Wraps a backing `desc` element.
     public Desc(Element element, XfaNode parent) {
         super(element, parent);
     }
 
-    /** @return the typed <code>id</code> attribute, or null. */
+    /// @return the typed `id` attribute, or null.
     public String getId() { return getString("id"); }
-    /** Sets the <code>id</code> attribute. */
+    /// Sets the `id` attribute.
     public void setId(String value) { setAttribute("id", value); }
 
-    /** @return the typed <code>use</code> attribute, or null. */
+    /// @return the typed `use` attribute, or null.
     public String getUse() { return getString("use"); }
-    /** Sets the <code>use</code> attribute. */
+    /// Sets the `use` attribute.
     public void setUse(String value) { setAttribute("use", value); }
 
-    /** @return the typed <code>usehref</code> attribute, or null. */
+    /// @return the typed `usehref` attribute, or null.
     public String getUsehref() { return getString("usehref"); }
-    /** Sets the <code>usehref</code> attribute. */
+    /// Sets the `usehref` attribute.
     public void setUsehref(String value) { setAttribute("usehref", value); }
 
-    /** @return the <code>boolean</code> children (typed). */
+    /// @return the `boolean` children (typed).
     public java.util.List<Boolean> getBooleanList() {
         java.util.List<Boolean> r = new java.util.ArrayList<Boolean>();
         for (XfaNode n : getChildren("boolean")) { r.add((Boolean) n); }
         return r;
     }
-    /** Appends a new <code>boolean</code> child. */
+    /// Appends a new `boolean` child.
     public Boolean addBoolean() { return (Boolean) addChild("boolean"); }
 
-    /** @return the <code>date</code> children (typed). */
+    /// @return the `date` children (typed).
     public java.util.List<Date> getDateList() {
         java.util.List<Date> r = new java.util.ArrayList<Date>();
         for (XfaNode n : getChildren("date")) { r.add((Date) n); }
         return r;
     }
-    /** Appends a new <code>date</code> child. */
+    /// Appends a new `date` child.
     public Date addDate() { return (Date) addChild("date"); }
 
-    /** @return the <code>dateTime</code> children (typed). */
+    /// @return the `dateTime` children (typed).
     public java.util.List<DateTime> getDateTimeList() {
         java.util.List<DateTime> r = new java.util.ArrayList<DateTime>();
         for (XfaNode n : getChildren("dateTime")) { r.add((DateTime) n); }
         return r;
     }
-    /** Appends a new <code>dateTime</code> child. */
+    /// Appends a new `dateTime` child.
     public DateTime addDateTime() { return (DateTime) addChild("dateTime"); }
 
-    /** @return the <code>decimal</code> children (typed). */
+    /// @return the `decimal` children (typed).
     public java.util.List<Decimal> getDecimalList() {
         java.util.List<Decimal> r = new java.util.ArrayList<Decimal>();
         for (XfaNode n : getChildren("decimal")) { r.add((Decimal) n); }
         return r;
     }
-    /** Appends a new <code>decimal</code> child. */
+    /// Appends a new `decimal` child.
     public Decimal addDecimal() { return (Decimal) addChild("decimal"); }
 
-    /** @return the <code>exData</code> children (typed). */
+    /// @return the `exData` children (typed).
     public java.util.List<ExData> getExDataList() {
         java.util.List<ExData> r = new java.util.ArrayList<ExData>();
         for (XfaNode n : getChildren("exData")) { r.add((ExData) n); }
         return r;
     }
-    /** Appends a new <code>exData</code> child. */
+    /// Appends a new `exData` child.
     public ExData addExData() { return (ExData) addChild("exData"); }
 
-    /** @return the <code>float</code> children (typed). */
+    /// @return the `float` children (typed).
     public java.util.List<Float> getFloatList() {
         java.util.List<Float> r = new java.util.ArrayList<Float>();
         for (XfaNode n : getChildren("float")) { r.add((Float) n); }
         return r;
     }
-    /** Appends a new <code>float</code> child. */
+    /// Appends a new `float` child.
     public Float addFloat() { return (Float) addChild("float"); }
 
-    /** @return the <code>image</code> children (typed). */
+    /// @return the `image` children (typed).
     public java.util.List<Image> getImageList() {
         java.util.List<Image> r = new java.util.ArrayList<Image>();
         for (XfaNode n : getChildren("image")) { r.add((Image) n); }
         return r;
     }
-    /** Appends a new <code>image</code> child. */
+    /// Appends a new `image` child.
     public Image addImage() { return (Image) addChild("image"); }
 
-    /** @return the <code>integer</code> children (typed). */
+    /// @return the `integer` children (typed).
     public java.util.List<Integer> getIntegerList() {
         java.util.List<Integer> r = new java.util.ArrayList<Integer>();
         for (XfaNode n : getChildren("integer")) { r.add((Integer) n); }
         return r;
     }
-    /** Appends a new <code>integer</code> child. */
+    /// Appends a new `integer` child.
     public Integer addInteger() { return (Integer) addChild("integer"); }
 
-    /** @return the <code>text</code> children (typed). */
+    /// @return the `text` children (typed).
     public java.util.List<Text> getTextList() {
         java.util.List<Text> r = new java.util.ArrayList<Text>();
         for (XfaNode n : getChildren("text")) { r.add((Text) n); }
         return r;
     }
-    /** Appends a new <code>text</code> child. */
+    /// Appends a new `text` child.
     public Text addText() { return (Text) addChild("text"); }
 
-    /** @return the <code>time</code> children (typed). */
+    /// @return the `time` children (typed).
     public java.util.List<Time> getTimeList() {
         java.util.List<Time> r = new java.util.ArrayList<Time>();
         for (XfaNode n : getChildren("time")) { r.add((Time) n); }
         return r;
     }
-    /** Appends a new <code>time</code> child. */
+    /// Appends a new `time` child.
     public Time addTime() { return (Time) addChild("time"); }
 }

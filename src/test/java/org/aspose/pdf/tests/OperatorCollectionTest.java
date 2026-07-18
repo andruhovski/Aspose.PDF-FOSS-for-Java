@@ -13,9 +13,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link OperatorCollection}.
- */
+/// Tests for [OperatorCollection].
 public class OperatorCollectionTest {
 
     @Test

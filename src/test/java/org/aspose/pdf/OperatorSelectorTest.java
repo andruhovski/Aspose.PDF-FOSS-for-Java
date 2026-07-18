@@ -10,11 +10,9 @@ import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Unit tests for {@link OperatorSelector} and the
- * {@link OperatorCollection#accept} / {@link OperatorCollection#delete(java.util.List)}
- * visitor API (Sprint 46).
- */
+/// Unit tests for [OperatorSelector] and the
+/// [OperatorCollection#accept] / [OperatorCollection#delete(java.util.List)]
+/// visitor API (Sprint 46).
 class OperatorSelectorTest {
 
     @Test

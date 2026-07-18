@@ -6,79 +6,61 @@ import org.aspose.pdf.Rectangle;
 import org.aspose.pdf.engine.xfa.binding.FormDom;
 import org.aspose.pdf.engine.xfa.binding.FormField;
 import org.aspose.pdf.engine.xfa.model.XfaNode;
-import org.aspose.pdf.forms.ButtonField;
-import org.aspose.pdf.forms.CheckboxField;
-import org.aspose.pdf.forms.ComboBoxField;
-import org.aspose.pdf.forms.Field;
-import org.aspose.pdf.forms.Form;
-import org.aspose.pdf.forms.ListBoxField;
-import org.aspose.pdf.forms.RadioButtonField;
-import org.aspose.pdf.forms.RadioButtonOptionField;
-import org.aspose.pdf.forms.SignatureField;
-import org.aspose.pdf.forms.TextBoxField;
+import org.aspose.pdf.forms.*;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Logger;
 
-/**
- * Maps a merged XFA {@link FormDom} into ordinary AcroForm fields on a
- * {@link Document}, so generic PDF viewers (which cannot render XFA) display the
- * form and its data.
- *
- * <p><b>Naming note:</b> this internal class keeps the historical {@code XfaFlattener}
- * /{@code flatten} names, but at the public API it is exposed as a <em>conversion</em>
- * — {@code XfaForm.convertToAcroForm(...)} produces <b>editable</b> AcroForm fields
- * (equivalent to {@code Form.setType(FormType.Standard)}). It is NOT an Aspose
- * "flatten" (which burns field appearances into the page content and removes the
- * fields — {@code Form.flatten()}). The internal name is retained because the
- * {@code Result} type and {@code flatten} entry point are referenced across the
- * flatten package and the layout track; renaming them would ripple widely for no
- * behavioural gain.</p>
- *
- * <p>This is the Stage-A deliverable: correct field set, types and bound values,
- * placed at their statically-resolvable geometry. It does NOT perform XFA dynamic
- * layout or static rendering (Stage C); fields whose geometry is flowed (no
- * {@code x}/{@code y}) are still created — so their bound value is carried — but at
- * a flagged placeholder position, recorded in {@link Result#geometryFallback}.</p>
- */
+/// Maps a merged XFA [FormDom] into ordinary AcroForm fields on a
+/// [Document], so generic PDF viewers (which cannot render XFA) display the
+/// form and its data.
+///
+/// **Naming note:** this internal class keeps the historical `XfaFlattener`
+/// /`flatten` names, but at the public API it is exposed as a _conversion_
+/// — `XfaForm.convertToAcroForm(...)` produces **editable** AcroForm fields
+/// (equivalent to `Form.setType(FormType.Standard)`). It is NOT an Aspose
+/// "flatten" (which burns field appearances into the page content and removes the
+/// fields — `Form.flatten()`). The internal name is retained because the
+/// `Result` type and `flatten` entry point are referenced across the
+/// flatten package and the layout track; renaming them would ripple widely for no
+/// behavioural gain.
+///
+/// This is the Stage-A deliverable: correct field set, types and bound values,
+/// placed at their statically-resolvable geometry. It does NOT perform XFA dynamic
+/// layout or static rendering (Stage C); fields whose geometry is flowed (no
+/// `x`/`y`) are still created — so their bound value is carried — but at
+/// a flagged placeholder position, recorded in [Result#geometryFallback].
 public final class XfaFlattener {
 
     private static final Logger LOG = Logger.getLogger(XfaFlattener.class.getName());
 
-    /** Policy for the AcroForm's {@code /XFA} entry after flattening. */
+    /// Policy for the AcroForm's `/XFA` entry after flattening.
     public enum XfaPolicy {
-        /** Remove {@code /XFA} — pure AcroForm; generic viewers render it (default). */
+        /// Remove `/XFA` — pure AcroForm; generic viewers render it (default).
         DROP,
-        /** Keep {@code /XFA} — hybrid document (XFA-aware viewers still use XFA). */
+        /// Keep `/XFA` — hybrid document (XFA-aware viewers still use XFA).
         KEEP
     }
 
-    /** Outcome of a flatten operation (the A5.4 acceptance numbers). */
+    /// Outcome of a flatten operation (the A5.4 acceptance numbers).
     public static final class Result {
-        /** AcroForm fields created. */
+        /// AcroForm fields created.
         public int fieldsAdded;
-        /** Fields carrying a non-empty bound value (the headline number). */
+        /// Fields carrying a non-empty bound value (the headline number).
         public int boundValuesCarried;
-        /** Fields placed with statically-resolved on-page geometry. */
+        /// Fields placed with statically-resolved on-page geometry.
         public int geometryResolved;
-        /** Fields placed at a flagged placeholder position (flowed/dynamic — Stage C). */
+        /// Fields placed at a flagged placeholder position (flowed/dynamic — Stage C).
         public int geometryFallback;
-        /** Fields clamped because their resolved rect fell off the page. */
+        /// Fields clamped because their resolved rect fell off the page.
         public int offPageClamped;
-        /** contentAreas found in the template pageSet (1 = static; &gt;1 deferred to C4 pagination). */
+        /// contentAreas found in the template pageSet (1 = static; >1 deferred to C4 pagination).
         public int contentAreaCount;
-        /** Field count by AcroForm field class. */
+        /// Field count by AcroForm field class.
         public final Map<String, Integer> byType = new LinkedHashMap<>();
-        /** Nodes not mapped to a field, with the reason. */
+        /// Nodes not mapped to a field, with the reason.
         public final List<String> unmapped = new ArrayList<>();
 
         void type(String t) {
@@ -89,33 +71,29 @@ public final class XfaFlattener {
     private XfaFlattener() {
     }
 
-    /**
-     * Flattens the Form DOM onto the document's AcroForm.
-     *
-     * @param doc    the target document (fields are added to {@code doc.getForm()})
-     * @param dom    the merged Form DOM
-     * @param policy the {@code /XFA} handling policy
-     * @param acroForm the AcroForm dictionary (for the {@code /XFA} policy), or {@code null}
-     * @return the flatten result
-     * @throws Exception on document access failure
-     */
+    /// Flattens the Form DOM onto the document's AcroForm.
+    ///
+    /// @param doc    the target document (fields are added to `doc.getForm()`)
+    /// @param dom    the merged Form DOM
+    /// @param policy the `/XFA` handling policy
+    /// @param acroForm the AcroForm dictionary (for the `/XFA` policy), or `null`
+    /// @return the flatten result
+    /// @throws Exception on document access failure
     public static Result flatten(Document doc, FormDom dom, XfaPolicy policy,
                                  org.aspose.pdf.engine.pdfobjects.PdfDictionary acroForm) throws Exception {
         return flatten(doc, dom, null, policy, acroForm);
     }
 
-    /**
-     * Flattens the Form DOM onto the document's AcroForm, using the template's
-     * {@code pageSet} contentArea as the positioned-layout origin (C1).
-     *
-     * @param doc      the target document
-     * @param dom      the merged Form DOM
-     * @param tpl      the XFA template (for the contentArea layout origin), or {@code null}
-     * @param policy   the {@code /XFA} handling policy
-     * @param acroForm the AcroForm dictionary (for the {@code /XFA} policy), or {@code null}
-     * @return the flatten result
-     * @throws Exception on document access failure
-     */
+    /// Flattens the Form DOM onto the document's AcroForm, using the template's
+    /// `pageSet` contentArea as the positioned-layout origin (C1).
+    ///
+    /// @param doc      the target document
+    /// @param dom      the merged Form DOM
+    /// @param tpl      the XFA template (for the contentArea layout origin), or `null`
+    /// @param policy   the `/XFA` handling policy
+    /// @param acroForm the AcroForm dictionary (for the `/XFA` policy), or `null`
+    /// @return the flatten result
+    /// @throws Exception on document access failure
     public static Result flatten(Document doc, FormDom dom,
                                  org.aspose.pdf.engine.xfa.model.template.Template tpl,
                                  XfaPolicy policy,
@@ -190,11 +168,9 @@ public final class XfaFlattener {
         placeField(f, form, page, rect, usedNames, r);
     }
 
-    /**
-     * Creates the AcroForm widget for a field at an explicit {@code rect} on {@code page} (the
-     * type mapping + value + caption→tooltip), reused by both the Stage-A grid flattener and the
-     * layout-driven {@link XfaAcroFormConverter} (which supplies real laid-out rects).
-     */
+    /// Creates the AcroForm widget for a field at an explicit `rect` on `page` (the
+    /// type mapping + value + caption→tooltip), reused by both the Stage-A grid flattener and the
+    /// layout-driven [XfaAcroFormConverter] (which supplies real laid-out rects).
     static Field placeField(FormField f, Form form, Page page, Rectangle rect,
                            Set<String> usedNames, Result r) {
         String ui = f.getUiType();
@@ -295,12 +271,10 @@ public final class XfaFlattener {
         }
     }
 
-    /**
-     * Builds a {@code /DA} default-appearance string from a field's authored XFA {@code <font>} — the
-     * value font size + colour the render track uses — so the editable widget's generated appearance
-     * matches the rendered XFA (rather than auto-sizing to the box). Font name stays {@code /Helv}
-     * (resolved via the AcroForm {@code /DR}); Helvetica ≈ the common XFA Arial visually.
-     */
+    /// Builds a `/DA` default-appearance string from a field's authored XFA `<font>` — the
+    /// value font size + colour the render track uses — so the editable widget's generated appearance
+    /// matches the rendered XFA (rather than auto-sizing to the box). Font name stays `/Helv`
+    /// (resolved via the AcroForm `/DR`); Helvetica ≈ the common XFA Arial visually.
     private static String authoredDa(Element fe) {
         double size = org.aspose.pdf.engine.xfa.flatten.paint.XfaPainter.valueFontSize(fe);
         float[] c = org.aspose.pdf.engine.xfa.flatten.paint.XfaPainter.valueFontColor(fe);
@@ -328,11 +302,9 @@ public final class XfaFlattener {
         placeRadio(ex, opts, rects, byElement.get(ex), byElement, usedNames, form, page, r);
     }
 
-    /**
-     * Creates a radio-button group from an exclGroup's option {@code rects} on {@code page}, reused
-     * by the Stage-A flattener and the layout-driven converter. Marks the chosen option from the
-     * surfaced exclGroup selection.
-     */
+    /// Creates a radio-button group from an exclGroup's option `rects` on `page`, reused
+    /// by the Stage-A flattener and the layout-driven converter. Marks the chosen option from the
+    /// surfaced exclGroup selection.
     static void placeRadio(Element ex, List<Element> opts, List<Rectangle> rects, FormField groupField,
                            Map<Element, FormField> byElement, Set<String> usedNames, Form form,
                            Page page, Result r) {
@@ -403,7 +375,7 @@ public final class XfaFlattener {
         return new Rectangle(llx, lly, urx, ury);
     }
 
-    /** Lays placeholder boxes in columns down the page for flowed/unresolved fields. */
+    /// Lays placeholder boxes in columns down the page for flowed/unresolved fields.
     private static final class PlaceCursor {
         private final double pageW;
         private final double pageH;
@@ -434,12 +406,10 @@ public final class XfaFlattener {
         return v < lo ? lo : (v > hi ? hi : v);
     }
 
-    /**
-     * The positioned-layout origin {@code {x,y}} (points, from the page top-left) = the
-     * first {@code contentArea} of the template {@code pageSet}, or {@code {0,0}} if the
-     * template has none. Records the total contentArea count on the result (1 = static
-     * single-area; &gt;1 means pagination selects the area per fragment — C4).
-     */
+    /// The positioned-layout origin `{x,y}` (points, from the page top-left) = the
+    /// first `contentArea` of the template `pageSet`, or `{0,0}` if the
+    /// template has none. Records the total contentArea count on the result (1 = static
+    /// single-area; >1 means pagination selects the area per fragment — C4).
     private static double[] contentAreaOrigin(org.aspose.pdf.engine.xfa.model.template.Template tpl, Result r) {
         if (tpl == null) {
             return new double[]{0, 0};
@@ -454,11 +424,9 @@ public final class XfaFlattener {
         return new double[]{XfaGeometry.toPoints(ca.getX()), XfaGeometry.toPoints(ca.getY())};
     }
 
-    /**
-     * Collects contentAreas by descending the layout subtree. The pageSet may be nested
-     * inside the root subform (XFA permits this), so descend containers too — not only
-     * pageSet/pageArea (a pageSet-only walk misses it, the 408975 P3 defect).
-     */
+    /// Collects contentAreas by descending the layout subtree. The pageSet may be nested
+    /// inside the root subform (XFA permits this), so descend containers too — not only
+    /// pageSet/pageArea (a pageSet-only walk misses it, the 408975 P3 defect).
     private static void collectContentAreas(XfaNode node,
             List<org.aspose.pdf.engine.xfa.model.template.ContentArea> out) {
         for (XfaNode child : node.getChildren()) {
@@ -476,7 +444,7 @@ public final class XfaFlattener {
 
     /* ----------------------------- helpers ------------------------------- */
 
-    /** The XFA field/exclGroup caption text (the on-form label), or {@code null}. */
+    /// The XFA field/exclGroup caption text (the on-form label), or `null`.
     private static String captionOf(XfaNode formNode) {
         if (formNode == null) {
             return null;

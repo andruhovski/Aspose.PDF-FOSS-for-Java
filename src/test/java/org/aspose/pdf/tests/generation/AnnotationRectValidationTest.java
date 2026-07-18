@@ -15,13 +15,11 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Stage 7 / Bug F — {@link org.aspose.pdf.annotations.Annotation#setRect(Rectangle)}
- * must reject degenerate (zero-area or negative-area) rectangles per ISO
- * 32000-1:2008 §12.5.2. {@link CaretAnnotation} also gains an
- * {@code atPoint(Page, Point)} helper for the common case of placing a caret
- * at a single coordinate.
- */
+/// Stage 7 / Bug F — [org.aspose.pdf.annotations.Annotation#setRect(Rectangle)]
+/// must reject degenerate (zero-area or negative-area) rectangles per ISO
+/// 32000-1:2008 §12.5.2. [CaretAnnotation] also gains an
+/// `atPoint(Page, Point)` helper for the common case of placing a caret
+/// at a single coordinate.
 class AnnotationRectValidationTest {
 
     @Test

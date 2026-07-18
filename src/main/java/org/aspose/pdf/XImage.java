@@ -1,13 +1,8 @@
 package org.aspose.pdf;
 
 import org.aspose.pdf.engine.colorspace.*;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfArray;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
-import org.aspose.pdf.engine.pdfobjects.PdfStream;
 import org.aspose.pdf.engine.parser.PDFParser;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
@@ -17,15 +12,13 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.logging.Logger;
 
-/**
- * Represents an image XObject in a PDF document (ISO 32000-1:2008, §8.9, Table 89).
- * <p>
- * Wraps a PdfStream with {@code /Subtype /Image}. Provides access to image
- * properties (width, height, bits per component, color space) and decoded
- * pixel data. Supports saving to output streams and conversion to
- * {@link BufferedImage}.
- * </p>
- */
+/// Represents an image XObject in a PDF document (ISO 32000-1:2008, §8.9, Table 89).
+///
+/// Wraps a PdfStream with `/Subtype /Image`. Provides access to image
+/// properties (width, height, bits per component, color space) and decoded
+/// pixel data. Supports saving to output streams and conversion to
+/// [BufferedImage].
+///
 public class XImage {
 
     private static final Logger LOG = Logger.getLogger(XImage.class.getName());
@@ -35,61 +28,49 @@ public class XImage {
     private final PDFParser parser;
     private PdfDictionary xobjectDict; // parent /XObject dictionary for renaming
 
-    /**
-     * Creates an XImage from an image XObject stream.
-     *
-     * @param stream the image XObject PdfStream
-     * @param name   the resource name (e.g., "Im1")
-     * @param parser the PDF parser for resolving indirect refs (may be null)
-     */
+    /// Creates an XImage from an image XObject stream.
+    ///
+    /// @param stream the image XObject PdfStream
+    /// @param name   the resource name (e.g., "Im1")
+    /// @param parser the PDF parser for resolving indirect refs (may be null)
     public XImage(PdfStream stream, String name, PDFParser parser) {
         this.stream = stream != null ? stream : new PdfStream();
         this.name = name;
         this.parser = parser;
     }
 
-    /**
-     * Returns the image width in pixels (/Width).
-     *
-     * @return the width
-     */
+    /// Returns the image width in pixels (/Width).
+    ///
+    /// @return the width
     public int getWidth() {
         return stream.getInt("Width", 0);
     }
 
-    /**
-     * Returns the image height in pixels (/Height).
-     *
-     * @return the height
-     */
+    /// Returns the image height in pixels (/Height).
+    ///
+    /// @return the height
     public int getHeight() {
         return stream.getInt("Height", 0);
     }
 
-    /**
-     * Returns the bits per component (/BitsPerComponent). Default: 8.
-     *
-     * @return the bits per component
-     */
+    /// Returns the bits per component (/BitsPerComponent). Default: 8.
+    ///
+    /// @return the bits per component
     public int getBitsPerComponent() {
         return stream.getInt("BitsPerComponent", 8);
     }
 
-    /**
-     * Returns the resource name of this image (e.g., "Im1").
-     *
-     * @return the resource name
-     */
+    /// Returns the resource name of this image (e.g., "Im1").
+    ///
+    /// @return the resource name
     public String getName() {
         return name;
     }
 
-    /**
-     * Sets the name of this image resource, updating both the Java field
-     * and the key in the parent /XObject dictionary (if known).
-     *
-     * @param newName the new name
-     */
+    /// Sets the name of this image resource, updating both the Java field
+    /// and the key in the parent /XObject dictionary (if known).
+    ///
+    /// @param newName the new name
     public void setName(String newName) {
         if (newName == null || newName.equals(this.name)) return;
         String oldName = this.name;
@@ -104,19 +85,15 @@ public class XImage {
         }
     }
 
-    /**
-     * Sets the parent /XObject dictionary reference (called by XImageCollection).
-     */
+    /// Sets the parent /XObject dictionary reference (called by XImageCollection).
     void setXObjectDictionary(PdfDictionary dict) {
         this.xobjectDict = dict;
     }
 
-    /**
-     * Returns the color space of this image.
-     *
-     * @return the color space
-     * @throws IOException if resolution fails
-     */
+    /// Returns the color space of this image.
+    ///
+    /// @return the color space
+    /// @throws IOException if resolution fails
     public ColorSpaceBase getColorSpace() throws IOException {
         PdfBase cs = stream.get("ColorSpace");
         if (cs != null) {
@@ -126,44 +103,35 @@ public class XImage {
         return DeviceRGB.INSTANCE;
     }
 
-    /**
-     * Returns whether this is an image mask (1-bit stencil).
-     *
-     * @return true if /ImageMask is true
-     */
+    /// Returns whether this is an image mask (1-bit stencil).
+    ///
+    /// @return true if /ImageMask is true
     public boolean isImageMask() {
         return stream.getBoolean("ImageMask", false);
     }
 
-    /**
-     * Returns the decoded image data (raw pixel bytes after filter decompression).
-     *
-     * @return the decoded bytes
-     * @throws IOException if decoding fails
-     */
+    /// Returns the decoded image data (raw pixel bytes after filter decompression).
+    ///
+    /// @return the decoded bytes
+    /// @throws IOException if decoding fails
     public byte[] getDecodedData() throws IOException {
         return stream.getDecodedData();
     }
 
-    /**
-     * Returns the raw encoded stream data (e.g., raw JPEG bytes for DCTDecode).
-     *
-     * @return the encoded bytes
-     */
+    /// Returns the raw encoded stream data (e.g., raw JPEG bytes for DCTDecode).
+    ///
+    /// @return the encoded bytes
     public byte[] getEncodedData() {
         return stream.getEncodedData();
     }
 
-    /**
-     * Saves the image to an output stream.
-     * <p>
-     * For DCTDecode (JPEG) images, writes raw JPEG data directly.
-     * For other images, converts to PNG format via {@code javax.imageio}.
-     * </p>
-     *
-     * @param output the output stream
-     * @throws IOException if saving fails
-     */
+    /// Saves the image to an output stream.
+    ///
+    /// For DCTDecode (JPEG) images, writes raw JPEG data directly.
+    /// For other images, converts to PNG format via `javax.imageio`.
+    ///
+    /// @param output the output stream
+    /// @throws IOException if saving fails
     public void save(OutputStream output) throws IOException {
         String filter = getFilterName();
         if ("DCTDecode".equals(filter)) {
@@ -174,15 +142,12 @@ public class XImage {
         }
     }
 
-    /**
-     * Converts this image to a {@link BufferedImage}.
-     * <p>
-     * Handles DeviceRGB, DeviceGray, DeviceCMYK, Indexed, and ICCBased color spaces.
-     * </p>
-     *
-     * @return the converted BufferedImage
-     * @throws IOException if conversion fails
-     */
+    /// Converts this image to a [BufferedImage].
+    ///
+    /// Handles DeviceRGB, DeviceGray, DeviceCMYK, Indexed, and ICCBased color spaces.
+    ///
+    /// @return the converted BufferedImage
+    /// @throws IOException if conversion fails
     public BufferedImage toBufferedImage() throws IOException {
         byte[] data = getDecodedData();
         int w = getWidth();
@@ -233,31 +198,26 @@ public class XImage {
         return applySoftMaskIfPresent(image);
     }
 
-    /**
-     * Deletes this image from the parent XObject dictionary.
-     * <p>
-     * After deletion, the image resource name is removed and subsequent
-     * references to it in content streams will fail to resolve.
-     * </p>
-     */
+    /// Deletes this image from the parent XObject dictionary.
+    ///
+    /// After deletion, the image resource name is removed and subsequent
+    /// references to it in content streams will fail to resolve.
+    ///
     public void delete() {
         if (xobjectDict != null && name != null) {
             xobjectDict.remove(PdfName.of(name));
         }
     }
 
-    /**
-     * Replaces this image with data from an input stream.
-     * <p>
-     * Creates a new image stream from the provided data and stores it under
-     * the same resource name in the parent XObject dictionary. If the data
-     * begins with a JPEG SOI marker (0xFF 0xD8), the {@code /Filter} is set
-     * to {@code /DCTDecode}.
-     * </p>
-     *
-     * @param newImageStream the input stream containing the replacement image data
-     * @throws IOException if reading from the stream fails
-     */
+    /// Replaces this image with data from an input stream.
+    ///
+    /// Creates a new image stream from the provided data and stores it under
+    /// the same resource name in the parent XObject dictionary. If the data
+    /// begins with a JPEG SOI marker (0xFF 0xD8), the `/Filter` is set
+    /// to `/DCTDecode`.
+    ///
+    /// @param newImageStream the input stream containing the replacement image data
+    /// @throws IOException if reading from the stream fails
     public void replace(InputStream newImageStream) throws IOException {
         if (xobjectDict == null || name == null) return;
         byte[] data = readAll(newImageStream);
@@ -265,11 +225,9 @@ public class XImage {
         xobjectDict.set(PdfName.of(name), newStream);
     }
 
-    /**
-     * Returns the underlying PDF stream.
-     *
-     * @return the image stream
-     */
+    /// Returns the underlying PDF stream.
+    ///
+    /// @return the image stream
     public PdfStream getPdfStream() {
         return stream;
     }
@@ -347,11 +305,9 @@ public class XImage {
         return img;
     }
 
-    /**
-     * Reads {@code /Decode} for a 1-bit image and tells whether it inverts
-     * the default {@code [0 1]} mapping.  Returns {@code true} only when
-     * the explicit array starts with {@code 1} (i.e. {@code /Decode [1 0]}).
-     */
+    /// Reads `/Decode` for a 1-bit image and tells whether it inverts
+    /// the default `[0 1]` mapping.  Returns `true` only when
+    /// the explicit array starts with `1` (i.e. `/Decode [1 0]`).
     private boolean isDecodeReversed1Bit() {
         org.aspose.pdf.engine.pdfobjects.PdfBase decode = stream.get("Decode");
         if (!(decode instanceof org.aspose.pdf.engine.pdfobjects.PdfArray)) return false;
@@ -598,9 +554,7 @@ public class XImage {
         return img;
     }
 
-    /**
-     * Converts alternate color space components to ARGB packed int.
-     */
+    /// Converts alternate color space components to ARGB packed int.
     private int altComponentsToARGB(double[] components, ColorSpaceBase altCS) {
         int nc = altCS.getNumberOfComponents();
         if (nc == 1 && components.length >= 1) {
@@ -616,9 +570,7 @@ public class XImage {
         return 0xFF000000;
     }
 
-    /**
-     * Converts double[3] RGB (0..1) to packed ARGB int.
-     */
+    /// Converts double[3] RGB (0..1) to packed ARGB int.
     private static int toARGB(double[] rgb) {
         int r = (int) Math.round(Math.max(0, Math.min(1, rgb[0])) * 255);
         int g = (int) Math.round(Math.max(0, Math.min(1, rgb[1])) * 255);
@@ -669,9 +621,7 @@ public class XImage {
         return val;
     }
 
-    /**
-     * Reads all bytes from an input stream.
-     */
+    /// Reads all bytes from an input stream.
     private static byte[] readAll(InputStream in) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         byte[] buf = new byte[8192];
@@ -682,27 +632,25 @@ public class XImage {
         return baos.toByteArray();
     }
 
-    /**
-     * Build a spec-compliant {@code /XObject /Image} {@link PdfStream} from raw
-     * bytes in any of the formats supported by {@link javax.imageio.ImageIO}.
-     * JPEG bytes (SOI {@code FF D8}) are stored verbatim with
-     * {@code /Filter /DCTDecode}; everything else (PNG, BMP, GIF, …) is decoded
-     * to RGB or grayscale via {@code ImageIO} and re-emitted as
-     * {@code /FlateDecode}-compressed pixel data. The resulting stream carries
-     * all of the entries the spec requires (ISO 32000-1:2008 §8.9.5 Table 89):
-     * {@code /Type /XObject}, {@code /Subtype /Image}, {@code /Width},
-     * {@code /Height}, {@code /ColorSpace}, {@code /BitsPerComponent},
-     * {@code /Filter}.
-     *
-     * <p>Package-private so {@link XImageCollection#add(InputStream)} and
-     * {@link Page#addStamp(ImageStamp)} (Stage 2) can share the same code
-     * path.</p>
-     *
-     * @param data raw image bytes; must not be null or empty
-     * @return a fully-specified Image XObject {@link PdfStream}
-     * @throws IOException if the bytes cannot be decoded as a recognised
-     *         image format. The exception message contains "unsupported".
-     */
+    /// Build a spec-compliant `/XObject /Image` [PdfStream] from raw
+    /// bytes in any of the formats supported by [javax.imageio.ImageIO].
+    /// JPEG bytes (SOI `FF D8`) are stored verbatim with
+    /// `/Filter /DCTDecode`; everything else (PNG, BMP, GIF, …) is decoded
+    /// to RGB or grayscale via `ImageIO` and re-emitted as
+    /// `/FlateDecode`-compressed pixel data. The resulting stream carries
+    /// all of the entries the spec requires (ISO 32000-1:2008 §8.9.5 Table 89):
+    /// `/Type /XObject`, `/Subtype /Image`, `/Width`,
+    /// `/Height`, `/ColorSpace`, `/BitsPerComponent`,
+    /// `/Filter`.
+    ///
+    /// Package-private so [XImageCollection#add(InputStream)] and
+    /// [Page#addStamp(ImageStamp)] (Stage 2) can share the same code
+    /// path.
+    ///
+    /// @param data raw image bytes; must not be null or empty
+    /// @return a fully-specified Image XObject [PdfStream]
+    /// @throws IOException if the bytes cannot be decoded as a recognised
+    ///         image format. The exception message contains "unsupported".
     static PdfStream createImageStream(byte[] data) throws IOException {
         if (data == null || data.length == 0) {
             throw new IOException("unsupported (empty) image data");

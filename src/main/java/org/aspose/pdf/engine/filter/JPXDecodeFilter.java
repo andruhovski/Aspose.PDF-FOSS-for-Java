@@ -6,57 +6,52 @@ import org.aspose.pdf.engine.pdfobjects.PdfName;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * JPXDecode filter — JPEG 2000 decompression (§7.4.9, ISO 32000-1:2008).
- *
- * <p>From-scratch baseline JPEG 2000 Part-1 (ISO/IEC 15444-1) decoder. Targets the
- * common photographic / scanned-page profile used inside PDF: a single tile,
- * 1–4 components 8-bit unsigned, LRCP progression with one quality layer,
- * default precincts (precinct = whole sub-band), MQ-coded code-blocks (no
- * selective bypass / termination / vertical-causal / segmentation modes), and
- * either 5/3 reversible or 9/7 irreversible wavelet with optional MCT.</p>
- *
- * <h2>Pipeline</h2>
- * <ol>
- *   <li>Optional JP2 file-format unwrapping ({@link #findCodestream}) to locate
- *       the {@code jp2c} box.</li>
- *   <li>Codestream main-header parse: SIZ / COD / QCD (others skipped).</li>
- *   <li>Per-component sub-band &amp; code-block grid construction
- *       ({@link #buildPerCompBands}).</li>
- *   <li>Tier-2: {@link BitReader}-driven LRCP packet walker
- *       ({@link #runLRCPPackets}). Each packet header is decoded with
- *       bit-stuffed reads (§B.10.1), inclusion / zero-bit-plane via tag-tree
- *       (§B.10.2), per-codeblock new-pass-count VLI (§B.10.7) and Lblock-based
- *       segment length. The packet body bytes that follow are split among the
- *       included code-blocks per the lengths announced in the header.</li>
- *   <li>Tier-1: {@link #decodeTier1} runs the MQ arithmetic decoder over the
- *       per-codeblock bytes, alternating Cleanup / SigProp / MagRef passes
- *       (Annex D).</li>
- *   <li>Inverse DWT (5/3 or 9/7) per component, applied in resolution order.</li>
- *   <li>Inverse multiple-component transform (RCT for 5/3 / ICT for 9/7) when
- *       MCT is enabled and ≥3 components are present.</li>
- *   <li>Component interleave to packed-pixel byte output.</li>
- * </ol>
- *
- * <h2>What this decoder does NOT do</h2>
- * <ul>
- *   <li>Multi-tile codestreams (logs a warning, falls back to first tile).</li>
- *   <li>Selective arithmetic coding bypass (cbStyle bit 0).</li>
- *   <li>Per-pass MQ reset (cbStyle bit 1).</li>
- *   <li>Termination on each pass (cbStyle bit 2).</li>
- *   <li>Vertical-causal context (cbStyle bit 3).</li>
- *   <li>Predictable termination / segmentation symbols (cbStyle bits 4–5).</li>
- *   <li>Explicit precinct subdivision smaller than the sub-band.</li>
- *   <li>SOP / EPH packet-boundary markers (treated as missing).</li>
- *   <li>Multi-layer rate-distortion progressions are read but layer 0 results
- *       are essentially equivalent to single-layer for the supported profile.</li>
- * </ul>
- */
+/// JPXDecode filter — JPEG 2000 decompression (§7.4.9, ISO 32000-1:2008).
+///
+/// From-scratch baseline JPEG 2000 Part-1 (ISO/IEC 15444-1) decoder. Targets the
+/// common photographic / scanned-page profile used inside PDF: a single tile,
+/// 1–4 components 8-bit unsigned, LRCP progression with one quality layer,
+/// default precincts (precinct = whole sub-band), MQ-coded code-blocks (no
+/// selective bypass / termination / vertical-causal / segmentation modes), and
+/// either 5/3 reversible or 9/7 irreversible wavelet with optional MCT.
+///
+/// ## Pipeline
+///
+///   1. Optional JP2 file-format unwrapping ([#findCodestream]) to locate
+///     the `jp2c` box.
+///   2. Codestream main-header parse: SIZ / COD / QCD (others skipped).
+///   3. Per-component sub-band & code-block grid construction
+///     ([#buildPerCompBands]).
+///   4. Tier-2: [BitReader]-driven LRCP packet walker
+///     ([#runLRCPPackets]). Each packet header is decoded with
+///     bit-stuffed reads (§B.10.1), inclusion / zero-bit-plane via tag-tree
+///     (§B.10.2), per-codeblock new-pass-count VLI (§B.10.7) and Lblock-based
+///     segment length. The packet body bytes that follow are split among the
+///     included code-blocks per the lengths announced in the header.
+///   5. Tier-1: [#decodeTier1] runs the MQ arithmetic decoder over the
+///     per-codeblock bytes, alternating Cleanup / SigProp / MagRef passes
+///     (Annex D).
+///   6. Inverse DWT (5/3 or 9/7) per component, applied in resolution order.
+///   7. Inverse multiple-component transform (RCT for 5/3 / ICT for 9/7) when
+///     MCT is enabled and ≥3 components are present.
+///   8. Component interleave to packed-pixel byte output.
+///
+/// ## What this decoder does NOT do
+///
+///   - Multi-tile codestreams (logs a warning, falls back to first tile).
+///   - Selective arithmetic coding bypass (cbStyle bit 0).
+///   - Per-pass MQ reset (cbStyle bit 1).
+///   - Termination on each pass (cbStyle bit 2).
+///   - Vertical-causal context (cbStyle bit 3).
+///   - Predictable termination / segmentation symbols (cbStyle bits 4–5).
+///   - Explicit precinct subdivision smaller than the sub-band.
+///   - SOP / EPH packet-boundary markers (treated as missing).
+///   - Multi-layer rate-distortion progressions are read but layer 0 results
+///     are essentially equivalent to single-layer for the supported profile.
 public final class JPXDecodeFilter implements PdfFilter {
 
     private static final Logger LOG = Logger.getLogger(JPXDecodeFilter.class.getName());
@@ -65,10 +60,8 @@ public final class JPXDecodeFilter implements PdfFilter {
     //  MQ Arithmetic Decoder (Annex C, ISO/IEC 15444-1)
     // ═══════════════════════════════════════════════════════════════
 
-    /**
-     * MQ arithmetic decoder used by the EBCOT Tier-1 engine.
-     * 47-state probability estimation with conditional exchange.
-     */
+    /// MQ arithmetic decoder used by the EBCOT Tier-1 engine.
+    /// 47-state probability estimation with conditional exchange.
     static final class MQDecoder {
         // State table: {Qe, NMPS, NLPS, SWITCH} — verbatim from ISO 15444-1
         // Annex C, Table C.2. The previous transcription had wrong Qe values
@@ -122,28 +115,27 @@ public final class JPXDecodeFilter implements PdfFilter {
             aReg = 0x8000;
         }
 
-        /** Sets context CX to state index and MPS value. */
+        /// Sets context CX to state index and MPS value.
         void setContext(int cx, int stateIdx, int mpsVal) {
             states[cx] = stateIdx;
             mps[cx] = mpsVal;
         }
 
-        /**
-         * Decodes one binary decision for context CX.
-         *
-         * <p>Follows ISO/IEC 15444-1 Annex C, §C.3.2 (DECODE):
-         * <pre>
-         *   A := A − Qe
-         *   if C_high < Qe          // C fell into the LPS sub-interval [0, Qe)
-         *     LPS-EXCHANGE; renormalise
-         *   else                    // C fell into the MPS sub-interval [Qe, A)
-         *     C := C − (Qe << 16)
-         *     if A < 0x8000
-         *       MPS-EXCHANGE; renormalise
-         *     else
-         *       return MPS
-         * </pre>
-         */
+        /// Decodes one binary decision for context CX.
+        ///
+        /// Follows ISO/IEC 15444-1 Annex C, §C.3.2 (DECODE):
+        ///
+        /// <pre>
+        ///   A := A − Qe
+        ///   if C_high &lt; Qe          // C fell into the LPS sub-interval [0, Qe)
+        ///     LPS-EXCHANGE; renormalise
+        ///   else                    // C fell into the MPS sub-interval [Qe, A)
+        ///     C := C − (Qe &lt;&lt; 16)
+        ///     if A &lt; 0x8000
+        ///       MPS-EXCHANGE; renormalise
+        ///     else
+        ///       return MPS
+        /// </pre>
         int decode(int cx) {
             int si = states[cx];
             int qe = TABLE[si][0];
@@ -242,16 +234,14 @@ public final class JPXDecodeFilter implements PdfFilter {
     //  Bit reader for packet headers (Annex B.10.1 — bit-stuffing)
     // ═══════════════════════════════════════════════════════════════
 
-    /**
-     * Reads bits MSB-first from a byte array, applying the JPEG 2000 packet
-     * header bit-stuffing rule: whenever a byte equal to {@code 0xFF} has been
-     * fully consumed, the next byte's most-significant bit is a stuff bit and
-     * is discarded (only its remaining 7 bits carry payload).
-     *
-     * <p>Public mutable {@code pos} / {@code bitsLeft} / {@code lastWasFF} let
-     * callers reset state when crossing the bit/byte-aligned boundary between
-     * a packet header and the raw packet body.</p>
-     */
+    /// Reads bits MSB-first from a byte array, applying the JPEG 2000 packet
+    /// header bit-stuffing rule: whenever a byte equal to `0xFF` has been
+    /// fully consumed, the next byte's most-significant bit is a stuff bit and
+    /// is discarded (only its remaining 7 bits carry payload).
+    ///
+    /// Public mutable `pos` / `bitsLeft` / `lastWasFF` let
+    /// callers reset state when crossing the bit/byte-aligned boundary between
+    /// a packet header and the raw packet body.
     static final class BitReader {
         final byte[] data;
         final int endPos;
@@ -289,14 +279,12 @@ public final class JPXDecodeFilter implements PdfFilter {
             return v;
         }
 
-        /**
-         * Aligns the reader to the next byte boundary (called between a packet
-         * header and its body). If the most recently loaded source byte was
-         * {@code 0xFF}, the spec-mandated "extra" stuff byte that follows is
-         * also consumed.
-         *
-         * @return the resulting byte position
-         */
+        /// Aligns the reader to the next byte boundary (called between a packet
+        /// header and its body). If the most recently loaded source byte was
+        /// `0xFF`, the spec-mandated "extra" stuff byte that follows is
+        /// also consumed.
+        ///
+        /// @return the resulting byte position
         int alignToByte() {
             boolean shouldSkipStuff = lastWasFF;
             bitsLeft = 0;
@@ -312,16 +300,14 @@ public final class JPXDecodeFilter implements PdfFilter {
     //  Tag tree (Annex B.10.2) — bit-coded
     // ═══════════════════════════════════════════════════════════════
 
-    /**
-     * Tag-tree as used inside packet headers for code-block inclusion and
-     * zero-bit-plane signalling. Each leaf carries a non-negative integer; the
-     * decoder asks "is the value at leaf (x, y) below threshold T?" and reads
-     * just enough bits from the underlying {@link BitReader} to answer.
-     *
-     * <p>Persistent state — the per-node ({@code currentValue}, {@code final})
-     * pair — is retained across calls so that subsequent layers can refine the
-     * answer rather than re-decode from scratch.</p>
-     */
+    /// Tag-tree as used inside packet headers for code-block inclusion and
+    /// zero-bit-plane signalling. Each leaf carries a non-negative integer; the
+    /// decoder asks "is the value at leaf (x, y) below threshold T?" and reads
+    /// just enough bits from the underlying [BitReader] to answer.
+    ///
+    /// Persistent state — the per-node (`currentValue`, `final`)
+    /// pair — is retained across calls so that subsequent layers can refine the
+    /// answer rather than re-decode from scratch.
     static final class TagTree {
         private final int[][] vals;
         private final boolean[][] finals;
@@ -354,10 +340,8 @@ public final class JPXDecodeFilter implements PdfFilter {
             }
         }
 
-        /**
-         * Returns the leaf's value if it is now known to be {@code < threshold};
-         * returns {@code -1} otherwise (meaning "value is at least threshold").
-         */
+        /// Returns the leaf's value if it is now known to be `< threshold`;
+        /// returns `-1` otherwise (meaning "value is at least threshold").
         int decode(BitReader br, int x, int y, int threshold) {
             int[] xs = new int[levels];
             int[] ys = new int[levels];
@@ -457,11 +441,9 @@ public final class JPXDecodeFilter implements PdfFilter {
     //  Tier-2 working state — sub-band & code-block grids
     // ═══════════════════════════════════════════════════════════════
 
-    /**
-     * Per code-block accumulator carried across packets. For multi-layer
-     * streams each new packet appends bytes to {@code data} and adds passes
-     * to {@code totalPasses}; Tier-1 is run once at the end on the totals.
-     */
+    /// Per code-block accumulator carried across packets. For multi-layer
+    /// streams each new packet appends bytes to `data` and adds passes
+    /// to `totalPasses`; Tier-1 is run once at the end on the totals.
     static final class TileCodeBlock {
         int x, y;                 // grid position within the sub-band
         int width, height;        // pixel dimensions (≤ cbW × cbH)
@@ -476,11 +458,9 @@ public final class JPXDecodeFilter implements PdfFilter {
         final ByteArrayOutputStream data = new ByteArrayOutputStream();
     }
 
-    /**
-     * One sub-band of one component, with its code-block grid and the two
-     * persistent tag trees that drive packet inclusion / zero-bit-plane
-     * signalling.
-     */
+    /// One sub-band of one component, with its code-block grid and the two
+    /// persistent tag trees that drive packet inclusion / zero-bit-plane
+    /// signalling.
     static final class SubBandInfo {
         int width, height;       // pixel size
         int bandType;            // BAND_LL / BAND_HL / BAND_LH / BAND_HH
@@ -529,20 +509,18 @@ public final class JPXDecodeFilter implements PdfFilter {
     private static final int CX_RL  = 18;  // run-length
     private static final int NUM_CX = 19;
 
-    /**
-     * Decodes a single code-block from its concatenated coding-pass bytes.
-     *
-     * @param cbData    concatenated coding-pass data for this block
-     * @param cbW       code-block width
-     * @param cbH       code-block height
-     * @param numPasses total number of coding passes accumulated for this block
-     * @param Mb        the sub-band's nominal number of magnitude bit-planes
-     *                  (G + ε_b − 1 per ISO 15444-1 Annex E.1.1)
-     * @param zeroBP    number of leading insignificant bit-planes (K), read
-     *                  from the packet header tag-tree
-     * @param bandType  BAND_LL / BAND_HL / BAND_LH / BAND_HH
-     * @return coefficient magnitudes with sign in MSB (bit 31 set ⇒ negative)
-     */
+    /// Decodes a single code-block from its concatenated coding-pass bytes.
+    ///
+    /// @param cbData    concatenated coding-pass data for this block
+    /// @param cbW       code-block width
+    /// @param cbH       code-block height
+    /// @param numPasses total number of coding passes accumulated for this block
+    /// @param Mb        the sub-band's nominal number of magnitude bit-planes
+    ///                  (G + ε\_b − 1 per ISO 15444-1 Annex E.1.1)
+    /// @param zeroBP    number of leading insignificant bit-planes (K), read
+    ///                  from the packet header tag-tree
+    /// @param bandType  BAND\_LL / BAND\_HL / BAND\_LH / BAND\_HH
+    /// @return coefficient magnitudes with sign in MSB (bit 31 set ⇒ negative)
     static int[] decodeTier1(byte[] cbData, int cbW, int cbH,
                              int numPasses, int Mb, int zeroBP, int bandType) {
         int[] coeffs = new int[cbW * cbH];
@@ -757,7 +735,7 @@ public final class JPXDecodeFilter implements PdfFilter {
         }
     }
 
-    /** Table D.1 row mapping for HL band (and LL, by extension). */
+    /// Table D.1 row mapping for HL band (and LL, by extension).
     private static int ctxFromHVD(int hc, int vc, int dc) {
         if (hc == 2) return 8;
         if (hc == 1) {
@@ -778,26 +756,25 @@ public final class JPXDecodeFilter implements PdfFilter {
         return sig[y * w + x] != 0 ? 1 : 0;
     }
 
-    /**
-     * Decodes the sign of a newly-significant coefficient (Annex D.3.2,
-     * Table D.3). The horizontal / vertical neighbour contributions are
-     * clamped to {-1, 0, +1} (via {@link Integer#signum} of the two-neighbour
-     * sum) and used to select one of five contexts (9..13). The decoded
-     * MQ bit is XOR'ed with a predicted sign bit to recover the actual sign.
-     *
-     * <p>Mapping (h, v) → (context, xor_bit):
-     * <pre>
-     *   ( 0,  0) → ( 9, 0)   (X5)
-     *   ( 0, +1) → (10, 0)   (X4 positive)
-     *   ( 0, -1) → (10, 1)   (X4 negative)
-     *   (+1, -1) → (11, 0)   (X3 positive)
-     *   (-1, +1) → (11, 1)   (X3 negative)
-     *   (+1,  0) → (12, 0)   (X2 positive)
-     *   (-1,  0) → (12, 1)   (X2 negative)
-     *   (+1, +1) → (13, 0)   (X1 positive)
-     *   (-1, -1) → (13, 1)   (X1 negative)
-     * </pre>
-     */
+    /// Decodes the sign of a newly-significant coefficient (Annex D.3.2,
+    /// Table D.3). The horizontal / vertical neighbour contributions are
+    /// clamped to {-1, 0, +1} (via [Integer#signum] of the two-neighbour
+    /// sum) and used to select one of five contexts (9..13). The decoded
+    /// MQ bit is XOR'ed with a predicted sign bit to recover the actual sign.
+    ///
+    /// Mapping (h, v) → (context, xor\_bit):
+    ///
+    /// <pre>
+    ///   ( 0,  0) → ( 9, 0)   (X5)
+    ///   ( 0, +1) → (10, 0)   (X4 positive)
+    ///   ( 0, -1) → (10, 1)   (X4 negative)
+    ///   (+1, -1) → (11, 0)   (X3 positive)
+    ///   (-1, +1) → (11, 1)   (X3 negative)
+    ///   (+1,  0) → (12, 0)   (X2 positive)
+    ///   (-1,  0) → (12, 1)   (X2 negative)
+    ///   (+1, +1) → (13, 0)   (X1 positive)
+    ///   (-1, -1) → (13, 1)   (X1 negative)
+    /// </pre>
     private static int decodeSign(MQDecoder mq, int[] sig, int[] c,
                                   int x, int y, int w, int h) {
         int hContrib = signContrib(sig, c, x - 1, y, w, h) + signContrib(sig, c, x + 1, y, w, h);
@@ -832,7 +809,7 @@ public final class JPXDecodeFilter implements PdfFilter {
         return bit ^ xorBit;
     }
 
-    /** +1 if neighbor is significant and positive, -1 if significant and negative, else 0. */
+    /// +1 if neighbor is significant and positive, -1 if significant and negative, else 0.
     private static int signContrib(int[] sig, int[] c, int x, int y, int w, int h) {
         if (x < 0 || x >= w || y < 0 || y >= h) return 0;
         int idx = y * w + x;
@@ -844,7 +821,7 @@ public final class JPXDecodeFilter implements PdfFilter {
     //  Inverse Discrete Wavelet Transform (Annex F)
     // ═══════════════════════════════════════════════════════════════
 
-    /** 1D inverse 5/3 lifting (reversible Le Gall). */
+    /// 1D inverse 5/3 lifting (reversible Le Gall).
     static void inverseDWT53_1D(int[] x, int lo, int len) {
         if (len <= 1) return;
         int halfLen = (len + 1) / 2;
@@ -864,7 +841,7 @@ public final class JPXDecodeFilter implements PdfFilter {
         }
     }
 
-    /** 1D inverse 9/7 lifting (irreversible Daubechies). */
+    /// 1D inverse 9/7 lifting (irreversible Daubechies).
     static void inverseDWT97_1D(double[] x, int lo, int len) {
         if (len <= 1) return;
         int halfLen = (len + 1) / 2;
@@ -919,7 +896,7 @@ public final class JPXDecodeFilter implements PdfFilter {
         }
     }
 
-    /** 2D inverse DWT for one decomposition level using 5/3 wavelet. */
+    /// 2D inverse DWT for one decomposition level using 5/3 wavelet.
     static void inverseDWT53_2D(int[] data, int width, int height, int stride) {
         checkCancelled(); // see inverseDWT97_2D
         int[] row = new int[width];
@@ -937,7 +914,7 @@ public final class JPXDecodeFilter implements PdfFilter {
         }
     }
 
-    /** 2D inverse DWT for one decomposition level using 9/7 wavelet. */
+    /// 2D inverse DWT for one decomposition level using 9/7 wavelet.
     static void inverseDWT97_2D(double[] data, int width, int height, int stride) {
         // Large JPEG2000 tiles run the wavelet for minutes — honour
         // cancellation so a timed-out mass-testing worker unwinds instead of
@@ -958,7 +935,7 @@ public final class JPXDecodeFilter implements PdfFilter {
         }
     }
 
-    /** Throws an unchecked cancellation marker when the worker is interrupted. */
+    /// Throws an unchecked cancellation marker when the worker is interrupted.
     private static void checkCancelled() {
         if (Thread.currentThread().isInterrupted()) {
             throw new IllegalStateException("JPXDecode: interrupted");
@@ -1076,7 +1053,7 @@ public final class JPXDecodeFilter implements PdfFilter {
         return decodeTile(data, bsStart, bsEnd, siz, cod, qcd, imgW, imgH);
     }
 
-    /** Locates the {@code jp2c} codestream box inside a JP2-wrapped file. */
+    /// Locates the `jp2c` codestream box inside a JP2-wrapped file.
     private int findCodestream(byte[] data) {
         int pos = 0;
         while (pos < data.length - 8) {
@@ -1320,13 +1297,11 @@ public final class JPXDecodeFilter implements PdfFilter {
         return interleaveComponents(compData, imgW, imgH, numComp);
     }
 
-    /**
-     * Builds the sub-band metadata grid for one component. Layout matches
-     * what {@link #inverseDWT53_Full} / {@link #inverseDWT97_Full} expect:
-     * indices 0..3·numDecomp−1 hold (HL, LH, HH) triplets ordered from the
-     * deepest decomposition level down to level 1; the final index holds
-     * LL_numDecomp.
-     */
+    /// Builds the sub-band metadata grid for one component. Layout matches
+    /// what [#inverseDWT53\_Full] / [#inverseDWT97\_Full] expect:
+    /// indices 0..3·numDecomp−1 hold (HL, LH, HH) triplets ordered from the
+    /// deepest decomposition level down to level 1; the final index holds
+    /// LL\_numDecomp.
     private SubBandInfo[] buildPerCompBands(int cW, int cH, int numDecomp, int cbW, int cbH) {
         int numBands = 1 + 3 * numDecomp;
         SubBandInfo[] bands = new SubBandInfo[numBands];
@@ -1347,7 +1322,7 @@ public final class JPXDecodeFilter implements PdfFilter {
         return bands;
     }
 
-    /** Returns the sub-bands present at resolution level {@code r} (0 = LL only). */
+    /// Returns the sub-bands present at resolution level `r` (0 = LL only).
     private List<SubBandInfo> bandsAtResolution(SubBandInfo[] perComp, int r, int numDecomp) {
         List<SubBandInfo> out = new ArrayList<>();
         if (r == 0) {
@@ -1433,7 +1408,7 @@ public final class JPXDecodeFilter implements PdfFilter {
         }
     }
 
-    /** Decodes one packet header into the per-codeblock {@code pendingBytes/pendingPasses}. */
+    /// Decodes one packet header into the per-codeblock `pendingBytes/pendingPasses`.
     private void decodePacketHeader(BitReader br, List<SubBandInfo> bands, int layer) {
         boolean diag = System.getProperty("jpx.diag") != null;
         // Reset per-packet scratch on every code-block we'll inspect.
@@ -1507,23 +1482,23 @@ public final class JPXDecodeFilter implements PdfFilter {
         }
     }
 
-    /**
-     * Reads the variable-length new-pass count (Annex B.10.7, Table B.4).
-     *
-     * <p>The encoding is a nested escape-coding:
-     * <pre>
-     *   "0"                                → P = 1
-     *   "10"                               → P = 2
-     *   "11" + v(2 bits, v < 3)            → P = v + 3            (P = 3, 4, 5)
-     *   "11" + "11" + v(5 bits, v < 31)    → P = v + 6            (P = 6..36)
-     *   "11" + "11" + "11111" + v(7 bits)  → P = v + 37           (P = 37..164)
-     * </pre>
-     * Note that {@code v = 3} in the 2-bit field, and {@code v = 31} in the
-     * 5-bit field, are escape codes that signal "read more bits". Previous
-     * versions of this method incorrectly used {@code two == 0b10} (=2) as
-     * the escape, which is actually a valid value (P=5), throwing off P and
-     * causing wildly wrong segment lengths.
-     */
+    /// Reads the variable-length new-pass count (Annex B.10.7, Table B.4).
+    ///
+    /// The encoding is a nested escape-coding:
+    ///
+    /// <pre>
+    ///   "0"                                → P = 1
+    ///   "10"                               → P = 2
+    ///   "11" + v(2 bits, v &lt; 3)            → P = v + 3            (P = 3, 4, 5)
+    ///   "11" + "11" + v(5 bits, v &lt; 31)    → P = v + 6            (P = 6..36)
+    ///   "11" + "11" + "11111" + v(7 bits)  → P = v + 37           (P = 37..164)
+    /// </pre>
+    ///
+    /// Note that `v = 3` in the 2-bit field, and `v = 31` in the
+    /// 5-bit field, are escape codes that signal "read more bits". Previous
+    /// versions of this method incorrectly used `two == 0b10` (=2) as
+    /// the escape, which is actually a valid value (P=5), throwing off P and
+    /// causing wildly wrong segment lengths.
     private int readNumPasses(BitReader br) {
         if (br.readBit() == 0) return 1;
         if (br.readBit() == 0) return 2;
@@ -1534,7 +1509,7 @@ public final class JPXDecodeFilter implements PdfFilter {
         return br.readBits(7) + 37;      // P = 37..164
     }
 
-    /** Reads packet body bytes and distributes them among included code-blocks. */
+    /// Reads packet body bytes and distributes them among included code-blocks.
     private int readPacketBody(byte[] data, int pos, int endPos, List<SubBandInfo> bands) {
         for (SubBandInfo band : bands) {
             for (int cby = 0; cby < band.cbRows; cby++) {
@@ -1558,7 +1533,7 @@ public final class JPXDecodeFilter implements PdfFilter {
         return pos;
     }
 
-    /** Runs Tier-1 on every code-block of every sub-band, returning per-sub-band coefficient grids. */
+    /// Runs Tier-1 on every code-block of every sub-band, returning per-sub-band coefficient grids.
     private int[][] assembleSubBands(SubBandInfo[] perComp, QCDData qcd, int numDecomp) {
         int[][] out = new int[perComp.length][];
         for (SubBandInfo band : perComp) {
@@ -1590,7 +1565,7 @@ public final class JPXDecodeFilter implements PdfFilter {
         return out;
     }
 
-    /** Computes M_b — the nominal magnitude bit-plane count for sub-band b. */
+    /// Computes M\_b — the nominal magnitude bit-plane count for sub-band b.
     private int computeMb(SubBandInfo band, QCDData qcd, int numDecomp) {
         int qcdIdx;
         if (qcd.style == 1) {
@@ -1733,23 +1708,21 @@ public final class JPXDecodeFilter implements PdfFilter {
         return result;
     }
 
-    /**
-     * Dequantizes one Tier-1 magnitude into a double sub-band sample (Annex E).
-     *
-     * <p>The QCD "expounded" layout stores values in band-walk order
-     * (LL_max, then HL/LH/HH from deepest to shallowest decomp level); our
-     * internal sub-band index maps to that order via
-     * {@code internalIdx == 3·numDecomp ⇒ QCD[0]} for LL, and
-     * {@code internalIdx ⇒ QCD[internalIdx + 1]} for HL/LH/HH.</p>
-     *
-     * @param coeff      Tier-1 coefficient (sign in MSB)
-     * @param qcd        quantization data from QCD marker
-     * @param internalIdx sub-band index in our internal layout
-     * @param numDecomp  total decomposition levels
-     * @param bandType   BAND_LL/HL/LH/HH
-     * @param decompLevel 1..numDecomp for HL/LH/HH; numDecomp for LL
-     * @param bitDepth   per-component bit depth (e.g., 8)
-     */
+    /// Dequantizes one Tier-1 magnitude into a double sub-band sample (Annex E).
+    ///
+    /// The QCD "expounded" layout stores values in band-walk order
+    /// (LL\_max, then HL/LH/HH from deepest to shallowest decomp level); our
+    /// internal sub-band index maps to that order via
+    /// `internalIdx == 3·numDecomp ⇒ QCD[0]` for LL, and
+    /// `internalIdx ⇒ QCD[internalIdx + 1]` for HL/LH/HH.
+    ///
+    /// @param coeff      Tier-1 coefficient (sign in MSB)
+    /// @param qcd        quantization data from QCD marker
+    /// @param internalIdx sub-band index in our internal layout
+    /// @param numDecomp  total decomposition levels
+    /// @param bandType   BAND\_LL/HL/LH/HH
+    /// @param decompLevel 1..numDecomp for HL/LH/HH; numDecomp for LL
+    /// @param bitDepth   per-component bit depth (e.g., 8)
     private double dequantize(int coeff, QCDData qcd, int internalIdx,
                               int numDecomp, int bandType, int decompLevel, int bitDepth) {
         int sign = (coeff & 0x80000000) != 0 ? -1 : 1;
@@ -1921,7 +1894,7 @@ public final class JPXDecodeFilter implements PdfFilter {
 
     // ─── Color transforms (Annex G.2) ────────────────────────────
 
-    /** Inverse Reversible Color Transform (RCT) — used with 5/3 wavelet. */
+    /// Inverse Reversible Color Transform (RCT) — used with 5/3 wavelet.
     private void inverseRCT(byte[][] comp, int w, int h) {
         for (int i = 0; i < w * h; i++) {
             int y = comp[0][i] & 0xFF;
@@ -1936,7 +1909,7 @@ public final class JPXDecodeFilter implements PdfFilter {
         }
     }
 
-    /** Inverse Irreversible Color Transform (ICT) — used with 9/7 wavelet. */
+    /// Inverse Irreversible Color Transform (ICT) — used with 9/7 wavelet.
     private void inverseICT(byte[][] comp, int w, int h) {
         for (int i = 0; i < w * h; i++) {
             double y  = (comp[0][i] & 0xFF);
@@ -1951,7 +1924,7 @@ public final class JPXDecodeFilter implements PdfFilter {
         }
     }
 
-    /** Interleaves component planes into packed pixels: R0,G0,B0,R1,G1,B1,… */
+    /// Interleaves component planes into packed pixels: R0,G0,B0,R1,G1,B1,…
     private byte[] interleaveComponents(byte[][] comp, int w, int h, int numComp) {
         byte[] result = new byte[w * h * numComp];
         int idx = 0;

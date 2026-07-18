@@ -15,18 +15,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * The XFA data-binding (merge) engine: combines the typed template with the
- * datasets data to produce the {@link FormDom} (XFA 3.0 binding chapter).
- *
- * <p>Supports empty merge (form-only, occur expanded to {@code initial}) and the
- * four {@code bind match} modes — {@code once}, {@code dataRef}, {@code global},
- * {@code none} — plus occur expansion. The Form DOM mirrors the template element
- * types (in the template namespace) so it remains typed and navigable.</p>
- *
- * <p>SOM is structural only here; a {@code dataRef} whose predicate contains
- * script is flagged on the {@link FormDom} (not evaluated) — Stage B.</p>
- */
+/// The XFA data-binding (merge) engine: combines the typed template with the
+/// datasets data to produce the [FormDom] (XFA 3.0 binding chapter).
+///
+/// Supports empty merge (form-only, occur expanded to `initial`) and the
+/// four `bind match` modes — `once`, `dataRef`, `global`,
+/// `none` — plus occur expansion. The Form DOM mirrors the template element
+/// types (in the template namespace) so it remains typed and navigable.
+///
+/// SOM is structural only here; a `dataRef` whose predicate contains
+/// script is flagged on the [FormDom] (not evaluated) — Stage B.
 public final class BindingEngine {
 
     private static final String NS = XfaNode.TEMPLATE_NS;
@@ -35,110 +33,92 @@ public final class BindingEngine {
 
     private final SomResolver som = new SomResolver();
 
-    /**
-     * Names of all template containers (subform/subformSet/exclGroup/area) for the
-     * current merge. The last-resort descent must not cross into a data group whose
-     * name matches one of these — that group is "claimed" by (i.e. is the data region
-     * of) another template subform, and its values belong to that subform's fields, not
-     * to an outer field reaching in. Set per {@link #merge}; read-only during the merge.
-     */
+    /// Names of all template containers (subform/subformSet/exclGroup/area) for the
+    /// current merge. The last-resort descent must not cross into a data group whose
+    /// name matches one of these — that group is "claimed" by (i.e. is the data region
+    /// of) another template subform, and its values belong to that subform's fields, not
+    /// to an outer field reaching in. Set per [#merge]; read-only during the merge.
     private Set<String> claimedNames = java.util.Collections.emptySet();
 
-    /**
-     * When {@code true}, the merge is currently building {@code <pageSet>} master-page furniture:
-     * fields it registers go to the FormDom's master channel ({@link FormDom#getMasterFields()})
-     * rather than the interactive flow-field list, so flatten / AcroForm conversion (which mirror
-     * the flow fields) are unaffected while the render track can still paint the furniture.
-     */
+    /// When `true`, the merge is currently building `<pageSet>` master-page furniture:
+    /// fields it registers go to the FormDom's master channel ([FormDom#getMasterFields()])
+    /// rather than the interactive flow-field list, so flatten / AcroForm conversion (which mirror
+    /// the flow fields) are unaffected while the render track can still paint the furniture.
     private boolean masterMode = false;
 
-    /**
-     * Master-page binding/rendering kill-switch ({@code -Dxfa.masterPages=false} disables it,
-     * restoring the pre-feature behaviour where {@code <pageSet>} is copied verbatim and unbound).
-     * Default on.
-     */
+    /// Master-page binding/rendering kill-switch (`-Dxfa.masterPages=false` disables it,
+    /// restoring the pre-feature behaviour where `<pageSet>` is copied verbatim and unbound).
+    /// Default on.
     static boolean masterPagesEnabled() {
         return !"false".equalsIgnoreCase(System.getProperty("xfa.masterPages", "true"));
     }
 
-    /**
-     * When {@code false}, automatic binding falls back to the pre-A4-FIX behaviour:
-     * direct child-by-name match only, with no scope (ancestor/sibling) search and no
-     * scope inheritance through unbound containers. The default ({@code true}) is the
-     * spec-correct scope-matching behaviour; the legacy mode exists only so a
-     * before/after comparison can quantify how many fields scope matching recovers.
-     */
+    /// When `false`, automatic binding falls back to the pre-A4-FIX behaviour:
+    /// direct child-by-name match only, with no scope (ancestor/sibling) search and no
+    /// scope inheritance through unbound containers. The default (`true`) is the
+    /// spec-correct scope-matching behaviour; the legacy mode exists only so a
+    /// before/after comparison can quantify how many fields scope matching recovers.
     private final boolean scopeMatching;
 
-    /**
-     * When {@code true}, an {@code <occur>} with no explicit {@code initial} defaults {@code initial}
-     * to {@code min} (the XFA spec rule) — so a script-toggled variant subform ({@code min="0"}) starts
-     * absent and a load-time {@code initialize}/{@code change} script {@code addInstance()}s the
-     * selected one. This is the RENDER path (which runs those scripts). The default ({@code false})
-     * keeps {@code initial}=1 for the flatten / AcroForm-conversion path (which does NOT run scripts):
-     * there the variant subforms must stay expanded so their bound data values are preserved (the
-     * 207-value flatten baseline). Pairs with {@link FormDom#getZeroOccurSlots()}.
-     */
+    /// When `true`, an `<occur>` with no explicit `initial` defaults `initial`
+    /// to `min` (the XFA spec rule) — so a script-toggled variant subform (`min="0"`) starts
+    /// absent and a load-time `initialize`/`change` script `addInstance()`s the
+    /// selected one. This is the RENDER path (which runs those scripts). The default (`false`)
+    /// keeps `initial`=1 for the flatten / AcroForm-conversion path (which does NOT run scripts):
+    /// there the variant subforms must stay expanded so their bound data values are preserved (the
+    /// 207-value flatten baseline). Pairs with [FormDom#getZeroOccurSlots()].
     private boolean scriptDrivenOccur = false;
 
-    /** Creates an engine with spec-correct scope matching enabled (the normal case). */
+    /// Creates an engine with spec-correct scope matching enabled (the normal case).
     public BindingEngine() {
         this(true);
     }
 
-    /**
-     * Enables the spec-correct {@code <occur initial>}=min default (render path; pairs with running the
-     * load-time scripts that re-add the selected variant). Off by default to preserve the flatten path.
-     *
-     * @param on {@code true} on the render path
-     * @return this engine (for chaining)
-     */
+    /// Enables the spec-correct `<occur initial>`=min default (render path; pairs with running the
+    /// load-time scripts that re-add the selected variant). Off by default to preserve the flatten path.
+    ///
+    /// @param on`true` on the render path
+    /// @return this engine (for chaining)
     public BindingEngine scriptDrivenOccur(boolean on) {
         this.scriptDrivenOccur = on;
         return this;
     }
 
-    /**
-     * Creates an engine, optionally forcing the legacy direct-only binding mode.
-     *
-     * @param scopeMatching {@code true} for spec-correct direct+ancestor+sibling
-     *                      matching; {@code false} for legacy direct-only (measurement)
-     */
+    /// Creates an engine, optionally forcing the legacy direct-only binding mode.
+    ///
+    /// @param scopeMatching`true` for spec-correct direct+ancestor+sibling
+    ///                      matching; `false` for legacy direct-only (measurement)
     public BindingEngine(boolean scopeMatching) {
         this.scopeMatching = scopeMatching;
     }
 
-    /** One field's bind directive. */
+    /// One field's bind directive.
     private static final class Bind {
         FormField.BindingKind kind = FormField.BindingKind.ONCE;
         String ref;
     }
 
-    /** One container's occur directive. */
+    /// One container's occur directive.
     private static final class Occur {
         int initial = 1;
         int min = 1;
         int max = 1; // -1 == unbounded
     }
 
-    /**
-     * Empty merge: the form structure with no data (occur expanded to
-     * {@code initial}), the prerequisite for blank-form flattening.
-     *
-     * @param template the typed template
-     * @return the merged Form DOM
-     */
+    /// Empty merge: the form structure with no data (occur expanded to
+    /// `initial`), the prerequisite for blank-form flattening.
+    ///
+    /// @param template the typed template
+    /// @return the merged Form DOM
     public FormDom mergeEmpty(Template template) {
         return merge(template, null);
     }
 
-    /**
-     * Data merge: the form structure populated from the data tree.
-     *
-     * @param template the typed template
-     * @param dataRoot the user-data root ({@code <xfa:data>}), or {@code null} for empty merge
-     * @return the merged Form DOM
-     */
+    /// Data merge: the form structure populated from the data tree.
+    ///
+    /// @param template the typed template
+    /// @param dataRoot the user-data root (`<xfa:data>`), or `null` for empty merge
+    /// @return the merged Form DOM
     public FormDom merge(Template template, XfaNode dataRoot) {
         Document formDoc = newDocument();
         XfaNode rootSubform = firstChild(template, "subform");
@@ -184,14 +164,12 @@ public final class BindingEngine {
 
     /* --------------------------- container --------------------------- */
 
-    /**
-     * Builds one container instance. {@code scope} is the data node that this
-     * container's children search within for automatic binding: the data group this
-     * container bound to, or &mdash; when the container is unbound &mdash; the
-     * nearest bound ancestor's data node inherited from the parent. Inheriting the
-     * scope through unbound subforms is what makes ancestor/scope matching work: a
-     * field inside an unmatched subform still sees the bound ancestor's data.
-     */
+    /// Builds one container instance. `scope` is the data node that this
+    /// container's children search within for automatic binding: the data group this
+    /// container bound to, or — when the container is unbound — the
+    /// nearest bound ancestor's data node inherited from the parent. Inheriting the
+    /// scope through unbound subforms is what makes ancestor/scope matching work: a
+    /// field inside an unmatched subform still sees the bound ancestor's data.
     private Element buildContainer(XfaNode tpl, XfaNode scope, XfaNode record, XfaNode dataRoot,
                                    Document formDoc, FormDom dom, String path, Set<Element> consumed) {
         Element f = cloneShallow(tpl, formDoc);
@@ -221,13 +199,11 @@ public final class BindingEngine {
 
     /* --------------------------- pageSet (master pages) --------------------------- */
 
-    /**
-     * Builds a bound {@code <pageSet>}: each {@code <pageArea>}'s furniture (subforms/draws/fields)
-     * is data-bound into the {@link FormDom} <b>master channel</b>; structural children
-     * ({@code medium}, {@code contentArea}, {@code occur}) are copied verbatim. The bound pageArea
-     * elements are recorded on the FormDom in declaration order so the paginator can paint the
-     * furniture of the pageArea assigned to each physical page.
-     */
+    /// Builds a bound `<pageSet>`: each `<pageArea>`'s furniture (subforms/draws/fields)
+    /// is data-bound into the [FormDom] **master channel**; structural children
+    /// (`medium`, `contentArea`, `occur`) are copied verbatim. The bound pageArea
+    /// elements are recorded on the FormDom in declaration order so the paginator can paint the
+    /// furniture of the pageArea assigned to each physical page.
     private Element buildPageSet(XfaNode tpl, XfaNode scope, XfaNode record, XfaNode dataRoot,
                                  Document formDoc, FormDom dom, String path) {
         Element ps = cloneShallow(tpl, formDoc);
@@ -249,12 +225,10 @@ public final class BindingEngine {
         return ps;
     }
 
-    /**
-     * Builds one bound {@code <pageArea>}: its furniture containers/fields are bound against the
-     * same data record as the flow, but with an <b>independent</b> consumed set — master furniture
-     * is a separate rendering of the data (the same value may appear both as page furniture and in
-     * the flow), so it neither consumes from nor is consumed by the flow binding.
-     */
+    /// Builds one bound `<pageArea>`: its furniture containers/fields are bound against the
+    /// same data record as the flow, but with an **independent** consumed set — master furniture
+    /// is a separate rendering of the data (the same value may appear both as page furniture and in
+    /// the flow), so it neither consumes from nor is consumed by the flow binding.
     private Element buildPageArea(XfaNode tpl, XfaNode scope, XfaNode record, XfaNode dataRoot,
                                   Document formDoc, FormDom dom, String path) {
         Element pa = cloneShallow(tpl, formDoc);
@@ -276,7 +250,7 @@ public final class BindingEngine {
         return pa;
     }
 
-    /** Registers a built field on the active channel (master furniture vs. interactive flow). */
+    /// Registers a built field on the active channel (master furniture vs. interactive flow).
     private void register(FormDom dom, FormField ff) {
         if (masterMode) {
             dom.addMasterField(ff);
@@ -337,14 +311,12 @@ public final class BindingEngine {
 
     /* --------------------------- exclGroup --------------------------- */
 
-    /**
-     * Expands an {@code exclGroup} (radio / exclusion group). Unlike a subform, an
-     * exclGroup binds to a single data <em>value</em> — the selection — not a data
-     * group; its child {@code field}s are the radio options. The Form DOM surfaces ONE
-     * value for the exclGroup (the bound selection), with the option on-values as its
-     * items, and does NOT enumerate the option fields as independent scalar values
-     * (no double counting). A5 maps the surfaced value to the chosen radio option.
-     */
+    /// Expands an `exclGroup` (radio / exclusion group). Unlike a subform, an
+    /// exclGroup binds to a single data _value_ — the selection — not a data
+    /// group; its child `field`s are the radio options. The Form DOM surfaces ONE
+    /// value for the exclGroup (the bound selection), with the option on-values as its
+    /// items, and does NOT enumerate the option fields as independent scalar values
+    /// (no double counting). A5 maps the surfaced value to the chosen radio option.
     private void expandExclGroup(XfaNode tpl, XfaNode scope, XfaNode record, XfaNode dataRoot,
                                  Document formDoc, FormDom dom, Element parent, String path, Set<Element> consumed) {
         Occur occ = readOccur(tpl);
@@ -401,7 +373,7 @@ public final class BindingEngine {
         return f;
     }
 
-    /** The on-value an exclGroup option contributes when selected (its value, else its items, else name). */
+    /// The on-value an exclGroup option contributes when selected (its value, else its items, else name).
     private static String optionOnValue(XfaNode optionField) {
         String v = templateDefaultValue(optionField);
         if (v != null && !v.isEmpty()) {
@@ -461,13 +433,11 @@ public final class BindingEngine {
 
     /* ------------------------- binding resolution -------------------- */
 
-    /**
-     * Resolves the data <em>values</em> an automatic field binds to, in
-     * binding-precedence order (direct, then ancestor, then sibling scope match),
-     * skipping already-consumed nodes. {@code dataRef} resolves the explicit SOM
-     * reference; {@code global} searches the whole data tree; {@code none} binds
-     * nothing.
-     */
+    /// Resolves the data _values_ an automatic field binds to, in
+    /// binding-precedence order (direct, then ancestor, then sibling scope match),
+    /// skipping already-consumed nodes. `dataRef` resolves the explicit SOM
+    /// reference; `global` searches the whole data tree; `none` binds
+    /// nothing.
     private List<XfaNode> resolveFieldData(XfaNode tpl, Bind bind, XfaNode scope,
                                            XfaNode record, XfaNode dataRoot, Set<Element> consumed) {
         List<XfaNode> out = new ArrayList<>();
@@ -514,13 +484,11 @@ public final class BindingEngine {
         }
     }
 
-    /**
-     * Breadth-first descent for an unconsumed data <em>value</em> named {@code name}
-     * below {@code from} (shallowest match first). The lowest-precedence automatic
-     * match: used only when direct/ancestor/sibling all fail, for data that nests the
-     * value under groups absent from the template. Bounded in depth; consumed-tracking
-     * keeps a value bound to a single field.
-     */
+    /// Breadth-first descent for an unconsumed data _value_ named `name`
+    /// below `from` (shallowest match first). The lowest-precedence automatic
+    /// match: used only when direct/ancestor/sibling all fail, for data that nests the
+    /// value under groups absent from the template. Bounded in depth; consumed-tracking
+    /// keeps a value bound to a single field.
     private void descendForValue(String name, XfaNode from, List<XfaNode> out,
                                  Set<Element> consumed, Set<String> fieldAncestors) {
         List<XfaNode> frontier = from.getChildren();
@@ -555,7 +523,7 @@ public final class BindingEngine {
                 || (group.getName() != null && fieldAncestors.contains(group.getName()));
     }
 
-    /** Names of the template containers on the field's own ancestor path. */
+    /// Names of the template containers on the field's own ancestor path.
     private static Set<String> ancestorContainerNames(XfaNode fieldTpl) {
         Set<String> names = new HashSet<>();
         for (XfaNode p = fieldTpl.getParent(); p != null; p = p.getParent()) {
@@ -586,12 +554,10 @@ public final class BindingEngine {
         }
     }
 
-    /**
-     * Resolves the data <em>groups</em> a subform/exclGroup binds to, in
-     * binding-precedence order, skipping consumed nodes. One match per occurrence
-     * drives occur expansion; consuming each match in turn gives index inferral for
-     * repeated same-named sibling subforms.
-     */
+    /// Resolves the data _groups_ a subform/exclGroup binds to, in
+    /// binding-precedence order, skipping consumed nodes. One match per occurrence
+    /// drives occur expansion; consuming each match in turn gives index inferral for
+    /// repeated same-named sibling subforms.
     private List<XfaNode> resolveContainerData(XfaNode tpl, Bind bind, XfaNode scope,
                                                XfaNode record, XfaNode dataRoot, Set<Element> consumed) {
         List<XfaNode> out = new ArrayList<>();
@@ -622,12 +588,10 @@ public final class BindingEngine {
         return out;
     }
 
-    /**
-     * Builds the SOM resolution context for a {@code dataRef} reference: the current
-     * node is the data context bound to the enclosing container ({@code scope}), so
-     * relative and {@code $} references resolve against it; {@code $record} resolves to
-     * the merge's record and {@code $data} to the datasets root.
-     */
+    /// Builds the SOM resolution context for a `dataRef` reference: the current
+    /// node is the data context bound to the enclosing container (`scope`), so
+    /// relative and `$` references resolve against it; `$record` resolves to
+    /// the merge's record and `$data` to the datasets root.
     private static SomResolver.Context dataRefContext(XfaNode scope, XfaNode record, XfaNode dataRoot) {
         SomResolver.Context ctx = SomResolver.Context.of(scope != null ? scope : record);
         ctx.record = record;
@@ -635,11 +599,9 @@ public final class BindingEngine {
         return ctx;
     }
 
-    /**
-     * Candidate data nodes named {@code name}, in binding-precedence order. Spec mode
-     * uses the full {@link SomResolver#scopeMatch} (direct + ancestor + sibling);
-     * legacy mode returns only direct children of {@code scope} (pre-A4-FIX).
-     */
+    /// Candidate data nodes named `name`, in binding-precedence order. Spec mode
+    /// uses the full [SomResolver#scopeMatch] (direct + ancestor + sibling);
+    /// legacy mode returns only direct children of `scope` (pre-A4-FIX).
     private List<XfaNode> candidates(String name, XfaNode scope) {
         if (scopeMatching) {
             return som.scopeMatch(name, scope);
@@ -653,12 +615,12 @@ public final class BindingEngine {
         return direct;
     }
 
-    /** A data value is a leaf (no element children); a field binds a data value. */
+    /// A data value is a leaf (no element children); a field binds a data value.
     private static boolean isDataValue(XfaNode n) {
         return n.getChildren().isEmpty();
     }
 
-    /** A data group has element children; a subform/exclGroup binds a data group. */
+    /// A data group has element children; a subform/exclGroup binds a data group.
     private static boolean isDataGroup(XfaNode n) {
         return !n.getChildren().isEmpty();
     }
@@ -807,13 +769,11 @@ public final class BindingEngine {
         return parent.getChild(name);
     }
 
-    /**
-     * Searches for the named record below {@code dataRoot}, descending through up to
-     * {@code maxDepth} wrapper data groups (breadth-first, shallowest match wins). Used
-     * when the form root subform's name is not a direct child of the datasets data node
-     * because the data nests it under an extra group level. Returns {@code null} if not
-     * found within the depth bound.
-     */
+    /// Searches for the named record below `dataRoot`, descending through up to
+    /// `maxDepth` wrapper data groups (breadth-first, shallowest match wins). Used
+    /// when the form root subform's name is not a direct child of the datasets data node
+    /// because the data nests it under an extra group level. Returns `null` if not
+    /// found within the depth bound.
     private static XfaNode findRecordDescendant(XfaNode dataRoot, String name, int maxDepth) {
         if (name == null || maxDepth <= 0) {
             return null;

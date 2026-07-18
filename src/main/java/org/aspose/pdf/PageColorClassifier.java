@@ -1,50 +1,32 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.pdfobjects.PdfArray;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
-import org.aspose.pdf.engine.pdfobjects.PdfStream;
-import org.aspose.pdf.operators.Do;
-import org.aspose.pdf.operators.SetCMYKColor;
-import org.aspose.pdf.operators.SetCMYKColorStroke;
-import org.aspose.pdf.operators.SetColor;
-import org.aspose.pdf.operators.SetColorSpace;
-import org.aspose.pdf.operators.SetColorSpaceStroke;
-import org.aspose.pdf.operators.SetColorStroke;
-import org.aspose.pdf.operators.SetGray;
-import org.aspose.pdf.operators.SetGrayStroke;
-import org.aspose.pdf.operators.SetRGBColor;
-import org.aspose.pdf.operators.SetRGBColorStroke;
+import org.aspose.pdf.engine.pdfobjects.*;
+import org.aspose.pdf.operators.*;
 
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Determines a page's {@link ColorType} by walking its content stream and
- * referenced image XObjects, then collapsing every observed colour-family
- * signal into a single worst-case classification:
- *
- * <pre>
- *   RGB / CMYK content seen        →  Rgb
- *   gray seen but no chromatic     →  Grayscale (or BlackAndWhite if every
- *                                      observed gray was exactly 0 or 1)
- *   nothing seen                   →  Undefined
- * </pre>
- *
- * <p>Implementation is intentionally heuristic — matches Aspose.Pdf's
- * documented behaviour where a single colour image promotes the whole page
- * to {@link ColorType#Rgb}, and a "BW" page is one whose every gray fill /
- * stroke and every embedded image uses {@code DeviceGray} with components
- * snapping to 0 or 1.</p>
- */
+/// Determines a page's [ColorType] by walking its content stream and
+/// referenced image XObjects, then collapsing every observed colour-family
+/// signal into a single worst-case classification:
+/// <pre>
+///   RGB / CMYK content seen        →  Rgb
+///   gray seen but no chromatic     →  Grayscale (or BlackAndWhite if every
+///                                      observed gray was exactly 0 or 1)
+///   nothing seen                   →  Undefined
+/// </pre>
+///
+/// Implementation is intentionally heuristic — matches Aspose.Pdf's
+/// documented behaviour where a single colour image promotes the whole page
+/// to [ColorType#Rgb], and a "BW" page is one whose every gray fill /
+/// stroke and every embedded image uses `DeviceGray` with components
+/// snapping to 0 or 1.
 final class PageColorClassifier {
 
     private static final Logger LOG = Logger.getLogger(PageColorClassifier.class.getName());
 
-    /** Tolerance for the "0 or 1" snap that distinguishes B/W from gray. */
+    /// Tolerance for the "0 or 1" snap that distinguishes B/W from gray.
     private static final double EPSILON = 1.0 / 255.0;
 
     private PageColorClassifier() {
@@ -92,13 +74,13 @@ final class PageColorClassifier {
     }
 
     private enum Signal {
-        /** Operator touches RGB or CMYK colour. */
+        /// Operator touches RGB or CMYK colour.
         CHROMATIC,
-        /** Operator touches a gray midtone (not pure 0 or 1). */
+        /// Operator touches a gray midtone (not pure 0 or 1).
         GRAY_MIDTONE,
-        /** Operator touches pure black or pure white. */
+        /// Operator touches pure black or pure white.
         GRAY_BW,
-        /** Operator doesn't influence colour. */
+        /// Operator doesn't influence colour.
         NONE,
     }
 
@@ -321,14 +303,12 @@ final class PageColorClassifier {
         }
     }
 
-    /**
-     * For a {@code DeviceGray}/{@code CalGray}/{@code ICCBased(N=1)} image, this
-     * sampler decodes a short prefix of the image stream and reports
-     * {@link Signal#GRAY_BW} if every pixel snaps to 0 or to its max-value
-     * (i.e. all black or white), or {@link Signal#GRAY_MIDTONE} if any
-     * midtone is present. Falls back to {@code GRAY_BW} when the image is
-     * declared as 1-bit-per-component, since those can't carry midtones.
-     */
+    /// For a `DeviceGray`/`CalGray`/`ICCBased(N=1)` image, this
+    /// sampler decodes a short prefix of the image stream and reports
+    /// [Signal#GRAY\_BW] if every pixel snaps to 0 or to its max-value
+    /// (i.e. all black or white), or [Signal#GRAY\_MIDTONE] if any
+    /// midtone is present. Falls back to `GRAY_BW` when the image is
+    /// declared as 1-bit-per-component, since those can't carry midtones.
     private static Signal imageMonoSignal(PdfStream xobject) {
         PdfBase bpcRaw = xobject.get(PdfName.of("BitsPerComponent"));
         int bits = (bpcRaw instanceof org.aspose.pdf.engine.pdfobjects.PdfInteger)

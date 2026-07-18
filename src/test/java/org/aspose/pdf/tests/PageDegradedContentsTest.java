@@ -10,17 +10,15 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * Sprint 63 B.6 — guarded degradation in {@link Page#getContents()}.
- * <p>
- * A page whose {@code /Contents} stream cannot be decoded must (a) parse to an
- * empty operator collection instead of throwing, and (b) NEVER serialise that
- * degraded cache back over the original raw bytes on save.
- * </p>
- */
+/// Sprint 63 B.6 — guarded degradation in [Page#getContents()].
+///
+/// A page whose `/Contents` stream cannot be decoded must (a) parse to an
+/// empty operator collection instead of throwing, and (b) NEVER serialise that
+/// degraded cache back over the original raw bytes on save.
+///
 public class PageDegradedContentsTest {
 
-    /** Builds a /Contents stream whose FlateDecode payload is undecodable. */
+    /// Builds a /Contents stream whose FlateDecode payload is undecodable.
     private PdfStream undecodableContentStream() {
         PdfStream stream = new PdfStream();
         // Too short to salvage and an invalid zlib/raw header -> decode throws.

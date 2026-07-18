@@ -2,17 +2,9 @@ package org.aspose.pdf.facades;
 
 import org.aspose.pdf.Document;
 import org.aspose.pdf.Page;
-import org.aspose.pdf.PageCollection;
 import org.aspose.pdf.PageCoordinateType;
 import org.aspose.pdf.PageSize;
-import org.aspose.pdf.devices.BmpDevice;
-import org.aspose.pdf.devices.CompressionType;
-import org.aspose.pdf.devices.JpegDevice;
-import org.aspose.pdf.devices.PageDevice;
-import org.aspose.pdf.devices.PngDevice;
-import org.aspose.pdf.devices.Resolution;
-import org.aspose.pdf.devices.TiffDevice;
-import org.aspose.pdf.devices.TiffSettings;
+import org.aspose.pdf.devices.*;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -21,23 +13,22 @@ import java.io.OutputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Converts PDF pages to raster images (JPEG, PNG).
- * <p>
- * Usage pattern:
- * <pre>
- *   PdfConverter converter = new PdfConverter();
- *   converter.bindPdf("input.pdf");
- *   converter.setResolution(new Resolution(150));
- *   converter.doConvert();
- *   int page = 1;
- *   while (converter.hasNextImage()) {
- *       converter.getNextImage("page_" + page + ".jpg", "jpeg");
- *       page++;
- *   }
- *   converter.close();
- * </pre>
- */
+/// Converts PDF pages to raster images (JPEG, PNG).
+///
+/// Usage pattern:
+///
+/// <pre>
+///   PdfConverter converter = new PdfConverter();
+///   converter.bindPdf("input.pdf");
+///   converter.setResolution(new Resolution(150));
+///   converter.doConvert();
+///   int page = 1;
+///   while (converter.hasNextImage()) {
+///       converter.getNextImage("page_" + page + ".jpg", "jpeg");
+///       page++;
+///   }
+///   converter.close();
+/// </pre>
 public class PdfConverter implements AutoCloseable {
 
     private static final Logger LOG = Logger.getLogger(PdfConverter.class.getName());
@@ -50,29 +41,23 @@ public class PdfConverter implements AutoCloseable {
     private int endPage;
     private PageCoordinateType coordinateType = PageCoordinateType.MediaBox;
 
-    /**
-     * Creates a new {@code PdfConverter} instance with default resolution of 150 DPI.
-     */
+    /// Creates a new `PdfConverter` instance with default resolution of 150 DPI.
     public PdfConverter() {
         this.resolution = new Resolution(150);
     }
 
-    /**
-     * Creates a new converter bound to the supplied document.
-     *
-     * @param document the document to bind initially
-     */
+    /// Creates a new converter bound to the supplied document.
+    ///
+    /// @param document the document to bind initially
     public PdfConverter(Document document) {
         this();
         bindPdf(document);
     }
 
-    /**
-     * Binds a PDF file to this converter.
-     *
-     * @param inputFile path to the PDF file
-     * @return {@code true} on success
-     */
+    /// Binds a PDF file to this converter.
+    ///
+    /// @param inputFile path to the PDF file
+    /// @return `true` on success
     public boolean bindPdf(String inputFile) {
         try {
             this.document = new Document(inputFile);
@@ -83,12 +68,10 @@ public class PdfConverter implements AutoCloseable {
         }
     }
 
-    /**
-     * Binds a PDF from an input stream.
-     *
-     * @param inputStream the input stream containing PDF data
-     * @return {@code true} on success
-     */
+    /// Binds a PDF from an input stream.
+    ///
+    /// @param inputStream the input stream containing PDF data
+    /// @return `true` on success
     public boolean bindPdf(InputStream inputStream) {
         try {
             this.document = new Document(inputStream);
@@ -99,12 +82,10 @@ public class PdfConverter implements AutoCloseable {
         }
     }
 
-    /**
-     * Binds an existing {@link Document} to this converter.
-     *
-     * @param document the document to bind
-     * @return {@code true} on success
-     */
+    /// Binds an existing [Document] to this converter.
+    ///
+    /// @param document the document to bind
+    /// @return `true` on success
     public boolean bindPdf(Document document) {
         if (document == null) {
             LOG.warning("Cannot bind null document");
@@ -114,20 +95,16 @@ public class PdfConverter implements AutoCloseable {
         return true;
     }
 
-    /**
-     * Returns the currently bound document.
-     *
-     * @return the bound document, or {@code null} if none is bound
-     */
+    /// Returns the currently bound document.
+    ///
+    /// @return the bound document, or `null` if none is bound
     public Document getDocument() {
         return document;
     }
 
-    /**
-     * Sets the resolution for image rendering.
-     *
-     * @param resolution the rendering resolution
-     */
+    /// Sets the resolution for image rendering.
+    ///
+    /// @param resolution the rendering resolution
     public void setResolution(Resolution resolution) {
         if (resolution == null) {
             LOG.warning("Cannot set null resolution");
@@ -136,12 +113,10 @@ public class PdfConverter implements AutoCloseable {
         this.resolution = resolution;
     }
 
-    /**
-     * Initializes the conversion process by resetting the page counter.
-     * Must be called before {@link #hasNextImage()} and {@link #getNextImage}.
-     *
-     * @return {@code true} on success
-     */
+    /// Initializes the conversion process by resetting the page counter.
+    /// Must be called before [#hasNextImage()] and [#getNextImage].
+    ///
+    /// @return `true` on success
     public boolean doConvert() {
         try {
             int total = document.getPages().getCount();
@@ -163,11 +138,9 @@ public class PdfConverter implements AutoCloseable {
         }
     }
 
-    /**
-     * Returns the total number of pages in the bound document.
-     *
-     * @return the page count, or 0 if no document is bound
-     */
+    /// Returns the total number of pages in the bound document.
+    ///
+    /// @return the page count, or 0 if no document is bound
     public int getPageCount() {
         if (document == null) return 0;
         try {
@@ -178,11 +151,9 @@ public class PdfConverter implements AutoCloseable {
         }
     }
 
-    /**
-     * Sets the first page (1-based) to include in subsequent renders.
-     *
-     * @param startPage 1-based first page; 0 or negative means "from first page"
-     */
+    /// Sets the first page (1-based) to include in subsequent renders.
+    ///
+    /// @param startPage 1-based first page; 0 or negative means "from first page"
     public void setStartPage(int startPage) {
         this.startPage = startPage;
         if (startPage > 0) {
@@ -203,11 +174,9 @@ public class PdfConverter implements AutoCloseable {
         }
     }
 
-    /**
-     * Sets the last page (1-based, inclusive) for subsequent renders.
-     *
-     * @param endPage 1-based last page; 0 or negative means "until end"
-     */
+    /// Sets the last page (1-based, inclusive) for subsequent renders.
+    ///
+    /// @param endPage 1-based last page; 0 or negative means "until end"
     public void setEndPage(int endPage) {
         this.endPage = endPage;
         if (document != null) {
@@ -227,39 +196,34 @@ public class PdfConverter implements AutoCloseable {
         }
     }
 
-    /** Returns the start page, or 0 if unset. */
+    /// Returns the start page, or 0 if unset.
     public int getStartPage() {
         return startPage;
     }
 
-    /** Returns the end page, or 0 if unset. */
+    /// Returns the end page, or 0 if unset.
     public int getEndPage() {
         return endPage;
     }
 
-    /** Returns the current resolution. */
+    /// Returns the current resolution.
     public Resolution getResolution() {
         return resolution;
     }
 
-    /**
-     * Returns which page box should be used as the coordinate space.
-     *
-     * @return the coordinate type
-     */
+    /// Returns which page box should be used as the coordinate space.
+    ///
+    /// @return the coordinate type
     public PageCoordinateType getCoordinateType() {
         return coordinateType;
     }
 
-    /**
-     * Sets which page box should be used as the coordinate space.
-     * <p>
-     * The current renderer keeps using the page default box; this property is
-     * stored for API compatibility and future rendering support.
-     * </p>
-     *
-     * @param coordinateType the coordinate type
-     */
+    /// Sets which page box should be used as the coordinate space.
+    ///
+    /// The current renderer keeps using the page default box; this property is
+    /// stored for API compatibility and future rendering support.
+    ///
+    /// @param coordinateType the coordinate type
     public void setCoordinateType(PageCoordinateType coordinateType) {
         if (coordinateType == null) {
             LOG.warning("Cannot set null coordinateType");
@@ -268,13 +232,11 @@ public class PdfConverter implements AutoCloseable {
         this.coordinateType = coordinateType;
     }
 
-    /**
-     * Returns whether there are more pages to convert. If {@link #doConvert()}
-     * was not called explicitly, this method initializes the iterator on the
-     * first call.
-     *
-     * @return {@code true} if more pages remain
-     */
+    /// Returns whether there are more pages to convert. If [#doConvert()]
+    /// was not called explicitly, this method initializes the iterator on the
+    /// first call.
+    ///
+    /// @return `true` if more pages remain
     public boolean hasNextImage() {
         if (pageCount == 0 && currentPage == 0 && document != null) {
             try {
@@ -293,13 +255,11 @@ public class PdfConverter implements AutoCloseable {
         return currentPage < pageCount;
     }
 
-    /**
-     * Renders the next page to an image file.
-     *
-     * @param outputFile path to the output image file
-     * @param format     image format: "jpeg", "jpg", or "png"
-     * @return {@code true} on success
-     */
+    /// Renders the next page to an image file.
+    ///
+    /// @param outputFile path to the output image file
+    /// @param format     image format: "jpeg", "jpg", or "png"
+    /// @return `true` on success
     public boolean getNextImage(String outputFile, String format) {
         try (FileOutputStream fos = new FileOutputStream(outputFile)) {
             return getNextImage(fos, format);
@@ -309,13 +269,11 @@ public class PdfConverter implements AutoCloseable {
         }
     }
 
-    /**
-     * Renders the next page to an output stream.
-     *
-     * @param stream the output stream
-     * @param format image format: "jpeg", "jpg", or "png"
-     * @return {@code true} on success
-     */
+    /// Renders the next page to an output stream.
+    ///
+    /// @param stream the output stream
+    /// @param format image format: "jpeg", "jpg", or "png"
+    /// @return `true` on success
     public boolean getNextImage(OutputStream stream, String format) {
         try {
             currentPage++;
@@ -330,13 +288,11 @@ public class PdfConverter implements AutoCloseable {
         }
     }
 
-    /**
-     * Renders the next page to an image file using the given {@link ImageFormat}.
-     *
-     * @param outputFile path to the output image file
-     * @param format     image format enum value
-     * @return {@code true} on success
-     */
+    /// Renders the next page to an image file using the given [ImageFormat].
+    ///
+    /// @param outputFile path to the output image file
+    /// @param format     image format enum value
+    /// @return `true` on success
     public boolean getNextImage(String outputFile, ImageFormat format) {
         rejectTiffFormat(format);
         try (FileOutputStream fos = new FileOutputStream(outputFile)) {
@@ -347,16 +303,14 @@ public class PdfConverter implements AutoCloseable {
         }
     }
 
-    /**
-     * Renders the next page to an image file with explicit JPEG quality.
-     * The {@code quality} parameter is honored only for {@link ImageFormat#JPEG};
-     * for other formats it is ignored.
-     *
-     * @param outputFile path to the output image file
-     * @param format     image format enum value
-     * @param quality    JPEG compression quality (1-100)
-     * @return {@code true} on success
-     */
+    /// Renders the next page to an image file with explicit JPEG quality.
+    /// The `quality` parameter is honored only for [ImageFormat#JPEG];
+    /// for other formats it is ignored.
+    ///
+    /// @param outputFile path to the output image file
+    /// @param format     image format enum value
+    /// @param quality    JPEG compression quality (1-100)
+    /// @return `true` on success
     public boolean getNextImage(String outputFile, ImageFormat format, int quality) {
         rejectTiffFormat(format);
         try (FileOutputStream fos = new FileOutputStream(outputFile)) {
@@ -367,72 +321,60 @@ public class PdfConverter implements AutoCloseable {
         }
     }
 
-    /**
-     * Renders the next page to an output stream using the given {@link ImageFormat}.
-     *
-     * @param stream the output stream
-     * @param format image format enum value
-     * @return {@code true} on success
-     */
+    /// Renders the next page to an output stream using the given [ImageFormat].
+    ///
+    /// @param stream the output stream
+    /// @param format image format enum value
+    /// @return `true` on success
     public boolean getNextImage(OutputStream stream, ImageFormat format) {
         return renderNext(stream, format, 0, 0, 100);
     }
 
-    /**
-     * Renders the next page to an output stream with explicit JPEG quality.
-     *
-     * @param stream  the output stream
-     * @param format  image format enum value
-     * @param quality JPEG compression quality (1-100)
-     * @return {@code true} on success
-     */
+    /// Renders the next page to an output stream with explicit JPEG quality.
+    ///
+    /// @param stream  the output stream
+    /// @param format  image format enum value
+    /// @param quality JPEG compression quality (1-100)
+    /// @return `true` on success
     public boolean getNextImage(OutputStream stream, ImageFormat format, int quality) {
         return renderNext(stream, format, 0, 0, quality);
     }
 
-    /**
-     * Renders the next page to a file using default JPEG format.
-     *
-     * @param outputFile path to the output file
-     * @return {@code true} on success
-     */
+    /// Renders the next page to a file using default JPEG format.
+    ///
+    /// @param outputFile path to the output file
+    /// @return `true` on success
     public boolean getNextImage(String outputFile) {
         return getNextImage(outputFile, ImageFormat.JPEG);
     }
 
-    /**
-     * Renders the next page to a stream using default JPEG format.
-     *
-     * @param stream the output stream
-     * @return {@code true} on success
-     */
+    /// Renders the next page to a stream using default JPEG format.
+    ///
+    /// @param stream the output stream
+    /// @return `true` on success
     public boolean getNextImage(OutputStream stream) {
         return getNextImage(stream, ImageFormat.JPEG);
     }
 
-    /**
-     * Renders the next page to a file with explicit output dimensions.
-     *
-     * @param outputFile path to the output image file
-     * @param format     image format enum value
-     * @param width      output width in pixels
-     * @param height     output height in pixels
-     * @return {@code true} on success
-     */
+    /// Renders the next page to a file with explicit output dimensions.
+    ///
+    /// @param outputFile path to the output image file
+    /// @param format     image format enum value
+    /// @param width      output width in pixels
+    /// @param height     output height in pixels
+    /// @return `true` on success
     public boolean getNextImage(String outputFile, ImageFormat format, int width, int height) {
         return getNextImage(outputFile, format, width, height, 100);
     }
 
-    /**
-     * Renders the next page to a file with explicit dimensions and JPEG quality.
-     *
-     * @param outputFile path to the output image file
-     * @param format     image format enum value
-     * @param width      output width in pixels
-     * @param height     output height in pixels
-     * @param quality    JPEG compression quality (1-100)
-     * @return {@code true} on success
-     */
+    /// Renders the next page to a file with explicit dimensions and JPEG quality.
+    ///
+    /// @param outputFile path to the output image file
+    /// @param format     image format enum value
+    /// @param width      output width in pixels
+    /// @param height     output height in pixels
+    /// @param quality    JPEG compression quality (1-100)
+    /// @return `true` on success
     public boolean getNextImage(String outputFile, ImageFormat format, int width, int height, int quality) {
         try (FileOutputStream fos = new FileOutputStream(outputFile)) {
             return renderNext(fos, format, width, height, quality);
@@ -442,32 +384,28 @@ public class PdfConverter implements AutoCloseable {
         }
     }
 
-    /**
-     * Renders the next page to a stream with explicit output dimensions.
-     */
+    /// Renders the next page to a stream with explicit output dimensions.
     public boolean getNextImage(OutputStream stream, ImageFormat format, int width, int height) {
         return renderNext(stream, format, width, height, 100);
     }
 
-    /**
-     * Renders the next page to a stream with explicit dimensions and JPEG quality.
-     */
+    /// Renders the next page to a stream with explicit dimensions and JPEG quality.
     public boolean getNextImage(OutputStream stream, ImageFormat format, int width, int height, int quality) {
         return renderNext(stream, format, width, height, quality);
     }
 
-    /** Double-width/height file overload (matches C# API signature). */
+    /// Double-width/height file overload (matches C# API signature).
     public boolean getNextImage(String outputFile, ImageFormat format, double width, double height, int quality) {
         return getNextImage(outputFile, format, (int) Math.round(width), (int) Math.round(height), quality);
     }
 
-    /** PageSize overload: renders the next page at the given page size (default JPEG). */
+    /// PageSize overload: renders the next page at the given page size (default JPEG).
     public boolean getNextImage(String outputFile, PageSize pageSize) {
         int[] wh = sizeToPixels(pageSize);
         return getNextImage(outputFile, ImageFormat.JPEG, wh[0], wh[1]);
     }
 
-    /** PageSize + format overload — stream version. */
+    /// PageSize + format overload — stream version.
     public boolean getNextImage(OutputStream stream, PageSize pageSize, ImageFormat format) {
         int[] wh = sizeToPixels(pageSize);
         return renderNext(stream, format, wh[0], wh[1], 100);
@@ -484,16 +422,14 @@ public class PdfConverter implements AutoCloseable {
         return new int[] { w, h };
     }
 
-    /** Double-width/height stream overload (matches C# API signature). */
+    /// Double-width/height stream overload (matches C# API signature).
     public boolean getNextImage(OutputStream stream, ImageFormat format, double width, double height, int quality) {
         return renderNext(stream, format, (int) Math.round(width), (int) Math.round(height), quality);
     }
 
-    /**
-     * Rejects {@link ImageFormat#TIFF} as an argument to {@code getNextImage} — TIFF is
-     * a multi-page container in Aspose's contract; callers must use {@code SaveAsTIFF()}
-     * instead. Mirrors Aspose.PDF behavior validated by PDFNEWNET_32406.
-     */
+    /// Rejects [ImageFormat#TIFF] as an argument to `getNextImage` — TIFF is
+    /// a multi-page container in Aspose's contract; callers must use `SaveAsTIFF()`
+    /// instead. Mirrors Aspose.PDF behavior validated by PDFNEWNET\_32406.
     private static void rejectTiffFormat(ImageFormat format) {
         if (format == ImageFormat.TIFF) {
             throw new IllegalArgumentException(
@@ -515,35 +451,29 @@ public class PdfConverter implements AutoCloseable {
         }
     }
 
-    /**
-     * Saves all pages of the bound document as a single multi-page TIFF file.
-     *
-     * @param outputFile path to the output TIFF file
-     * @return {@code true} on success
-     */
+    /// Saves all pages of the bound document as a single multi-page TIFF file.
+    ///
+    /// @param outputFile path to the output TIFF file
+    /// @return `true` on success
     public boolean saveAsTIFF(String outputFile) {
         return saveAsTIFF(outputFile, (TiffSettings) null, (Resolution) null);
     }
 
-    /**
-     * Saves all pages of the bound document as a multi-page TIFF with settings.
-     *
-     * @param outputFile path to the output TIFF file
-     * @param settings   TIFF output settings (compression, color depth, ...)
-     * @return {@code true} on success
-     */
+    /// Saves all pages of the bound document as a multi-page TIFF with settings.
+    ///
+    /// @param outputFile path to the output TIFF file
+    /// @param settings   TIFF output settings (compression, color depth, ...)
+    /// @return `true` on success
     public boolean saveAsTIFF(String outputFile, TiffSettings settings) {
         return saveAsTIFF(outputFile, settings, null);
     }
 
-    /**
-     * Saves all pages as a multi-page TIFF with settings and explicit resolution.
-     *
-     * @param outputFile path to the output TIFF file
-     * @param settings   TIFF output settings, or {@code null} for defaults
-     * @param resolution rendering resolution, or {@code null} to use the converter's resolution
-     * @return {@code true} on success
-     */
+    /// Saves all pages as a multi-page TIFF with settings and explicit resolution.
+    ///
+    /// @param outputFile path to the output TIFF file
+    /// @param settings   TIFF output settings, or `null` for defaults
+    /// @param resolution rendering resolution, or `null` to use the converter's resolution
+    /// @return `true` on success
     public boolean saveAsTIFF(String outputFile, TiffSettings settings, Resolution resolution) {
         try (FileOutputStream fos = new FileOutputStream(outputFile)) {
             return saveAsTIFF(fos, settings, resolution);
@@ -553,76 +483,62 @@ public class PdfConverter implements AutoCloseable {
         }
     }
 
-    /**
-     * Saves all pages as a multi-page TIFF to an output stream.
-     *
-     * @param stream   the output stream
-     * @param settings TIFF output settings, or {@code null} for defaults
-     * @return {@code true} on success
-     */
+    /// Saves all pages as a multi-page TIFF to an output stream.
+    ///
+    /// @param stream   the output stream
+    /// @param settings TIFF output settings, or `null` for defaults
+    /// @return `true` on success
     public boolean saveAsTIFF(OutputStream stream, TiffSettings settings) {
         return saveAsTIFFInternal(stream, settings, 0, 0);
     }
 
-    /**
-     * Saves all pages as multi-page TIFF with the given compression type.
-     *
-     * @param outputFile  path to the output TIFF file
-     * @param compression the compression type
-     * @return {@code true} on success
-     */
+    /// Saves all pages as multi-page TIFF with the given compression type.
+    ///
+    /// @param outputFile  path to the output TIFF file
+    /// @param compression the compression type
+    /// @return `true` on success
     public boolean saveAsTIFF(String outputFile, CompressionType compression) {
         return saveAsTIFF(outputFile, new TiffSettings(compression));
     }
 
-    /**
-     * Saves all pages as a multi-page TIFF fitted to the specified page size.
-     *
-     * @param outputFile path to the output TIFF file
-     * @param pageSize   target page size used to derive pixel dimensions
-     * @param settings   TIFF settings, or {@code null} for defaults
-     * @return {@code true} on success
-     */
+    /// Saves all pages as a multi-page TIFF fitted to the specified page size.
+    ///
+    /// @param outputFile path to the output TIFF file
+    /// @param pageSize   target page size used to derive pixel dimensions
+    /// @param settings   TIFF settings, or `null` for defaults
+    /// @return `true` on success
     public boolean saveAsTIFF(String outputFile, PageSize pageSize, TiffSettings settings) {
         int[] wh = sizeToPixels(pageSize);
         return saveAsTIFF(outputFile, wh[0], wh[1], settings);
     }
 
-    /**
-     * Saves all pages as a multi-page TIFF fitted to the specified page size.
-     *
-     * @param stream   the output stream
-     * @param pageSize target page size used to derive pixel dimensions
-     * @param settings TIFF settings, or {@code null} for defaults
-     * @return {@code true} on success
-     */
+    /// Saves all pages as a multi-page TIFF fitted to the specified page size.
+    ///
+    /// @param stream   the output stream
+    /// @param pageSize target page size used to derive pixel dimensions
+    /// @param settings TIFF settings, or `null` for defaults
+    /// @return `true` on success
     public boolean saveAsTIFF(OutputStream stream, PageSize pageSize, TiffSettings settings) {
         int[] wh = sizeToPixels(pageSize);
         return saveAsTIFF(stream, wh[0], wh[1], settings);
     }
 
-    /**
-     * Saves all pages as multi-page TIFF scaled to the given pixel dimensions.
-     *
-     * @param outputFile path to the output TIFF file
-     * @param width      target image width in pixels
-     * @param height     target image height in pixels
-     * @return {@code true} on success
-     */
+    /// Saves all pages as multi-page TIFF scaled to the given pixel dimensions.
+    ///
+    /// @param outputFile path to the output TIFF file
+    /// @param width      target image width in pixels
+    /// @param height     target image height in pixels
+    /// @return `true` on success
     public boolean saveAsTIFF(String outputFile, int width, int height) {
         return saveAsTIFF(outputFile, width, height, (TiffSettings) null);
     }
 
-    /**
-     * Saves all pages as multi-page TIFF scaled to the given dimensions with compression.
-     */
+    /// Saves all pages as multi-page TIFF scaled to the given dimensions with compression.
     public boolean saveAsTIFF(String outputFile, int width, int height, CompressionType compression) {
         return saveAsTIFF(outputFile, width, height, new TiffSettings(compression));
     }
 
-    /**
-     * Saves all pages as multi-page TIFF scaled to the given dimensions with settings.
-     */
+    /// Saves all pages as multi-page TIFF scaled to the given dimensions with settings.
     public boolean saveAsTIFF(String outputFile, int width, int height, TiffSettings settings) {
         try (FileOutputStream fos = new FileOutputStream(outputFile)) {
             return saveAsTIFFInternal(fos, settings, width, height);
@@ -632,22 +548,20 @@ public class PdfConverter implements AutoCloseable {
         }
     }
 
-    /** Stream overload with explicit target dimensions and settings. */
+    /// Stream overload with explicit target dimensions and settings.
     public boolean saveAsTIFF(OutputStream stream, int width, int height, TiffSettings settings) {
         return saveAsTIFFInternal(stream, settings, width, height);
     }
 
-    /**
-     * Saves all pages as TIFF Class F (B/W fax format, CCITT4 compression).
-     *
-     * @param outputFile path to the output TIFF file
-     * @return {@code true} on success
-     */
+    /// Saves all pages as TIFF Class F (B/W fax format, CCITT4 compression).
+    ///
+    /// @param outputFile path to the output TIFF file
+    /// @return `true` on success
     public boolean saveAsTIFFClassF(String outputFile) {
         return saveAsTIFF(outputFile, new TiffSettings(CompressionType.CCITT4));
     }
 
-    /** TIFF Class F with target dimensions. */
+    /// TIFF Class F with target dimensions.
     public boolean saveAsTIFFClassF(String outputFile, int width, int height) {
         return saveAsTIFF(outputFile, width, height, new TiffSettings(CompressionType.CCITT4));
     }
@@ -681,9 +595,7 @@ public class PdfConverter implements AutoCloseable {
         return saveAsTIFF(stream, settings, null);
     }
 
-    /**
-     * Closes the converter and releases the bound document.
-     */
+    /// Closes the converter and releases the bound document.
     public void close() {
         if (document != null) {
             try {
@@ -695,9 +607,7 @@ public class PdfConverter implements AutoCloseable {
         }
     }
 
-    /**
-     * Creates the appropriate device for the given image format.
-     */
+    /// Creates the appropriate device for the given image format.
     private PageDevice createDevice(String format) {
         if (format == null) {
             return new PngDevice(resolution);

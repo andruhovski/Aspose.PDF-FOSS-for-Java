@@ -4,14 +4,12 @@ import org.aspose.pdf.engine.script.js.runtime.JSObject;
 import org.aspose.pdf.engine.script.js.runtime.Undefined;
 import org.aspose.pdf.engine.xfa.model.XfaNode;
 
-/**
- * A live JavaScript view of an XFA Form-DOM node (Stage B / B3.1 A.2). Overrides {@code [[Get]]}/
- * {@code [[Put]]} so the value accessors the corpus scripts use — {@code rawValue} / {@code value} /
- * {@code formattedValue} (read AND write), {@code presence}, {@code name}, {@code parent},
- * {@code somExpression} — read and write the backing Form DOM through {@link XfaScriptHost}. Writing
- * {@code rawValue} updates the bound value the render track paints. Any other property behaves as a
- * plain JS object property (scripts may stash state on the node).
- */
+/// A live JavaScript view of an XFA Form-DOM node (Stage B / B3.1 A.2). Overrides `[[Get]]`/
+/// `[[Put]]` so the value accessors the corpus scripts use — `rawValue` / `value` /
+/// `formattedValue` (read AND write), `presence`, `name`, `parent`,
+/// `somExpression` — read and write the backing Form DOM through [XfaScriptHost]. Writing
+/// `rawValue` updates the bound value the render track paints. Any other property behaves as a
+/// plain JS object property (scripts may stash state on the node).
 public final class XfaScriptNode extends JSObject {
 
     final XfaNode node;
@@ -162,7 +160,7 @@ public final class XfaScriptNode extends JSObject {
         }
     }
 
-    /** Resolves a child container/field by name (then by class/element name) — the SOM dot step {@code a.b}. */
+    /// Resolves a child container/field by name (then by class/element name) — the SOM dot step `a.b`.
     private XfaNode childByName(String name) {
         XfaNode byName = null;
         for (XfaNode c : node.getChildren()) {
@@ -176,7 +174,7 @@ public final class XfaScriptNode extends JSObject {
         return byName;
     }
 
-    /** Count of same-named siblings (the XFA instance/occur count); 1 for a normal single node. */
+    /// Count of same-named siblings (the XFA instance/occur count); 1 for a normal single node.
     private int sameNameSiblingCount() {
         XfaNode parent = node.getParent();
         String nm = node.getName();
@@ -193,12 +191,10 @@ public final class XfaScriptNode extends JSObject {
         return Math.max(1, n);
     }
 
-    /**
-     * The {@code assist/toolTip} node (Acrobat exposes {@code field.toolTip} as a shortcut for
-     * {@code field.assist.toolTip}). The corpus writes {@code field.toolTip.value = "…"}; returns the
-     * existing toolTip node if present, else a benign object so the write does not throw (dynamic
-     * tooltip text is not painted — a tracked render gap, not an error).
-     */
+    /// The `assist/toolTip` node (Acrobat exposes `field.toolTip` as a shortcut for
+    /// `field.assist.toolTip`). The corpus writes `field.toolTip.value = "…"`; returns the
+    /// existing toolTip node if present, else a benign object so the write does not throw (dynamic
+    /// tooltip text is not painted — a tracked render gap, not an error).
     private Object toolTipNode() {
         XfaNode assist = childByName("assist");
         if (assist != null) {
@@ -213,7 +209,7 @@ public final class XfaScriptNode extends JSObject {
 
     /* ------------------------------ B3.4 node methods ------------------------------ */
 
-    /** XFA {@code isPropertySpecified}: was {@code prop} explicitly set (an attribute or a child property). */
+    /// XFA `isPropertySpecified`: was `prop` explicitly set (an attribute or a child property).
     private boolean isPropertySpecified(String prop) {
         org.w3c.dom.Element el = node.getElement();
         if (el == null || prop == null || prop.isEmpty()) {
@@ -230,7 +226,7 @@ public final class XfaScriptNode extends JSObject {
         return false;
     }
 
-    /** The field's {@code <items>} element — display (first) or bound ({@code save="1"}/second); created on demand. */
+    /// The field's `<items>` element — display (first) or bound (`save="1"`/second); created on demand.
     private org.w3c.dom.Element itemsElement(boolean bound, boolean create) {
         org.w3c.dom.Element el = node.getElement();
         if (el == null) {
@@ -269,7 +265,7 @@ public final class XfaScriptNode extends JSObject {
         return it;
     }
 
-    /** XFA {@code addItem(display[, bound])}: appends an option (display + optional bound value) to a list. */
+    /// XFA `addItem(display[, bound])`: appends an option (display + optional bound value) to a list.
     private void addItem(String display, String bound) {
         appendText(itemsElement(false, true), display == null ? "" : display);
         if (bound != null) {
@@ -286,7 +282,7 @@ public final class XfaScriptNode extends JSObject {
         items.appendChild(text);
     }
 
-    /** XFA {@code clearItems()}: removes every option from the display and bound item lists. */
+    /// XFA `clearItems()`: removes every option from the display and bound item lists.
     private void clearItems() {
         for (boolean bound : new boolean[]{false, true}) {
             org.w3c.dom.Element items = itemsElement(bound, false);
@@ -303,13 +299,13 @@ public final class XfaScriptNode extends JSObject {
         }
     }
 
-    /** The option text at {@code index} in the display (or bound) list, or {@code ""}. */
+    /// The option text at `index` in the display (or bound) list, or `""`.
     private String getItem(boolean bound, int index) {
         java.util.List<String> list = itemTexts(bound);
         return index >= 0 && index < list.size() ? list.get(index) : "";
     }
 
-    /** XFA {@code boundItem(display)}: the bound value paired with a display value (else the display value). */
+    /// XFA `boundItem(display)`: the bound value paired with a display value (else the display value).
     private String boundItem(String display) {
         java.util.List<String> disp = itemTexts(false);
         java.util.List<String> save = itemTexts(true);
@@ -334,7 +330,7 @@ public final class XfaScriptNode extends JSObject {
         return out;
     }
 
-    /** The 0-based index of the field's current value among its bound (then display) items, or -1. */
+    /// The 0-based index of the field's current value among its bound (then display) items, or -1.
     private int selectedIndex() {
         String v = host.readValue(node);
         if (v == null) {
@@ -347,12 +343,10 @@ public final class XfaScriptNode extends JSObject {
         return itemTexts(false).indexOf(v);
     }
 
-    /**
-     * XFA {@code execEvent(name)}: runs the node's named event handler (or calculate/validate) script
-     * synchronously and returns whether it ran. An inactive node, a missing handler or a thrown handler
-     * fails cleanly (returns {@code false}) — this is the script-driven synchronous call, not the
-     * interactive event loop.
-     */
+    /// XFA `execEvent(name)`: runs the node's named event handler (or calculate/validate) script
+    /// synchronously and returns whether it ran. An inactive node, a missing handler or a thrown handler
+    /// fails cleanly (returns `false`) — this is the script-driven synchronous call, not the
+    /// interactive event loop.
     private Object execEvent(String eventName) {
         if ("inactive".equals(node.getAttribute("presence")) || eventName == null || eventName.isEmpty()) {
             return Boolean.FALSE;
@@ -388,7 +382,7 @@ public final class XfaScriptNode extends JSObject {
         return e.getLocalName() != null ? e.getLocalName() : e.getNodeName();
     }
 
-    /** This instance's 0-based index among its same-named subform siblings (0 if not an instance). */
+    /// This instance's 0-based index among its same-named subform siblings (0 if not an instance).
     private int instanceIndex() {
         XfaNode parent = node.getParent();
         if (parent == null) {
@@ -420,7 +414,7 @@ public final class XfaScriptNode extends JSObject {
         return sb.length() == 0 ? "" : sb.substring(1);
     }
 
-    /** Coerces a JS value to the string an XFA {@code rawValue} stores (integral doubles lose the {@code .0}). */
+    /// Coerces a JS value to the string an XFA `rawValue` stores (integral doubles lose the `.0`).
     static String coerce(Object v) {
         if (v == null || v instanceof Undefined) {
             return "";

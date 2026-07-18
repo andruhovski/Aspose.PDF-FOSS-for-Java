@@ -7,9 +7,7 @@ import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link RunLengthFilter}.
- */
+/// Tests for [RunLengthFilter].
 public class RunLengthFilterTest {
 
     private final RunLengthFilter filter = new RunLengthFilter();

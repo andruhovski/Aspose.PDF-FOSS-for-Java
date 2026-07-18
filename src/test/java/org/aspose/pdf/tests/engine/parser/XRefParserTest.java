@@ -12,14 +12,10 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link XRefParser} — PDF cross-reference table/stream parser.
- */
+/// Tests for [XRefParser] — PDF cross-reference table/stream parser.
 public class XRefParserTest {
 
-    /**
-     * Test 1: Simple text xref table with one subsection.
-     */
+    /// Test 1: Simple text xref table with one subsection.
     @Test
     public void testSimpleTextXref() throws IOException {
         String xref = "xref\n" +
@@ -65,9 +61,7 @@ public class XRefParserTest {
         assertNotNull(trailer);
     }
 
-    /**
-     * Test 2: Multiple subsections in xref table.
-     */
+    /// Test 2: Multiple subsections in xref table.
     @Test
     public void testMultipleSubsections() throws IOException {
         String xref = "xref\n" +
@@ -94,9 +88,7 @@ public class XRefParserTest {
         assertEquals(200, entry5.getByteOffset());
     }
 
-    /**
-     * Test 7: findStartxref locates the position.
-     */
+    /// Test 7: findStartxref locates the position.
     @Test
     public void testFindStartxref() throws IOException {
         String content = "%PDF-1.4\nsome content here\n" +
@@ -109,9 +101,7 @@ public class XRefParserTest {
         assertEquals(12345, offset);
     }
 
-    /**
-     * Test 8: Free entries are correctly recognized.
-     */
+    /// Test 8: Free entries are correctly recognized.
     @Test
     public void testFreeEntries() throws IOException {
         String xref = "xref\n" +
@@ -133,9 +123,7 @@ public class XRefParserTest {
         assertEquals(XRefEntry.Type.FREE, entry2.getType());
     }
 
-    /**
-     * Test 10: Invalid xref throws IOException.
-     */
+    /// Test 10: Invalid xref throws IOException.
     @Test
     public void testInvalidXrefThrows() {
         String xref = "not_xref\n";
@@ -146,9 +134,7 @@ public class XRefParserTest {
         assertThrows(IOException.class, () -> parser.parse(0));
     }
 
-    /**
-     * Test: Constructor rejects null arguments.
-     */
+    /// Test: Constructor rejects null arguments.
     @Test
     public void testConstructorRejectsNull() {
         RandomAccessReader reader = RandomAccessReader.fromBytes(new byte[0]);
@@ -158,9 +144,7 @@ public class XRefParserTest {
         assertThrows(IllegalArgumentException.class, () -> new XRefParser(reader, null));
     }
 
-    /**
-     * Test: findStartxref fails when keyword is missing.
-     */
+    /// Test: findStartxref fails when keyword is missing.
     @Test
     public void testFindStartxrefMissing() {
         String content = "%PDF-1.4\nno startxref here\n%%EOF\n";

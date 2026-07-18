@@ -21,16 +21,14 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * Guards PDFNET-38363: adding a multi-frame TIFF as a single {@link Image}
- * paragraph must paginate into one page per decodable frame on save.
- */
+/// Guards PDFNET-38363: adding a multi-frame TIFF as a single [Image]
+/// paragraph must paginate into one page per decodable frame on save.
 public class MultiFrameTiffPaginationTest {
 
     @TempDir
     Path tempDir;
 
-    /** Writes an in-memory TIFF with {@code frames} solid-colour frames. */
+    /// Writes an in-memory TIFF with `frames` solid-colour frames.
     private static byte[] buildTiff(int frames, int width, int height) throws Exception {
         Iterator<ImageWriter> writers = ImageIO.getImageWritersByFormatName("tiff");
         assertTrue(writers.hasNext(), "JDK TIFF writer expected on Java 11+");

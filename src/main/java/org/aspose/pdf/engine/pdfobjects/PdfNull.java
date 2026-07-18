@@ -4,37 +4,31 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.logging.Logger;
 
-/**
- * PDF null object (§7.3.9, ISO 32000-1:2008).
- * <p>
- * Represents the single "empty" value. Equivalent to a missing entry in a dictionary.
- * Singleton: use {@link #INSTANCE} or {@link #getInstance()}.
- * </p>
- */
+/// PDF null object (§7.3.9, ISO 32000-1:2008).
+///
+/// Represents the single "empty" value. Equivalent to a missing entry in a dictionary.
+/// Singleton: use [#INSTANCE] or [#getInstance()].
+///
 public final class PdfNull extends PdfBase {
 
     private static final Logger LOG = Logger.getLogger(PdfNull.class.getName());
 
     private static final byte[] BYTES = {'n', 'u', 'l', 'l'};
 
-    /** The singleton null instance. */
+    /// The singleton null instance.
     public static final PdfNull INSTANCE = new PdfNull();
 
     private PdfNull() {
     }
 
-    /**
-     * Returns the singleton null instance.
-     *
-     * @return the null instance
-     */
+    /// Returns the singleton null instance.
+    ///
+    /// @return the null instance
     public static PdfNull getInstance() {
         return INSTANCE;
     }
 
-    /**
-     * Flyweight singleton — object key assignment is ignored.
-     */
+    /// Flyweight singleton — object key assignment is ignored.
     @Override
     public void setObjectKey(PdfObjectKey key) {
         // Flyweight: ignore object key assignment to protect singleton

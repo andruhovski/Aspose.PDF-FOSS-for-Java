@@ -21,17 +21,15 @@ import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Bug M — {@link TextBuilder#formatNumber(double)} (private, but reached via
- * every {@code appendText} / position / color setter) must always emit
- * numbers with {@code '.'} as the decimal separator, regardless of the JVM's
- * default locale. PDF syntax recognises only {@code '.'} per ISO 32000-1:2008
- * §7.3.3; a locale like {@code ru/de/fr} emits commas and viewers report
- * {@code Unknown operator ',2000'} and refuse to render any content.
- *
- * <p>Each test saves/restores {@link Locale#getDefault()} in {@code @AfterEach}
- * so cross-test contamination is impossible.</p>
- */
+/// Bug M — [TextBuilder#formatNumber(double)] (private, but reached via
+/// every `appendText` / position / color setter) must always emit
+/// numbers with `'.'` as the decimal separator, regardless of the JVM's
+/// default locale. PDF syntax recognises only `'.'` per ISO 32000-1:2008
+/// §7.3.3; a locale like `ru/de/fr` emits commas and viewers report
+/// `Unknown operator ',2000'` and refuse to render any content.
+///
+/// Each test saves/restores [Locale#getDefault()] in `@AfterEach`
+/// so cross-test contamination is impossible.
 class TextBuilderLocaleTest {
 
     private static final Pattern COMMA_DECIMAL = Pattern.compile("\\b\\d+,\\d+\\b");
@@ -46,13 +44,11 @@ class TextBuilderLocaleTest {
     @AfterEach
     void restoreLocale() { Locale.setDefault(savedLocale); }
 
-    /**
-     * Builds a 1-page document with a {@link TextFragment} placed at
-     * {@code (87.2, 496.5)} with foreground colour {@code (0.1, 0.2, 0.3)}
-     * — all values that go through {@code formatNumber} as fractional doubles.
-     * Returns the saved file's bytes interpreted as ISO-8859-1 so PDF binary
-     * survives untouched.
-     */
+    /// Builds a 1-page document with a [TextFragment] placed at
+    /// `(87.2, 496.5)` with foreground colour `(0.1, 0.2, 0.3)`
+    /// — all values that go through `formatNumber` as fractional doubles.
+    /// Returns the saved file's bytes interpreted as ISO-8859-1 so PDF binary
+    /// survives untouched.
     private String buildAndReadBytes(String label) throws IOException {
         Path out = tempDir.resolve(label + ".pdf");
         try (Document doc = new Document()) {

@@ -1,21 +1,20 @@
 package org.aspose.pdf.annotations;
 
-import org.aspose.pdf.*;
+import org.aspose.pdf.Color;
+import org.aspose.pdf.Page;
+import org.aspose.pdf.Rectangle;
 import org.aspose.pdf.engine.pdfobjects.*;
 import org.aspose.pdf.text.RichTextFontStyles;
 import org.aspose.pdf.text.TextState;
 
-import java.nio.charset.StandardCharsets;
 import java.util.logging.Logger;
 
-/**
- * Free text annotation (ISO 32000-1:2008, Section 12.5.6.6, /Subtype /FreeText).
- * <p>
- * A free text annotation displays text directly on the page without requiring
- * a pop-up window. The text is always visible and is rendered using a default
- * appearance string.
- * </p>
- */
+/// Free text annotation (ISO 32000-1:2008, Section 12.5.6.6, /Subtype /FreeText).
+///
+/// A free text annotation displays text directly on the page without requiring
+/// a pop-up window. The text is always visible and is rendered using a default
+/// appearance string.
+///
 public class FreeTextAnnotation extends MarkupAnnotation {
 
     private static final Logger LOG = Logger.getLogger(FreeTextAnnotation.class.getName());
@@ -23,49 +22,40 @@ public class FreeTextAnnotation extends MarkupAnnotation {
     private DefaultAppearance defaultAppearanceObj;
     private TextState textStyle;
 
-    /**
-     * Constructs a free text annotation from an existing PDF dictionary.
-     *
-     * @param dict the PDF dictionary backing this annotation
-     * @param page the page this annotation belongs to
-     */
+    /// Constructs a free text annotation from an existing PDF dictionary.
+    ///
+    /// @param dict the PDF dictionary backing this annotation
+    /// @param page the page this annotation belongs to
     public FreeTextAnnotation(PdfDictionary dict, Page page) {
         super(dict, page);
     }
 
-    /**
-     * Constructs a new free text annotation with the given rectangle on the specified page.
-     *
-     * @param page the page this annotation belongs to
-     * @param rect the annotation rectangle
-     */
+    /// Constructs a new free text annotation with the given rectangle on the specified page.
+    ///
+    /// @param page the page this annotation belongs to
+    /// @param rect the annotation rectangle
     public FreeTextAnnotation(Page page, Rectangle rect) {
         super(page, rect);
         dict.set(PdfName.of("Subtype"), PdfName.of("FreeText"));
     }
 
-    /**
-     * Constructs a new free text annotation with the given rectangle and default appearance.
-     * <p>
-     * The default appearance defines the font, font size, and text color used
-     * when rendering the annotation text.
-     * </p>
-     *
-     * @param page              the page this annotation belongs to
-     * @param rect              the annotation rectangle
-     * @param defaultAppearance the default appearance for the annotation text
-     */
+    /// Constructs a new free text annotation with the given rectangle and default appearance.
+    ///
+    /// The default appearance defines the font, font size, and text color used
+    /// when rendering the annotation text.
+    ///
+    /// @param page              the page this annotation belongs to
+    /// @param rect              the annotation rectangle
+    /// @param defaultAppearance the default appearance for the annotation text
     public FreeTextAnnotation(Page page, Rectangle rect, DefaultAppearance defaultAppearance) {
         super(page, rect);
         dict.set(PdfName.of("Subtype"), PdfName.of("FreeText"));
         setDefaultAppearance(defaultAppearance);
     }
 
-    /**
-     * Returns the default appearance string (/DA entry).
-     *
-     * @return the default appearance string, or null if not set
-     */
+    /// Returns the default appearance string (/DA entry).
+    ///
+    /// @return the default appearance string, or null if not set
     public String getDefaultAppearance() {
         if (defaultAppearanceObj != null) {
             return defaultAppearanceObj.getText();
@@ -74,24 +64,19 @@ public class FreeTextAnnotation extends MarkupAnnotation {
         return (da instanceof PdfString) ? ((PdfString) da).getString() : null;
     }
 
-    /**
-     * Returns the default appearance string (/DA entry).
-     * <p>
-     * Alias for {@link #getDefaultAppearance()} to maintain compatibility
-     * with Aspose.PDF naming conventions.
-     * </p>
-     *
-     * @return the default appearance string, or null if not set
-     */
+    /// Returns the default appearance string (/DA entry).
+    ///
+    /// Alias for [#getDefaultAppearance()] to maintain compatibility
+    /// with Aspose.PDF naming conventions.
+    ///
+    /// @return the default appearance string, or null if not set
     public String getDefaultAppearanceString() {
         return getDefaultAppearance();
     }
 
-    /**
-     * Sets the default appearance string (/DA entry).
-     *
-     * @param da the default appearance string
-     */
+    /// Sets the default appearance string (/DA entry).
+    ///
+    /// @param da the default appearance string
     public void setDefaultAppearance(String da) {
         this.defaultAppearanceObj = null;
         if (da != null) {
@@ -99,21 +84,17 @@ public class FreeTextAnnotation extends MarkupAnnotation {
         }
     }
 
-    /**
-     * Returns the default appearance object for this annotation.
-     *
-     * @return the default appearance object, or null if not set
-     */
+    /// Returns the default appearance object for this annotation.
+    ///
+    /// @return the default appearance object, or null if not set
     public DefaultAppearance getDefaultAppearanceObject() {
         return defaultAppearanceObj;
     }
 
-    /**
-     * Sets the default appearance using a {@link DefaultAppearance} object.
-     * This also updates the /DA string in the underlying dictionary.
-     *
-     * @param da the default appearance object
-     */
+    /// Sets the default appearance using a [DefaultAppearance] object.
+    /// This also updates the /DA string in the underlying dictionary.
+    ///
+    /// @param da the default appearance object
     public void setDefaultAppearance(DefaultAppearance da) {
         this.defaultAppearanceObj = da;
         if (da != null) {
@@ -122,37 +103,30 @@ public class FreeTextAnnotation extends MarkupAnnotation {
         }
     }
 
-    /**
-     * Returns the text style applied to this annotation's text.
-     *
-     * @return the text style, or null if not set
-     */
+    /// Returns the text style applied to this annotation's text.
+    ///
+    /// @return the text style, or null if not set
     public TextState getTextStyle() {
         return textStyle;
     }
 
-    /**
-     * Sets the text style for this annotation's text.
-     *
-     * @param textStyle the text style
-     */
+    /// Sets the text style for this annotation's text.
+    ///
+    /// @param textStyle the text style
     public void setTextStyle(TextState textStyle) {
         this.textStyle = textStyle;
     }
 
-    /**
-     * Applies rich text font styles to a range of characters in the annotation text.
-     * <p>
-     * This method modifies the rich text (/RC) entry to apply CSS-style formatting
-     * (bold, italic, underline) to the specified character range. The range is
-     * zero-based and refers to the plain text content of the annotation.
-     * </p>
-     *
-     * @param startIndex the starting character index (inclusive, zero-based)
-     * @param endIndex   the ending character index (inclusive, zero-based)
-     * @param styles     a bitmask of {@link RichTextFontStyles} flags
-     * @see RichTextFontStyles
-     */
+    /// Applies rich text font styles to a range of characters in the annotation text.
+    ///
+    /// This method modifies the rich text (/RC) entry to apply CSS-style formatting
+    /// (bold, italic, underline) to the specified character range. The range is
+    /// zero-based and refers to the plain text content of the annotation.
+    ///
+    /// @param startIndex the starting character index (inclusive, zero-based)
+    /// @param endIndex   the ending character index (inclusive, zero-based)
+    /// @param styles     a bitmask of [RichTextFontStyles] flags
+    /// @see RichTextFontStyles
     public void setTextStyle(int startIndex, int endIndex, int styles) {
         LOG.fine(() -> "setTextStyle(" + startIndex + ", " + endIndex + ", 0x"
                 + Integer.toHexString(styles) + ")");
@@ -189,20 +163,17 @@ public class FreeTextAnnotation extends MarkupAnnotation {
         setRichText(richText.toString());
     }
 
-    /**
-     * Applies rich text font styles to the entire annotation text, optionally changing
-     * font name, size, and color.
-     * <p>
-     * When {@link RichTextFontStyles#ClearExisting} is included in the styles bitmask,
-     * all existing styles are removed before applying the new ones.
-     * </p>
-     *
-     * @param styles   a bitmask of {@link RichTextFontStyles} flags
-     * @param fontName the font name to apply (e.g. "Arial", "Helvetica")
-     * @param fontSize the font size in points
-     * @param color    the text color
-     * @see RichTextFontStyles
-     */
+    /// Applies rich text font styles to the entire annotation text, optionally changing
+    /// font name, size, and color.
+    ///
+    /// When [RichTextFontStyles#ClearExisting] is included in the styles bitmask,
+    /// all existing styles are removed before applying the new ones.
+    ///
+    /// @param styles   a bitmask of [RichTextFontStyles] flags
+    /// @param fontName the font name to apply (e.g. "Arial", "Helvetica")
+    /// @param fontSize the font size in points
+    /// @param color    the text color
+    /// @see RichTextFontStyles
     public void setTextStyle(int styles, String fontName, double fontSize, Color color) {
         LOG.fine(() -> "setTextStyle(0x" + Integer.toHexString(styles) + ", "
                 + fontName + ", " + fontSize + ", " + color + ")");
@@ -263,24 +234,19 @@ public class FreeTextAnnotation extends MarkupAnnotation {
         }
     }
 
-    /**
-     * Returns the justification of the text (/Q entry).
-     * <p>
-     * 0 = left-justified, 1 = centered, 2 = right-justified.
-     * </p>
-     *
-     * @return the justification value, default 0 (left-justified)
-     */
+    /// Returns the justification of the text (/Q entry).
+    ///
+    /// 0 = left-justified, 1 = centered, 2 = right-justified.
+    ///
+    /// @return the justification value, default 0 (left-justified)
     public int getJustification() {
         return dict.getInt("Q", 0);
     }
 
-    /**
-     * Builds a CSS style string from a {@link RichTextFontStyles} bitmask.
-     *
-     * @param styles the bitmask
-     * @return the CSS style string
-     */
+    /// Builds a CSS style string from a [RichTextFontStyles] bitmask.
+    ///
+    /// @param styles the bitmask
+    /// @return the CSS style string
     private static String buildCssStyle(int styles) {
         StringBuilder css = new StringBuilder();
         if ((styles & RichTextFontStyles.Bold) != 0) {
@@ -295,12 +261,10 @@ public class FreeTextAnnotation extends MarkupAnnotation {
         return css.toString();
     }
 
-    /**
-     * Escapes special XML characters in text content.
-     *
-     * @param text the text to escape
-     * @return the escaped text
-     */
+    /// Escapes special XML characters in text content.
+    ///
+    /// @param text the text to escape
+    /// @return the escaped text
     private static String escapeXml(String text) {
         if (text == null) return "";
         return text.replace("&", "&amp;")
@@ -316,12 +280,10 @@ public class FreeTextAnnotation extends MarkupAnnotation {
     private static final PdfName N_ROTATE = PdfName.of("Rotate");
     private static final PdfName N_CL     = PdfName.of("CL");
 
-    /**
-     * Returns the intent (/IT) of this annotation, or {@link FreeTextIntent#Undefined}
-     * if not set. See ISO 32000-1:2008 §12.5.6.6 (FreeText annotations).
-     *
-     * @return the intent, never null
-     */
+    /// Returns the intent (/IT) of this annotation, or [FreeTextIntent#Undefined]
+    /// if not set. See ISO 32000-1:2008 §12.5.6.6 (FreeText annotations).
+    ///
+    /// @return the intent, never null
     public FreeTextIntent getIntent() {
         PdfBase it = dict.get(N_IT);
         if (it instanceof PdfName) {
@@ -330,12 +292,10 @@ public class FreeTextAnnotation extends MarkupAnnotation {
         return FreeTextIntent.Undefined;
     }
 
-    /**
-     * Sets the intent (/IT). Passing {@code null} or {@link FreeTextIntent#Undefined}
-     * removes the entry.
-     *
-     * @param intent the intent, or null/Undefined to remove
-     */
+    /// Sets the intent (/IT). Passing `null` or [FreeTextIntent#Undefined]
+    /// removes the entry.
+    ///
+    /// @param intent the intent, or null/Undefined to remove
     public void setIntent(FreeTextIntent intent) {
         if (intent == null || intent == FreeTextIntent.Undefined) {
             dict.remove(N_IT);
@@ -349,12 +309,10 @@ public class FreeTextAnnotation extends MarkupAnnotation {
         }
     }
 
-    /**
-     * Returns the rotation (/Rotate) of the annotation in degrees, default 0.
-     * Should be a multiple of 90 per spec.
-     *
-     * @return the rotation
-     */
+    /// Returns the rotation (/Rotate) of the annotation in degrees, default 0.
+    /// Should be a multiple of 90 per spec.
+    ///
+    /// @return the rotation
     public int getRotate() {
         PdfBase r = dict.get(N_ROTATE);
         if (r instanceof PdfInteger) {
@@ -366,12 +324,10 @@ public class FreeTextAnnotation extends MarkupAnnotation {
         return 0;
     }
 
-    /**
-     * Sets the rotation (/Rotate). A warning is logged if the value is not a
-     * multiple of 90, but the value is still written.
-     *
-     * @param rotate the rotation in degrees
-     */
+    /// Sets the rotation (/Rotate). A warning is logged if the value is not a
+    /// multiple of 90, but the value is still written.
+    ///
+    /// @param rotate the rotation in degrees
     public void setRotate(int rotate) {
         if (rotate % 90 != 0) {
             LOG.warning(() -> "FreeTextAnnotation Rotate should be a multiple of 90, got " + rotate);
@@ -379,14 +335,12 @@ public class FreeTextAnnotation extends MarkupAnnotation {
         dict.set(N_ROTATE, PdfInteger.valueOf(rotate));
     }
 
-    /**
-     * Returns the callout-line points (/CL), or {@code null} if not set.
-     *
-     * <p>Per spec the callout line is either 2 points (4 numbers) or 3 points
-     * (6 numbers). Each row of the returned array is {@code {x, y}}.</p>
-     *
-     * @return array of points, or null
-     */
+    /// Returns the callout-line points (/CL), or `null` if not set.
+    ///
+    /// Per spec the callout line is either 2 points (4 numbers) or 3 points
+    /// (6 numbers). Each row of the returned array is `{x, y}`.
+    ///
+    /// @return array of points, or null
     public double[][] getCallout() {
         PdfBase cl = dict.get(N_CL);
         if (!(cl instanceof PdfArray)) return null;
@@ -402,13 +356,11 @@ public class FreeTextAnnotation extends MarkupAnnotation {
         return result;
     }
 
-    /**
-     * Sets the callout-line points (/CL). Pass {@code null} or an empty
-     * array to remove the entry. Must be 2 or 3 points; a warning is logged
-     * for other sizes and the call is a no-op.
-     *
-     * @param points array of {x, y} points (length 2 or 3), or null
-     */
+    /// Sets the callout-line points (/CL). Pass `null` or an empty
+    /// array to remove the entry. Must be 2 or 3 points; a warning is logged
+    /// for other sizes and the call is a no-op.
+    ///
+    /// @param points array of {x, y} points (length 2 or 3), or null
     public void setCallout(double[][] points) {
         if (points == null || points.length == 0) {
             dict.remove(N_CL);
@@ -430,19 +382,17 @@ public class FreeTextAnnotation extends MarkupAnnotation {
         dict.set(N_CL, arr);
     }
 
-    /**
-     * Returns the line-ending style at the endpoint of the callout line
-     * ({@code /LE}, ISO 32000-1:2008 §12.5.6.6). Only meaningful when the
-     * annotation's {@code /IT} is {@code FreeTextCallout}; otherwise the value
-     * is read-only metadata that PDF viewers may ignore.
-     *
-     * <p>Unlike {@link LineAnnotation} (which stores {@code /LE} as a two-entry
-     * array for start+end), a FreeText callout has a single endpoint, so
-     * {@code /LE} is stored as a bare {@link org.aspose.pdf.engine.pdfobjects.PdfName}.</p>
-     *
-     * @return the ending style, or {@link LineEnding#None} if not set or
-     *         unrecognised
-     */
+    /// Returns the line-ending style at the endpoint of the callout line
+    /// (`/LE`, ISO 32000-1:2008 §12.5.6.6). Only meaningful when the
+    /// annotation's `/IT` is `FreeTextCallout`; otherwise the value
+    /// is read-only metadata that PDF viewers may ignore.
+    ///
+    /// Unlike [LineAnnotation] (which stores `/LE` as a two-entry
+    /// array for start+end), a FreeText callout has a single endpoint, so
+    /// `/LE` is stored as a bare [org.aspose.pdf.engine.pdfobjects.PdfName].
+    ///
+    /// @return the ending style, or [LineEnding#None] if not set or
+    ///         unrecognised
     public LineEnding getEndingStyle() {
         PdfBase le = dict.get("LE");
         if (le instanceof PdfName) {
@@ -455,13 +405,11 @@ public class FreeTextAnnotation extends MarkupAnnotation {
         return LineEnding.None;
     }
 
-    /**
-     * Sets the line-ending style at the endpoint of the callout line.
-     * Passing {@code null} or {@link LineEnding#None} removes the {@code /LE}
-     * entry from the dictionary.
-     *
-     * @param style the ending style; null/None clears the entry
-     */
+    /// Sets the line-ending style at the endpoint of the callout line.
+    /// Passing `null` or [LineEnding#None] removes the `/LE`
+    /// entry from the dictionary.
+    ///
+    /// @param style the ending style; null/None clears the entry
     public void setEndingStyle(LineEnding style) {
         if (style == null || style == LineEnding.None) {
             dict.remove(PdfName.of("LE"));

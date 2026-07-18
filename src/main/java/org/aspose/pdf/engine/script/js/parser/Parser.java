@@ -5,19 +5,13 @@ import org.aspose.pdf.engine.script.js.lexer.Lexer;
 import org.aspose.pdf.engine.script.js.lexer.Token;
 import org.aspose.pdf.engine.script.js.lexer.TokenType;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-/**
- * Recursive-descent parser for ECMAScript 3 (ECMA-262 3rd ed., sec 11-14).
- *
- * <p>Implements the full statement and expression grammar with the complete
- * precedence ladder and Automatic Semicolon Insertion (sec 7.9). On malformed
- * input it throws {@link JSSyntaxError} with a source position.</p>
- */
+/// Recursive-descent parser for ECMAScript 3 (ECMA-262 3rd ed., sec 11-14).
+///
+/// Implements the full statement and expression grammar with the complete
+/// precedence ladder and Automatic Semicolon Insertion (sec 7.9). On malformed
+/// input it throws [JSSyntaxError] with a source position.
 public final class Parser {
 
     private static final Set<String> ASSIGN_OPS = new HashSet<>(Arrays.asList(
@@ -30,13 +24,11 @@ public final class Parser {
         this.toks = toks;
     }
 
-    /**
-     * Parses a complete program from source text.
-     *
-     * @param source ES3 source
-     * @return the {@link Node.Program} root
-     * @throws JSSyntaxError on a lexical or syntactic error
-     */
+    /// Parses a complete program from source text.
+    ///
+    /// @param source ES3 source
+    /// @return the [Node.Program] root
+    /// @throws JSSyntaxError on a lexical or syntactic error
     public static Node.Program parse(String source) {
         List<Token> toks = new Lexer(source).tokenize();
         return new Parser(toks).parseProgram();
@@ -113,7 +105,7 @@ public final class Parser {
         return new JSSyntaxError(msg, t.line, t.column);
     }
 
-    /** Automatic Semicolon Insertion (sec 7.9). */
+    /// Automatic Semicolon Insertion (sec 7.9).
     private void semicolon() {
         if (eatPunct(";")) {
             return;
@@ -457,10 +449,8 @@ public final class Parser {
         return test;
     }
 
-    /**
-     * Binary precedence climbing. Levels (low to high): || && | ^ &amp;
-     * equality relational shift additive multiplicative.
-     */
+    /// Binary precedence climbing. Levels (low to high): || && | ^ &
+    /// equality relational shift additive multiplicative.
     private Node parseBinary(int minLevel, boolean noIn) {
         Node left = parseUnary(noIn);
         while (true) {

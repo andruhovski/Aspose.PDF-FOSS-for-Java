@@ -9,14 +9,12 @@ import org.w3c.dom.Node;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * The XFA <b>instanceManager</b> host object (Stage B / B3.2) for a variable-occurrence container —
- * accessed in script as {@code _<name>} (e.g. {@code _Detail.addInstance()}). Binding does the
- * static occur-expansion (the {@code min} occurrences); this object performs the <b>runtime</b>
- * add/remove/set against the same Form-DOM instance list, honouring the {@code <occur min max>}
- * limits. Each instance is a same-named subform sibling under a shared parent; a new instance is a
- * deep clone of the template (or an existing instance), its field values cleared unless merged.
- */
+/// The XFA **instanceManager** host object (Stage B / B3.2) for a variable-occurrence container —
+/// accessed in script as `_<name>` (e.g. `_Detail.addInstance()`). Binding does the
+/// static occur-expansion (the `min` occurrences); this object performs the **runtime**
+/// add/remove/set against the same Form-DOM instance list, honouring the `<occur min max>`
+/// limits. Each instance is a same-named subform sibling under a shared parent; a new instance is a
+/// deep clone of the template (or an existing instance), its field values cleared unless merged.
 public final class XfaInstanceManager extends JSObject {
 
     private final XfaScriptHost host;
@@ -89,12 +87,12 @@ public final class XfaInstanceManager extends JSObject {
 
     /* ------------------------------ mutators ------------------------------ */
 
-    /** @return the current instance count. */
+    /// @return the current instance count.
     public int count() {
         return instanceElements().size();
     }
 
-    /** Adds one instance (clone of the template / last instance), honouring {@code max}. */
+    /// Adds one instance (clone of the template / last instance), honouring `max`.
     public XfaScriptNode addInstance(boolean merge) {
         int c = count();
         if (max != -1 && c >= max) {
@@ -103,7 +101,7 @@ public final class XfaInstanceManager extends JSObject {
         return insertAt(c, merge);
     }
 
-    /** Inserts an instance at {@code index}, honouring {@code max}. */
+    /// Inserts an instance at `index`, honouring `max`.
     public XfaScriptNode insertInstance(int index, boolean merge) {
         int c = count();
         if (max != -1 && c >= max) {
@@ -139,7 +137,7 @@ public final class XfaInstanceManager extends JSObject {
         return host.wrap(host.canonical(clone));
     }
 
-    /** The node to insert before when appending after the last instance (keeps trailing siblings put). */
+    /// The node to insert before when appending after the last instance (keeps trailing siblings put).
     private Node refAfterLast(List<Element> existing) {
         if (existing.isEmpty()) {
             return null;
@@ -147,7 +145,7 @@ public final class XfaInstanceManager extends JSObject {
         return existing.get(existing.size() - 1).getNextSibling();
     }
 
-    /** Removes the instance at {@code index}, honouring {@code min}. */
+    /// Removes the instance at `index`, honouring `min`.
     public void removeInstance(int index) {
         List<Element> existing = instanceElements();
         if (existing.size() <= min || index < 0 || index >= existing.size()) {
@@ -158,7 +156,7 @@ public final class XfaInstanceManager extends JSObject {
         e.getParentNode().removeChild(e);
     }
 
-    /** Grows/shrinks to exactly {@code n}, clamped to {@code [min, max]}. */
+    /// Grows/shrinks to exactly `n`, clamped to `[min, max]`.
     public void setInstances(int n) {
         if (n < min) {
             n = min;
@@ -177,7 +175,7 @@ public final class XfaInstanceManager extends JSObject {
         }
     }
 
-    /** Moves the instance from {@code from} to {@code to}. */
+    /// Moves the instance from `from` to `to`.
     public void moveInstance(int from, int to) {
         List<Element> existing = instanceElements();
         if (from < 0 || from >= existing.size() || to < 0 || to >= existing.size() || from == to) {
@@ -210,12 +208,10 @@ public final class XfaInstanceManager extends JSObject {
         return out;
     }
 
-    /**
-     * Clears the field DATA values inside a freshly-added instance (XFA addInstance without merge).
-     * A {@code <caption>} or {@code <draw>} subtree is skipped — its {@code <value>} is static label
-     * content (e.g. "Právní řád založení", or the "2D kód dlužníka" headings of the barcode page added
-     * by a load script), not data, and must survive the clear (else the cloned section renders blank).
-     */
+    /// Clears the field DATA values inside a freshly-added instance (XFA addInstance without merge).
+    /// A `<caption>` or `<draw>` subtree is skipped — its `<value>` is static label
+    /// content (e.g. "Právní řád založení", or the "2D kód dlužníka" headings of the barcode page added
+    /// by a load script), not data, and must survive the clear (else the cloned section renders blank).
     private static void clearValues(Element el) {
         String ln = el.getLocalName() != null ? el.getLocalName() : el.getNodeName();
         if ("caption".equals(ln) || "draw".equals(ln)) {

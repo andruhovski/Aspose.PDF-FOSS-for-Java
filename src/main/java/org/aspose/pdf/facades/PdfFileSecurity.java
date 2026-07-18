@@ -2,29 +2,18 @@ package org.aspose.pdf.facades;
 
 import org.aspose.pdf.CryptoAlgorithm;
 import org.aspose.pdf.Document;
-import org.aspose.pdf.engine.pdfobjects.PdfArray;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfString;
 import org.aspose.pdf.engine.parser.PDFParser;
+import org.aspose.pdf.engine.pdfobjects.*;
 import org.aspose.pdf.engine.security.PDFEncryptionDict;
 import org.aspose.pdf.engine.security.StandardSecurityHandler;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.Closeable;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Provides methods for managing PDF document security: encryption, decryption,
- * passwords, and access permissions.
- */
+/// Provides methods for managing PDF document security: encryption, decryption,
+/// passwords, and access permissions.
 public class PdfFileSecurity implements Closeable {
 
     private static final Logger LOG = Logger.getLogger(PdfFileSecurity.class.getName());
@@ -36,134 +25,108 @@ public class PdfFileSecurity implements Closeable {
     private OutputStream outputStream;
     private boolean allowExceptions = true;
 
-    /**
-     * Creates a new {@code PdfFileSecurity} instance.
-     */
+    /// Creates a new `PdfFileSecurity` instance.
     public PdfFileSecurity() {
     }
 
-    /**
-     * Creates a facade bound to the specified input and output files.
-     *
-     * @param inputFile input PDF path
-     * @param outputFile output PDF path
-     */
+    /// Creates a facade bound to the specified input and output files.
+    ///
+    /// @param inputFile input PDF path
+    /// @param outputFile output PDF path
     public PdfFileSecurity(String inputFile, String outputFile) {
         this.inputFile = inputFile;
         this.outputFile = outputFile;
     }
 
-    /**
-     * Creates a facade bound to the specified input and output streams.
-     *
-     * @param inputStream input PDF stream
-     * @param outputStream output PDF stream
-     * @throws IOException if the input stream cannot be buffered
-     */
+    /// Creates a facade bound to the specified input and output streams.
+    ///
+    /// @param inputStream input PDF stream
+    /// @param outputStream output PDF stream
+    /// @throws IOException if the input stream cannot be buffered
     public PdfFileSecurity(InputStream inputStream, OutputStream outputStream) throws IOException {
         setInputStream(inputStream);
         this.outputStream = outputStream;
     }
 
-    /**
-     * Creates a facade bound to the specified document and output stream.
-     *
-     * @param document already opened document
-     * @param outputStream output PDF stream
-     */
+    /// Creates a facade bound to the specified document and output stream.
+    ///
+    /// @param document already opened document
+    /// @param outputStream output PDF stream
     public PdfFileSecurity(Document document, OutputStream outputStream) {
         bindPdf(document);
         this.outputStream = outputStream;
     }
 
-    /**
-     * Returns the configured input file path.
-     *
-     * @return the input file path, or {@code null}
-     */
+    /// Returns the configured input file path.
+    ///
+    /// @return the input file path, or `null`
     public String getInputFile() {
         return inputFile;
     }
 
-    /**
-     * Sets the configured input file path.
-     *
-     * @param inputFile the input file path
-     */
+    /// Sets the configured input file path.
+    ///
+    /// @param inputFile the input file path
     public void setInputFile(String inputFile) {
         closeDocumentOnly();
         this.inputFile = inputFile;
         this.inputBytes = null;
     }
 
-    /**
-     * Returns the configured output file path.
-     *
-     * @return the output file path, or {@code null}
-     */
+    /// Returns the configured output file path.
+    ///
+    /// @return the output file path, or `null`
     public String getOutputFile() {
         return outputFile;
     }
 
-    /**
-     * Sets the configured output file path.
-     *
-     * @param outputFile the output file path
-     */
+    /// Sets the configured output file path.
+    ///
+    /// @param outputFile the output file path
     public void setOutputFile(String outputFile) {
         this.outputFile = outputFile;
     }
 
-    /**
-     * Sets the configured input stream. The stream contents are buffered so the
-     * caller can continue using the original stream after facade operations.
-     *
-     * @param inputStream the input PDF stream
-     * @throws IOException if buffering fails
-     */
+    /// Sets the configured input stream. The stream contents are buffered so the
+    /// caller can continue using the original stream after facade operations.
+    ///
+    /// @param inputStream the input PDF stream
+    /// @throws IOException if buffering fails
     public void setInputStream(InputStream inputStream) throws IOException {
         closeDocumentOnly();
         this.inputBytes = inputStream != null ? readAllBytes(inputStream) : null;
         this.inputFile = null;
     }
 
-    /** Returns the bound Document, or {@code null}. Mirrors C# {@code PdfFileSecurity.Document}. */
+    /// Returns the bound Document, or `null`. Mirrors C# `PdfFileSecurity.Document`.
     public Document getDocument() {
         return document;
     }
 
-    /**
-     * Returns the configured output stream.
-     *
-     * @return the output stream, or {@code null}
-     */
+    /// Returns the configured output stream.
+    ///
+    /// @return the output stream, or `null`
     public OutputStream getOutputStream() {
         return outputStream;
     }
 
-    /**
-     * Sets the configured output stream.
-     *
-     * @param outputStream the output stream
-     */
+    /// Sets the configured output stream.
+    ///
+    /// @param outputStream the output stream
     public void setOutputStream(OutputStream outputStream) {
         this.outputStream = outputStream;
     }
 
-    /**
-     * Returns whether facade methods should throw immediately when an operation fails.
-     *
-     * @return {@code true} when exceptions are propagated
-     */
+    /// Returns whether facade methods should throw immediately when an operation fails.
+    ///
+    /// @return `true` when exceptions are propagated
     public boolean isAllowExceptions() {
         return allowExceptions;
     }
 
-    /**
-     * Sets the exception behavior flag.
-     *
-     * @param allowExceptions exception behavior flag
-     */
+    /// Sets the exception behavior flag.
+    ///
+    /// @param allowExceptions exception behavior flag
     public void setAllowExceptions(boolean allowExceptions) {
         if (!allowExceptions) {
             throw new UnsupportedOperationException("PdfFileSecurity.AllowExceptions=false is not supported");
@@ -171,12 +134,10 @@ public class PdfFileSecurity implements Closeable {
         this.allowExceptions = true;
     }
 
-    /**
-     * Binds a PDF file to this security facade.
-     *
-     * @param inputFile path to the PDF file
-     * @return {@code true} on success
-     */
+    /// Binds a PDF file to this security facade.
+    ///
+    /// @param inputFile path to the PDF file
+    /// @return `true` on success
     public boolean bindPdf(String inputFile) {
         closeDocumentOnly();
         this.inputFile = inputFile;
@@ -195,12 +156,10 @@ public class PdfFileSecurity implements Closeable {
         }
     }
 
-    /**
-     * Binds a PDF from an input stream.
-     *
-     * @param inputStream the input stream containing PDF data
-     * @return {@code true} on success
-     */
+    /// Binds a PDF from an input stream.
+    ///
+    /// @param inputStream the input stream containing PDF data
+    /// @return `true` on success
     public boolean bindPdf(InputStream inputStream) {
         closeDocumentOnly();
         try {
@@ -219,12 +178,10 @@ public class PdfFileSecurity implements Closeable {
         }
     }
 
-    /**
-     * Binds an existing {@link Document} to this security facade.
-     *
-     * @param document the document to bind
-     * @return {@code true} on success
-     */
+    /// Binds an existing [Document] to this security facade.
+    ///
+    /// @param document the document to bind
+    /// @return `true` on success
     public boolean bindPdf(Document document) {
         if (document == null) {
             LOG.warning("Cannot bind null document");
@@ -237,12 +194,10 @@ public class PdfFileSecurity implements Closeable {
         return true;
     }
 
-    /**
-     * Saves the bound document to a file.
-     *
-     * @param outputFile path to the output file
-     * @return {@code true} on success
-     */
+    /// Saves the bound document to a file.
+    ///
+    /// @param outputFile path to the output file
+    /// @return `true` on success
     public boolean save(String outputFile) {
         try {
             if (document == null) {
@@ -258,12 +213,10 @@ public class PdfFileSecurity implements Closeable {
         }
     }
 
-    /**
-     * Saves the bound document to an output stream.
-     *
-     * @param outputStream the output stream
-     * @return {@code true} on success
-     */
+    /// Saves the bound document to an output stream.
+    ///
+    /// @param outputStream the output stream
+    /// @return `true` on success
     public boolean save(OutputStream outputStream) {
         try {
             if (document == null) {
@@ -279,11 +232,9 @@ public class PdfFileSecurity implements Closeable {
         }
     }
 
-    /**
-     * Saves the bound document to the configured output destination.
-     *
-     * @return {@code true} on success
-     */
+    /// Saves the bound document to the configured output destination.
+    ///
+    /// @return `true` on success
     public boolean save() {
         if (outputFile != null) {
             return save(outputFile);
@@ -295,12 +246,10 @@ public class PdfFileSecurity implements Closeable {
         return false;
     }
 
-    /**
-     * Decrypts the bound PDF document.
-     *
-     * @param password the document password
-     * @return {@code true} if successful
-     */
+    /// Decrypts the bound PDF document.
+    ///
+    /// @param password the document password
+    /// @return `true` if successful
     public boolean decryptFile(String password) {
         try {
             Document bound = ensureDocument(password);
@@ -314,11 +263,9 @@ public class PdfFileSecurity implements Closeable {
         }
     }
 
-    /**
-     * Returns whether the bound document is encrypted.
-     *
-     * @return {@code true} if the document is encrypted
-     */
+    /// Returns whether the bound document is encrypted.
+    ///
+    /// @return `true` if the document is encrypted
     public boolean isEncrypted() {
         if (document == null) {
             return false;
@@ -326,37 +273,31 @@ public class PdfFileSecurity implements Closeable {
         return document.isEncrypted();
     }
 
-    /**
-     * Sets document privileges using explicit password strings and a raw bitmask.
-     *
-     * @param userPassword the user password
-     * @param ownerPassword the owner password
-     * @param permissions the permission bitmask
-     * @return {@code true} on success
-     */
+    /// Sets document privileges using explicit password strings and a raw bitmask.
+    ///
+    /// @param userPassword the user password
+    /// @param ownerPassword the owner password
+    /// @param permissions the permission bitmask
+    /// @return `true` on success
     public boolean setPrivilege(String userPassword, String ownerPassword, int permissions) {
         return setPrivilege(userPassword, ownerPassword, new DocumentPrivilege(permissions));
     }
 
-    /**
-     * Sets document privileges using empty passwords.
-     *
-     * @param privilege privilege flags to apply
-     * @return {@code true} on success
-     */
+    /// Sets document privileges using empty passwords.
+    ///
+    /// @param privilege privilege flags to apply
+    /// @return `true` on success
     public boolean setPrivilege(DocumentPrivilege privilege) {
         return setPrivilege("", "", privilege);
     }
 
-    /**
-     * Sets document privileges and applies standard encryption using the supplied
-     * passwords.
-     *
-     * @param userPassword user password
-     * @param ownerPassword owner password
-     * @param privilege privilege flags to apply
-     * @return {@code true} on success
-     */
+    /// Sets document privileges and applies standard encryption using the supplied
+    /// passwords.
+    ///
+    /// @param userPassword user password
+    /// @param ownerPassword owner password
+    /// @param privilege privilege flags to apply
+    /// @return `true` on success
     public boolean setPrivilege(String userPassword, String ownerPassword, DocumentPrivilege privilege) {
         try {
             Document bound = ensureDocument(null);
@@ -368,30 +309,26 @@ public class PdfFileSecurity implements Closeable {
         }
     }
 
-    /**
-     * Encrypts the document using the specified key size.
-     *
-     * @param userPassword user password
-     * @param ownerPassword owner password
-     * @param privilege privilege flags
-     * @param keySize encryption key size
-     * @return {@code true} on success
-     */
+    /// Encrypts the document using the specified key size.
+    ///
+    /// @param userPassword user password
+    /// @param ownerPassword owner password
+    /// @param privilege privilege flags
+    /// @param keySize encryption key size
+    /// @return `true` on success
     public boolean encryptFile(String userPassword, String ownerPassword,
                                DocumentPrivilege privilege, KeySize keySize) {
         return encryptFile(userPassword, ownerPassword, privilege, keySize, null);
     }
 
-    /**
-     * Encrypts the document using the specified key size and algorithm family.
-     *
-     * @param userPassword user password
-     * @param ownerPassword owner password
-     * @param privilege privilege flags
-     * @param keySize encryption key size
-     * @param algorithm algorithm family
-     * @return {@code true} on success
-     */
+    /// Encrypts the document using the specified key size and algorithm family.
+    ///
+    /// @param userPassword user password
+    /// @param ownerPassword owner password
+    /// @param privilege privilege flags
+    /// @param keySize encryption key size
+    /// @param algorithm algorithm family
+    /// @return `true` on success
     public boolean encryptFile(String userPassword, String ownerPassword,
                                DocumentPrivilege privilege, KeySize keySize, Algorithm algorithm) {
         try {
@@ -403,15 +340,13 @@ public class PdfFileSecurity implements Closeable {
         }
     }
 
-    /**
-     * Changes the document passwords while preserving the current permissions and
-     * algorithm.
-     *
-     * @param oldPassword current owner password
-     * @param newPassword new user password
-     * @param newOwnerPassword new owner password
-     * @return {@code true} on success
-     */
+    /// Changes the document passwords while preserving the current permissions and
+    /// algorithm.
+    ///
+    /// @param oldPassword current owner password
+    /// @param newPassword new user password
+    /// @param newOwnerPassword new owner password
+    /// @return `true` on success
     public boolean changePassword(String oldPassword, String newPassword, String newOwnerPassword) {
         try {
             Document bound = ensureDocument(oldPassword);
@@ -429,32 +364,28 @@ public class PdfFileSecurity implements Closeable {
         }
     }
 
-    /**
-     * Changes passwords and privilege flags using the specified key size.
-     *
-     * @param oldPassword old owner password
-     * @param newPassword new user password
-     * @param newOwnerPassword new owner password
-     * @param privilege new privileges
-     * @param keySize target key size
-     * @return {@code true} on success
-     */
+    /// Changes passwords and privilege flags using the specified key size.
+    ///
+    /// @param oldPassword old owner password
+    /// @param newPassword new user password
+    /// @param newOwnerPassword new owner password
+    /// @param privilege new privileges
+    /// @param keySize target key size
+    /// @return `true` on success
     public boolean changePassword(String oldPassword, String newPassword, String newOwnerPassword,
                                   DocumentPrivilege privilege, KeySize keySize) {
         return changePassword(oldPassword, newPassword, newOwnerPassword, privilege, keySize, null);
     }
 
-    /**
-     * Changes passwords, privilege flags, and algorithm family.
-     *
-     * @param oldPassword old owner password
-     * @param newPassword new user password
-     * @param newOwnerPassword new owner password
-     * @param privilege new privileges
-     * @param keySize target key size
-     * @param algorithm target algorithm family
-     * @return {@code true} on success
-     */
+    /// Changes passwords, privilege flags, and algorithm family.
+    ///
+    /// @param oldPassword old owner password
+    /// @param newPassword new user password
+    /// @param newOwnerPassword new owner password
+    /// @param privilege new privileges
+    /// @param keySize target key size
+    /// @param algorithm target algorithm family
+    /// @return `true` on success
     public boolean changePassword(String oldPassword, String newPassword, String newOwnerPassword,
                                   DocumentPrivilege privilege, KeySize keySize, Algorithm algorithm) {
         try {
@@ -471,9 +402,7 @@ public class PdfFileSecurity implements Closeable {
         }
     }
 
-    /**
-     * Attempts to set privileges and returns {@code false} instead of throwing.
-     */
+    /// Attempts to set privileges and returns `false` instead of throwing.
     public boolean trySetPrivilege(String userPassword, String ownerPassword, DocumentPrivilege privilege) {
         try {
             return setPrivilege(userPassword, ownerPassword, privilege);
@@ -482,17 +411,13 @@ public class PdfFileSecurity implements Closeable {
         }
     }
 
-    /**
-     * Attempts to encrypt and returns {@code false} instead of throwing.
-     */
+    /// Attempts to encrypt and returns `false` instead of throwing.
     public boolean tryEncryptFile(String userPassword, String ownerPassword,
                                   DocumentPrivilege privilege, KeySize keySize) {
         return tryEncryptFile(userPassword, ownerPassword, privilege, keySize, null);
     }
 
-    /**
-     * Attempts to encrypt and returns {@code false} instead of throwing.
-     */
+    /// Attempts to encrypt and returns `false` instead of throwing.
     public boolean tryEncryptFile(String userPassword, String ownerPassword,
                                   DocumentPrivilege privilege, KeySize keySize, Algorithm algorithm) {
         try {
@@ -502,9 +427,7 @@ public class PdfFileSecurity implements Closeable {
         }
     }
 
-    /**
-     * Attempts to decrypt and returns {@code false} instead of throwing.
-     */
+    /// Attempts to decrypt and returns `false` instead of throwing.
     public boolean tryDecryptFile(String password) {
         try {
             Document bound = ensureDocument(password);
@@ -520,9 +443,7 @@ public class PdfFileSecurity implements Closeable {
         }
     }
 
-    /**
-     * Attempts to change password and returns {@code false} instead of throwing.
-     */
+    /// Attempts to change password and returns `false` instead of throwing.
     public boolean tryChangePassword(String oldPassword, String newPassword, String newOwnerPassword) {
         try {
             return changePassword(oldPassword, newPassword, newOwnerPassword);
@@ -531,9 +452,7 @@ public class PdfFileSecurity implements Closeable {
         }
     }
 
-    /**
-     * Attempts to change password and returns {@code false} instead of throwing.
-     */
+    /// Attempts to change password and returns `false` instead of throwing.
     public boolean tryChangePassword(String oldPassword, String newPassword, String newOwnerPassword,
                                      DocumentPrivilege privilege, KeySize keySize) {
         try {
@@ -543,9 +462,7 @@ public class PdfFileSecurity implements Closeable {
         }
     }
 
-    /**
-     * Attempts to change password and returns {@code false} instead of throwing.
-     */
+    /// Attempts to change password and returns `false` instead of throwing.
     public boolean tryChangePassword(String oldPassword, String newPassword, String newOwnerPassword,
                                      DocumentPrivilege privilege, KeySize keySize, Algorithm algorithm) {
         try {
@@ -555,9 +472,7 @@ public class PdfFileSecurity implements Closeable {
         }
     }
 
-    /**
-     * Closes the security facade and releases the bound document.
-     */
+    /// Closes the security facade and releases the bound document.
     @Override
     public void close() {
         closeDocumentOnly();

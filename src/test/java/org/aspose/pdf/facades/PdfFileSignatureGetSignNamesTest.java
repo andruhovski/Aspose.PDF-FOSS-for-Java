@@ -12,14 +12,12 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Unit tests for {@link PdfFileSignature#getSignNames()} (Sprint 47).
- * <p>
- * {@code getSignNames()} must return only <em>signed</em> signature fields
- * (those with a {@code /V} value). Blank/unsigned signature fields and
- * non-signature fields must be excluded.
- * </p>
- */
+/// Unit tests for [PdfFileSignature#getSignNames()] (Sprint 47).
+///
+/// `getSignNames()` must return only _signed_ signature fields
+/// (those with a `/V` value). Blank/unsigned signature fields and
+/// non-signature fields must be excluded.
+///
 class PdfFileSignatureGetSignNamesTest {
 
     @Test

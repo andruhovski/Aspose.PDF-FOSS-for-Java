@@ -2,29 +2,20 @@ package org.aspose.pdf.engine.script.js.interp;
 
 import org.aspose.pdf.engine.script.js.ast.Node;
 import org.aspose.pdf.engine.script.js.builtins.Realm;
-import org.aspose.pdf.engine.script.js.runtime.JSArray;
-import org.aspose.pdf.engine.script.js.runtime.JSFunction;
-import org.aspose.pdf.engine.script.js.runtime.JSNull;
-import org.aspose.pdf.engine.script.js.runtime.JSNumber;
-import org.aspose.pdf.engine.script.js.runtime.JSObject;
-import org.aspose.pdf.engine.script.js.runtime.Scope;
-import org.aspose.pdf.engine.script.js.runtime.Types;
-import org.aspose.pdf.engine.script.js.runtime.Undefined;
+import org.aspose.pdf.engine.script.js.runtime.*;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 
-/**
- * Tree-walking evaluator for ECMAScript 3 (ECMA-262 3rd ed.).
- *
- * <p>Holds a {@link Realm} (the intrinsics + global object) and walks the AST
- * produced by the parser. Abstract operations that may invoke user code
- * (ToPrimitive, ToNumber/ToString of objects, abstract equality, the addition
- * operator) are methods here; the pure ones live in
- * {@link org.aspose.pdf.engine.script.js.runtime.Types}.</p>
- */
+/// Tree-walking evaluator for ECMAScript 3 (ECMA-262 3rd ed.).
+///
+/// Holds a [Realm] (the intrinsics + global object) and walks the AST
+/// produced by the parser. Abstract operations that may invoke user code
+/// (ToPrimitive, ToNumber/ToString of objects, abstract equality, the addition
+/// operator) are methods here; the pure ones live in
+/// [org.aspose.pdf.engine.script.js.runtime.Types].
 public final class Interpreter {
 
     private static final Object UNDEF = Undefined.INSTANCE;
@@ -33,26 +24,22 @@ public final class Interpreter {
     private final Scope globalScope;
     private final Deque<Object> thisStack = new ArrayDeque<>();
 
-    /**
-     * Guards against unbounded user-function recursion. A runaway or non-terminating recursive
-     * script (seen in real XFA forms) would otherwise blow the JVM stack with a fatal
-     * {@link StackOverflowError}, aborting the whole render. Like a real engine we instead throw a
-     * catchable {@code RangeError} ("Maximum call stack size exceeded"), so the script host reports
-     * the failure and rendering continues. 512 is well below the depth at which the interpreter's
-     * ~7 Java frames per JS call overflow the default thread stack.
-     */
+    /// Guards against unbounded user-function recursion. A runaway or non-terminating recursive
+    /// script (seen in real XFA forms) would otherwise blow the JVM stack with a fatal
+    /// [StackOverflowError], aborting the whole render. Like a real engine we instead throw a
+    /// catchable `RangeError` ("Maximum call stack size exceeded"), so the script host reports
+    /// the failure and rendering continues. 512 is well below the depth at which the interpreter's
+    /// \~7 Java frames per JS call overflow the default thread stack.
     private static final int MAX_CALL_DEPTH = 512;
     private int callDepth;
 
-    /**
-     * Execution-step budget: every statement/expression dispatch counts one step, and a
-     * script exceeding the budget is aborted with a {@link JsExecutionLimitError} (a host-level
-     * error a script-level {@code try/catch} cannot swallow). Closes the DoS where an untrusted
-     * form's {@code while(true){}} — or the child-chain absent-node loops noted in the B3.5
-     * findings — hangs the processing thread. The default (50 million steps, well under a
-     * minute of tree-walking) is far above any legitimate form script; override with
-     * {@code -Dxfa.js.maxSteps=N}. The budget resets per top-level {@link #run}/{@link #runWithThis}.
-     */
+    /// Execution-step budget: every statement/expression dispatch counts one step, and a
+    /// script exceeding the budget is aborted with a [JsExecutionLimitError] (a host-level
+    /// error a script-level `try/catch` cannot swallow). Closes the DoS where an untrusted
+    /// form's `while(true){}` — or the child-chain absent-node loops noted in the B3.5
+    /// findings — hangs the processing thread. The default (50 million steps, well under a
+    /// minute of tree-walking) is far above any legitimate form script; override with
+    /// `-Dxfa.js.maxSteps=N`. The budget resets per top-level [#run]/[#runWithThis].
     private static final long DEFAULT_MAX_STEPS = 50_000_000L;
     private final long maxSteps = readMaxSteps();
     private long steps;
@@ -65,7 +52,7 @@ public final class Interpreter {
         }
     }
 
-    /** Counts one dispatch step; aborts the script when the budget is exhausted. */
+    /// Counts one dispatch step; aborts the script when the budget is exhausted.
     private void countStep() {
         if (++steps > maxSteps) {
             throw new JsExecutionLimitError(
@@ -74,34 +61,30 @@ public final class Interpreter {
         }
     }
 
-    /**
-     * Creates an interpreter over a realm.
-     *
-     * @param realm the realm to execute against
-     */
+    /// Creates an interpreter over a realm.
+    ///
+    /// @param realm the realm to execute against
     public Interpreter(Realm realm) {
         this.realm = realm;
         this.globalScope = new Scope(realm.globalObject, null, false);
         thisStack.push(realm.globalObject);
     }
 
-    /** @return the realm (intrinsics + global object). */
+    /// @return the realm (intrinsics + global object).
     public Realm getRealm() {
         return realm;
     }
 
-    /** @return the global scope. */
+    /// @return the global scope.
     public Scope getGlobalScope() {
         return globalScope;
     }
 
-    /**
-     * Runs a parsed program in the global scope and returns the completion
-     * value (the value of the last evaluated statement, REPL-style).
-     *
-     * @param program parsed program
-     * @return completion value
-     */
+    /// Runs a parsed program in the global scope and returns the completion
+    /// value (the value of the last evaluated statement, REPL-style).
+    ///
+    /// @param program parsed program
+    /// @return completion value
     public Object run(Node.Program program) {
         steps = 0; // fresh execution budget per top-level script
         try {
@@ -119,35 +102,31 @@ public final class Interpreter {
         }
     }
 
-    /**
-     * Converts a JVM {@link StackOverflowError} into the controlled execution
-     * abort. The MAX_CALL_DEPTH guard caps <em>script</em> recursion, but a
-     * script that keeps recursing from inside {@code catch} blocks stacks a
-     * fresh Java frame layer per caught RangeError, so on hosts with a small
-     * thread stack the JVM can overflow before the step budget triggers. At
-     * this point the stack has already unwound to the top-level entry, so
-     * mapping the error to {@link JsExecutionLimitError} is safe and keeps the
-     * host contract: scripts terminate with a RuntimeException, never an Error.
-     *
-     * @return the limit error to throw (never returns normally)
-     */
+    /// Converts a JVM [StackOverflowError] into the controlled execution
+    /// abort. The MAX\_CALL\_DEPTH guard caps _script_ recursion, but a
+    /// script that keeps recursing from inside `catch` blocks stacks a
+    /// fresh Java frame layer per caught RangeError, so on hosts with a small
+    /// thread stack the JVM can overflow before the step budget triggers. At
+    /// this point the stack has already unwound to the top-level entry, so
+    /// mapping the error to [JsExecutionLimitError] is safe and keeps the
+    /// host contract: scripts terminate with a RuntimeException, never an Error.
+    ///
+    /// @return the limit error to throw (never returns normally)
     private JsExecutionLimitError hostStackExhausted() {
         callDepth = 0; // finally-based unwinding may have been skipped mid-overflow
         return new JsExecutionLimitError(
                 "Maximum call stack size exceeded (host thread stack exhausted)");
     }
 
-    /**
-     * Runs a program in global scope with an explicit {@code this} binding, returning the
-     * completion value (REPL-style, like {@link #run}). Used by host integrations (e.g. XFA
-     * scripting) that execute a script "as a method" of a host node — {@code this} resolves to the
-     * given object while top-level {@code var}/{@code function} declarations and the completion
-     * value behave as in {@link #run}.
-     *
-     * @param program  the parsed program
-     * @param thisVal  the {@code this} binding (a {@link JSObject}; falls back to the global object)
-     * @return the completion value
-     */
+    /// Runs a program in global scope with an explicit `this` binding, returning the
+    /// completion value (REPL-style, like [#run]). Used by host integrations (e.g. XFA
+    /// scripting) that execute a script "as a method" of a host node — `this` resolves to the
+    /// given object while top-level `var`/`function` declarations and the completion
+    /// value behave as in [#run].
+    ///
+    /// @param program  the parsed program
+    /// @param thisVal  the `this` binding (a [JSObject]; falls back to the global object)
+    /// @return the completion value
     public Object runWithThis(Node.Program program, Object thisVal) {
         steps = 0; // fresh execution budget per top-level script
         Object binding = thisVal instanceof JSObject ? thisVal : realm.globalObject;
@@ -464,13 +443,11 @@ public final class Interpreter {
 
     /* ========================== expressions ========================= */
 
-    /**
-     * Evaluates an expression node.
-     *
-     * @param n     expression
-     * @param scope current scope
-     * @return the value
-     */
+    /// Evaluates an expression node.
+    ///
+    /// @param n     expression
+    /// @param scope current scope
+    /// @return the value
     public Object evalExpr(Node n, Scope scope) {
         countStep();
         if (n instanceof Node.NumberLit) {
@@ -775,15 +752,13 @@ public final class Interpreter {
         return args;
     }
 
-    /**
-     * Invokes a function value with an explicit {@code this} and arguments
-     * (used by {@code call}/{@code apply} and internal callbacks).
-     *
-     * @param fn      function value
-     * @param thisVal {@code this} binding
-     * @param args    arguments
-     * @return result
-     */
+    /// Invokes a function value with an explicit `this` and arguments
+    /// (used by `call`/`apply` and internal callbacks).
+    ///
+    /// @param fn      function value
+    /// @param thisVal`this` binding
+    /// @param args    arguments
+    /// @return result
     public Object callFunction(Object fn, Object thisVal, Object[] args) {
         if (!(fn instanceof JSFunction)) {
             throw realm.typeError("value is not a function");
@@ -791,15 +766,13 @@ public final class Interpreter {
         return ((JSFunction) fn).call(this, thisVal, args);
     }
 
-    /**
-     * Executes a user function: builds the activation record, binds parameters
-     * and {@code arguments}, hoists declarations and runs the body.
-     *
-     * @param fn      the user function
-     * @param thisArg requested {@code this}
-     * @param args    arguments
-     * @return the return value
-     */
+    /// Executes a user function: builds the activation record, binds parameters
+    /// and `arguments`, hoists declarations and runs the body.
+    ///
+    /// @param fn      the user function
+    /// @param thisArg requested `this`
+    /// @param args    arguments
+    /// @return the return value
     public Object callUserFunction(UserFunction fn, Object thisArg, Object[] args) {
         if (++callDepth > MAX_CALL_DEPTH) {
             callDepth--;
@@ -987,15 +960,13 @@ public final class Interpreter {
 
     /* --------------------- property access ----------------------- */
 
-    /**
-     * {@code [[Get]]} on any value, boxing primitives to their wrapper
-     * prototypes for method/property access.
-     *
-     * @param base value
-     * @param name property name
-     * @param node source node (for diagnostics) or {@code null}
-     * @return the property value
-     */
+    /// `[[Get]]` on any value, boxing primitives to their wrapper
+    /// prototypes for method/property access.
+    ///
+    /// @param base value
+    /// @param name property name
+    /// @param node source node (for diagnostics) or `null`
+    /// @return the property value
     public Object getMember(Object base, String name, Node node) {
         if (base instanceof JSObject) {
             return ((JSObject) base).get(name);
@@ -1040,13 +1011,11 @@ public final class Interpreter {
 
     /* --------------------- abstract operations ------------------- */
 
-    /**
-     * ToPrimitive (sec 9.1).
-     *
-     * @param v    value
-     * @param hint {@code "string"} or {@code "number"} (or {@code null} for default)
-     * @return a primitive value
-     */
+    /// ToPrimitive (sec 9.1).
+    ///
+    /// @param v    value
+    /// @param hint`"string"` or `"number"` (or `null` for default)
+    /// @return a primitive value
     public Object toPrimitive(Object v, String hint) {
         if (!(v instanceof JSObject)) {
             return v;
@@ -1071,7 +1040,7 @@ public final class Interpreter {
         throw realm.typeError("Cannot convert object to primitive value");
     }
 
-    /** ToNumber (sec 9.3). */
+    /// ToNumber (sec 9.3).
     public double toNumber(Object v) {
         if (v instanceof JSObject) {
             return Types.toNumberPrimitiveOrNaN(toPrimitive(v, "number"));
@@ -1079,7 +1048,7 @@ public final class Interpreter {
         return Types.toNumberPrimitiveOrNaN(v);
     }
 
-    /** ToString (sec 9.8). */
+    /// ToString (sec 9.8).
     public String toStringJS(Object v) {
         if (v instanceof JSObject) {
             return Types.primitiveToString(toPrimitive(v, "string"));
@@ -1087,7 +1056,7 @@ public final class Interpreter {
         return Types.primitiveToString(v);
     }
 
-    /** ToObject (sec 9.9); throws TypeError for {@code undefined}/{@code null}. */
+    /// ToObject (sec 9.9); throws TypeError for `undefined`/`null`.
     public JSObject toObject(Object v) {
         if (v instanceof JSObject) {
             return (JSObject) v;
@@ -1118,7 +1087,7 @@ public final class Interpreter {
         return o;
     }
 
-    /** The addition operator (sec 11.6.1): string concat or numeric add. */
+    /// The addition operator (sec 11.6.1): string concat or numeric add.
     public Object add(Object l, Object r) {
         Object lp = toPrimitive(l, null);
         Object rp = toPrimitive(r, null);
@@ -1128,7 +1097,7 @@ public final class Interpreter {
         return Types.toNumberPrimitiveOrNaN(lp) + Types.toNumberPrimitiveOrNaN(rp);
     }
 
-    /** Abstract relational comparison (sec 11.8.5); returns Java boolean. */
+    /// Abstract relational comparison (sec 11.8.5); returns Java boolean.
     private boolean lessThan(Object l, Object r) {
         Object lp = toPrimitive(l, "number");
         Object rp = toPrimitive(r, "number");
@@ -1143,11 +1112,9 @@ public final class Interpreter {
         return a < b;
     }
 
-    /**
-     * Relational comparison treating a NaN/undefined result as {@code true}
-     * so that {@code <=}/{@code >=} (which negate the swapped comparison)
-     * behave correctly when an operand is NaN.
-     */
+    /// Relational comparison treating a NaN/undefined result as `true`
+    /// so that `<=`/`>=` (which negate the swapped comparison)
+    /// behave correctly when an operand is NaN.
     private boolean lessThanOrUndefined(Object l, Object r) {
         Object lp = toPrimitive(l, "number");
         Object rp = toPrimitive(r, "number");
@@ -1162,7 +1129,7 @@ public final class Interpreter {
         return a < b;
     }
 
-    /** Abstract equality {@code ==} (sec 11.9.3). */
+    /// Abstract equality `==` (sec 11.9.3).
     public boolean looseEquals(Object a, Object b) {
         if (sameType(a, b)) {
             return Types.strictEquals(a, b);

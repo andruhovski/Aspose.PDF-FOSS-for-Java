@@ -12,9 +12,7 @@ import java.io.ByteArrayOutputStream;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * Unit tests for {@link PdfPageEditor} zoom + movePosition functionality.
- */
+/// Unit tests for [PdfPageEditor] zoom + movePosition functionality.
 public class PdfPageEditorZoomTests {
 
     @Test
@@ -127,7 +125,7 @@ public class PdfPageEditorZoomTests {
         }
     }
 
-    /** True iff the page starts with q + ConcatenateMatrix(0.5,0,0,0.5,...). */
+    /// True iff the page starts with q + ConcatenateMatrix(0.5,0,0,0.5,...).
     private static boolean pageHasZoom(Page page) throws java.io.IOException {
         org.aspose.pdf.OperatorCollection ops = page.getContents();
         if (ops.size() < 3) return false;

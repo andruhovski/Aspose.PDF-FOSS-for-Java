@@ -18,17 +18,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * L5.1 coverage on synthetic fixtures: a {@code <draw>}/field whose value is rich text
- * ({@code <value><exData contentType="text/html"><body><p>…</p></body></exData>}) is painted.
- *
- * <p>408975 authors its table column headers, instruction labels and the multi-paragraph
- * disclosure/WHEREAS blocks this way; the C2 painter only read {@code <value><text>}, so all of it
- * (61 of 72 rich draws on page 1) was silently dropped — the dominant per-cell fidelity defect.
- * These tests pin: (1) the HTML paragraph text is painted; (2) each {@code <p>}'s own inline
- * {@code font-size}/{@code font-weight} style wins over the draw's {@code <font>}; (3) multiple
- * paragraphs stack downward; (4) the text wraps to the box width.</p>
- */
+/// L5.1 coverage on synthetic fixtures: a `<draw>`/field whose value is rich text
+/// (`<value><exData contentType="text/html"><body><p>…</p></body></exData>`) is painted.
+///
+/// 408975 authors its table column headers, instruction labels and the multi-paragraph
+/// disclosure/WHEREAS blocks this way; the C2 painter only read `<value><text>`, so all of it
+/// (61 of 72 rich draws on page 1) was silently dropped — the dominant per-cell fidelity defect.
+/// These tests pin: (1) the HTML paragraph text is painted; (2) each `<p>`'s own inline
+/// `font-size`/`font-weight` style wins over the draw's `<font>`; (3) multiple
+/// paragraphs stack downward; (4) the text wraps to the box width.
 public class XfaRichTextPaintTest {
 
     private static final String TPL = XfaNode.TEMPLATE_NS;

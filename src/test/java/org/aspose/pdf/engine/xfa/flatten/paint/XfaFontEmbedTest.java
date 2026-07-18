@@ -25,17 +25,14 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * FE.1–FE.3 end-to-end, deterministic (synthetic {@link MinimalTtf} fixture only — no proprietary font):
- * <ul>
- *   <li><b>FE.3 host + FE.1 embed</b>: a draw whose typeface is found in {@code -Dxfa.fontDir} is painted
- *       with the embedded font; the saved PDF carries {@code /FontFile2}+{@code /Type0} and reopens.</li>
- *   <li><b>FE.2 source reuse</b>: that saved PDF's embedded font is reused (priority 1) by a resolver
- *       built from it — resolved via {@code SOURCE_PDF}, even with no host dir configured.</li>
- *   <li><b>priority + disabled + fallback</b>: source beats host; {@code xfa.embedFonts=false} embeds
- *       nothing; an unknown family falls back to {@code null} (substitution).</li>
- * </ul>
- */
+/// FE.1–FE.3 end-to-end, deterministic (synthetic [MinimalTtf] fixture only — no proprietary font):
+///
+///   - **FE.3 host + FE.1 embed**: a draw whose typeface is found in `-Dxfa.fontDir` is painted
+///     with the embedded font; the saved PDF carries `/FontFile2`+`/Type0` and reopens.
+///   - **FE.2 source reuse**: that saved PDF's embedded font is reused (priority 1) by a resolver
+///     built from it — resolved via `SOURCE_PDF`, even with no host dir configured.
+///   - **priority + disabled + fallback**: source beats host; `xfa.embedFonts=false` embeds
+///     nothing; an unknown family falls back to `null` (substitution).
 public class XfaFontEmbedTest {
 
     private static final String TPL = XfaNode.TEMPLATE_NS;

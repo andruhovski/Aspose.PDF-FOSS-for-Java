@@ -1,28 +1,26 @@
 package org.aspose.pdf.engine.filter;
 
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
 import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
 import org.aspose.pdf.engine.pdfobjects.PdfName;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
-import java.io.ByteArrayOutputStream;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.logging.Logger;
 
-/**
- * DCTDecode filter: JPEG to raw pixel samples.
- * ISO 32000-1:2008 §7.4.8.
- *
- * <p>Decodes JPEG (baseline and progressive) image data into raw pixel samples
- * using the standard {@link javax.imageio.ImageIO} JPEG reader.</p>
- *
- * <p>Output format: interleaved component bytes in scan-line order.
- * For a 3-component RGB image of width W and height H, the output is
- * W*H*3 bytes: R,G,B,R,G,B,... row by row.</p>
- */
+/// DCTDecode filter: JPEG to raw pixel samples.
+/// ISO 32000-1:2008 §7.4.8.
+///
+/// Decodes JPEG (baseline and progressive) image data into raw pixel samples
+/// using the standard [javax.imageio.ImageIO] JPEG reader.
+///
+/// Output format: interleaved component bytes in scan-line order.
+/// For a 3-component RGB image of width W and height H, the output is
+/// W\*H\*3 bytes: R,G,B,R,G,B,... row by row.
 public final class DCTDecodeFilter implements PdfFilter {
 
     private static final Logger LOG = Logger.getLogger(DCTDecodeFilter.class.getName());
@@ -221,19 +219,17 @@ public final class DCTDecodeFilter implements PdfFilter {
         return (r << 16) | (g << 8) | b;
     }
 
-    /**
-     * Scans the JPEG bitstream for the Adobe APP14 marker (FF EE) and decides
-     * whether the data is Adobe-inverted CMYK / YCCK.
-     *
-     * <p>The APP14 segment carries a ColorTransform byte: 0 means
-     * unknown/CMYK/RGBA, 1 = YCbCr, 2 = YCCK. For 4-component JPEGs both 0
-     * and 2 imply Adobe's inverted-CMYK storage convention.</p>
-     *
-     * <p>When no APP14 marker is present we default to {@code true} —
-     * effectively all real-world CMYK JPEGs found in PDFs come from Photoshop
-     * and follow this convention; the rare non-inverted variant would have an
-     * APP14 with a different transform code.</p>
-     */
+    /// Scans the JPEG bitstream for the Adobe APP14 marker (FF EE) and decides
+    /// whether the data is Adobe-inverted CMYK / YCCK.
+    ///
+    /// The APP14 segment carries a ColorTransform byte: 0 means
+    /// unknown/CMYK/RGBA, 1 = YCbCr, 2 = YCCK. For 4-component JPEGs both 0
+    /// and 2 imply Adobe's inverted-CMYK storage convention.
+    ///
+    /// When no APP14 marker is present we default to `true` —
+    /// effectively all real-world CMYK JPEGs found in PDFs come from Photoshop
+    /// and follow this convention; the rare non-inverted variant would have an
+    /// APP14 with a different transform code.
     private static boolean isAdobeInvertedCmyk(byte[] encoded) {
         if (encoded == null || encoded.length < 14) return true;
         // Walk past SOI (FF D8) and scan marker segments until SOS or EOI.

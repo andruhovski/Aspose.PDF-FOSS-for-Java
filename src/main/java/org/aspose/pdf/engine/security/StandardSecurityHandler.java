@@ -4,13 +4,11 @@ import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.logging.Logger;
 
-/**
- * Standard security handler — validates passwords and produces encryption keys.
- * <p>
- * Implements Algorithms 4-7 (R2-R4) and 8-12 (R5/R6) from
- * ISO 32000-1:2008, §7.6.3.
- * </p>
- */
+/// Standard security handler — validates passwords and produces encryption keys.
+///
+/// Implements Algorithms 4-7 (R2-R4) and 8-12 (R5/R6) from
+/// ISO 32000-1:2008, §7.6.3.
+///
 public class StandardSecurityHandler {
 
     private static final Logger LOG = Logger.getLogger(StandardSecurityHandler.class.getName());
@@ -20,24 +18,20 @@ public class StandardSecurityHandler {
     private byte[] encryptionKey;
     private boolean authenticated;
 
-    /**
-     * Creates a security handler for the given encryption dictionary.
-     *
-     * @param encDict    the encryption dictionary
-     * @param documentId the first element of the /ID array (may be null)
-     */
+    /// Creates a security handler for the given encryption dictionary.
+    ///
+    /// @param encDict    the encryption dictionary
+    /// @param documentId the first element of the /ID array (may be null)
     public StandardSecurityHandler(PDFEncryptionDict encDict, byte[] documentId) {
         this.encDict = encDict;
         this.documentId = documentId;
     }
 
-    /**
-     * Tries to authenticate with the given password.
-     * Attempts user password first, then owner password.
-     *
-     * @param password the password bytes (empty array for no password)
-     * @return true if authenticated
-     */
+    /// Tries to authenticate with the given password.
+    /// Attempts user password first, then owner password.
+    ///
+    /// @param password the password bytes (empty array for no password)
+    /// @return true if authenticated
     public boolean authenticate(byte[] password) {
         if (password == null) password = new byte[0];
         int r = encDict.getR();
@@ -52,12 +46,10 @@ public class StandardSecurityHandler {
         return false;
     }
 
-    /**
-     * Attempts authentication using only the user-password branch.
-     *
-     * @param password the candidate password bytes
-     * @return {@code true} if the password is a valid user password
-     */
+    /// Attempts authentication using only the user-password branch.
+    ///
+    /// @param password the candidate password bytes
+    /// @return `true` if the password is a valid user password
     public boolean authenticateUserPassword(byte[] password) {
         if (password == null) password = new byte[0];
         int r = encDict.getR();
@@ -70,12 +62,10 @@ public class StandardSecurityHandler {
         return false;
     }
 
-    /**
-     * Attempts authentication using only the owner-password branch.
-     *
-     * @param password the candidate password bytes
-     * @return {@code true} if the password is a valid owner password
-     */
+    /// Attempts authentication using only the owner-password branch.
+    ///
+    /// @param password the candidate password bytes
+    /// @return `true` if the password is a valid owner password
     public boolean authenticateOwnerPassword(byte[] password) {
         if (password == null) password = new byte[0];
         int r = encDict.getR();
@@ -88,7 +78,7 @@ public class StandardSecurityHandler {
         return false;
     }
 
-    /** Algorithm 6: Authenticate user password (R2-R4). */
+    /// Algorithm 6: Authenticate user password (R2-R4).
     private boolean authenticateUserR2R4(byte[] password) {
         try {
             byte[] key = PDFKeyDerivation.computeEncryptionKeyR2R4(password, encDict, documentId);
@@ -133,7 +123,7 @@ public class StandardSecurityHandler {
         }
     }
 
-    /** Algorithm 7: Authenticate owner password (R2-R4). */
+    /// Algorithm 7: Authenticate owner password (R2-R4).
     private boolean authenticateOwnerR2R4(byte[] ownerPassword) {
         try {
             byte[] paddedPw = PDFKeyDerivation.padPassword(ownerPassword);
@@ -172,7 +162,7 @@ public class StandardSecurityHandler {
         }
     }
 
-    /** Algorithm 11: Authenticate user password (R=5/R=6). */
+    /// Algorithm 11: Authenticate user password (R=5/R=6).
     private boolean authenticateUserR6(byte[] password) {
         try {
             byte[] u = encDict.getU();
@@ -198,7 +188,7 @@ public class StandardSecurityHandler {
         }
     }
 
-    /** Algorithm 12: Authenticate owner password (R=5/R=6). */
+    /// Algorithm 12: Authenticate owner password (R=5/R=6).
     private boolean authenticateOwnerR6(byte[] password) {
         try {
             byte[] o = encDict.getO();

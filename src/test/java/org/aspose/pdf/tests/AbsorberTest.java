@@ -12,9 +12,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for TableAbsorber and ParagraphAbsorber.
- */
+/// Tests for TableAbsorber and ParagraphAbsorber.
 public class AbsorberTest {
 
     @Test

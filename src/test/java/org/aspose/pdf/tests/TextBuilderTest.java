@@ -20,9 +20,7 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link TextBuilder} and {@link TextParagraph}.
- */
+/// Tests for [TextBuilder] and [TextParagraph].
 public class TextBuilderTest {
 
     @TempDir
@@ -270,9 +268,7 @@ public class TextBuilderTest {
         assertThrows(IllegalArgumentException.class, () -> paragraph.appendLine((TextFragment) null));
     }
 
-    /**
-     * Helper to extract raw content bytes from a page.
-     */
+    /// Helper to extract raw content bytes from a page.
     private byte[] getPageContentBytes(Page page) throws IOException {
         org.aspose.pdf.engine.pdfobjects.PdfBase raw = page.getRawContents();
         if (raw instanceof org.aspose.pdf.engine.pdfobjects.PdfStream) {

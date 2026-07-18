@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** A5.2/A5.3: Form DOM node -> AcroForm field mapping, assembly, and round-trip. */
+/// A5.2/A5.3: Form DOM node -> AcroForm field mapping, assembly, and round-trip.
 public class XfaFlattenerTest {
 
     private static final String TPL = XfaNode.TEMPLATE_NS;
@@ -81,8 +81,8 @@ public class XfaFlattenerTest {
         }
     }
 
-    /** A5.2: exclGroup -> one radio group with N options and the CHOSEN one marked on,
-     *  plus XFA caption -> AcroForm tooltip (/TU). */
+    /// A5.2: exclGroup -> one radio group with N options and the CHOSEN one marked on,
+    ///  plus XFA caption -> AcroForm tooltip (/TU).
     @Test
     void exclGroupRadioMarksChosenOptionAndCaptionTooltip() throws Exception {
         Template tpl = (Template) XfaNodeFactory.load(parse("<template xmlns='" + TPL + "'>"

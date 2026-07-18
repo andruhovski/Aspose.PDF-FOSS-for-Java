@@ -26,13 +26,11 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Bug G — newly-constructed {@link BackgroundArtifact} and
- * {@link WatermarkArtifact} must synthesise drawing operators from their
- * high-level properties when no explicit operator list is provided. Before
- * the fix they round-tripped an empty {@code /Artifact BMC ... EMC} marker
- * with no visible content.
- */
+/// Bug G — newly-constructed [BackgroundArtifact] and
+/// [WatermarkArtifact] must synthesise drawing operators from their
+/// high-level properties when no explicit operator list is provided. Before
+/// the fix they round-tripped an empty `/Artifact BMC ... EMC` marker
+/// with no visible content.
 class ArtifactRenderingTest {
 
     @TempDir Path tempDir;

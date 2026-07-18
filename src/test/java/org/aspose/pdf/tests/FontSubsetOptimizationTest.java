@@ -19,11 +19,9 @@ import java.nio.file.Paths;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * Guards the {@code subsetFonts} pass: a document embedding a full TrueType
- * program must shrink substantially when only a handful of glyphs is used,
- * and the text must extract identically afterwards.
- */
+/// Guards the `subsetFonts` pass: a document embedding a full TrueType
+/// program must shrink substantially when only a handful of glyphs is used,
+/// and the text must extract identically afterwards.
 public class FontSubsetOptimizationTest {
 
     @TempDir
@@ -82,7 +80,7 @@ public class FontSubsetOptimizationTest {
         }
     }
 
-    /** Without the flag the font program must stay untouched. */
+    /// Without the flag the font program must stay untouched.
     @Test
     public void noSubsetWithoutFlag() throws Exception {
         Assumptions.assumeTrue(Files.exists(Paths.get(SYSTEM_TTF)),

@@ -1,11 +1,9 @@
 package org.aspose.pdf.engine.font.cff;
 
-/**
- * CFF predefined "Standard Strings" (Adobe Technical Note #5176, Appendix A).
- *
- * <p>SIDs 0..390 are mapped to fixed glyph names by this table; SIDs 391+
- * are custom strings looked up in the font's String INDEX.</p>
- */
+/// CFF predefined "Standard Strings" (Adobe Technical Note #5176, Appendix A).
+///
+/// SIDs 0..390 are mapped to fixed glyph names by this table; SIDs 391+
+/// are custom strings looked up in the font's String INDEX.
 final class CFFStandardStrings {
 
     static final String[] NAMES = {
@@ -72,7 +70,7 @@ final class CFFStandardStrings {
         "Black", "Bold", "Book", "Light", "Medium", "Regular", "Roman", "Semibold"
     };
 
-    /** Number of glyphs in the predefined ISOAdobe charset (228 glyphs incl. .notdef). */
+    /// Number of glyphs in the predefined ISOAdobe charset (228 glyphs incl. .notdef).
     static final int ISO_ADOBE_LEN = 229;
 
     private CFFStandardStrings() {}

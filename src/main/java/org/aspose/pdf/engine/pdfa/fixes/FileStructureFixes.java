@@ -2,15 +2,9 @@ package org.aspose.pdf.engine.pdfa.fixes;
 
 import org.aspose.pdf.ConvertErrorAction;
 import org.aspose.pdf.PdfFormat;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfArray;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectKey;
-import org.aspose.pdf.engine.pdfobjects.PdfStream;
-import org.aspose.pdf.engine.pdfobjects.PdfString;
-import org.aspose.pdf.engine.pdfa.PdfAValidationResult;
 import org.aspose.pdf.engine.parser.PDFParser;
+import org.aspose.pdf.engine.pdfa.PdfAValidationResult;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -18,37 +12,30 @@ import java.security.SecureRandom;
 import java.util.logging.Logger;
 import java.util.zip.DeflaterOutputStream;
 
-/**
- * File-structure fixes for PDF/A and PDF/X compliance.
- * <p>
- * Addresses requirements related to encryption removal, LZW-to-Flate filter
- * replacement, external stream reference removal, embedded-file removal (PDF/A-1),
- * optional-content removal (PDF/A-1), and trailer /ID generation.
- * </p>
- */
+/// File-structure fixes for PDF/A and PDF/X compliance.
+///
+/// Addresses requirements related to encryption removal, LZW-to-Flate filter
+/// replacement, external stream reference removal, embedded-file removal (PDF/A-1),
+/// optional-content removal (PDF/A-1), and trailer /ID generation.
+///
 public final class FileStructureFixes {
 
     private static final Logger LOG = Logger.getLogger(FileStructureFixes.class.getName());
 
-    /**
-     * Creates a new FileStructureFixes instance.
-     */
+    /// Creates a new FileStructureFixes instance.
     public FileStructureFixes() {
         // default
     }
 
-    /**
-     * Removes the {@code /Encrypt} dictionary from the trailer.
-     * <p>
-     * PDF/A forbids any form of encryption (ISO 19005-1:2005, 6.1.3).
-     * </p>
-     *
-     * @param parser      the parsed PDF
-     * @param format      the target format
-     * @param errorAction the error action strategy
-     * @param result      the validation result
-     * @throws IOException if an I/O error occurs
-     */
+    /// Removes the `/Encrypt` dictionary from the trailer.
+    ///
+    /// PDF/A forbids any form of encryption (ISO 19005-1:2005, 6.1.3).
+    ///
+    /// @param parser      the parsed PDF
+    /// @param format      the target format
+    /// @param errorAction the error action strategy
+    /// @param result      the validation result
+    /// @throws IOException if an I/O error occurs
     public void removeEncryption(PDFParser parser, PdfFormat format,
                                  ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
         PdfDictionary trailer = parser.getTrailer();
@@ -61,19 +48,16 @@ public final class FileStructureFixes {
         }
     }
 
-    /**
-     * Replaces all LZWDecode filters with FlateDecode across every stream object.
-     * <p>
-     * PDF/A forbids LZW compression (ISO 19005-1:2005, 6.1.10).
-     * Each affected stream is decoded, then re-encoded with Flate.
-     * </p>
-     *
-     * @param parser      the parsed PDF
-     * @param format      the target format
-     * @param errorAction the error action strategy
-     * @param result      the validation result
-     * @throws IOException if an I/O error occurs
-     */
+    /// Replaces all LZWDecode filters with FlateDecode across every stream object.
+    ///
+    /// PDF/A forbids LZW compression (ISO 19005-1:2005, 6.1.10).
+    /// Each affected stream is decoded, then re-encoded with Flate.
+    ///
+    /// @param parser      the parsed PDF
+    /// @param format      the target format
+    /// @param errorAction the error action strategy
+    /// @param result      the validation result
+    /// @throws IOException if an I/O error occurs
     public void replaceLzwWithFlate(PDFParser parser, PdfFormat format,
                                     ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
         for (PdfObjectKey key : parser.getAllObjectKeys()) {
@@ -118,19 +102,16 @@ public final class FileStructureFixes {
         }
     }
 
-    /**
-     * Removes external stream references ({@code /F}, {@code /FFilter}, {@code /FDecodeParms})
-     * from all stream dictionaries.
-     * <p>
-     * PDF/A requires all data to be embedded (ISO 19005-1:2005, 6.1.7).
-     * </p>
-     *
-     * @param parser      the parsed PDF
-     * @param format      the target format
-     * @param errorAction the error action strategy
-     * @param result      the validation result
-     * @throws IOException if an I/O error occurs
-     */
+    /// Removes external stream references (`/F`, `/FFilter`, `/FDecodeParms`)
+    /// from all stream dictionaries.
+    ///
+    /// PDF/A requires all data to be embedded (ISO 19005-1:2005, 6.1.7).
+    ///
+    /// @param parser      the parsed PDF
+    /// @param format      the target format
+    /// @param errorAction the error action strategy
+    /// @param result      the validation result
+    /// @throws IOException if an I/O error occurs
     public void removeExternalStreamRefs(PDFParser parser, PdfFormat format,
                                          ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
         for (PdfObjectKey key : parser.getAllObjectKeys()) {
@@ -166,20 +147,17 @@ public final class FileStructureFixes {
         }
     }
 
-    /**
-     * Removes {@code /EmbeddedFiles} from the catalog's {@code /Names} dictionary.
-     * <p>
-     * PDF/A-1 forbids embedded files (ISO 19005-1:2005, 6.2.5). PDF/A-2 and later
-     * allow them under certain conditions, so this method should only be called for
-     * PDF/A-1 targets.
-     * </p>
-     *
-     * @param parser      the parsed PDF
-     * @param format      the target format
-     * @param errorAction the error action strategy
-     * @param result      the validation result
-     * @throws IOException if an I/O error occurs
-     */
+    /// Removes `/EmbeddedFiles` from the catalog's `/Names` dictionary.
+    ///
+    /// PDF/A-1 forbids embedded files (ISO 19005-1:2005, 6.2.5). PDF/A-2 and later
+    /// allow them under certain conditions, so this method should only be called for
+    /// PDF/A-1 targets.
+    ///
+    /// @param parser      the parsed PDF
+    /// @param format      the target format
+    /// @param errorAction the error action strategy
+    /// @param result      the validation result
+    /// @throws IOException if an I/O error occurs
     public void removeEmbeddedFiles(PDFParser parser, PdfFormat format,
                                     ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
         PdfDictionary catalog = parser.getCatalog();
@@ -200,18 +178,15 @@ public final class FileStructureFixes {
         }
     }
 
-    /**
-     * Removes {@code /OCProperties} from the catalog.
-     * <p>
-     * PDF/A-1 forbids optional content (layers) (ISO 19005-1:2005, 6.1.13).
-     * </p>
-     *
-     * @param parser      the parsed PDF
-     * @param format      the target format
-     * @param errorAction the error action strategy
-     * @param result      the validation result
-     * @throws IOException if an I/O error occurs
-     */
+    /// Removes `/OCProperties` from the catalog.
+    ///
+    /// PDF/A-1 forbids optional content (layers) (ISO 19005-1:2005, 6.1.13).
+    ///
+    /// @param parser      the parsed PDF
+    /// @param format      the target format
+    /// @param errorAction the error action strategy
+    /// @param result      the validation result
+    /// @throws IOException if an I/O error occurs
     public void removeOCProperties(PDFParser parser, PdfFormat format,
                                    ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
         PdfDictionary catalog = parser.getCatalog();
@@ -223,19 +198,16 @@ public final class FileStructureFixes {
         }
     }
 
-    /**
-     * Ensures the trailer contains an {@code /ID} array with two 16-byte random
-     * hex strings.
-     * <p>
-     * PDF/A requires a file identifier (ISO 19005-1:2005, 6.1.4).
-     * </p>
-     *
-     * @param parser      the parsed PDF
-     * @param format      the target format
-     * @param errorAction the error action strategy
-     * @param result      the validation result
-     * @throws IOException if an I/O error occurs
-     */
+    /// Ensures the trailer contains an `/ID` array with two 16-byte random
+    /// hex strings.
+    ///
+    /// PDF/A requires a file identifier (ISO 19005-1:2005, 6.1.4).
+    ///
+    /// @param parser      the parsed PDF
+    /// @param format      the target format
+    /// @param errorAction the error action strategy
+    /// @param result      the validation result
+    /// @throws IOException if an I/O error occurs
     public void ensureTrailerId(PDFParser parser, PdfFormat format,
                                 ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
         PdfDictionary trailer = parser.getTrailer();
@@ -261,13 +233,11 @@ public final class FileStructureFixes {
                 "trailer/ID", "ISO 19005-1:2005, 6.1.4");
     }
 
-    /**
-     * Compresses data using the Flate algorithm.
-     *
-     * @param data the uncompressed data
-     * @return the compressed data
-     * @throws IOException if compression fails
-     */
+    /// Compresses data using the Flate algorithm.
+    ///
+    /// @param data the uncompressed data
+    /// @return the compressed data
+    /// @throws IOException if compression fails
     static byte[] flateCompress(byte[] data) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream(data.length);
         try (DeflaterOutputStream dos = new DeflaterOutputStream(baos)) {

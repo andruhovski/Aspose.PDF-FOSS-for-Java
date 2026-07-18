@@ -2,35 +2,30 @@ package org.aspose.pdf.text;
 
 import java.util.logging.Logger;
 
-/**
- * Clean-room contextual Arabic shaper: maps plain Arabic letters
- * (U+0621–U+064A) to their Unicode Arabic Presentation Forms-B
- * (U+FE70–U+FEFC) glyph variants — isolated, final, initial, medial —
- * according to the cursive joining rules of the script.
- * <p>
- * Used when replacement text is written back into a content stream whose
- * original run was already stored as presentation forms (the common shape
- * for PDFs produced from Arabic documents): the replacement must be shaped
- * the same way or it will neither render nor re-extract like the
- * surrounding text.
- * </p>
- * <p>
- * Rules implemented (Unicode Standard ch. 9.2 "Arabic", joining classes):
- * </p>
- * <ul>
- *   <li>Dual-joining letters take initial/medial/final/isolated forms.</li>
- *   <li>Right-joining letters (alef, dal, thal, reh, zain, waw, …) take only
- *       final/isolated forms and never connect to the following letter.</li>
- *   <li>Combining marks (harakat, U+064B–U+065F, U+0670) are transparent:
- *       they pass through unchanged and do not interrupt joining.</li>
- *   <li>Any other character — including text already encoded as
- *       presentation forms — is a non-joining boundary and passes through
- *       unchanged (matches Aspose.PDF behaviour: pre-shaped input is kept
- *       verbatim, plain letters around it shape as if next to a space).</li>
- *   <li>The lam-alef pairs compose into the mandatory ligatures
- *       U+FEF5–U+FEFC.</li>
- * </ul>
- */
+/// Clean-room contextual Arabic shaper: maps plain Arabic letters
+/// (U+0621–U+064A) to their Unicode Arabic Presentation Forms-B
+/// (U+FE70–U+FEFC) glyph variants — isolated, final, initial, medial —
+/// according to the cursive joining rules of the script.
+///
+/// Used when replacement text is written back into a content stream whose
+/// original run was already stored as presentation forms (the common shape
+/// for PDFs produced from Arabic documents): the replacement must be shaped
+/// the same way or it will neither render nor re-extract like the
+/// surrounding text.
+///
+/// Rules implemented (Unicode Standard ch. 9.2 "Arabic", joining classes):
+///
+///   - Dual-joining letters take initial/medial/final/isolated forms.
+///   - Right-joining letters (alef, dal, thal, reh, zain, waw, …) take only
+///     final/isolated forms and never connect to the following letter.
+///   - Combining marks (harakat, U+064B–U+065F, U+0670) are transparent:
+///     they pass through unchanged and do not interrupt joining.
+///   - Any other character — including text already encoded as
+///     presentation forms — is a non-joining boundary and passes through
+///     unchanged (matches Aspose.PDF behaviour: pre-shaped input is kept
+///     verbatim, plain letters around it shape as if next to a space).
+///   - The lam-alef pairs compose into the mandatory ligatures
+///     U+FEF5–U+FEFC.
 public final class ArabicShaper {
 
     private static final Logger LOG = Logger.getLogger(ArabicShaper.class.getName());
@@ -38,19 +33,17 @@ public final class ArabicShaper {
     private ArabicShaper() {
     }
 
-    /** Joining class: does not connect on either side (hamza). */
+    /// Joining class: does not connect on either side (hamza).
     private static final int NON_JOINING = 0;
-    /** Joining class: connects only to the preceding letter (isolated/final). */
+    /// Joining class: connects only to the preceding letter (isolated/final).
     private static final int RIGHT_JOINING = 1;
-    /** Joining class: connects on both sides (all four forms). */
+    /// Joining class: connects on both sides (all four forms).
     private static final int DUAL_JOINING = 2;
 
-    /**
-     * Presentation forms per letter, indexed by {@code char - 0x0621}:
-     * {@code {isolated, final, initial, medial}}. Right-joining letters carry
-     * only isolated/final (initial/medial repeat the isolated/final forms and
-     * are never selected for them). A zero row means "not a shapeable letter".
-     */
+    /// Presentation forms per letter, indexed by `char - 0x0621`:
+    /// `{isolated, final, initial, medial}`. Right-joining letters carry
+    /// only isolated/final (initial/medial repeat the isolated/final forms and
+    /// are never selected for them). A zero row means "not a shapeable letter".
     private static final char[][] FORMS = new char[0x064B - 0x0621][];
     private static final int[] JOINING = new int[0x064B - 0x0621];
 
@@ -98,7 +91,7 @@ public final class ArabicShaper {
         def('ي', DUAL_JOINING,  'ﻱ', 'ﻲ', 'ﻳ', 'ﻴ'); // yeh
     }
 
-    /** Lam-alef ligatures {@code {isolated, final}} keyed by the alef variant. */
+    /// Lam-alef ligatures `{isolated, final}` keyed by the alef variant.
     private static char[] lamAlefLigature(char alef) {
         switch (alef) {
             case 'آ': return new char[]{'ﻵ', 'ﻶ'};
@@ -109,23 +102,21 @@ public final class ArabicShaper {
         }
     }
 
-    /** Returns whether {@code c} is a transparent combining mark (harakat). */
+    /// Returns whether `c` is a transparent combining mark (harakat).
     private static boolean isTransparent(char c) {
         return (c >= 'ً' && c <= 'ٟ') || c == 'ٰ';
     }
 
-    /** Returns whether {@code c} is a shapeable plain Arabic letter. */
+    /// Returns whether `c` is a shapeable plain Arabic letter.
     private static boolean isShapeable(char c) {
         return c >= 'ء' && c <= 'ي' && FORMS[c - 0x0621] != null;
     }
 
-    /**
-     * Returns whether the text contains at least one plain Arabic letter
-     * that this shaper would transform.
-     *
-     * @param text the text to inspect (may be {@code null})
-     * @return {@code true} if shaping would change the text
-     */
+    /// Returns whether the text contains at least one plain Arabic letter
+    /// that this shaper would transform.
+    ///
+    /// @param text the text to inspect (may be `null`)
+    /// @return `true` if shaping would change the text
     public static boolean needsShaping(String text) {
         if (text == null) return false;
         for (int i = 0; i < text.length(); i++) {
@@ -134,15 +125,13 @@ public final class ArabicShaper {
         return false;
     }
 
-    /**
-     * Shapes the plain Arabic letters of {@code text} (in logical order) into
-     * presentation forms. All other characters pass through unchanged.
-     *
-     * @param text logical-order text, possibly mixing plain Arabic letters,
-     *             presentation forms, digits and Latin
-     * @return the shaped text (same length or shorter — lam-alef pairs
-     *         compose into one ligature character)
-     */
+    /// Shapes the plain Arabic letters of `text` (in logical order) into
+    /// presentation forms. All other characters pass through unchanged.
+    ///
+    /// @param text logical-order text, possibly mixing plain Arabic letters,
+    ///             presentation forms, digits and Latin
+    /// @return the shaped text (same length or shorter — lam-alef pairs
+    ///         compose into one ligature character)
     public static String shape(String text) {
         if (!needsShaping(text)) {
             return text;
@@ -187,7 +176,7 @@ public final class ArabicShaper {
         return out.toString();
     }
 
-    /** The nearest preceding non-transparent char, or {@code '\0'}. */
+    /// The nearest preceding non-transparent char, or `'\\0'`.
     private static char prevBaseChar(String text, int i) {
         for (int j = i - 1; j >= 0; j--) {
             char c = text.charAt(j);
@@ -196,7 +185,7 @@ public final class ArabicShaper {
         return '\0';
     }
 
-    /** Index of the nearest following non-transparent char, or {@code -1}. */
+    /// Index of the nearest following non-transparent char, or `-1`.
     private static int nextBaseIndex(String text, int i) {
         for (int j = i + 1; j < text.length(); j++) {
             if (!isTransparent(text.charAt(j))) return j;
@@ -204,12 +193,12 @@ public final class ArabicShaper {
         return -1;
     }
 
-    /** Whether {@code c} cursively connects to the letter AFTER it. */
+    /// Whether `c` cursively connects to the letter AFTER it.
     private static boolean joinsForward(char c) {
         return isShapeable(c) && JOINING[c - 0x0621] == DUAL_JOINING;
     }
 
-    /** Whether {@code c} cursively accepts a connection from the letter BEFORE it. */
+    /// Whether `c` cursively accepts a connection from the letter BEFORE it.
     private static boolean joinsBackward(char c) {
         return isShapeable(c) && JOINING[c - 0x0621] != NON_JOINING;
     }

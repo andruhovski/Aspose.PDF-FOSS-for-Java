@@ -2,15 +2,8 @@ package org.aspose.pdf.engine.parser;
 
 import org.aspose.pdf.Operator;
 import org.aspose.pdf.OperatorCollection;
-import org.aspose.pdf.engine.pdfobjects.PdfArray;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfFloat;
-import org.aspose.pdf.engine.pdfobjects.PdfInteger;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfString;
-import org.aspose.pdf.engine.pdfobjects.PdfStream;
 import org.aspose.pdf.engine.io.RandomAccessReader;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -19,18 +12,15 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Parses PDF content streams into a list of {@link Operator} objects.
- * <p>
- * Content streams use the same token syntax as the rest of PDF (ISO 32000-1:2008, §7.8.2),
- * but the grammar is different: there are no "obj"/"endobj" wrappers, and keywords
- * are operator names (BT, ET, Tf, Td, Tj, TJ, q, Q, cm, re, m, l, etc.).
- * </p>
- * <p>
- * Tokens are accumulated as operands until a keyword (operator name) is encountered,
- * at which point a typed {@link Operator} subclass is created with the accumulated operands.
- * </p>
- */
+/// Parses PDF content streams into a list of [Operator] objects.
+///
+/// Content streams use the same token syntax as the rest of PDF (ISO 32000-1:2008, §7.8.2),
+/// but the grammar is different: there are no "obj"/"endobj" wrappers, and keywords
+/// are operator names (BT, ET, Tf, Td, Tj, TJ, q, Q, cm, re, m, l, etc.).
+///
+/// Tokens are accumulated as operands until a keyword (operator name) is encountered,
+/// at which point a typed [Operator] subclass is created with the accumulated operands.
+///
 public final class ContentStreamParser {
 
     private static final Logger LOGGER = Logger.getLogger(ContentStreamParser.class.getName());
@@ -39,14 +29,12 @@ public final class ContentStreamParser {
         // Utility class
     }
 
-    /**
-     * Parses raw content stream bytes into a list of operators.
-     *
-     * @param streamData the raw (decoded) content stream bytes
-     * @return the list of operators
-     * @throws IOException if parsing fails
-     * @throws IllegalArgumentException if streamData is null
-     */
+    /// Parses raw content stream bytes into a list of operators.
+    ///
+    /// @param streamData the raw (decoded) content stream bytes
+    /// @return the list of operators
+    /// @throws IOException if parsing fails
+    /// @throws IllegalArgumentException if streamData is null
     public static List<Operator> parse(byte[] streamData) throws IOException {
         if (streamData == null) {
             throw new IllegalArgumentException("Stream data must not be null");
@@ -169,14 +157,12 @@ public final class ContentStreamParser {
         return operators;
     }
 
-    /**
-     * Parses a content stream from a PdfStream and returns an OperatorCollection.
-     *
-     * @param stream the PdfStream containing the content stream
-     * @return the parsed operator collection
-     * @throws IOException if parsing or decoding fails
-     * @throws IllegalArgumentException if stream is null
-     */
+    /// Parses a content stream from a PdfStream and returns an OperatorCollection.
+    ///
+    /// @param stream the PdfStream containing the content stream
+    /// @return the parsed operator collection
+    /// @throws IOException if parsing or decoding fails
+    /// @throws IllegalArgumentException if stream is null
     public static OperatorCollection parseToCollection(PdfStream stream) throws IOException {
         if (stream == null) {
             throw new IllegalArgumentException("Stream must not be null");
@@ -186,26 +172,22 @@ public final class ContentStreamParser {
         return new OperatorCollection(ops);
     }
 
-    /**
-     * Parses raw content stream bytes and returns an OperatorCollection.
-     *
-     * @param data the raw (decoded) content stream bytes
-     * @return the parsed operator collection
-     * @throws IOException if parsing fails
-     */
+    /// Parses raw content stream bytes and returns an OperatorCollection.
+    ///
+    /// @param data the raw (decoded) content stream bytes
+    /// @return the parsed operator collection
+    /// @throws IOException if parsing fails
     public static OperatorCollection parseToCollection(byte[] data) throws IOException {
         List<Operator> ops = parse(data);
         return new OperatorCollection(ops);
     }
 
-    /** Single-letter no-operand operators that PDF content streams sometimes pack without separators. */
+    /// Single-letter no-operand operators that PDF content streams sometimes pack without separators.
     private static final String RUN_ON_NO_OPERAND_OPS = "QqSsfFnBbh";
 
-    /**
-     * Returns true if {@code keyword} is a contiguous repetition of single-letter
-     * no-operand operators (e.g. "QQQ", "QqQ"). Used to split "QQQQQ" into 5 Q
-     * operators (PDFNEWNET-33721).
-     */
+    /// Returns true if `keyword` is a contiguous repetition of single-letter
+    /// no-operand operators (e.g. "QQQ", "QqQ"). Used to split "QQQQQ" into 5 Q
+    /// operators (PDFNEWNET-33721).
     private static boolean isRunOnNoOperandOps(String keyword) {
         if (keyword == null || keyword.length() < 2) {
             return false;
@@ -218,10 +200,8 @@ public final class ContentStreamParser {
         return true;
     }
 
-    /**
-     * Creates a typed Operator subclass based on the operator keyword.
-     * Falls back to generic Operator for unrecognized keywords.
-     */
+    /// Creates a typed Operator subclass based on the operator keyword.
+    /// Falls back to generic Operator for unrecognized keywords.
     private static Operator createTypedOperator(String keyword, List<PdfBase> operands) {
         switch (keyword) {
             // --- Graphics state ---
@@ -327,11 +307,9 @@ public final class ContentStreamParser {
         }
     }
 
-    /**
-     * Maximum container nesting inside a content stream. Real content never
-     * approaches this; damaged streams full of consecutive '[' bytes would
-     * otherwise recurse to StackOverflowError.
-     */
+    /// Maximum container nesting inside a content stream. Real content never
+    /// approaches this; damaged streams full of consecutive '[' bytes would
+    /// otherwise recurse to StackOverflowError.
     private static final int MAX_NESTING_DEPTH = 64;
 
     private static PdfArray parseArray(PDFLexer lexer) throws IOException {
@@ -342,7 +320,7 @@ public final class ContentStreamParser {
         return parseDictionary(lexer, 0);
     }
 
-    /** Consumes tokens until the current array is balanced (recovery for over-deep nesting). */
+    /// Consumes tokens until the current array is balanced (recovery for over-deep nesting).
     private static void skipBalancedArray(PDFLexer lexer) throws IOException {
         int depth = 1;
         while (depth > 0) {
@@ -358,7 +336,7 @@ public final class ContentStreamParser {
         }
     }
 
-    /** Consumes tokens until the current dictionary is balanced (recovery for over-deep nesting). */
+    /// Consumes tokens until the current dictionary is balanced (recovery for over-deep nesting).
     private static void skipBalancedDictionary(PDFLexer lexer) throws IOException {
         int depth = 1;
         while (depth > 0) {
@@ -374,9 +352,7 @@ public final class ContentStreamParser {
         }
     }
 
-    /**
-     * Parses an array from the content stream. The opening '[' has already been consumed.
-     */
+    /// Parses an array from the content stream. The opening '[' has already been consumed.
     private static PdfArray parseArray(PDFLexer lexer, int depth) throws IOException {
         PdfArray array = new PdfArray();
         if (depth > MAX_NESTING_DEPTH) {
@@ -452,9 +428,7 @@ public final class ContentStreamParser {
         return array;
     }
 
-    /**
-     * Parses a dictionary from the content stream. The opening '&lt;&lt;' has already been consumed.
-     */
+    /// Parses a dictionary from the content stream. The opening '<<' has already been consumed.
     private static PdfDictionary parseDictionary(PDFLexer lexer, int depth) throws IOException {
         PdfDictionary dict = new PdfDictionary();
         if (depth > MAX_NESTING_DEPTH) {
@@ -524,11 +498,9 @@ public final class ContentStreamParser {
         return dict;
     }
 
-    /**
-     * Parses an inline image (BI ... ID ... EI).
-     * The "BI" keyword has already been consumed.
-     * Reads key-value pairs until "ID" keyword, then reads raw image data until EI marker.
-     */
+    /// Parses an inline image (BI ... ID ... EI).
+    /// The "BI" keyword has already been consumed.
+    /// Reads key-value pairs until "ID" keyword, then reads raw image data until EI marker.
     private static Operator parseInlineImage(PDFLexer lexer, RandomAccessReader reader) throws IOException {
         // Parse dictionary key-value pairs until "ID"
         PdfDictionary imageDict = new PdfDictionary();
@@ -650,21 +622,17 @@ public final class ContentStreamParser {
         }
     }
 
-    /**
-     * Returns true if the byte value is PDF whitespace or -1 (start of stream).
-     */
+    /// Returns true if the byte value is PDF whitespace or -1 (start of stream).
     private static boolean isWhitespaceOrStart(int b) {
         return b == -1 || PDFLexer.isWhitespace(b);
     }
 
-    /**
-     * Peeks up to 24 bytes ahead and reports whether they read like a plain
-     * content-operator stream (printable ASCII and whitespace only). Used to
-     * validate an {@code EI} inline-image terminator that is NOT preceded by
-     * whitespace: genuine terminators are followed by operators, while a
-     * false "EI" inside compressed image data is almost always followed by
-     * more binary bytes. The reader position is restored before returning.
-     */
+    /// Peeks up to 24 bytes ahead and reports whether they read like a plain
+    /// content-operator stream (printable ASCII and whitespace only). Used to
+    /// validate an `EI` inline-image terminator that is NOT preceded by
+    /// whitespace: genuine terminators are followed by operators, while a
+    /// false "EI" inside compressed image data is almost always followed by
+    /// more binary bytes. The reader position is restored before returning.
     private static boolean looksLikeOperatorStreamAhead(RandomAccessReader reader) throws IOException {
         long pos = reader.getPosition();
         try {
@@ -684,12 +652,10 @@ public final class ContentStreamParser {
         }
     }
 
-    /**
-     * Parses a real-number token with a small amount of recovery for malformed content streams.
-     * Content streams in broken PDFs sometimes contain standalone "." / "+." / "-." tokens
-     * where a numeric operand was expected. In that case we recover as {@code 0} so the
-     * surrounding operators can still be parsed and downstream extractors can salvage text.
-     */
+    /// Parses a real-number token with a small amount of recovery for malformed content streams.
+    /// Content streams in broken PDFs sometimes contain standalone "." / "+." / "-." tokens
+    /// where a numeric operand was expected. In that case we recover as `0` so the
+    /// surrounding operators can still be parsed and downstream extractors can salvage text.
     private static PdfFloat parseRealValue(PDFLexer.Token token) {
         String textValue = token.getValue();
         if (".".equals(textValue) || "+.".equals(textValue) || "-.".equals(textValue)) {

@@ -7,25 +7,21 @@ import org.aspose.pdf.engine.pdfobjects.PdfName;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Marked content point operator (MP).
- * <p>
- * Designates a marked-content point with an associated tag but no properties dictionary.
- * Unlike {@link BMC}/{@link EMC}, this operator marks a single point rather than
- * a sequence.
- * See ISO 32000-1:2008, §14.6, Table 320.
- * </p>
- */
+/// Marked content point operator (MP).
+///
+/// Designates a marked-content point with an associated tag but no properties dictionary.
+/// Unlike [BMC]/[EMC], this operator marks a single point rather than
+/// a sequence.
+/// See ISO 32000-1:2008, §14.6, Table 320.
+///
 public class MP extends Operator {
 
     private final String tag;
 
-    /**
-     * Creates an MP operator with the specified tag.
-     *
-     * @param tag the marked-content tag name
-     * @throws IllegalArgumentException if tag is null or empty
-     */
+    /// Creates an MP operator with the specified tag.
+    ///
+    /// @param tag the marked-content tag name
+    /// @throws IllegalArgumentException if tag is null or empty
     public MP(String tag) {
         super("MP", Collections.singletonList(PdfName.of(tag)));
         if (tag == null || tag.isEmpty()) {
@@ -34,14 +30,11 @@ public class MP extends Operator {
         this.tag = tag;
     }
 
-    /**
-     * Creates an MP operator from parsed operands.
-     * <p>
-     * Expects one operand: a {@link PdfName} for the tag.
-     * </p>
-     *
-     * @param operands the operands from the content stream parser
-     */
+    /// Creates an MP operator from parsed operands.
+    ///
+    /// Expects one operand: a [PdfName] for the tag.
+    ///
+    /// @param operands the operands from the content stream parser
     public MP(List<PdfBase> operands) {
         super("MP", operands);
         this.tag = (operands != null && operands.size() > 0 && operands.get(0) instanceof PdfName)
@@ -49,11 +42,9 @@ public class MP extends Operator {
                 : "";
     }
 
-    /**
-     * Returns the marked-content tag name.
-     *
-     * @return the tag name
-     */
+    /// Returns the marked-content tag name.
+    ///
+    /// @return the tag name
     public String getTag() {
         return tag;
     }

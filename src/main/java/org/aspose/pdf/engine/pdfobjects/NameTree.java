@@ -1,35 +1,29 @@
 package org.aspose.pdf.engine.pdfobjects;
 
 import java.io.IOException;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Read/write view over a PDF name tree (ISO 32000-1:2008, §7.9.6).
- *
- * <p>A name tree is a balanced tree whose leaves hold sorted {@code /Names}
- * pair arrays {@code [key0 value0 key1 value1 …]}, and whose intermediate
- * nodes carry {@code /Kids} arrays plus a {@code /Limits} pair
- * {@code [minKey maxKey]} for range pruning. This class hides the traversal
- * and provides the usual {@link #get}, {@link #put}, {@link #remove},
- * {@link #entries} primitives.</p>
- *
- * <p>The implementation tolerates malformed inputs: missing {@code /Limits},
- * unsorted {@code /Names}, mixed {@code /Names}+{@code /Kids} on a single
- * node — read paths fall back to linear scans and write paths repair
- * {@code /Limits} from observed data after every mutation. Per spec writes
- * keep {@code /Names} sorted and {@code /Limits} synced bottom-up.</p>
- *
- * <p>This class does not rebalance the tree (no node splitting/merging).
- * Inserts go into the leaf whose range already covers the key, or whose
- * range is closest if the key is out of bounds; that leaf grows until the
- * caller decides to rebalance externally.</p>
- */
+/// Read/write view over a PDF name tree (ISO 32000-1:2008, §7.9.6).
+///
+/// A name tree is a balanced tree whose leaves hold sorted `/Names`
+/// pair arrays `[key0 value0 key1 value1 …]`, and whose intermediate
+/// nodes carry `/Kids` arrays plus a `/Limits` pair
+/// `[minKey maxKey]` for range pruning. This class hides the traversal
+/// and provides the usual [#get], [#put], [#remove],
+/// [#entries] primitives.
+///
+/// The implementation tolerates malformed inputs: missing `/Limits`,
+/// unsorted `/Names`, mixed `/Names`+`/Kids` on a single
+/// node — read paths fall back to linear scans and write paths repair
+/// `/Limits` from observed data after every mutation. Per spec writes
+/// keep `/Names` sorted and `/Limits` synced bottom-up.
+///
+/// This class does not rebalance the tree (no node splitting/merging).
+/// Inserts go into the leaf whose range already covers the key, or whose
+/// range is closest if the key is out of bounds; that leaf grows until the
+/// caller decides to rebalance externally.
 public final class NameTree {
 
     private static final Logger LOG = Logger.getLogger(NameTree.class.getName());
@@ -40,85 +34,69 @@ public final class NameTree {
 
     private final PdfDictionary root;
 
-    /**
-     * Wraps the given root dictionary. The dictionary is the name-tree root
-     * itself (e.g. the {@code /Dests} sub-dictionary under
-     * {@code /Catalog/Names}) — <em>not</em> the catalog.
-     *
-     * @param root the name-tree root, or {@code null} for an empty view
-     */
+    /// Wraps the given root dictionary. The dictionary is the name-tree root
+    /// itself (e.g. the `/Dests` sub-dictionary under
+    /// `/Catalog/Names`) — _not_ the catalog.
+    ///
+    /// @param root the name-tree root, or `null` for an empty view
     public NameTree(PdfDictionary root) {
         this.root = root;
     }
 
-    /**
-     * Returns the underlying root dictionary, or {@code null} if this view
-     * was constructed over a {@code null} root.
-     *
-     * @return the root dictionary
-     */
+    /// Returns the underlying root dictionary, or `null` if this view
+    /// was constructed over a `null` root.
+    ///
+    /// @return the root dictionary
     public PdfDictionary getRoot() {
         return root;
     }
 
-    /**
-     * Returns whether the tree has no entries.
-     *
-     * @return {@code true} when no name maps to any value
-     */
+    /// Returns whether the tree has no entries.
+    ///
+    /// @return `true` when no name maps to any value
     public boolean isEmpty() {
         return root == null || countEntries(root) == 0;
     }
 
-    /**
-     * Returns the number of (key, value) pairs in the tree.
-     *
-     * @return the entry count
-     */
+    /// Returns the number of (key, value) pairs in the tree.
+    ///
+    /// @return the entry count
     public int size() {
         return root == null ? 0 : countEntries(root);
     }
 
-    /**
-     * Looks up a key. Uses {@code /Limits} to prune sub-trees when present.
-     *
-     * @param key the key to look up
-     * @return the associated value, or {@code null} if not found
-     */
+    /// Looks up a key. Uses `/Limits` to prune sub-trees when present.
+    ///
+    /// @param key the key to look up
+    /// @return the associated value, or `null` if not found
     public PdfBase get(String key) {
         if (root == null || key == null) return null;
         return findInNode(root, key);
     }
 
-    /**
-     * Returns whether the tree contains the given key.
-     *
-     * @param key the key
-     * @return {@code true} if a value is associated with {@code key}
-     */
+    /// Returns whether the tree contains the given key.
+    ///
+    /// @param key the key
+    /// @return `true` if a value is associated with `key`
     public boolean containsKey(String key) {
         return get(key) != null;
     }
 
-    /**
-     * Returns all entries in tree order (which, for a conformant tree, is
-     * key-sorted order). The returned list is a snapshot — subsequent
-     * mutations do not affect it.
-     *
-     * @return the list of {@code (key, value)} entries
-     */
+    /// Returns all entries in tree order (which, for a conformant tree, is
+    /// key-sorted order). The returned list is a snapshot — subsequent
+    /// mutations do not affect it.
+    ///
+    /// @return the list of `(key, value)` entries
     public List<Map.Entry<String, PdfBase>> entries() {
         List<Map.Entry<String, PdfBase>> out = new ArrayList<>();
         if (root != null) collectEntries(root, out);
         return out;
     }
 
-    /**
-     * Returns all keys in tree order. Convenience wrapper around
-     * {@link #entries()} for callers that only need the names.
-     *
-     * @return the list of keys
-     */
+    /// Returns all keys in tree order. Convenience wrapper around
+    /// [#entries()] for callers that only need the names.
+    ///
+    /// @return the list of keys
     public List<String> keys() {
         List<Map.Entry<String, PdfBase>> es = entries();
         List<String> out = new ArrayList<>(es.size());
@@ -126,16 +104,14 @@ public final class NameTree {
         return out;
     }
 
-    /**
-     * Inserts or replaces a value. The host {@code /Names} array stays
-     * sorted by key and {@code /Limits} are re-synced bottom-up along the
-     * insertion path.
-     *
-     * @param key   the key to insert (must not be {@code null})
-     * @param value the value to associate
-     * @return the previous value bound to {@code key}, or {@code null}
-     * @throws IllegalStateException if this view wraps a {@code null} root
-     */
+    /// Inserts or replaces a value. The host `/Names` array stays
+    /// sorted by key and `/Limits` are re-synced bottom-up along the
+    /// insertion path.
+    ///
+    /// @param key   the key to insert (must not be `null`)
+    /// @param value the value to associate
+    /// @return the previous value bound to `key`, or `null`
+    /// @throws IllegalStateException if this view wraps a `null` root
     public PdfBase put(String key, PdfBase value) {
         requireRoot();
         if (key == null) throw new IllegalArgumentException("key must not be null");
@@ -149,14 +125,12 @@ public final class NameTree {
         return previous;
     }
 
-    /**
-     * Removes a key. Empty leaves keep their (now empty) {@code /Names}
-     * array — the writer is content-preserving; pruning leaves is a job
-     * for an external rebalancing pass.
-     *
-     * @param key the key to remove
-     * @return the removed value, or {@code null} if the key was absent
-     */
+    /// Removes a key. Empty leaves keep their (now empty) `/Names`
+    /// array — the writer is content-preserving; pruning leaves is a job
+    /// for an external rebalancing pass.
+    ///
+    /// @param key the key to remove
+    /// @return the removed value, or `null` if the key was absent
     public PdfBase remove(String key) {
         if (root == null || key == null) return null;
         List<PdfDictionary> path = new ArrayList<>();
@@ -167,11 +141,9 @@ public final class NameTree {
         return removed;
     }
 
-    /**
-     * Empties the tree: drops all {@code /Kids}, {@code /Limits} and any
-     * {@code /Names} array contents. Leaves an empty {@code /Names} on the
-     * root so subsequent inserts have a leaf to fall into.
-     */
+    /// Empties the tree: drops all `/Kids`, `/Limits` and any
+    /// `/Names` array contents. Leaves an empty `/Names` on the
+    /// root so subsequent inserts have a leaf to fall into.
     public void clear() {
         requireRoot();
         root.remove(KIDS);
@@ -306,13 +278,11 @@ public final class NameTree {
         return false;
     }
 
-    /**
-     * Picks the kid whose /Limits range contains the key, or — if no range
-     * does — the best-fit kid (first kid for keys below all mins, last
-     * kid for keys above all maxes, nearest by min-distance otherwise).
-     * Kids without /Limits are treated as universal matches and chosen
-     * preferentially over fallback kids.
-     */
+    /// Picks the kid whose /Limits range contains the key, or — if no range
+    /// does — the best-fit kid (first kid for keys below all mins, last
+    /// kid for keys above all maxes, nearest by min-distance otherwise).
+    /// Kids without /Limits are treated as universal matches and chosen
+    /// preferentially over fallback kids.
     private PdfDictionary pickKidForKey(PdfArray kids, String key) {
         PdfDictionary universalFallback = null;
         PdfDictionary nearestBelow = null;  // largest /Limits[1] still < key
@@ -355,10 +325,8 @@ public final class NameTree {
         return firstKid;                                  // empty /Kids — unreachable in practice
     }
 
-    /**
-     * Inserts (or overwrites) the pair in a sorted leaf {@code /Names}
-     * array. Returns the previous value if the key was already present.
-     */
+    /// Inserts (or overwrites) the pair in a sorted leaf `/Names`
+    /// array. Returns the previous value if the key was already present.
     private PdfBase insertSorted(PdfDictionary leaf, String key, PdfBase value) {
         PdfBase namesObj = resolve(leaf.get(NAMES));
         PdfArray names;
@@ -404,11 +372,9 @@ public final class NameTree {
         return null;
     }
 
-    /**
-     * Rebuilds {@code /Limits} on every node along the path except the
-     * root (the root in a name tree carries no {@code /Limits} per spec).
-     * Walks from leaf up so each ancestor sees a consistent child state.
-     */
+    /// Rebuilds `/Limits` on every node along the path except the
+    /// root (the root in a name tree carries no `/Limits` per spec).
+    /// Walks from leaf up so each ancestor sees a consistent child state.
     private void refreshLimitsAlongPath(List<PdfDictionary> path) {
         for (int i = path.size() - 1; i >= 0; i--) {
             PdfDictionary node = path.get(i);
@@ -484,21 +450,17 @@ public final class NameTree {
         return null;
     }
 
-    /**
-     * Builds the PdfString key. PdfString(String) chooses PDFDocEncoding when
-     * possible and falls back to UTF-16BE with BOM for non-encodable code
-     * points — matching how strings are stored in conformant PDF writers.
-     */
+    /// Builds the PdfString key. PdfString(String) chooses PDFDocEncoding when
+    /// possible and falls back to UTF-16BE with BOM for non-encodable code
+    /// points — matching how strings are stored in conformant PDF writers.
     private static PdfBase makeKey(String key) {
         return new PdfString(key);
     }
 
-    /**
-     * Returns an unmodifiable view of {@link #entries()} for callers that
-     * want a {@link List} interface but no mutation.
-     *
-     * @return unmodifiable entry list
-     */
+    /// Returns an unmodifiable view of [#entries()] for callers that
+    /// want a [List] interface but no mutation.
+    ///
+    /// @return unmodifiable entry list
     public List<Map.Entry<String, PdfBase>> entriesUnmodifiable() {
         return Collections.unmodifiableList(entries());
     }

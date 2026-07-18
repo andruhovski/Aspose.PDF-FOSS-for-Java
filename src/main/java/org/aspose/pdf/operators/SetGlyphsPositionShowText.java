@@ -8,52 +8,42 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Show text with glyph positioning operator (TJ).
- * <p>
- * Shows one or more text strings, allowing individual glyph positioning. The operand
- * is a PdfArray of interleaved strings and numbers. Each string is shown in the current
- * font. Each number adjusts the text position by that amount (in thousandths of a unit
- * of text space); negative values move right in horizontal mode.
- * See ISO 32000-1:2008, §9.4.3, Table 109.
- * </p>
- */
+/// Show text with glyph positioning operator (TJ).
+///
+/// Shows one or more text strings, allowing individual glyph positioning. The operand
+/// is a PdfArray of interleaved strings and numbers. Each string is shown in the current
+/// font. Each number adjusts the text position by that amount (in thousandths of a unit
+/// of text space); negative values move right in horizontal mode.
+/// See ISO 32000-1:2008, §9.4.3, Table 109.
+///
 public class SetGlyphsPositionShowText extends TextShowOperator {
 
-    /**
-     * Creates a SetGlyphsPositionShowText (TJ) operator from parsed operands.
-     * <p>
-     * The operands list should contain a single {@link PdfArray} with interleaved
-     * strings and numbers. The raw operands are stored as-is; access them via
-     * {@link #getOperands()}.
-     * </p>
-     *
-     * @param operands the operands from the content stream parser
-     */
+    /// Creates a SetGlyphsPositionShowText (TJ) operator from parsed operands.
+    ///
+    /// The operands list should contain a single [PdfArray] with interleaved
+    /// strings and numbers. The raw operands are stored as-is; access them via
+    /// [#getOperands()].
+    ///
+    /// @param operands the operands from the content stream parser
     public SetGlyphsPositionShowText(List<PdfBase> operands) {
         super("TJ", operands);
     }
 
-    /**
-     * Creates a SetGlyphsPositionShowText (TJ) operator from an array of glyph positions.
-     * <p>
-     * Builds a PdfArray from the provided glyph positions. Text elements are encoded
-     * as PdfString using ISO 8859-1; numeric adjustments are encoded as numbers.
-     * </p>
-     *
-     * @param positions the glyph positions
-     * @throws IllegalArgumentException if positions is null
-     */
+    /// Creates a SetGlyphsPositionShowText (TJ) operator from an array of glyph positions.
+    ///
+    /// Builds a PdfArray from the provided glyph positions. Text elements are encoded
+    /// as PdfString using ISO 8859-1; numeric adjustments are encoded as numbers.
+    ///
+    /// @param positions the glyph positions
+    /// @throws IllegalArgumentException if positions is null
     public SetGlyphsPositionShowText(GlyphPosition[] positions) {
         super("TJ", buildOperands(positions));
     }
 
-    /**
-     * Returns the PdfArray operand containing interleaved strings and numbers,
-     * or null if not available.
-     *
-     * @return the TJ array, or null
-     */
+    /// Returns the PdfArray operand containing interleaved strings and numbers,
+    /// or null if not available.
+    ///
+    /// @return the TJ array, or null
     public PdfArray getArray() {
         List<PdfBase> ops = getOperands();
         if (ops != null && !ops.isEmpty() && ops.get(0) instanceof PdfArray) {

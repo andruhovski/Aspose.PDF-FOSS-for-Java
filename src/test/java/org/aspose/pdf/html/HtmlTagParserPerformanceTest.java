@@ -7,15 +7,13 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Sprint 27 Part B — performance and correctness guards for
- * {@link HtmlTagParser#cleanHtml(String)} and {@link HtmlTagParser#parse(String)}.
- *
- * <p>The {@code @Timeout} annotations are the actual regression detectors: before
- * the Sprint 27 rewrite {@code cleanHtml} made ~70 full passes over the input, so a
- * 5&nbsp;MB document took 30+ minutes. After the rewrite (combined alternation
- * regex + single-pass entity scanner) the same input completes in seconds.</p>
- */
+/// Sprint 27 Part B — performance and correctness guards for
+/// [HtmlTagParser#cleanHtml(String)] and [HtmlTagParser#parse(String)].
+///
+/// The `@Timeout` annotations are the actual regression detectors: before
+/// the Sprint 27 rewrite `cleanHtml` made \~70 full passes over the input, so a
+/// 5&nbsp;MB document took 30+ minutes. After the rewrite (combined alternation
+/// regex + single-pass entity scanner) the same input completes in seconds.
 class HtmlTagParserPerformanceTest {
 
     @Test

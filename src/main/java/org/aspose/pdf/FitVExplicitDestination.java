@@ -3,9 +3,7 @@ package org.aspose.pdf;
 import org.aspose.pdf.engine.pdfobjects.PdfArray;
 import org.aspose.pdf.engine.pdfobjects.PdfName;
 
-/**
- * FitV explicit destination — fit page height, position at left coordinate.
- */
+/// FitV explicit destination — fit page height, position at left coordinate.
 public class FitVExplicitDestination extends ExplicitDestination {
 
     private final double left;

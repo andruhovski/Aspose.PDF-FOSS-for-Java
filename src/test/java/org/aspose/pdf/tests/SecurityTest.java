@@ -6,9 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for PDF security/decryption classes.
- */
+/// Tests for PDF security/decryption classes.
 public class SecurityTest {
 
     // ── RC4Cipher ──

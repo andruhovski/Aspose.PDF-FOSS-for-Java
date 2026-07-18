@@ -18,13 +18,11 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * L4.1 (leaders/trailers at explicit breaks) and L4.2 (bookends — overflow leaders/trailers at
- * every region boundary). B/C oracle: leader is the first object of each page it appears on,
- * trailer the last; bookend repetition is capped by the leader subform's {@code <occur max>};
- * heights account for the boilerplate (content shifts down by the leader height, fits the region);
- * the flowed content is conserved (every data unit on exactly one page).
- */
+/// L4.1 (leaders/trailers at explicit breaks) and L4.2 (bookends — overflow leaders/trailers at
+/// every region boundary). B/C oracle: leader is the first object of each page it appears on,
+/// trailer the last; bookend repetition is capped by the leader subform's `<occur max>`;
+/// heights account for the boilerplate (content shifts down by the leader height, fits the region);
+/// the flowed content is conserved (every data unit on exactly one page).
 public class XfaBookendsTest {
 
     private static final String TPL = XfaNode.TEMPLATE_NS;
@@ -158,7 +156,7 @@ public class XfaBookendsTest {
 
     /* --------------------------------- helpers --------------------------------- */
 
-    /** A flowed table form with an optional overflow leader (header) and/or trailer (footer) subform. */
+    /// A flowed table form with an optional overflow leader (header) and/or trailer (footer) subform.
     private static String bookendTable(int n, int rowH, int regionH, String leaderName, int leaderH,
                                        int occurMax, String trailerName, int trailerH) {
         StringBuilder rows = new StringBuilder();

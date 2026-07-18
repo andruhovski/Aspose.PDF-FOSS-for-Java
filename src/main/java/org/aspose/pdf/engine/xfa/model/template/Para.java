@@ -1,21 +1,19 @@
 package org.aspose.pdf.engine.xfa.model.template;
 
-import org.aspose.pdf.engine.xfa.model.XfaNode;
 import org.aspose.pdf.engine.xfa.model.XfaMeasurement;
+import org.aspose.pdf.engine.xfa.model.XfaNode;
 import org.w3c.dom.Element;
 
-/**
- * Typed XFA template element <code>para</code>. Attribute and child
- * accessors are typed; unknown attributes/children round-trip via the DOM.
- */
+/// Typed XFA template element `para`. Attribute and child
+/// accessors are typed; unknown attributes/children round-trip via the DOM.
 public final class Para extends XfaNode {
 
-    /** Wraps a backing <code>para</code> element. */
+    /// Wraps a backing `para` element.
     public Para(Element element, XfaNode parent) {
         super(element, parent);
     }
 
-    /** Allowed values of the <code>hAlign</code> attribute. */
+    /// Allowed values of the `hAlign` attribute.
     public enum HAlignValue {
         CENTER("center"),
         JUSTIFY("justify"),
@@ -25,130 +23,130 @@ public final class Para extends XfaNode {
         RIGHT("right");
         private final String v;
         HAlignValue(String v) { this.v = v; }
-        /** @return the XFA attribute string for this value. */
+        /// @return the XFA attribute string for this value.
         public String value() { return v; }
-        /** @param s raw value @return the matching constant, or null. */
+        /// @param s raw value @return the matching constant, or null.
         public static HAlignValue fromValue(String s) {
             for (HAlignValue e : values()) { if (e.v.equals(s)) return e; }
             return null;
         }
     }
-    /** @return the typed <code>hAlign</code> attribute, or null. */
+    /// @return the typed `hAlign` attribute, or null.
     public HAlignValue getHAlign() {
         String v = getAttribute("hAlign");
         return v == null ? null : HAlignValue.fromValue(v);
     }
-    /** Sets the <code>hAlign</code> attribute. */
+    /// Sets the `hAlign` attribute.
     public void setHAlign(HAlignValue value) {
         setAttribute("hAlign", value == null ? null : value.value());
     }
-    /** @return the raw <code>hAlign</code> string, or null. */
+    /// @return the raw `hAlign` string, or null.
     public String getHAlignRaw() { return getAttribute("hAlign"); }
 
-    /** @return the typed <code>id</code> attribute, or null. */
+    /// @return the typed `id` attribute, or null.
     public String getId() { return getString("id"); }
-    /** Sets the <code>id</code> attribute. */
+    /// Sets the `id` attribute.
     public void setId(String value) { setAttribute("id", value); }
 
-    /** @return the typed <code>lineHeight</code> attribute, or null. */
+    /// @return the typed `lineHeight` attribute, or null.
     public XfaMeasurement getLineHeight() { return getMeasurement("lineHeight"); }
-    /** Sets the <code>lineHeight</code> attribute. */
+    /// Sets the `lineHeight` attribute.
     public void setLineHeight(XfaMeasurement value) { setAttribute("lineHeight", value == null ? null : value.format()); }
 
-    /** @return the typed <code>marginLeft</code> attribute, or null. */
+    /// @return the typed `marginLeft` attribute, or null.
     public XfaMeasurement getMarginLeft() { return getMeasurement("marginLeft"); }
-    /** Sets the <code>marginLeft</code> attribute. */
+    /// Sets the `marginLeft` attribute.
     public void setMarginLeft(XfaMeasurement value) { setAttribute("marginLeft", value == null ? null : value.format()); }
 
-    /** @return the typed <code>marginRight</code> attribute, or null. */
+    /// @return the typed `marginRight` attribute, or null.
     public XfaMeasurement getMarginRight() { return getMeasurement("marginRight"); }
-    /** Sets the <code>marginRight</code> attribute. */
+    /// Sets the `marginRight` attribute.
     public void setMarginRight(XfaMeasurement value) { setAttribute("marginRight", value == null ? null : value.format()); }
 
-    /** @return the typed <code>orphans</code> attribute, or null. */
+    /// @return the typed `orphans` attribute, or null.
     public java.lang.Integer getOrphans() { return getInteger("orphans"); }
-    /** Sets the <code>orphans</code> attribute. */
+    /// Sets the `orphans` attribute.
     public void setOrphans(java.lang.Integer value) { setAttribute("orphans", value == null ? null : value.toString()); }
 
-    /** @return the typed <code>preserve</code> attribute, or null. */
+    /// @return the typed `preserve` attribute, or null.
     public String getPreserve() { return getString("preserve"); }
-    /** Sets the <code>preserve</code> attribute. */
+    /// Sets the `preserve` attribute.
     public void setPreserve(String value) { setAttribute("preserve", value); }
 
-    /** @return the typed <code>radixOffset</code> attribute, or null. */
+    /// @return the typed `radixOffset` attribute, or null.
     public XfaMeasurement getRadixOffset() { return getMeasurement("radixOffset"); }
-    /** Sets the <code>radixOffset</code> attribute. */
+    /// Sets the `radixOffset` attribute.
     public void setRadixOffset(XfaMeasurement value) { setAttribute("radixOffset", value == null ? null : value.format()); }
 
-    /** @return the typed <code>spaceAbove</code> attribute, or null. */
+    /// @return the typed `spaceAbove` attribute, or null.
     public XfaMeasurement getSpaceAbove() { return getMeasurement("spaceAbove"); }
-    /** Sets the <code>spaceAbove</code> attribute. */
+    /// Sets the `spaceAbove` attribute.
     public void setSpaceAbove(XfaMeasurement value) { setAttribute("spaceAbove", value == null ? null : value.format()); }
 
-    /** @return the typed <code>spaceBelow</code> attribute, or null. */
+    /// @return the typed `spaceBelow` attribute, or null.
     public XfaMeasurement getSpaceBelow() { return getMeasurement("spaceBelow"); }
-    /** Sets the <code>spaceBelow</code> attribute. */
+    /// Sets the `spaceBelow` attribute.
     public void setSpaceBelow(XfaMeasurement value) { setAttribute("spaceBelow", value == null ? null : value.format()); }
 
-    /** @return the typed <code>tabDefault</code> attribute, or null. */
+    /// @return the typed `tabDefault` attribute, or null.
     public String getTabDefault() { return getString("tabDefault"); }
-    /** Sets the <code>tabDefault</code> attribute. */
+    /// Sets the `tabDefault` attribute.
     public void setTabDefault(String value) { setAttribute("tabDefault", value); }
 
-    /** @return the typed <code>tabStops</code> attribute, or null. */
+    /// @return the typed `tabStops` attribute, or null.
     public String getTabStops() { return getString("tabStops"); }
-    /** Sets the <code>tabStops</code> attribute. */
+    /// Sets the `tabStops` attribute.
     public void setTabStops(String value) { setAttribute("tabStops", value); }
 
-    /** @return the typed <code>textIndent</code> attribute, or null. */
+    /// @return the typed `textIndent` attribute, or null.
     public XfaMeasurement getTextIndent() { return getMeasurement("textIndent"); }
-    /** Sets the <code>textIndent</code> attribute. */
+    /// Sets the `textIndent` attribute.
     public void setTextIndent(XfaMeasurement value) { setAttribute("textIndent", value == null ? null : value.format()); }
 
-    /** @return the typed <code>use</code> attribute, or null. */
+    /// @return the typed `use` attribute, or null.
     public String getUse() { return getString("use"); }
-    /** Sets the <code>use</code> attribute. */
+    /// Sets the `use` attribute.
     public void setUse(String value) { setAttribute("use", value); }
 
-    /** @return the typed <code>usehref</code> attribute, or null. */
+    /// @return the typed `usehref` attribute, or null.
     public String getUsehref() { return getString("usehref"); }
-    /** Sets the <code>usehref</code> attribute. */
+    /// Sets the `usehref` attribute.
     public void setUsehref(String value) { setAttribute("usehref", value); }
 
-    /** Allowed values of the <code>vAlign</code> attribute. */
+    /// Allowed values of the `vAlign` attribute.
     public enum VAlignValue {
         BOTTOM("bottom"),
         MIDDLE("middle"),
         TOP("top");
         private final String v;
         VAlignValue(String v) { this.v = v; }
-        /** @return the XFA attribute string for this value. */
+        /// @return the XFA attribute string for this value.
         public String value() { return v; }
-        /** @param s raw value @return the matching constant, or null. */
+        /// @param s raw value @return the matching constant, or null.
         public static VAlignValue fromValue(String s) {
             for (VAlignValue e : values()) { if (e.v.equals(s)) return e; }
             return null;
         }
     }
-    /** @return the typed <code>vAlign</code> attribute, or null. */
+    /// @return the typed `vAlign` attribute, or null.
     public VAlignValue getVAlign() {
         String v = getAttribute("vAlign");
         return v == null ? null : VAlignValue.fromValue(v);
     }
-    /** Sets the <code>vAlign</code> attribute. */
+    /// Sets the `vAlign` attribute.
     public void setVAlign(VAlignValue value) {
         setAttribute("vAlign", value == null ? null : value.value());
     }
-    /** @return the raw <code>vAlign</code> string, or null. */
+    /// @return the raw `vAlign` string, or null.
     public String getVAlignRaw() { return getAttribute("vAlign"); }
 
-    /** @return the typed <code>widows</code> attribute, or null. */
+    /// @return the typed `widows` attribute, or null.
     public java.lang.Integer getWidows() { return getInteger("widows"); }
-    /** Sets the <code>widows</code> attribute. */
+    /// Sets the `widows` attribute.
     public void setWidows(java.lang.Integer value) { setAttribute("widows", value == null ? null : value.toString()); }
 
-    /** @return the <code>hyphenation</code> child (typed), or null. */
+    /// @return the `hyphenation` child (typed), or null.
     public Hyphenation getHyphenation() { return (Hyphenation) getChild("hyphenation"); }
-    /** Ensures and returns the <code>hyphenation</code> child. */
+    /// Ensures and returns the `hyphenation` child.
     public Hyphenation ensureHyphenation() { return (Hyphenation) ensureChild("hyphenation"); }
 }

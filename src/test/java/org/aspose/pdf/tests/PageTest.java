@@ -16,9 +16,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link Page}.
- */
+/// Tests for [Page].
 public class PageTest {
 
     private static PdfArray makeBox(double llx, double lly, double urx, double ury) {

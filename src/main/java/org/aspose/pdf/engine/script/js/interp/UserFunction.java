@@ -7,31 +7,27 @@ import org.aspose.pdf.engine.script.js.runtime.Scope;
 
 import java.util.List;
 
-/**
- * A function defined in ECMAScript source (a function declaration or
- * expression). Captures its defining scope for closures; execution is
- * delegated to the {@link Interpreter}.
- */
+/// A function defined in ECMAScript source (a function declaration or
+/// expression). Captures its defining scope for closures; execution is
+/// delegated to the [Interpreter].
 public final class UserFunction extends JSFunction {
 
-    /** Source name ({@code ""} for anonymous). */
+    /// Source name (`""` for anonymous).
     public final String name;
-    /** Formal parameter names. */
+    /// Formal parameter names.
     public final List<String> params;
-    /** Function body block. */
+    /// Function body block.
     public final Node.Block body;
-    /** The lexical scope in which the function was created. */
+    /// The lexical scope in which the function was created.
     public final Scope closure;
 
-    /**
-     * Creates a user function.
-     *
-     * @param functionPrototype {@code Function.prototype}
-     * @param name              source name or {@code ""}
-     * @param params            formal parameters
-     * @param body              body block
-     * @param closure           defining scope
-     */
+    /// Creates a user function.
+    ///
+    /// @param functionPrototype`Function.prototype`
+    /// @param name              source name or `""`
+    /// @param params            formal parameters
+    /// @param body              body block
+    /// @param closure           defining scope
     public UserFunction(JSObject functionPrototype, String name, List<String> params,
                         Node.Block body, Scope closure) {
         super(functionPrototype);

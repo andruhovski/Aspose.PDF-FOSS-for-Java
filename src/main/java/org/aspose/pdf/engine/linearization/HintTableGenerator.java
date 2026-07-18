@@ -4,33 +4,29 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
 
-/**
- * Generates hint tables for linearized PDF.
- * ISO 32000-1:2008 §F.4: hint tables are binary bit-packed structures
- * stored in the primary hint stream.
- *
- * <p>Per §F.4: "This byte stream shall be treated as a bit stream, high-order
- * bit first, which shall then be subdivided into fields of arbitrary width
- * without regard to byte boundaries."</p>
- */
+/// Generates hint tables for linearized PDF.
+/// ISO 32000-1:2008 §F.4: hint tables are binary bit-packed structures
+/// stored in the primary hint stream.
+///
+/// Per §F.4: "This byte stream shall be treated as a bit stream, high-order
+/// bit first, which shall then be subdivided into fields of arbitrary width
+/// without regard to byte boundaries."
 public final class HintTableGenerator {
 
     private static final Logger LOG = Logger.getLogger(HintTableGenerator.class.getName());
 
     private HintTableGenerator() {}
 
-    /**
-     * Generates the combined hint stream data (page offset table + shared object table).
-     *
-     * @param plan             the linearization plan
-     * @param pageOffsets      byte offset of each page's first object in the output
-     * @param pageLengths      total byte length of each page's objects
-     * @param pageObjectCounts number of objects per page
-     * @param sharedOffsets    byte offset of each shared object
-     * @param sharedLengths    byte length of each shared object
-     * @param sharedObjRefs    per-page list of shared object indices referenced
-     * @return the raw hint stream bytes
-     */
+    /// Generates the combined hint stream data (page offset table + shared object table).
+    ///
+    /// @param plan             the linearization plan
+    /// @param pageOffsets      byte offset of each page's first object in the output
+    /// @param pageLengths      total byte length of each page's objects
+    /// @param pageObjectCounts number of objects per page
+    /// @param sharedOffsets    byte offset of each shared object
+    /// @param sharedLengths    byte length of each shared object
+    /// @param sharedObjRefs    per-page list of shared object indices referenced
+    /// @return the raw hint stream bytes
     public static byte[] generate(
             LinearizationPlan plan,
             long[] pageOffsets, int[] pageLengths,
@@ -53,9 +49,7 @@ public final class HintTableGenerator {
         return bits.toByteArray();
     }
 
-    /**
-     * Page Offset Hint Table: header (Table F.3) + per-page entries (Table F.4).
-     */
+    /// Page Offset Hint Table: header (Table F.3) + per-page entries (Table F.4).
     private static void generatePageOffsetTable(BitOutputStream bits,
             LinearizationPlan plan, long[] pageOffsets, int[] pageLengths,
             int[] pageObjectCounts, List<List<Integer>> sharedObjRefs) {
@@ -137,9 +131,7 @@ public final class HintTableGenerator {
         // Items 5-7 (content stream numerators): all 0, omitted when denominator=0
     }
 
-    /**
-     * Shared Object Hint Table: header (Table F.5) + per-object entries (Table F.6).
-     */
+    /// Shared Object Hint Table: header (Table F.5) + per-object entries (Table F.6).
     private static void generateSharedObjectTable(BitOutputStream bits,
             long[] sharedOffsets, int[] sharedLengths) {
 
@@ -176,10 +168,8 @@ public final class HintTableGenerator {
         }
     }
 
-    /**
-     * Returns the number of bits needed to represent the given non-negative value.
-     * Returns 0 if value &lt;= 0.
-     */
+    /// Returns the number of bits needed to represent the given non-negative value.
+    /// Returns 0 if value <= 0.
     public static int bitsNeeded(int value) {
         if (value <= 0) return 0;
         return 32 - Integer.numberOfLeadingZeros(value);
@@ -203,21 +193,17 @@ public final class HintTableGenerator {
     //  BitOutputStream — MSB-first bit-packed writer
     // ═══════════════════════════════════════════════════════════════
 
-    /**
-     * Writes bits to a byte array, MSB first, crossing byte boundaries.
-     * Per §F.4: "treated as a bit stream, high-order bit first."
-     */
+    /// Writes bits to a byte array, MSB first, crossing byte boundaries.
+    /// Per §F.4: "treated as a bit stream, high-order bit first."
     public static final class BitOutputStream {
         private byte[] buffer = new byte[4096];
         private int bytePos = 0;
         private int bitPos = 7; // MSB first: 7 = highest bit
 
-        /**
-         * Writes {@code numBits} bits from the low-order bits of {@code value}.
-         *
-         * @param value   the value to write (low-order bits used)
-         * @param numBits number of bits to write (0–32)
-         */
+        /// Writes `numBits` bits from the low-order bits of `value`.
+        ///
+        /// @param value   the value to write (low-order bits used)
+        /// @param numBits number of bits to write (0–32)
         public void writeBits(int value, int numBits) {
             if (numBits == 0) return;
             for (int i = numBits - 1; i >= 0; i--) {
@@ -233,9 +219,7 @@ public final class HintTableGenerator {
             }
         }
 
-        /**
-         * Writes {@code numBits} bits from a long value.
-         */
+        /// Writes `numBits` bits from a long value.
         void writeBitsLong(long value, int numBits) {
             if (numBits <= 32) {
                 writeBits((int) value, numBits);
@@ -246,7 +230,7 @@ public final class HintTableGenerator {
             writeBits((int) value, 32);
         }
 
-        /** Advances to the next byte boundary. */
+        /// Advances to the next byte boundary.
         public void alignToByte() {
             if (bitPos != 7) {
                 bytePos++;
@@ -254,12 +238,12 @@ public final class HintTableGenerator {
             }
         }
 
-        /** Returns the number of bytes written (including partial). */
+        /// Returns the number of bytes written (including partial).
         int getByteCount() {
             return bitPos == 7 ? bytePos : bytePos + 1;
         }
 
-        /** Returns a copy of the written bytes. */
+        /// Returns a copy of the written bytes.
         public byte[] toByteArray() {
             return Arrays.copyOf(buffer, getByteCount());
         }

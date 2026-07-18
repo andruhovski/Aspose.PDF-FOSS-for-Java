@@ -9,9 +9,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for named destinations and destination resolution.
- */
+/// Tests for named destinations and destination resolution.
 public class NamedDestinationsTest {
 
     // ═══════════════════════════════════════════════════════════════

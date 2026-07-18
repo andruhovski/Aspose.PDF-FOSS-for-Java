@@ -5,13 +5,11 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.logging.Logger;
 
-/**
- * PDF real number object (§7.3.3, ISO 32000-1:2008).
- * <p>
- * Represents a floating-point number backed by {@code double}. Serialization follows
- * PDF rules: no exponential notation, trailing zeros removed, maximum 5 decimal places.
- * </p>
- */
+/// PDF real number object (§7.3.3, ISO 32000-1:2008).
+///
+/// Represents a floating-point number backed by `double`. Serialization follows
+/// PDF rules: no exponential notation, trailing zeros removed, maximum 5 decimal places.
+///
 public final class PdfFloat extends PdfBase {
 
     private static final Logger LOG = Logger.getLogger(PdfFloat.class.getName());
@@ -19,12 +17,10 @@ public final class PdfFloat extends PdfBase {
     private final double value;
     private transient byte[] serialized;
 
-    /**
-     * Creates a PdfFloat from a double value.
-     *
-     * @param value the numeric value
-     * @throws IllegalArgumentException if the value is NaN or infinite
-     */
+    /// Creates a PdfFloat from a double value.
+    ///
+    /// @param value the numeric value
+    /// @throws IllegalArgumentException if the value is NaN or infinite
     public PdfFloat(double value) {
         if (Double.isNaN(value)) {
             throw new IllegalArgumentException("NaN is not a valid PDF number");
@@ -35,12 +31,10 @@ public final class PdfFloat extends PdfBase {
         this.value = value;
     }
 
-    /**
-     * Creates a PdfFloat by parsing a PDF numeric token.
-     *
-     * @param textValue the string representation
-     * @throws IllegalArgumentException if the string cannot be parsed or represents NaN/Infinity
-     */
+    /// Creates a PdfFloat by parsing a PDF numeric token.
+    ///
+    /// @param textValue the string representation
+    /// @throws IllegalArgumentException if the string cannot be parsed or represents NaN/Infinity
     public PdfFloat(String textValue) {
         if (textValue == null || textValue.isEmpty()) {
             throw new IllegalArgumentException("Cannot parse empty string as float");
@@ -52,20 +46,16 @@ public final class PdfFloat extends PdfBase {
         this.value = parsed;
     }
 
-    /**
-     * Returns the value as a {@code double}.
-     *
-     * @return the double value
-     */
+    /// Returns the value as a `double`.
+    ///
+    /// @return the double value
     public double doubleValue() {
         return value;
     }
 
-    /**
-     * Returns the value as a {@code float}.
-     *
-     * @return the float value
-     */
+    /// Returns the value as a `float`.
+    ///
+    /// @return the float value
     public float floatValue() {
         return (float) value;
     }
@@ -78,9 +68,7 @@ public final class PdfFloat extends PdfBase {
         os.write(serialized);
     }
 
-    /**
-     * Formats the value according to PDF rules.
-     */
+    /// Formats the value according to PDF rules.
     private String formatValue() {
         // If value has no fractional part and fits in long range, format as integer
         if (value == Math.floor(value) && !Double.isInfinite(value)

@@ -7,11 +7,9 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * Tests for the analytical DeviceCMYK display conversion (process-ink mixing
- * formula, see {@link CmykDisplay}). Anchors are the standard process-color
- * primaries; tolerances cover the mixing-model approximation.
- */
+/// Tests for the analytical DeviceCMYK display conversion (process-ink mixing
+/// formula, see [CmykDisplay]). Anchors are the standard process-color
+/// primaries; tolerances cover the mixing-model approximation.
 public class CmykDisplayTest {
 
     private static int[] rgb(int packed) {
@@ -37,7 +35,7 @@ public class CmykDisplayTest {
                 "print black ~ (35,31,32) not pure black, got " + java.util.Arrays.toString(k));
     }
 
-    /** The corpus-10734 background: print-neutral gray must not be greenish. */
+    /// The corpus-10734 background: print-neutral gray must not be greenish.
     @Test
     public void printNeutralGrayIsNeutral() {
         int[] g = rgb(CmykDisplay.toRGBInt(0.20, 0.14, 0.14, 0.04));
@@ -45,7 +43,7 @@ public class CmykDisplayTest {
                 "C>M=Y print gray must be neutral, got " + java.util.Arrays.toString(g));
     }
 
-    /** API contract unchanged: DeviceCMYK keeps algebraic primaries. */
+    /// API contract unchanged: DeviceCMYK keeps algebraic primaries.
     @Test
     public void apiConversionKeepsAlgebraicAnchors() {
         assertEquals(0xFF00FFFF, DeviceCMYK.INSTANCE.toRGBInt(1, 0, 0, 0));

@@ -1,28 +1,27 @@
 package org.aspose.pdf.facades;
 
 import org.aspose.pdf.Document;
-import org.aspose.pdf.Page;
 import org.aspose.pdf.engine.render.PdfPageRenderer;
-import org.aspose.pdf.printing.*;
+import org.aspose.pdf.printing.PdfPrinterSettings;
+import org.aspose.pdf.printing.PrintPageSettings;
+import org.aspose.pdf.printing.PrinterMargins;
 
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.image.BufferedImage;
-import java.awt.print.*;
 import javax.imageio.ImageIO;
 import javax.print.PrintService;
 import javax.print.PrintServiceLookup;
-import java.io.*;
-import java.util.logging.Level;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.awt.print.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.logging.Logger;
 
-/**
- * Facade for viewing and printing PDF documents.
- * <p>
- * Uses {@code java.awt.print.PrinterJob} for physical printing and
- * {@link PdfPageRenderer} for rendering pages to images.
- * </p>
- */
+/// Facade for viewing and printing PDF documents.
+///
+/// Uses `java.awt.print.PrinterJob` for physical printing and
+/// [PdfPageRenderer] for rendering pages to images.
+///
 public class PdfViewer implements Printable, AutoCloseable {
 
     private static final Logger LOG = Logger.getLogger(PdfViewer.class.getName());
@@ -39,59 +38,47 @@ public class PdfViewer implements Printable, AutoCloseable {
     private int printFromPage = 1;
     private int printToPage = Integer.MAX_VALUE;
 
-    /**
-     * Creates a new PdfViewer instance.
-     */
+    /// Creates a new PdfViewer instance.
     public PdfViewer() {
     }
 
-    /**
-     * Binds a PDF file to this viewer.
-     *
-     * @param inputFile path to the PDF file
-     * @throws IOException if the file cannot be opened
-     */
+    /// Binds a PDF file to this viewer.
+    ///
+    /// @param inputFile path to the PDF file
+    /// @throws IOException if the file cannot be opened
     public void bindPdf(String inputFile) throws IOException {
         this.document = new Document(inputFile);
     }
 
-    /**
-     * Binds a PDF from an input stream.
-     *
-     * @param stream the input stream
-     * @throws IOException if the stream cannot be read
-     */
+    /// Binds a PDF from an input stream.
+    ///
+    /// @param stream the input stream
+    /// @throws IOException if the stream cannot be read
     public void bindPdf(InputStream stream) throws IOException {
         this.document = new Document(stream);
     }
 
-    /**
-     * Binds an existing Document to this viewer.
-     *
-     * @param doc the document
-     */
+    /// Binds an existing Document to this viewer.
+    ///
+    /// @param doc the document
     public void bindPdf(Document doc) {
         this.document = doc;
     }
 
-    /**
-     * Opens a PDF file (alias for bindPdf).
-     *
-     * @param inputFile path to the PDF file
-     * @throws IOException if the file cannot be opened
-     */
+    /// Opens a PDF file (alias for bindPdf).
+    ///
+    /// @param inputFile path to the PDF file
+    /// @throws IOException if the file cannot be opened
     public void openPdfFile(String inputFile) throws IOException {
         bindPdf(inputFile);
     }
 
-    /**
-     * Prints the document with specified page and printer settings.
-     *
-     * @param pageSettings    page settings (paper size, margins, orientation)
-     * @param printerSettings printer settings (printer name, copies, page range)
-     * @throws IOException      if document processing fails
-     * @throws PrinterException if printing fails
-     */
+    /// Prints the document with specified page and printer settings.
+    ///
+    /// @param pageSettings    page settings (paper size, margins, orientation)
+    /// @param printerSettings printer settings (printer name, copies, page range)
+    /// @throws IOException      if document processing fails
+    /// @throws PrinterException if printing fails
     public void printDocumentWithSettings(PrintPageSettings pageSettings,
                                            PdfPrinterSettings printerSettings)
             throws IOException, PrinterException {
@@ -104,59 +91,49 @@ public class PdfViewer implements Printable, AutoCloseable {
         }
     }
 
-    /**
-     * Prints the document with the specified printer settings using default page settings.
-     *
-     * @param printerSettings the printer settings
-     * @throws IOException      if document processing fails
-     * @throws PrinterException if printing fails
-     */
+    /// Prints the document with the specified printer settings using default page settings.
+    ///
+    /// @param printerSettings the printer settings
+    /// @throws IOException      if document processing fails
+    /// @throws PrinterException if printing fails
     public void printDocumentWithSettings(PdfPrinterSettings printerSettings)
             throws IOException, PrinterException {
         printDocumentWithSettings(printerSettings.getDefaultPageSettings(), printerSettings);
     }
 
-    /**
-     * Prints the document using default settings.
-     *
-     * @throws IOException      if document processing fails
-     * @throws PrinterException if printing fails
-     */
+    /// Prints the document using default settings.
+    ///
+    /// @throws IOException      if document processing fails
+    /// @throws PrinterException if printing fails
     public void printDocument() throws IOException, PrinterException {
         printDocumentWithSettings(new PdfPrinterSettings());
     }
 
-    /**
-     * Prints a large PDF file (binds and prints).
-     *
-     * @param inputFile path to the PDF file
-     * @throws IOException      if document processing fails
-     * @throws PrinterException if printing fails
-     */
+    /// Prints a large PDF file (binds and prints).
+    ///
+    /// @param inputFile path to the PDF file
+    /// @throws IOException      if document processing fails
+    /// @throws PrinterException if printing fails
     public void printLargePdf(String inputFile) throws IOException, PrinterException {
         bindPdf(inputFile);
         printDocument();
     }
 
-    /**
-     * Renders a single page to a BufferedImage.
-     *
-     * @param pageNum 1-based page number
-     * @return the rendered image
-     * @throws IOException if rendering fails
-     */
+    /// Renders a single page to a BufferedImage.
+    ///
+    /// @param pageNum 1-based page number
+    /// @return the rendered image
+    /// @throws IOException if rendering fails
     public BufferedImage decodePage(int pageNum) throws IOException {
         if (document == null) throw new IllegalStateException("No document bound");
         PdfPageRenderer renderer = new PdfPageRenderer();
         return renderer.renderPage(document.getPages().get(pageNum), resolution, resolution);
     }
 
-    /**
-     * Renders all pages to BufferedImage array.
-     *
-     * @return array of rendered images
-     * @throws IOException if rendering fails
-     */
+    /// Renders all pages to BufferedImage array.
+    ///
+    /// @return array of rendered images
+    /// @throws IOException if rendering fails
     public BufferedImage[] decodeAllPages() throws IOException {
         if (document == null) throw new IllegalStateException("No document bound");
         int n = document.getPages().getCount();
@@ -196,9 +173,7 @@ public class PdfViewer implements Printable, AutoCloseable {
 
     // ===================== Print helpers =====================
 
-    /**
-     * Print-to-file: renders pages as images.
-     */
+    /// Print-to-file: renders pages as images.
     private void printToFile(PdfPrinterSettings settings, PrintPageSettings pageSettings) throws IOException {
         String outputFile = settings.getPrintFileName();
         if (outputFile == null) throw new IOException("PrintFileName not set");
@@ -221,9 +196,7 @@ public class PdfViewer implements Printable, AutoCloseable {
         }
     }
 
-    /**
-     * Prints to a physical/virtual printer via java.awt.print.PrinterJob.
-     */
+    /// Prints to a physical/virtual printer via java.awt.print.PrinterJob.
     private void printToDevice(PdfPrinterSettings settings, PrintPageSettings pageSettings)
             throws PrinterException {
         PrinterJob job = PrinterJob.getPrinterJob();
@@ -279,41 +252,39 @@ public class PdfViewer implements Printable, AutoCloseable {
 
     // ===================== Properties =====================
 
-    /** Returns whether pages are auto-resized to fit the paper. */
+    /// Returns whether pages are auto-resized to fit the paper.
     public boolean isAutoResize() { return autoResize; }
-    /** Sets whether pages are auto-resized to fit the paper. */
+    /// Sets whether pages are auto-resized to fit the paper.
     public void setAutoResize(boolean v) { this.autoResize = v; }
 
-    /** Returns whether pages are auto-rotated to best fit. */
+    /// Returns whether pages are auto-rotated to best fit.
     public boolean isAutoRotate() { return autoRotate; }
-    /** Sets whether pages are auto-rotated. */
+    /// Sets whether pages are auto-rotated.
     public void setAutoRotate(boolean v) { this.autoRotate = v; }
 
-    /** Returns whether a print dialog is shown before printing. */
+    /// Returns whether a print dialog is shown before printing.
     public boolean isPrintPageDialog() { return printPageDialog; }
-    /** Sets whether a print dialog is shown. */
+    /// Sets whether a print dialog is shown.
     public void setPrintPageDialog(boolean v) { this.printPageDialog = v; }
 
-    /** Returns whether to print in grayscale. */
+    /// Returns whether to print in grayscale.
     public boolean isPrintAsGrayscale() { return printAsGrayscale; }
-    /** Sets whether to print in grayscale. */
+    /// Sets whether to print in grayscale.
     public void setPrintAsGrayscale(boolean v) { this.printAsGrayscale = v; }
 
-    /** Returns the rendering resolution in DPI. */
+    /// Returns the rendering resolution in DPI.
     public int getResolution() { return resolution; }
-    /** Sets the rendering resolution in DPI. */
+    /// Sets the rendering resolution in DPI.
     public void setResolution(int v) { this.resolution = v; }
 
-    /** Sets whether to use an intermediate image for printing. */
+    /// Sets whether to use an intermediate image for printing.
     public void setUseIntermidiateImage(boolean v) { this.useIntermidiateImage = v; }
-    /** Returns whether intermediate image is used. */
+    /// Returns whether intermediate image is used.
     public boolean isUseIntermidiateImage() { return useIntermidiateImage; }
 
-    /**
-     * Closes the PDF file (alias for close).
-     *
-     * @throws IOException if closing fails
-     */
+    /// Closes the PDF file (alias for close).
+    ///
+    /// @throws IOException if closing fails
     public void closePdfFile() throws IOException {
         close();
     }

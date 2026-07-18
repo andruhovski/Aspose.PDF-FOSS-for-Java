@@ -12,12 +12,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * FE.3 — host font discovery: {@link FontDiskLookup#loadStyled} finds a font by family name in a
- * configured directory, returns its bytes, and falls through cleanly (never throws) on a missing dir,
- * missing family, or empty dir. Uses the synthetic {@link MinimalTtf} fixture only — NO dependency on
- * any proprietary host font (CI-safe).
- */
+/// FE.3 — host font discovery: [FontDiskLookup#loadStyled] finds a font by family name in a
+/// configured directory, returns its bytes, and falls through cleanly (never throws) on a missing dir,
+/// missing family, or empty dir. Uses the synthetic [MinimalTtf] fixture only — NO dependency on
+/// any proprietary host font (CI-safe).
 public class FontDiskLookupStyledTest {
 
     private static byte[] fixtureTtf() {

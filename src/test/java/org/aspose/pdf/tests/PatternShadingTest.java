@@ -18,9 +18,7 @@ import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for pattern and shading classes (§8.7).
- */
+/// Tests for pattern and shading classes (§8.7).
 public class PatternShadingTest {
 
     // ═══════════════════════════════════════════════════════════════
@@ -295,14 +293,12 @@ public class PatternShadingTest {
     //  ShadingRenderer — device/user space consistency
     // ═══════════════════════════════════════════════════════════════
 
-    /**
-     * The {@code sh} operator paints under a scaled+flipped base transform
-     * (PngDevice at any DPI). The renderer samples device pixels through the
-     * inverse of (base × CTM); the clip however is set in g2d user space.
-     * Regression: corpus 28762.pdf — user-space clip bounds were fed into the
-     * device-space inverse, every sample fell outside the axis span and, with
-     * /Extend [false false], the bar gradients painted nothing at all.
-     */
+    /// The `sh` operator paints under a scaled+flipped base transform
+    /// (PngDevice at any DPI). The renderer samples device pixels through the
+    /// inverse of (base × CTM); the clip however is set in g2d user space.
+    /// Regression: corpus 28762.pdf — user-space clip bounds were fed into the
+    /// device-space inverse, every sample fell outside the axis span and, with
+    /// /Extend [false false], the bar gradients painted nothing at all.
     @Test
     public void shadingRendererPaintsUnderScaledFlippedBaseTransform() throws IOException {
         // Axial gradient along x: 10 → 40 (user space), red → blue, no extend.

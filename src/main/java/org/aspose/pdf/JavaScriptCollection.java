@@ -1,42 +1,29 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
-import org.aspose.pdf.engine.pdfobjects.PdfStream;
-import org.aspose.pdf.engine.pdfobjects.PdfString;
-import org.aspose.pdf.engine.pdfobjects.NameTree;
 import org.aspose.pdf.engine.parser.PDFParser;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Logger;
 
-/**
- * Provides access to the JavaScript name tree of a PDF document
- * (ISO 32000-1:2008, §12.6.4.16 and §7.9.6).
- *
- * <p>JavaScript actions are stored in the document catalog under
- * {@code /Names → /JavaScript}, a name tree mapping names to JavaScript
- * action dictionaries. The traversal is delegated to {@link NameTree}.</p>
- */
+/// Provides access to the JavaScript name tree of a PDF document
+/// (ISO 32000-1:2008, §12.6.4.16 and §7.9.6).
+///
+/// JavaScript actions are stored in the document catalog under
+/// `/Names → /JavaScript`, a name tree mapping names to JavaScript
+/// action dictionaries. The traversal is delegated to [NameTree].
 public class JavaScriptCollection implements Iterable<Map.Entry<String, String>> {
 
     private static final Logger LOG = Logger.getLogger(JavaScriptCollection.class.getName());
 
     private final Map<String, String> scripts;
 
-    /**
-     * Creates a JavaScriptCollection by reading the /Names → /JavaScript name tree
-     * from the document catalog.
-     *
-     * @param catalog the document catalog dictionary
-     * @param parser  the PDF parser for resolving references (may be null)
-     */
+    /// Creates a JavaScriptCollection by reading the /Names → /JavaScript name tree
+    /// from the document catalog.
+    ///
+    /// @param catalog the document catalog dictionary
+    /// @param parser  the PDF parser for resolving references (may be null)
     public JavaScriptCollection(PdfDictionary catalog, PDFParser parser) {
         this.scripts = new LinkedHashMap<>();
         if (catalog == null) return;
@@ -59,49 +46,39 @@ public class JavaScriptCollection implements Iterable<Map.Entry<String, String>>
         }
     }
 
-    /**
-     * Returns the set of JavaScript action names.
-     *
-     * @return the set of names (keys)
-     */
+    /// Returns the set of JavaScript action names.
+    ///
+    /// @return the set of names (keys)
     public Set<String> getKeys() {
         return Collections.unmodifiableSet(scripts.keySet());
     }
 
-    /**
-     * Returns the JavaScript source code associated with the given name.
-     *
-     * @param name the JavaScript action name
-     * @return the JavaScript source, or null if not found
-     */
+    /// Returns the JavaScript source code associated with the given name.
+    ///
+    /// @param name the JavaScript action name
+    /// @return the JavaScript source, or null if not found
     public String get(String name) {
         return scripts.get(name);
     }
 
-    /**
-     * Returns the number of JavaScript entries.
-     *
-     * @return the count
-     */
+    /// Returns the number of JavaScript entries.
+    ///
+    /// @return the count
     public int size() {
         return scripts.size();
     }
 
-    /**
-     * Returns an iterator over the name-to-script entries.
-     *
-     * @return an iterator of map entries
-     */
+    /// Returns an iterator over the name-to-script entries.
+    ///
+    /// @return an iterator of map entries
     @Override
     public Iterator<Map.Entry<String, String>> iterator() {
         return scripts.entrySet().iterator();
     }
 
-    /**
-     * Extracts a JavaScript string from a name-tree value. The value can be a
-     * direct string or a JavaScript action dictionary
-     * ({@code /S /JavaScript /JS …}).
-     */
+    /// Extracts a JavaScript string from a name-tree value. The value can be a
+    /// direct string or a JavaScript action dictionary
+    /// (`/S /JavaScript /JS …`).
     private String extractJavaScript(PdfBase value) {
         if (value instanceof PdfString) {
             return ((PdfString) value).getString();
@@ -124,12 +101,10 @@ public class JavaScriptCollection implements Iterable<Map.Entry<String, String>>
         return null;
     }
 
-    /**
-     * Resolves an indirect reference. Prefers the parser when supplied (it can
-     * pull objects from compressed object streams that the reference's own
-     * resolver might not be aware of), and otherwise falls back to the
-     * built-in {@link PdfObjectReference#dereference} path.
-     */
+    /// Resolves an indirect reference. Prefers the parser when supplied (it can
+    /// pull objects from compressed object streams that the reference's own
+    /// resolver might not be aware of), and otherwise falls back to the
+    /// built-in [PdfObjectReference#dereference] path.
     private static PdfBase resolve(PdfBase obj, PDFParser parser) {
         if (obj == null) return null;
         if (parser != null) {

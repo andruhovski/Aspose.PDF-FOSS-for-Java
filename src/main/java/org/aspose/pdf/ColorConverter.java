@@ -7,13 +7,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
-/**
- * Converts color operators in page content streams from one color space to another.
- * <p>
- * Handles the six device-color operators: rg/RG (RGB), k/K (CMYK), g/G (Gray).
- * Conversion formulas follow standard colorimetric transforms.
- * </p>
- */
+/// Converts color operators in page content streams from one color space to another.
+///
+/// Handles the six device-color operators: rg/RG (RGB), k/K (CMYK), g/G (Gray).
+/// Conversion formulas follow standard colorimetric transforms.
+///
 public final class ColorConverter {
 
     private static final Logger LOG = Logger.getLogger(ColorConverter.class.getName());
@@ -22,14 +20,12 @@ public final class ColorConverter {
         // utility class
     }
 
-    /**
-     * Converts all color operators in every page of the document according to the given strategy.
-     *
-     * @param document the document to process
-     * @param strategy the color conversion strategy
-     * @throws IOException              if reading content streams fails
-     * @throws IllegalArgumentException if document or strategy is null
-     */
+    /// Converts all color operators in every page of the document according to the given strategy.
+    ///
+    /// @param document the document to process
+    /// @param strategy the color conversion strategy
+    /// @throws IOException              if reading content streams fails
+    /// @throws IllegalArgumentException if document or strategy is null
     public static void convert(Document document, ColorConversionStrategy strategy) throws IOException {
         if (document == null) {
             throw new IllegalArgumentException("Document must not be null");
@@ -46,9 +42,7 @@ public final class ColorConverter {
         }
     }
 
-    /**
-     * Converts color operators on a single page.
-     */
+    /// Converts color operators on a single page.
     private static void convertPageColors(Page page, ColorConversionStrategy strategy) throws IOException {
         OperatorCollection contents = page.getContents();
         List<Operator> converted = new ArrayList<>(contents.size());
@@ -71,9 +65,7 @@ public final class ColorConverter {
         }
     }
 
-    /**
-     * Converts a single operator if it is a color operator; otherwise returns it unchanged.
-     */
+    /// Converts a single operator if it is a color operator; otherwise returns it unchanged.
     private static Operator convertOperator(Operator op, ColorConversionStrategy strategy) {
         // Non-stroking RGB (rg)
         if (op instanceof SetRGBColor) {
@@ -180,26 +172,22 @@ public final class ColorConverter {
 
     // ── Conversion formulas ──
 
-    /**
-     * Converts RGB to grayscale using luminance weights.
-     *
-     * @param r red (0..1)
-     * @param g green (0..1)
-     * @param b blue (0..1)
-     * @return gray level (0..1)
-     */
+    /// Converts RGB to grayscale using luminance weights.
+    ///
+    /// @param r red (0..1)
+    /// @param g green (0..1)
+    /// @param b blue (0..1)
+    /// @return gray level (0..1)
     public static double rgbToGray(double r, double g, double b) {
         return 0.299 * r + 0.587 * g + 0.114 * b;
     }
 
-    /**
-     * Converts RGB to CMYK color values.
-     *
-     * @param r red (0..1)
-     * @param g green (0..1)
-     * @param b blue (0..1)
-     * @return array of {c, m, y, k} each in range 0..1
-     */
+    /// Converts RGB to CMYK color values.
+    ///
+    /// @param r red (0..1)
+    /// @param g green (0..1)
+    /// @param b blue (0..1)
+    /// @return array of {c, m, y, k} each in range 0..1
     public static double[] rgbToCmyk(double r, double g, double b) {
         double k = 1.0 - Math.max(r, Math.max(g, b));
         if (k >= 1.0) {
@@ -211,15 +199,13 @@ public final class ColorConverter {
         return new double[]{c, m, y, k};
     }
 
-    /**
-     * Converts CMYK to RGB color values.
-     *
-     * @param c cyan (0..1)
-     * @param m magenta (0..1)
-     * @param y yellow (0..1)
-     * @param k black/key (0..1)
-     * @return array of {r, g, b} each in range 0..1
-     */
+    /// Converts CMYK to RGB color values.
+    ///
+    /// @param c cyan (0..1)
+    /// @param m magenta (0..1)
+    /// @param y yellow (0..1)
+    /// @param k black/key (0..1)
+    /// @return array of {r, g, b} each in range 0..1
     public static double[] cmykToRgb(double c, double m, double y, double k) {
         double r = (1.0 - c) * (1.0 - k);
         double g = (1.0 - m) * (1.0 - k);

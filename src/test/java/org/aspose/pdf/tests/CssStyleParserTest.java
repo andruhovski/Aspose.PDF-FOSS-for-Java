@@ -7,9 +7,7 @@ import org.aspose.pdf.html.CssStyleParser;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for CSS style parsing.
- */
+/// Tests for CSS style parsing.
 public class CssStyleParserTest {
 
     @Test

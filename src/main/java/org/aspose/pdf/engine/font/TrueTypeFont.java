@@ -1,25 +1,19 @@
 package org.aspose.pdf.engine.font;
 
-import org.aspose.pdf.engine.pdfobjects.PdfArray;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfStream;
 import org.aspose.pdf.engine.font.ttf.TrueTypeReader;
 import org.aspose.pdf.engine.parser.PDFParser;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.io.IOException;
 import java.util.Locale;
 import java.util.logging.Logger;
 
-/**
- * TrueType font (/Subtype /TrueType) - ISO 32000-1:2008, 9.6.3.
- * <p>
- * Wraps a TrueType font embedded in a PDF. Reads /Widths, /Encoding,
- * and optionally parses the embedded font program via {@link TrueTypeReader}
- * for glyph-level metrics and cmap decoding.
- * </p>
- */
+/// TrueType font (/Subtype /TrueType) - ISO 32000-1:2008, 9.6.3.
+///
+/// Wraps a TrueType font embedded in a PDF. Reads /Widths, /Encoding,
+/// and optionally parses the embedded font program via [TrueTypeReader]
+/// for glyph-level metrics and cmap decoding.
+///
 public class TrueTypeFont extends PdfFont {
 
     private static final Logger LOG = Logger.getLogger(TrueTypeFont.class.getName());
@@ -30,13 +24,11 @@ public class TrueTypeFont extends PdfFont {
     private int lastChar;
     private boolean hasExplicitEncoding;
 
-    /**
-     * Creates a TrueTypeFont from a font dictionary.
-     *
-     * @param fontDict the font dictionary (/Type /Font, /Subtype /TrueType)
-     * @param parser   the PDF parser (may be null)
-     * @throws IOException if reading the font data fails
-     */
+    /// Creates a TrueTypeFont from a font dictionary.
+    ///
+    /// @param fontDict the font dictionary (/Type /Font, /Subtype /TrueType)
+    /// @param parser   the PDF parser (may be null)
+    /// @throws IOException if reading the font data fails
     public TrueTypeFont(PdfDictionary fontDict, PDFParser parser) throws IOException {
         super(fontDict, parser);
         initEncoding();
@@ -144,28 +136,23 @@ public class TrueTypeFont extends PdfFont {
         return 1000;
     }
 
-    /**
-     * Returns the TrueTypeReader if the font program was loaded.
-     *
-     * @return the reader, or null
-     */
+    /// Returns the TrueTypeReader if the font program was loaded.
+    ///
+    /// @return the reader, or null
     public TrueTypeReader getTrueTypeReader() {
         return ttReader;
     }
 
-    /**
-     * Maps a character code to a glyph id in the embedded program, following the
-     * TrueType glyph-selection rules of ISO 32000-1:2008 §9.6.6.4:
-     * <ol>
-     *   <li>symbolic font with no explicit /Encoding → embedded (3,0)/(1,0) cmap
-     *       keyed by the raw code (and the {@code 0xF000+code} fallback);</li>
-     *   <li>otherwise → /Encoding code→Unicode, then the embedded Unicode cmap;</li>
-     *   <li>last resort → the raw code (and {@code 0xF000+code}) through the cmap.</li>
-     * </ol>
-     *
-     * @param code the 1-byte character code from the content stream
-     * @return the glyph id, or 0 when it cannot be resolved
-     */
+    /// Maps a character code to a glyph id in the embedded program, following the
+    /// TrueType glyph-selection rules of ISO 32000-1:2008 §9.6.6.4:
+    ///
+    ///   1. symbolic font with no explicit /Encoding → embedded (3,0)/(1,0) cmap
+    ///     keyed by the raw code (and the `0xF000+code` fallback);
+    ///   2. otherwise → /Encoding code→Unicode, then the embedded Unicode cmap;
+    ///   3. last resort → the raw code (and `0xF000+code`) through the cmap.
+    ///
+    /// @param code the 1-byte character code from the content stream
+    /// @return the glyph id, or 0 when it cannot be resolved
     public int resolveGlyphId(int code) {
         if (ttReader == null) return 0;
         boolean symbolic = fontDescriptor != null && fontDescriptor.isSymbolic();
@@ -186,42 +173,36 @@ public class TrueTypeFont extends PdfFont {
         return g;
     }
 
-    /**
-     * Returns the em-normalised, Y-up outline of the glyph selected by
-     * {@link #resolveGlyphId(int)} for the given character code, or {@code null}
-     * when no embedded program is present or the glyph cannot be resolved.
-     * Drawing this outline avoids {@code java.awt.Font}, which renders the
-     * default ".notdef" box for subset programs whose cmap is missing or partial
-     * even when {@code canDisplay} reports the character as available (corpus
-     * 46679: the dotted-leader colon of an embedded TimesNewRoman subset).
-     *
-     * @param code the 1-byte character code
-     * @return the glyph outline, or {@code null}
-     */
+    /// Returns the em-normalised, Y-up outline of the glyph selected by
+    /// [#resolveGlyphId(int)] for the given character code, or `null`
+    /// when no embedded program is present or the glyph cannot be resolved.
+    /// Drawing this outline avoids `java.awt.Font`, which renders the
+    /// default ".notdef" box for subset programs whose cmap is missing or partial
+    /// even when `canDisplay` reports the character as available (corpus
+    /// 46679: the dotted-leader colon of an embedded TimesNewRoman subset).
+    ///
+    /// @param code the 1-byte character code
+    /// @return the glyph outline, or `null`
     public java.awt.geom.GeneralPath glyphOutlineForCode(int code) {
         if (ttReader == null) return null;
         int gid = resolveGlyphId(code);
         return gid > 0 ? ttReader.getGlyphPath(gid) : null;
     }
 
-    /**
-     * Returns true if the font dictionary carries an explicit /Encoding
-     * (a base-encoding name or an encoding dictionary). Symbolic fonts
-     * without one map character codes through the embedded font program's
-     * own cmap (ISO 32000-1:2008, §9.6.6.4).
-     *
-     * @return true if /Encoding was present
-     */
+    /// Returns true if the font dictionary carries an explicit /Encoding
+    /// (a base-encoding name or an encoding dictionary). Symbolic fonts
+    /// without one map character codes through the embedded font program's
+    /// own cmap (ISO 32000-1:2008, §9.6.6.4).
+    ///
+    /// @return true if /Encoding was present
     public boolean hasExplicitEncoding() {
         return hasExplicitEncoding;
     }
 
-    /**
-     * Resolves a PostScript glyph name (e.g. {@code "C"}, {@code "germandbls"},
-     * {@code "uni0041"}, {@code "u00041"}) to a Unicode codepoint via the
-     * Adobe Glyph List, with the standard {@code uniXXXX} / {@code uXXXXX}
-     * fallbacks. Returns 0 if the name is null, empty, or unrecognised.
-     */
+    /// Resolves a PostScript glyph name (e.g. `"C"`, `"germandbls"`,
+    /// `"uni0041"`, `"u00041"`) to a Unicode codepoint via the
+    /// Adobe Glyph List, with the standard `uniXXXX` / `uXXXXX`
+    /// fallbacks. Returns 0 if the name is null, empty, or unrecognised.
     private static int unicodeFromGlyphName(String name) {
         if (name == null || name.isEmpty() || ".notdef".equals(name)) return 0;
         // Strip a textual variant suffix ("A.alt" → "A") because subset fonts
@@ -242,7 +223,7 @@ public class TrueTypeFont extends PdfFont {
         return 0;
     }
 
-    /** Filters out C0/C1 control codes that pollute extracted text. */
+    /// Filters out C0/C1 control codes that pollute extracted text.
     private static boolean isReadableUnicodeCodePoint(int unicode) {
         if (unicode <= 0) return false;
         if (Character.isWhitespace(unicode)) return true;

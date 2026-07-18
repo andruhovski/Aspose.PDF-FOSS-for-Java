@@ -10,11 +10,9 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Unit tests for {@link AppearanceCharacteristics} when accessed through
- * {@link WidgetAnnotation#getCharacteristics()} — wraps the {@code /MK}
- * appearance-characteristics dictionary (ISO 32000-1:2008 §12.5.6.19).
- */
+/// Unit tests for [AppearanceCharacteristics] when accessed through
+/// [WidgetAnnotation#getCharacteristics()] — wraps the `/MK`
+/// appearance-characteristics dictionary (ISO 32000-1:2008 §12.5.6.19).
 public class AnnotationCharacteristicsTests {
 
     @Test

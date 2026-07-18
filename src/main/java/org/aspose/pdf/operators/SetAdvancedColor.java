@@ -5,37 +5,30 @@ import org.aspose.pdf.engine.pdfobjects.PdfName;
 
 import java.util.List;
 
-/**
- * Set color for non-stroking operations with pattern support operator (scn).
- * <p>
- * Similar to {@link SetColor} (sc) but additionally supports Pattern and Separation
- * color spaces. When the current color space is a Pattern space, the last operand
- * is a pattern name ({@link PdfName}); the preceding operands (if any) are numeric
- * color components for the underlying color space.
- * See ISO 32000-1:2008, §8.6.8, Table 74.
- * </p>
- */
+/// Set color for non-stroking operations with pattern support operator (scn).
+///
+/// Similar to [SetColor] (sc) but additionally supports Pattern and Separation
+/// color spaces. When the current color space is a Pattern space, the last operand
+/// is a pattern name ([PdfName]); the preceding operands (if any) are numeric
+/// color components for the underlying color space.
+/// See ISO 32000-1:2008, §8.6.8, Table 74.
+///
 public class SetAdvancedColor extends BasicSetColorAndPatternOperator {
 
-    /**
-     * Creates a SetAdvancedColor (scn) operator from parsed operands.
-     * <p>
-     * Operands may be a variable number of numeric values, optionally followed
-     * by a {@link PdfName} identifying a pattern.
-     * </p>
-     *
-     * @param operands the operands from the content stream parser
-     */
+    /// Creates a SetAdvancedColor (scn) operator from parsed operands.
+    ///
+    /// Operands may be a variable number of numeric values, optionally followed
+    /// by a [PdfName] identifying a pattern.
+    ///
+    /// @param operands the operands from the content stream parser
     public SetAdvancedColor(List<PdfBase> operands) {
         super("scn", operands);
     }
 
-    /**
-     * Returns the numeric color components. If the last operand is a pattern name,
-     * it is excluded from the returned array.
-     *
-     * @return the color component values
-     */
+    /// Returns the numeric color components. If the last operand is a pattern name,
+    /// it is excluded from the returned array.
+    ///
+    /// @return the color component values
     public double[] getComponents() {
         List<PdfBase> ops = getOperands();
         if (ops == null || ops.isEmpty()) {
@@ -52,12 +45,10 @@ public class SetAdvancedColor extends BasicSetColorAndPatternOperator {
         return result;
     }
 
-    /**
-     * Returns the pattern name if the last operand is a {@link PdfName}, or {@code null}
-     * if no pattern name is present.
-     *
-     * @return the pattern name, or {@code null}
-     */
+    /// Returns the pattern name if the last operand is a [PdfName], or `null`
+    /// if no pattern name is present.
+    ///
+    /// @return the pattern name, or `null`
     public String getPatternName() {
         List<PdfBase> ops = getOperands();
         if (ops != null && !ops.isEmpty()) {

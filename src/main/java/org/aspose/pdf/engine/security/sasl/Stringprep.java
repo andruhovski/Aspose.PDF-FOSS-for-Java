@@ -6,42 +6,34 @@ import java.io.InputStream;
 import java.text.Normalizer;
 import java.util.Objects;
 
-/**
- * Minimal SASLprep implementation used by security-related regression tests.
- * <p>
- * The implementation covers mapping to nothing, NFKC normalization, prohibited
- * output checks, and the bidirectional rule from RFC 4013 / RFC 3454.
- * </p>
- */
+/// Minimal SASLprep implementation used by security-related regression tests.
+///
+/// The implementation covers mapping to nothing, NFKC normalization, prohibited
+/// output checks, and the bidirectional rule from RFC 4013 / RFC 3454.
+///
 public class Stringprep {
 
     private final String source;
     private String result;
 
-    /**
-     * Creates a processor from a source string.
-     *
-     * @param source source text
-     */
+    /// Creates a processor from a source string.
+    ///
+    /// @param source source text
     public Stringprep(String source) {
         this.source = Objects.requireNonNull(source, "source");
     }
 
-    /**
-     * Creates a processor from a UTF-8 input stream.
-     *
-     * @param stream source stream
-     * @throws IOException if the stream cannot be read
-     */
+    /// Creates a processor from a UTF-8 input stream.
+    ///
+    /// @param stream source stream
+    /// @throws IOException if the stream cannot be read
     public Stringprep(InputStream stream) throws IOException {
         this.source = new String(readAllBytes(stream), java.nio.charset.StandardCharsets.UTF_8);
     }
 
-    /**
-     * Processes the input according to SASLprep.
-     *
-     * @return normalized result
-     */
+    /// Processes the input according to SASLprep.
+    ///
+    /// @return normalized result
     public String process() {
         String mapped = mapToNothing(source);
         String normalized = Normalizer.normalize(mapped, Normalizer.Form.NFKC);
@@ -51,11 +43,9 @@ public class Stringprep {
         return normalized;
     }
 
-    /**
-     * Returns the last processed result.
-     *
-     * @return the processed result, or {@code null} if {@link #process()} was not called
-     */
+    /// Returns the last processed result.
+    ///
+    /// @return the processed result, or `null` if [#process()] was not called
     public String getResult() {
         return result;
     }

@@ -1,19 +1,17 @@
 package org.aspose.pdf;
 
-/**
- * Numbering style for headings and TOC entries.
- */
+/// Numbering style for headings and TOC entries.
 public enum NumberingStyle {
-    /** No numbering. */
+    /// No numbering.
     None,
-    /** Arabic numerals (1, 2, 3, ...). */
+    /// Arabic numerals (1, 2, 3, ...).
     NumeralsArabic,
-    /** Roman numerals uppercase (I, II, III, ...). */
+    /// Roman numerals uppercase (I, II, III, ...).
     NumeralsRomanUppercase,
-    /** Roman numerals lowercase (i, ii, iii, ...). */
+    /// Roman numerals lowercase (i, ii, iii, ...).
     NumeralsRomanLowercase,
-    /** Letters uppercase (A, B, C, ...). */
+    /// Letters uppercase (A, B, C, ...).
     LettersUppercase,
-    /** Letters lowercase (a, b, c, ...). */
+    /// Letters lowercase (a, b, c, ...).
     LettersLowercase
 }

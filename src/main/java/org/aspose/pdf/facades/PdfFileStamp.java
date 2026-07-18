@@ -1,11 +1,6 @@
 package org.aspose.pdf.facades;
 
-import org.aspose.pdf.Document;
-import org.aspose.pdf.ImageStamp;
-import org.aspose.pdf.Page;
-import org.aspose.pdf.PageNumberStamp;
-import org.aspose.pdf.PdfPageStamp;
-import org.aspose.pdf.TextStamp;
+import org.aspose.pdf.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,13 +10,11 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Provides methods for adding stamps (text or image) to PDF pages.
- * <p>
- * The current implementation stores stamps but does not render them into the
- * content stream, as that requires the layout engine. Stamps are logged for
- * diagnostic purposes.
- */
+/// Provides methods for adding stamps (text or image) to PDF pages.
+///
+/// The current implementation stores stamps but does not render them into the
+/// content stream, as that requires the layout engine. Stamps are logged for
+/// diagnostic purposes.
 public class PdfFileStamp implements AutoCloseable {
 
     private static final Logger LOG = Logger.getLogger(PdfFileStamp.class.getName());
@@ -40,71 +33,61 @@ public class PdfFileStamp implements AutoCloseable {
     private final List<PendingStamp> stamps = new ArrayList<>();
     private final List<Document> auxiliaryDocuments = new ArrayList<>();
     private int stampId;
-    /** Output stream supplied via {@link #PdfFileStamp(InputStream, OutputStream)};
-     *  {@link #close()} writes the finished PDF here when set. */
+    /// Output stream supplied via [#PdfFileStamp(InputStream, OutputStream)];
+    ///  [#close()] writes the finished PDF here when set.
     private OutputStream pendingOutputStream;
 
-    /** Output file supplied via {@link #PdfFileStamp(String, String)};
-     *  {@link #close()} writes the finished PDF here when set. */
+    /// Output file supplied via [#PdfFileStamp(String, String)];
+    ///  [#close()] writes the finished PDF here when set.
     private String pendingOutputFile;
 
-    /**
-     * Creates a new {@code PdfFileStamp} instance.
-     */
+    /// Creates a new `PdfFileStamp` instance.
     public PdfFileStamp() {
     }
 
-    /**
-     * Creates a {@code PdfFileStamp} bound to the input stream and configured to
-     * write the stamped result to the supplied output stream when
-     * {@link #close()} is called. Mirrors the C# {@code PdfFileStamp(Stream, Stream)}
-     * constructor used by the legacy facade pattern
-     * ({@code new PdfFileStamp(in, out); add…; close();}).
-     *
-     * @param inputStream  the source PDF stream
-     * @param outputStream the destination stream (the stamped PDF is written here on {@link #close()})
-     */
+    /// Creates a `PdfFileStamp` bound to the input stream and configured to
+    /// write the stamped result to the supplied output stream when
+    /// [#close()] is called. Mirrors the C# `PdfFileStamp(Stream, Stream)`
+    /// constructor used by the legacy facade pattern
+    /// (`new PdfFileStamp(in, out); add…; close();`).
+    ///
+    /// @param inputStream  the source PDF stream
+    /// @param outputStream the destination stream (the stamped PDF is written here on [#close()])
     public PdfFileStamp(InputStream inputStream, OutputStream outputStream) {
         bindPdf(inputStream);
         this.pendingOutputStream = outputStream;
     }
 
-    /**
-     * Creates a {@code PdfFileStamp} bound to {@code inputFile} and configured
-     * to write the stamped result to {@code outputFile} when {@link #close()}
-     * is called. Mirrors the C# {@code PdfFileStamp(string, string)}
-     * constructor used by the legacy facade pattern
-     * ({@code new PdfFileStamp(inFile, outFile); addStamp(...); close();}).
-     */
+    /// Creates a `PdfFileStamp` bound to `inputFile` and configured
+    /// to write the stamped result to `outputFile` when [#close()]
+    /// is called. Mirrors the C# `PdfFileStamp(string, string)`
+    /// constructor used by the legacy facade pattern
+    /// (`new PdfFileStamp(inFile, outFile); addStamp(...); close();`).
     public PdfFileStamp(String inputFile, String outputFile) {
         bindPdf(inputFile);
         this.pendingOutputFile = outputFile;
     }
 
-    /** Creates a {@code PdfFileStamp} bound to {@code document}. */
+    /// Creates a `PdfFileStamp` bound to `document`.
     public PdfFileStamp(Document document) {
         bindPdf(document);
     }
 
-    /** Returns the bound document, or {@code null}. Mirrors C# {@code PdfFileStamp.Document}. */
+    /// Returns the bound document, or `null`. Mirrors C# `PdfFileStamp.Document`.
     public Document getDocument() {
         return document;
     }
 
-    /**
-     * Sets the input file path. The file is loaded into the bound {@link Document}.
-     * Mirrors C# {@code PdfFileStamp.InputFile} setter.
-     */
+    /// Sets the input file path. The file is loaded into the bound [Document].
+    /// Mirrors C# `PdfFileStamp.InputFile` setter.
     public void setInputFile(String inputFile) {
         bindPdf(inputFile);
     }
 
-    /**
-     * Binds a PDF file to this stamp editor.
-     *
-     * @param inputFile path to the PDF file
-     * @return {@code true} on success
-     */
+    /// Binds a PDF file to this stamp editor.
+    ///
+    /// @param inputFile path to the PDF file
+    /// @return `true` on success
     public boolean bindPdf(String inputFile) {
         try {
             this.document = new Document(inputFile);
@@ -115,12 +98,10 @@ public class PdfFileStamp implements AutoCloseable {
         }
     }
 
-    /**
-     * Binds a PDF from an input stream.
-     *
-     * @param inputStream the input stream containing PDF data
-     * @return {@code true} on success
-     */
+    /// Binds a PDF from an input stream.
+    ///
+    /// @param inputStream the input stream containing PDF data
+    /// @return `true` on success
     public boolean bindPdf(InputStream inputStream) {
         try {
             this.document = new Document(inputStream);
@@ -131,12 +112,10 @@ public class PdfFileStamp implements AutoCloseable {
         }
     }
 
-    /**
-     * Binds an existing {@link Document} to this stamp editor.
-     *
-     * @param document the document to bind
-     * @return {@code true} on success
-     */
+    /// Binds an existing [Document] to this stamp editor.
+    ///
+    /// @param document the document to bind
+    /// @return `true` on success
     public boolean bindPdf(Document document) {
         if (document == null) {
             LOG.warning("Cannot bind null document");
@@ -146,15 +125,13 @@ public class PdfFileStamp implements AutoCloseable {
         return true;
     }
 
-    /**
-     * Adds a text stamp to the list of stamps to apply.
-     * <p>
-     * <strong>Note:</strong> Stamp rendering into the content stream requires
-     * layout engine support and is not yet fully implemented. The stamp is stored
-     * for future application.
-     *
-     * @param stamp the text stamp to add
-     */
+    /// Adds a text stamp to the list of stamps to apply.
+    ///
+    /// **Note:** Stamp rendering into the content stream requires
+    /// layout engine support and is not yet fully implemented. The stamp is stored
+    /// for future application.
+    ///
+    /// @param stamp the text stamp to add
     public void addStamp(TextStamp stamp) {
         if (stamp == null) {
             LOG.warning("Cannot add null stamp");
@@ -166,15 +143,12 @@ public class PdfFileStamp implements AutoCloseable {
                 + "Stamp application requires layout engine support.");
     }
 
-    /**
-     * Adds a facades {@link Stamp} to the list of stamps to apply.
-     * <p>
-     * If the stamp has a bound {@link FormattedText} (via {@link Stamp#bindLogo(FormattedText)}),
-     * it is converted to a {@link TextStamp} with the formatted text properties applied.
-     * </p>
-     *
-     * @param stamp the facades stamp to add
-     */
+    /// Adds a facades [Stamp] to the list of stamps to apply.
+    ///
+    /// If the stamp has a bound [FormattedText] (via [Stamp#bindLogo(FormattedText)]),
+    /// it is converted to a [TextStamp] with the formatted text properties applied.
+    ///
+    /// @param stamp the facades stamp to add
     public void addStamp(Stamp stamp) {
         if (stamp == null) {
             LOG.warning("Cannot add null stamp");
@@ -210,28 +184,24 @@ public class PdfFileStamp implements AutoCloseable {
         LOG.fine("Queued facades stamp (no doc bound), stampId=" + stamp.getStampId());
     }
 
-    /**
-     * Adds a text footer to all pages.
-     *
-     * @param footerText the footer content
-     * @param bottomMargin the bottom margin in points
-     */
+    /// Adds a text footer to all pages.
+    ///
+    /// @param footerText the footer content
+    /// @param bottomMargin the bottom margin in points
     public void addFooter(FormattedText footerText, float bottomMargin) {
         addFooter(footerText, bottomMargin, 0f, 0f);
     }
 
-    /**
-     * Adds a text footer to all pages with explicit left/right indents
-     * (mirrors the C# {@code AddFooter(FormattedText, float, float, float)}
-     * 4-arg overload used by PDFNEWNET-28949 and similar tests).
-     *
-     * @param footerText  the footer content
-     * @param bottomMargin the bottom margin in points
-     * @param leftIndent  left edge offset in points
-     * @param rightIndent right edge offset in points (currently used to
-     *                    width-clip the stamp; takes effect once the layout
-     *                    engine applies the right indent)
-     */
+    /// Adds a text footer to all pages with explicit left/right indents
+    /// (mirrors the C# `AddFooter(FormattedText, float, float, float)`
+    /// 4-arg overload used by PDFNEWNET-28949 and similar tests).
+    ///
+    /// @param footerText  the footer content
+    /// @param bottomMargin the bottom margin in points
+    /// @param leftIndent  left edge offset in points
+    /// @param rightIndent right edge offset in points (currently used to
+    ///                    width-clip the stamp; takes effect once the layout
+    ///                    engine applies the right indent)
     public void addFooter(FormattedText footerText, float bottomMargin,
                            float leftIndent, float rightIndent) {
         Stamp stamp = new Stamp();
@@ -242,12 +212,10 @@ public class PdfFileStamp implements AutoCloseable {
         addStamp(stamp);
     }
 
-    /**
-     * Adds an image footer to all pages.
-     *
-     * @param imageFile the image path
-     * @param bottomMargin the bottom margin in points
-     */
+    /// Adds an image footer to all pages.
+    ///
+    /// @param imageFile the image path
+    /// @param bottomMargin the bottom margin in points
     public void addFooter(String imageFile, float bottomMargin) {
         Stamp stamp = new Stamp();
         stamp.bindImage(imageFile);
@@ -257,12 +225,10 @@ public class PdfFileStamp implements AutoCloseable {
         addStamp(stamp);
     }
 
-    /**
-     * Adds a text header to all pages.
-     *
-     * @param headerText the header content
-     * @param topMargin the top margin in points
-     */
+    /// Adds a text header to all pages.
+    ///
+    /// @param headerText the header content
+    /// @param topMargin the top margin in points
     public void addHeader(FormattedText headerText, float topMargin) {
         ensureDocumentBound();
         if (document == null) {
@@ -276,12 +242,10 @@ public class PdfFileStamp implements AutoCloseable {
         addStamp(stamp);
     }
 
-    /**
-     * Adds an image header to all pages.
-     *
-     * @param imageFile the image path
-     * @param topMargin the top margin in points
-     */
+    /// Adds an image header to all pages.
+    ///
+    /// @param imageFile the image path
+    /// @param topMargin the top margin in points
     public void addHeader(String imageFile, float topMargin) {
         ensureDocumentBound();
         if (document == null) {
@@ -295,12 +259,10 @@ public class PdfFileStamp implements AutoCloseable {
         addStamp(stamp);
     }
 
-    /**
-     * Adds a page number stamp to all pages using the supplied formatted text
-     * as the source for text value and text state.
-     *
-     * @param formattedText the formatted page-number text
-     */
+    /// Adds a page number stamp to all pages using the supplied formatted text
+    /// as the source for text value and text state.
+    ///
+    /// @param formattedText the formatted page-number text
     public void addPageNumber(FormattedText formattedText) {
         if (formattedText == null) {
             LOG.warning("Cannot add null page number text");
@@ -313,29 +275,23 @@ public class PdfFileStamp implements AutoCloseable {
         stamps.add(new PendingStamp(stamp, 0));
     }
 
-    /**
-     * Returns the stamp id used by convenience stamp helpers.
-     *
-     * @return stamp identifier
-     */
+    /// Returns the stamp id used by convenience stamp helpers.
+    ///
+    /// @return stamp identifier
     public int getStampId() {
         return stampId;
     }
 
-    /**
-     * Sets the stamp id used by subsequent convenience stamp helpers.
-     *
-     * @param stampId stamp identifier
-     */
+    /// Sets the stamp id used by subsequent convenience stamp helpers.
+    ///
+    /// @param stampId stamp identifier
     public void setStampId(int stampId) {
         this.stampId = stampId;
     }
 
-    /**
-     * Returns the number of stamps that have been added.
-     *
-     * @return the stamp count
-     */
+    /// Returns the number of stamps that have been added.
+    ///
+    /// @return the stamp count
     public int getStampCount() {
         // Total number of addStamp / addHeader / addFooter / addPageNumber calls
         // since this PdfFileStamp was created. Independent of the pending-queue
@@ -345,12 +301,10 @@ public class PdfFileStamp implements AutoCloseable {
 
     private int totalStampCount;
 
-    /**
-     * Saves the bound document to a file.
-     *
-     * @param outputFile path to the output file
-     * @return {@code true} on success
-     */
+    /// Saves the bound document to a file.
+    ///
+    /// @param outputFile path to the output file
+    /// @return `true` on success
     public boolean save(String outputFile) {
         try {
             applyPendingStamps();
@@ -363,12 +317,10 @@ public class PdfFileStamp implements AutoCloseable {
         }
     }
 
-    /**
-     * Saves the bound document to an output stream.
-     *
-     * @param outputStream the output stream
-     * @return {@code true} on success
-     */
+    /// Saves the bound document to an output stream.
+    ///
+    /// @param outputStream the output stream
+    /// @return `true` on success
     public boolean save(OutputStream outputStream) {
         try {
             applyPendingStamps();
@@ -381,12 +333,10 @@ public class PdfFileStamp implements AutoCloseable {
         }
     }
 
-    /**
-     * Closes the stamp editor and releases the bound document. If the editor
-     * was created via {@link #PdfFileStamp(InputStream, OutputStream)}, the
-     * stamped document is saved to the bound output stream first
-     * (matching the C# {@code PdfFileStamp.Close()} contract).
-     */
+    /// Closes the stamp editor and releases the bound document. If the editor
+    /// was created via [#PdfFileStamp(InputStream, OutputStream)], the
+    /// stamped document is saved to the bound output stream first
+    /// (matching the C# `PdfFileStamp.Close()` contract).
     public void close() {
         if (pendingOutputStream != null && document != null) {
             try {
@@ -449,13 +399,11 @@ public class PdfFileStamp implements AutoCloseable {
         auxiliaryDocuments.clear();
     }
 
-    /**
-     * Routes a single pending stamp onto {@code page}. ImageStamp goes
-     * through {@link PdfFileMend#addImage(String, int, double, double, double, double)}
-     * which actually registers a new {@code /XObject} in page resources —
-     * unlike {@code Page.addStamp(ImageStamp)} which only emits the
-     * {@code Do} operator without the underlying XObject. See PDFNEWNET-31502.
-     */
+    /// Routes a single pending stamp onto `page`. ImageStamp goes
+    /// through [PdfFileMend#addImage(String, int, double, double, double, double)]
+    /// which actually registers a new `/XObject` in page resources —
+    /// unlike `Page.addStamp(ImageStamp)` which only emits the
+    /// `Do` operator without the underlying XObject. See PDFNEWNET-31502.
     private void applyOneStamp(int pageNumber, org.aspose.pdf.Stamp stamp) throws IOException {
         Page page = document.getPages().get(pageNumber);
         if (stamp instanceof org.aspose.pdf.ImageStamp) {

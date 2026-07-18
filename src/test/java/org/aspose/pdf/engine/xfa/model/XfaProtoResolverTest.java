@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static java.time.Duration.ofSeconds;
 
-/** A2.4: use/usehref/proto prototype resolution, inheritance, cycle detection. */
+/// A2.4: use/usehref/proto prototype resolution, inheritance, cycle detection.
 public class XfaProtoResolverTest {
 
     private static final String NS = XfaNode.TEMPLATE_NS;

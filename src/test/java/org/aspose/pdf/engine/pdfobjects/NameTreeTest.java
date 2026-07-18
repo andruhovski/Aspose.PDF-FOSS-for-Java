@@ -7,12 +7,10 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Unit tests for {@link NameTree}: covers single-leaf reads/writes, multi-level
- * descent with {@code /Limits} pruning, sorted insertion, deletion with
- * {@code /Limits} resync, and tolerance of malformed inputs (missing
- * {@code /Limits}, unsorted leaves, mixed {@code /Names}+{@code /Kids}).
- */
+/// Unit tests for [NameTree]: covers single-leaf reads/writes, multi-level
+/// descent with `/Limits` pruning, sorted insertion, deletion with
+/// `/Limits` resync, and tolerance of malformed inputs (missing
+/// `/Limits`, unsorted leaves, mixed `/Names`+`/Kids`).
 public class NameTreeTest {
 
     // ────────────────────────────────────────────────────────────────────

@@ -14,21 +14,19 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * A4-SAFETY: adversarial tests that try to make the A4-FIX2 last-resort descent bind a
- * WRONG value (a same-named value from an unrelated / index-mismatched node). The oracle
- * is the XFA binding chapter's nearest + index-consistent + never-override-direct rule:
- * the descent is legitimate only when no closer match exists AND it does not cross into a
- * data group claimed by another template subform. "Bind nothing" beats "bind wrong".
- */
+/// A4-SAFETY: adversarial tests that try to make the A4-FIX2 last-resort descent bind a
+/// WRONG value (a same-named value from an unrelated / index-mismatched node). The oracle
+/// is the XFA binding chapter's nearest + index-consistent + never-override-direct rule:
+/// the descent is legitimate only when no closer match exists AND it does not cross into a
+/// data group claimed by another template subform. "Bind nothing" beats "bind wrong".
 public class OverBindSafetyTest {
 
     private static final String TPL = XfaNode.TEMPLATE_NS;
     private static final String DATA = "http://www.xfa.org/schema/xfa-data/1.0/";
     private final BindingEngine engine = new BindingEngine();
 
-    /** (1a) decoy same-name inside a data group CLAIMED by another template subform:
-     *  the outer field must NOT steal it across the subform boundary. */
+    /// (1a) decoy same-name inside a data group CLAIMED by another template subform:
+    ///  the outer field must NOT steal it across the subform boundary.
     @Test
     void descentDoesNotCrossIntoAnotherSubformsDataGroup() throws Exception {
         Template tpl = tpl("<template xmlns='" + TPL + "'><subform name='form1'>"
@@ -45,8 +43,8 @@ public class OverBindSafetyTest {
                 "form1.Code must NOT steal Section.Code via descent; got '" + code + "'");
     }
 
-    /** (1b) legitimate transparent-group descent is preserved (TEST_PATIENT shape):
-     *  data nests the value under a group that is NOT a template subform. */
+    /// (1b) legitimate transparent-group descent is preserved (TEST\_PATIENT shape):
+    ///  data nests the value under a group that is NOT a template subform.
     @Test
     void descentStillBindsThroughTrulyTransparentGroup() throws Exception {
         Template tpl = tpl("<template xmlns='" + TPL + "'><subform name='form1'>"
@@ -59,7 +57,7 @@ public class OverBindSafetyTest {
         assertEquals("Alice", dom.fieldByName("Name").getValue(), "transparent-group descent preserved");
     }
 
-    /** (2) a nearer (sibling) match must win over a deeper same-named value. */
+    /// (2) a nearer (sibling) match must win over a deeper same-named value.
     @Test
     void nearerSiblingWinsOverDeepDescent() throws Exception {
         Template tpl = tpl("<template xmlns='" + TPL + "'><subform name='form1'>"
@@ -72,7 +70,7 @@ public class OverBindSafetyTest {
         assertEquals("SIB", dom.fieldByName("V").getValue(), "sibling match wins, descent must not override");
     }
 
-    /** (3) index ambiguity: each repeated instance binds its OWN record by index. */
+    /// (3) index ambiguity: each repeated instance binds its OWN record by index.
     @Test
     void repeatedInstancesBindIndexCorrectRecords() throws Exception {
         Template tpl = tpl("<template xmlns='" + TPL + "'><subform name='form1'>"
@@ -87,7 +85,7 @@ public class OverBindSafetyTest {
         assertEquals("30", dom.fieldByPath("form1.Row[2].Amount").getValue());
     }
 
-    /** (4) direct match always wins over descent (regression lock from A4-FIX2). */
+    /// (4) direct match always wins over descent (regression lock from A4-FIX2).
     @Test
     void directMatchWinsOverDescent() throws Exception {
         Template tpl = tpl("<template xmlns='" + TPL + "'><subform name='form1'>"
@@ -99,7 +97,7 @@ public class OverBindSafetyTest {
         assertEquals("SHALLOW", dom.fieldByName("Code").getValue());
     }
 
-    /** (5) cross-row isolation: row 2 must not receive row 1's value via descent. */
+    /// (5) cross-row isolation: row 2 must not receive row 1's value via descent.
     @Test
     void repeatedRowsDoNotCrossBindViaDescent() throws Exception {
         Template tpl = tpl("<template xmlns='" + TPL + "'><subform name='form1'><subform name='Table'>"

@@ -8,14 +8,12 @@ import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Exercises the catalog-recovery path in {@link PDFParser} when the trailer
- * {@code /Root} reference is wrong (off by object number) and the xref offsets
- * are stale, so the regular catalog lookup fails and the parser must fall
- * back to scanning the raw body for an indirect object whose dictionary is
- * tagged {@code /Type /Catalog}. Mirrors the real-world {@code 34129.pdf}
- * shape.
- */
+/// Exercises the catalog-recovery path in [PDFParser] when the trailer
+/// `/Root` reference is wrong (off by object number) and the xref offsets
+/// are stale, so the regular catalog lookup fails and the parser must fall
+/// back to scanning the raw body for an indirect object whose dictionary is
+/// tagged `/Type /Catalog`. Mirrors the real-world `34129.pdf`
+/// shape.
 public class ParserRecoveryTest {
 
     @Test
@@ -59,11 +57,9 @@ public class ParserRecoveryTest {
         }
     }
 
-    /**
-     * Pins the actual user-visible behaviour from PDFNEWNET_34129: the parser
-     * must NOT throw {@code Cannot find /Root catalog dictionary in trailer}
-     * on a PDF whose trailer {@code /Root} points at the wrong object.
-     */
+    /// Pins the actual user-visible behaviour from PDFNEWNET\_34129: the parser
+    /// must NOT throw `Cannot find /Root catalog dictionary in trailer`
+    /// on a PDF whose trailer `/Root` points at the wrong object.
     @Test
     public void noCatalogTrailerError_onTrailerRootMismatch() throws Exception {
         StringBuilder body = new StringBuilder();

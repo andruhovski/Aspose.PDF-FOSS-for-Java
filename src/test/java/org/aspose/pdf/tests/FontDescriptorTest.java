@@ -11,9 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link FontDescriptor}.
- */
+/// Tests for [FontDescriptor].
 public class FontDescriptorTest {
 
     @Test

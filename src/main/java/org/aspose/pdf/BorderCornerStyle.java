@@ -1,22 +1,16 @@
 package org.aspose.pdf;
 
-/**
- * Specifies the corner style for table borders.
- * <p>
- * Controls whether table border corners are rendered as sharp right angles
- * or as rounded curves.
- * </p>
- */
+/// Specifies the corner style for table borders.
+///
+/// Controls whether table border corners are rendered as sharp right angles
+/// or as rounded curves.
+///
 public enum BorderCornerStyle {
 
-    /**
-     * Sharp (right-angle) corners (default).
-     */
+    /// Sharp (right-angle) corners (default).
     None,
 
-    /**
-     * Rounded corners, using the radius specified by
-     * {@link BorderInfo#getRoundedBorderRadius()}.
-     */
+    /// Rounded corners, using the radius specified by
+    /// [BorderInfo#getRoundedBorderRadius()].
     Round
 }

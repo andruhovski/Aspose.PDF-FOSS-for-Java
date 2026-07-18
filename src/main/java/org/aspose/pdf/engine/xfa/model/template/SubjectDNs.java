@@ -1,67 +1,64 @@
 package org.aspose.pdf.engine.xfa.model.template;
 
 import org.aspose.pdf.engine.xfa.model.XfaNode;
-import org.aspose.pdf.engine.xfa.model.XfaMeasurement;
 import org.w3c.dom.Element;
 
-/**
- * Typed XFA template element <code>subjectDNs</code>. Attribute and child
- * accessors are typed; unknown attributes/children round-trip via the DOM.
- */
+/// Typed XFA template element `subjectDNs`. Attribute and child
+/// accessors are typed; unknown attributes/children round-trip via the DOM.
 public final class SubjectDNs extends XfaNode {
 
-    /** Wraps a backing <code>subjectDNs</code> element. */
+    /// Wraps a backing `subjectDNs` element.
     public SubjectDNs(Element element, XfaNode parent) {
         super(element, parent);
     }
 
-    /** @return the typed <code>id</code> attribute, or null. */
+    /// @return the typed `id` attribute, or null.
     public String getId() { return getString("id"); }
-    /** Sets the <code>id</code> attribute. */
+    /// Sets the `id` attribute.
     public void setId(String value) { setAttribute("id", value); }
 
-    /** Allowed values of the <code>type</code> attribute. */
+    /// Allowed values of the `type` attribute.
     public enum TypeValue {
         OPTIONAL("optional"),
         REQUIRED("required");
         private final String v;
         TypeValue(String v) { this.v = v; }
-        /** @return the XFA attribute string for this value. */
+        /// @return the XFA attribute string for this value.
         public String value() { return v; }
-        /** @param s raw value @return the matching constant, or null. */
+        /// @param s raw value @return the matching constant, or null.
         public static TypeValue fromValue(String s) {
             for (TypeValue e : values()) { if (e.v.equals(s)) return e; }
             return null;
         }
     }
-    /** @return the typed <code>type</code> attribute, or null. */
+    /// @return the typed `type` attribute, or null.
     public TypeValue getType() {
         String v = getAttribute("type");
         return v == null ? null : TypeValue.fromValue(v);
     }
-    /** Sets the <code>type</code> attribute. */
+    /// Sets the `type` attribute.
     public void setType(TypeValue value) {
         setAttribute("type", value == null ? null : value.value());
     }
-    /** @return the raw <code>type</code> string, or null. */
+    /// @return the raw `type` string, or null.
     public String getTypeRaw() { return getAttribute("type"); }
 
-    /** @return the typed <code>use</code> attribute, or null. */
+    /// @return the typed `use` attribute, or null.
     public String getUse() { return getString("use"); }
-    /** Sets the <code>use</code> attribute. */
+    /// Sets the `use` attribute.
     public void setUse(String value) { setAttribute("use", value); }
 
-    /** @return the typed <code>usehref</code> attribute, or null. */
+    /// @return the typed `usehref` attribute, or null.
     public String getUsehref() { return getString("usehref"); }
-    /** Sets the <code>usehref</code> attribute. */
+    /// Sets the `usehref` attribute.
     public void setUsehref(String value) { setAttribute("usehref", value); }
 
-    /** @return the <code>subjectDN</code> children (typed). */
+    /// @return the `subjectDN` children (typed).
     public java.util.List<SubjectDN> getSubjectDNList() {
         java.util.List<SubjectDN> r = new java.util.ArrayList<SubjectDN>();
         for (XfaNode n : getChildren("subjectDN")) { r.add((SubjectDN) n); }
         return r;
     }
-    /** Appends a new <code>subjectDN</code> child. */
+    /// Appends a new `subjectDN` child.
     public SubjectDN addSubjectDN() { return (SubjectDN) addChild("subjectDN"); }
 }

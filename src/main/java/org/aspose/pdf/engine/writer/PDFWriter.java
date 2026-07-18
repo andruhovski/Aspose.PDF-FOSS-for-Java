@@ -1,117 +1,92 @@
 package org.aspose.pdf.engine.writer;
 
-import org.aspose.pdf.engine.pdfobjects.PdfArray;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfInteger;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectKey;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
-import org.aspose.pdf.engine.pdfobjects.PdfStream;
-import org.aspose.pdf.engine.pdfobjects.PdfString;
 import org.aspose.pdf.engine.filter.FlateFilter;
 import org.aspose.pdf.engine.io.RandomAccessReader;
 import org.aspose.pdf.engine.parser.XRefParser;
+import org.aspose.pdf.engine.pdfobjects.*;
 import org.aspose.pdf.engine.security.PDFEncryptor;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Serializes a graph of PDF objects into a valid PDF file.
- * Writes the header, body (all indirect objects), cross-reference table, and trailer,
- * conforming to ISO 32000-1:2008, §7.5.
- *
- * <p>Also supports incremental updates (appending modified objects to an existing PDF).</p>
- */
+/// Serializes a graph of PDF objects into a valid PDF file.
+/// Writes the header, body (all indirect objects), cross-reference table, and trailer,
+/// conforming to ISO 32000-1:2008, §7.5.
+///
+/// Also supports incremental updates (appending modified objects to an existing PDF).
 public final class PDFWriter {
 
     private static final Logger LOGGER = Logger.getLogger(PDFWriter.class.getName());
 
-    /** Binary hint bytes after the header, per §7.5.2.
-     *  Four bytes with high bit set to indicate binary content. */
+    /// Binary hint bytes after the header, per §7.5.2.
+    ///  Four bytes with high bit set to indicate binary content.
     private static final byte[] BINARY_HINT = {(byte) 0xE2, (byte) 0xE3, (byte) 0xCF, (byte) 0xD3};
 
     private final OutputStream output;
     private final float pdfVersion;
 
-    /** Tracks byte offsets of each object for the xref table. */
+    /// Tracks byte offsets of each object for the xref table.
     private final Map<PdfObjectKey, Long> objectOffsets = new LinkedHashMap<>();
 
-    /** Current byte position in the output. */
+    /// Current byte position in the output.
     private long currentOffset = 0;
 
-    /** Counter for assigning object numbers to new objects. */
+    /// Counter for assigning object numbers to new objects.
     private int nextObjectNumber = 1;
 
-    /**
-     * Lower bound for newly-allocated object numbers. In an incremental update the
-     * original objects are preserved verbatim in the copied file prefix but are
-     * absent from the modified-objects map, so {@link #getMaxObjectNumber(Map)}
-     * under-counts. Without this floor a freshly-created object (e.g. a redaction
-     * content stream) could reuse a still-live original number — in particular an
-     * {@code /ObjStm} that backs compressed objects — leaving dangling type-2
-     * references that fail to load on reopen ("Invalid index 0 in object stream N").
-     * Set to the original {@code /Size} before registering orphan streams; 0 for
-     * full (non-incremental) writes, where the objects map is complete.
-     */
+    /// Lower bound for newly-allocated object numbers. In an incremental update the
+    /// original objects are preserved verbatim in the copied file prefix but are
+    /// absent from the modified-objects map, so [#getMaxObjectNumber(Map)]
+    /// under-counts. Without this floor a freshly-created object (e.g. a redaction
+    /// content stream) could reuse a still-live original number — in particular an
+    /// `/ObjStm` that backs compressed objects — leaving dangling type-2
+    /// references that fail to load on reopen ("Invalid index 0 in object stream N").
+    /// Set to the original `/Size` before registering orphan streams; 0 for
+    /// full (non-incremental) writes, where the objects map is complete.
     private int objectNumberFloor = 0;
 
-    /**
-     * When true, {@link #write} emits the hybrid-reference layout
-     * (ISO 32000-1 §7.5.8.4): a cross-reference stream object followed by a
-     * classic xref table whose trailer points at the stream via
-     * {@code /XRefStm}. Set by callers whose source document was hybrid.
-     */
+    /// When true, [#write] emits the hybrid-reference layout
+    /// (ISO 32000-1 §7.5.8.4): a cross-reference stream object followed by a
+    /// classic xref table whose trailer points at the stream via
+    /// `/XRefStm`. Set by callers whose source document was hybrid.
     private boolean preserveHybridXRef;
 
-    /** Encryptor for write-side encryption (null when not encrypting). */
+    /// Encryptor for write-side encryption (null when not encrypting).
     private PDFEncryptor encryptor;
 
-    /** Object key of the /Encrypt dictionary — excluded from encryption per ISO 32000 §7.6.1. */
+    /// Object key of the /Encrypt dictionary — excluded from encryption per ISO 32000 §7.6.1.
     private PdfObjectKey encryptDictKey;
 
-    /**
-     * Sets the encryptor for write-side encryption.
-     * When set, all objects except the /Encrypt dictionary and XRef streams
-     * will have their strings and stream data encrypted.
-     *
-     * @param encryptor      the encryptor (null to disable encryption)
-     * @param encryptDictKey the object key of the /Encrypt dictionary (excluded from encryption)
-     */
+    /// Sets the encryptor for write-side encryption.
+    /// When set, all objects except the /Encrypt dictionary and XRef streams
+    /// will have their strings and stream data encrypted.
+    ///
+    /// @param encryptor      the encryptor (null to disable encryption)
+    /// @param encryptDictKey the object key of the /Encrypt dictionary (excluded from encryption)
     public void setEncryptor(PDFEncryptor encryptor, PdfObjectKey encryptDictKey) {
         this.encryptor = encryptor;
         this.encryptDictKey = encryptDictKey;
     }
 
-    /**
-     * Requests the hybrid-reference layout (§7.5.8.4) from {@link #write}:
-     * classic xref table + parallel cross-reference stream, the table
-     * trailer carrying {@code /XRefStm}. Used to preserve the file shape of
-     * hybrid source documents on full rewrite.
-     *
-     * @param preserve {@code true} to emit the hybrid layout
-     */
+    /// Requests the hybrid-reference layout (§7.5.8.4) from [#write]:
+    /// classic xref table + parallel cross-reference stream, the table
+    /// trailer carrying `/XRefStm`. Used to preserve the file shape of
+    /// hybrid source documents on full rewrite.
+    ///
+    /// @param preserve`true` to emit the hybrid layout
     public void setPreserveHybridXRef(boolean preserve) {
         this.preserveHybridXRef = preserve;
     }
 
-    /**
-     * Constructs a new PDFWriter.
-     *
-     * @param output     the output stream to write the PDF to
-     * @param pdfVersion the PDF version (e.g. 1.7f)
-     */
+    /// Constructs a new PDFWriter.
+    ///
+    /// @param output     the output stream to write the PDF to
+    /// @param pdfVersion the PDF version (e.g. 1.7f)
     public PDFWriter(OutputStream output, float pdfVersion) {
         if (output == null) {
             throw new IllegalArgumentException("output must not be null");
@@ -120,13 +95,11 @@ public final class PDFWriter {
         this.pdfVersion = pdfVersion;
     }
 
-    /**
-     * Writes a complete PDF file: header, objects, xref table, and trailer.
-     *
-     * @param trailer the trailer dictionary (must contain /Root at minimum)
-     * @param objects the map of object keys to PDF objects
-     * @throws IOException if writing fails
-     */
+    /// Writes a complete PDF file: header, objects, xref table, and trailer.
+    ///
+    /// @param trailer the trailer dictionary (must contain /Root at minimum)
+    /// @param objects the map of object keys to PDF objects
+    /// @throws IOException if writing fails
     public void write(PdfDictionary trailer, Map<PdfObjectKey, PdfBase> objects) throws IOException {
         LOGGER.log(Level.FINE, "Writing PDF {0} with {1} objects", new Object[]{pdfVersion, objects.size()});
 
@@ -179,16 +152,14 @@ public final class PDFWriter {
         LOGGER.log(Level.FINE, "PDF written: {0} bytes", currentOffset);
     }
 
-    /**
-     * Writes an incremental update to an existing PDF.
-     * Copies the original file content, then appends modified objects,
-     * a new xref table, and a new trailer with /Prev pointing to the old xref.
-     *
-     * @param original        reader for the original PDF file
-     * @param trailer         the new trailer dictionary
-     * @param modifiedObjects the modified/new objects to append
-     * @throws IOException if writing fails
-     */
+    /// Writes an incremental update to an existing PDF.
+    /// Copies the original file content, then appends modified objects,
+    /// a new xref table, and a new trailer with /Prev pointing to the old xref.
+    ///
+    /// @param original        reader for the original PDF file
+    /// @param trailer         the new trailer dictionary
+    /// @param modifiedObjects the modified/new objects to append
+    /// @throws IOException if writing fails
     public void writeIncremental(RandomAccessReader original,
                                   PdfDictionary trailer,
                                   Map<PdfObjectKey, PdfBase> modifiedObjects) throws IOException {
@@ -244,45 +215,40 @@ public final class PDFWriter {
         LOGGER.log(Level.FINE, "Incremental update written: {0} bytes total", currentOffset);
     }
 
-    /**
-     * Assigns a new object number and returns the key.
-     * Useful when adding new objects that don't yet have a key.
-     *
-     * @return a new PdfObjectKey with the next available object number
-     */
+    /// Assigns a new object number and returns the key.
+    /// Useful when adding new objects that don't yet have a key.
+    ///
+    /// @return a new PdfObjectKey with the next available object number
     public PdfObjectKey allocateObjectNumber() {
         return new PdfObjectKey(nextObjectNumber++, 0);
     }
 
     // ========== Private implementation methods ==========
 
-    /**
-     * Walks the object graph rooted at {@code objects.values()} (and the
-     * trailer) and ensures every {@link PdfStream} reachable from it has an
-     * object key and is registered in {@code objects}. After this pass
-     * {@link PdfDictionary#writeTo} sees an object key on every stream and
-     * emits a reference ({@code N G R}) rather than serialising the stream
-     * inline — which would violate ISO 32000-1:2008 §7.3.8.1 ("All streams
-     * shall be indirect objects").
-     *
-     * <p>Three cases are handled:</p>
-     * <ul>
-     *   <li><strong>Inline orphan</strong> — {@code PdfStream} with no
-     *       object key. Assigned a fresh key and added to {@code objects}.</li>
-     *   <li><strong>Stale reference</strong> — {@code PdfObjectReference}
-     *       whose target is a {@code PdfStream} with a key from a previous
-     *       save, but the target is missing from the current {@code objects}
-     *       map. The target is re-registered under the reference's key (if
-     *       free) or under a fresh key (in which case the parent slot is
-     *       rewritten to point at the new key). Surfaces on the second save
-     *       of any {@code Document} that contains annotation appearance
-     *       streams ({@code /AP /N}) or imported content streams — those
-     *       sit behind {@code PdfObjectReference} after the first save.</li>
-     *   <li><strong>Active reference</strong> — target stream is already
-     *       in {@code objects}; no-op but descend into the target so nested
-     *       streams (e.g. a Form XObject's {@code /Resources}) get walked.</li>
-     * </ul>
-     */
+    /// Walks the object graph rooted at `objects.values()` (and the
+    /// trailer) and ensures every [PdfStream] reachable from it has an
+    /// object key and is registered in `objects`. After this pass
+    /// [PdfDictionary#writeTo] sees an object key on every stream and
+    /// emits a reference (`N G R`) rather than serialising the stream
+    /// inline — which would violate ISO 32000-1:2008 §7.3.8.1 ("All streams
+    /// shall be indirect objects").
+    ///
+    /// Three cases are handled:
+    ///
+    ///   - **Inline orphan** — `PdfStream` with no
+    ///     object key. Assigned a fresh key and added to `objects`.
+    ///   - **Stale reference** — `PdfObjectReference`
+    ///     whose target is a `PdfStream` with a key from a previous
+    ///     save, but the target is missing from the current `objects`
+    ///     map. The target is re-registered under the reference's key (if
+    ///     free) or under a fresh key (in which case the parent slot is
+    ///     rewritten to point at the new key). Surfaces on the second save
+    ///     of any `Document` that contains annotation appearance
+    ///     streams (`/AP /N`) or imported content streams — those
+    ///     sit behind `PdfObjectReference` after the first save.
+    ///   - **Active reference** — target stream is already
+    ///     in `objects`; no-op but descend into the target so nested
+    ///     streams (e.g. a Form XObject's `/Resources`) get walked.
     private void registerOrphanStreams(Map<PdfObjectKey, PdfBase> objects,
                                        PdfDictionary trailer) {
         java.util.Set<PdfBase> visited =
@@ -297,14 +263,12 @@ public final class PDFWriter {
         }
     }
 
-    /**
-     * Registers a stream that is the target of a reference into
-     * {@code objects}, returning the key the reference should point at.
-     * If the reference's original key is free, the stream is registered
-     * under it. If the key collides with a different object, a fresh key
-     * is allocated and the caller is expected to rewrite the parent slot
-     * to use the new key.
-     */
+    /// Registers a stream that is the target of a reference into
+    /// `objects`, returning the key the reference should point at.
+    /// If the reference's original key is free, the stream is registered
+    /// under it. If the key collides with a different object, a fresh key
+    /// is allocated and the caller is expected to rewrite the parent slot
+    /// to use the new key.
     private PdfObjectKey registerStreamUnderRefKey(PdfStream s,
                                                     PdfObjectKey refKey,
                                                     Map<PdfObjectKey, PdfBase> objects) {
@@ -325,11 +289,9 @@ public final class PDFWriter {
         return fresh;
     }
 
-    /**
-     * Recursively walks {@code node}, registering any orphan / stale
-     * streams it encounters per the contract on
-     * {@link #registerOrphanStreams(Map, PdfDictionary)}.
-     */
+    /// Recursively walks `node`, registering any orphan / stale
+    /// streams it encounters per the contract on
+    /// [#registerOrphanStreams(Map, PdfDictionary)].
     private void collectOrphanStreams(PdfBase node,
                                       java.util.Set<PdfBase> visited,
                                       Map<PdfObjectKey, PdfBase> objects) {
@@ -379,15 +341,13 @@ public final class PDFWriter {
         }
     }
 
-    /**
-     * If {@code value} is a {@link PdfObjectReference} whose target is a
-     * {@link PdfStream}, ensure the target is registered in {@code objects}
-     * (possibly under a fresh key, in which case {@code slotSetter} is
-     * invoked to rewrite the parent slot to point at the new key). Returns
-     * the dereferenced target so the caller can continue walking into it,
-     * or {@code null} when {@code value} is not a reference (caller falls
-     * through to walking {@code value} directly).
-     */
+    /// If `value` is a [PdfObjectReference] whose target is a
+    /// [PdfStream], ensure the target is registered in `objects`
+    /// (possibly under a fresh key, in which case `slotSetter` is
+    /// invoked to rewrite the parent slot to point at the new key). Returns
+    /// the dereferenced target so the caller can continue walking into it,
+    /// or `null` when `value` is not a reference (caller falls
+    /// through to walking `value` directly).
     private PdfBase walkReferenceForReregistration(PdfBase value,
                                                     Map<PdfObjectKey, PdfBase> objects,
                                                     java.util.function.Consumer<PdfObjectReference> slotSetter) {
@@ -417,9 +377,7 @@ public final class PDFWriter {
         return target;
     }
 
-    /**
-     * Writes the PDF header: %PDF-X.Y followed by a binary hint comment.
-     */
+    /// Writes the PDF header: %PDF-X.Y followed by a binary hint comment.
     private void writeHeader() throws IOException {
         // Format version with one decimal place (always use '.' decimal separator per PDF spec)
         String versionStr = String.format(Locale.US, "%%PDF-%.1f\n", pdfVersion);
@@ -431,15 +389,13 @@ public final class PDFWriter {
         writeBytes(new byte[]{'\n'});
     }
 
-    /**
-     * Writes a single indirect object.
-     * Format: "N G obj\n...content...\nendobj\n"
-     * <p>
-     * When an encryptor is active, strings and stream data are encrypted
-     * per ISO 32000-1:2008 §7.6.2. The /Encrypt dictionary itself and
-     * XRef streams are excluded from encryption.
-     * </p>
-     */
+    /// Writes a single indirect object.
+    /// Format: "N G obj\n...content...\nendobj\n"
+    ///
+    /// When an encryptor is active, strings and stream data are encrypted
+    /// per ISO 32000-1:2008 §7.6.2. The /Encrypt dictionary itself and
+    /// XRef streams are excluded from encryption.
+    ///
     private void writeObject(PdfObjectKey key, PdfBase object) throws IOException {
         objectOffsets.put(key, currentOffset);
 
@@ -464,10 +420,8 @@ public final class PDFWriter {
         writeBytes("\nendobj\n".getBytes(StandardCharsets.US_ASCII));
     }
 
-    /**
-     * Returns true if the object is an XRef stream (/Type /XRef).
-     * XRef streams are not encrypted per ISO 32000-1:2008 §7.6.1.
-     */
+    /// Returns true if the object is an XRef stream (/Type /XRef).
+    /// XRef streams are not encrypted per ISO 32000-1:2008 §7.6.1.
     private boolean isXRefStream(PdfBase object) {
         if (object instanceof PdfDictionary) {
             String type = ((PdfDictionary) object).getNameAsString("Type");
@@ -476,9 +430,7 @@ public final class PDFWriter {
         return false;
     }
 
-    /**
-     * Writes an object with encryption applied to strings and stream data.
-     */
+    /// Writes an object with encryption applied to strings and stream data.
     private void writeEncryptedObject(PdfObjectKey key, PdfBase object) throws IOException {
         int objNum = key.getObjectNumber();
         int genNum = key.getGenerationNumber();
@@ -510,22 +462,20 @@ public final class PDFWriter {
         }
     }
 
-    /**
-     * Writes an encrypted PdfStream: compresses → encrypts → writes dict + encrypted data.
-     * Per ISO 32000-1:2008 §7.6.2: stream data is encrypted AFTER filter encoding.
-     * <p>
-     * <b>Pass-through optimization for re-saved encrypted documents.</b> When a
-     * stream was loaded from an encrypted source and has not been modified
-     * ({@link PdfStream#hasActiveDecryptor()} is true and
-     * {@link PdfStream#hasPendingDecodedData()} is false), its
-     * {@code encodedData} is still the original ciphertext on disk. Re-encrypting
-     * it would corrupt the bytes (RC4 is symmetric, so a second pass decrypts;
-     * AES would yield different ciphertext that no longer matches the recorded
-     * key). In that case we write the bytes as-is. Streams with pending decoded
-     * data — i.e. content the caller modified through {@link PdfStream#setDecodedData(byte[])}
-     * — are re-encoded through filters and then encrypted, as before.
-     * </p>
-     */
+    /// Writes an encrypted PdfStream: compresses → encrypts → writes dict + encrypted data.
+    /// Per ISO 32000-1:2008 §7.6.2: stream data is encrypted AFTER filter encoding.
+    ///
+    /// **Pass-through optimization for re-saved encrypted documents.** When a
+    /// stream was loaded from an encrypted source and has not been modified
+    /// ([PdfStream#hasActiveDecryptor()] is true and
+    /// [PdfStream#hasPendingDecodedData()] is false), its
+    /// `encodedData` is still the original ciphertext on disk. Re-encrypting
+    /// it would corrupt the bytes (RC4 is symmetric, so a second pass decrypts;
+    /// AES would yield different ciphertext that no longer matches the recorded
+    /// key). In that case we write the bytes as-is. Streams with pending decoded
+    /// data — i.e. content the caller modified through [PdfStream#setDecodedData(byte\[\])]
+    /// — are re-encoded through filters and then encrypted, as before.
+    ///
     private void writeEncryptedStream(PdfObjectKey key, PdfStream stream) throws IOException {
         int objNum = key.getObjectNumber();
         int genNum = key.getGenerationNumber();
@@ -562,10 +512,8 @@ public final class PDFWriter {
         writeBytes("\r\nendstream".getBytes(StandardCharsets.US_ASCII));
     }
 
-    /**
-     * Creates a shallow copy of a PdfDictionary with all PdfString values encrypted.
-     * Recurses into inline (non-indirect) sub-dictionaries and arrays.
-     */
+    /// Creates a shallow copy of a PdfDictionary with all PdfString values encrypted.
+    /// Recurses into inline (non-indirect) sub-dictionaries and arrays.
     private PdfDictionary encryptDictionaryStrings(PdfDictionary dict, int objNum, int genNum) {
         PdfDictionary copy = new PdfDictionary();
         for (Map.Entry<PdfName, PdfBase> entry : dict) {
@@ -574,9 +522,7 @@ public final class PDFWriter {
         return copy;
     }
 
-    /**
-     * Creates a shallow copy of a PdfArray with all PdfString values encrypted.
-     */
+    /// Creates a shallow copy of a PdfArray with all PdfString values encrypted.
     private PdfArray encryptArrayStrings(PdfArray array, int objNum, int genNum) {
         PdfArray copy = new PdfArray(array.size());
         for (int i = 0; i < array.size(); i++) {
@@ -585,10 +531,8 @@ public final class PDFWriter {
         return copy;
     }
 
-    /**
-     * Encrypts a single PDF value if it's a string, or recurses into inline dicts/arrays.
-     * Indirect references are returned as-is (their target objects are encrypted separately).
-     */
+    /// Encrypts a single PDF value if it's a string, or recurses into inline dicts/arrays.
+    /// Indirect references are returned as-is (their target objects are encrypted separately).
     private PdfBase encryptValue(PdfBase value, int objNum, int genNum) {
         if (value == null) return null;
 
@@ -612,14 +556,12 @@ public final class PDFWriter {
         return value;
     }
 
-    /**
-     * Writes the cross-reference table.
-     * Each entry is EXACTLY 20 bytes: "OOOOOOOOOO GGGGG n \n" (or "f" for free).
-     * Per ISO 32000-1:2008 §7.5.4, the EOL marker is SP CR or SP LF —
-     * NOT SP CR LF — the latter produces 21-byte entries and breaks readers
-     * that index xref by absolute byte offset (Ghostscript, Adobe Reader,
-     * mupdf).
-     */
+    /// Writes the cross-reference table.
+    /// Each entry is EXACTLY 20 bytes: "OOOOOOOOOO GGGGG n \n" (or "f" for free).
+    /// Per ISO 32000-1:2008 §7.5.4, the EOL marker is SP CR or SP LF —
+    /// NOT SP CR LF — the latter produces 21-byte entries and breaks readers
+    /// that index xref by absolute byte offset (Ghostscript, Adobe Reader,
+    /// mupdf).
     private void writeXRefTable(Map<PdfObjectKey, PdfBase> objects) throws IOException {
         // Determine the range of object numbers
         int maxObjNum = getMaxObjectNumber(objects);
@@ -657,12 +599,10 @@ public final class PDFWriter {
         }
     }
 
-    /**
-     * Writes an incremental xref table containing only the modified objects.
-     * Uses subsections to avoid writing entries for unmodified objects.
-     * ISO 32000-1:2008 §7.5.4: "Each cross-reference section shall contain one or more
-     * cross-reference subsections."
-     */
+    /// Writes an incremental xref table containing only the modified objects.
+    /// Uses subsections to avoid writing entries for unmodified objects.
+    /// ISO 32000-1:2008 §7.5.4: "Each cross-reference section shall contain one or more
+    /// cross-reference subsections."
     private void writeIncrementalXRefTable() throws IOException {
         writeBytes("xref\n".getBytes(StandardCharsets.US_ASCII));
 
@@ -710,19 +650,15 @@ public final class PDFWriter {
         }
     }
 
-    /**
-     * Writes the trailer section: trailer dictionary, startxref, and %%EOF.
-     */
+    /// Writes the trailer section: trailer dictionary, startxref, and %%EOF.
     private void writeTrailer(PdfDictionary trailer, int size, long xrefOffset) throws IOException {
         writeTrailer(trailer, size, xrefOffset, -1);
     }
 
-    /**
-     * Writes the trailer section. When {@code xrefStmOffset} is non-negative
-     * the trailer is a hybrid-reference table trailer (§7.5.8.4) carrying
-     * {@code /XRefStm} — the byte offset of the parallel cross-reference
-     * stream that PDF 1.5+ readers process instead of the table.
-     */
+    /// Writes the trailer section. When `xrefStmOffset` is non-negative
+    /// the trailer is a hybrid-reference table trailer (§7.5.8.4) carrying
+    /// `/XRefStm` — the byte offset of the parallel cross-reference
+    /// stream that PDF 1.5+ readers process instead of the table.
     private void writeTrailer(PdfDictionary trailer, int size, long xrefOffset,
                               long xrefStmOffset) throws IOException {
         // Set /Size in trailer
@@ -751,25 +687,19 @@ public final class PDFWriter {
         writeBytes(startxref.getBytes(StandardCharsets.US_ASCII));
     }
 
-    /**
-     * Writes bytes to the output and tracks the current offset.
-     */
+    /// Writes bytes to the output and tracks the current offset.
     private void writeBytes(byte[] data) throws IOException {
         output.write(data);
         currentOffset += data.length;
     }
 
-    /**
-     * Writes a portion of a byte array to the output and tracks the current offset.
-     */
+    /// Writes a portion of a byte array to the output and tracks the current offset.
     private void writeBytes(byte[] data, int offset, int length) throws IOException {
         output.write(data, offset, length);
         currentOffset += length;
     }
 
-    /**
-     * Creates a shallow copy of a PdfDictionary.
-     */
+    /// Creates a shallow copy of a PdfDictionary.
     private PdfDictionary copyDictionary(PdfDictionary source) {
         PdfDictionary copy = new PdfDictionary();
         for (java.util.Map.Entry<PdfName, PdfBase> entry : source) {
@@ -778,9 +708,7 @@ public final class PDFWriter {
         return copy;
     }
 
-    /**
-     * Finds the maximum object number in the given objects map.
-     */
+    /// Finds the maximum object number in the given objects map.
     private int getMaxObjectNumber(Map<PdfObjectKey, PdfBase> objects) {
         int max = 0;
         for (PdfObjectKey key : objects.keySet()) {
@@ -791,30 +719,24 @@ public final class PDFWriter {
         return max;
     }
 
-    /**
-     * Returns the next free object number for a newly-created object, never below
-     * {@link #objectNumberFloor}. In incremental updates the floor accounts for
-     * original objects that are preserved in the copied prefix but missing from
-     * {@code objects}, preventing a collision with a still-live original number.
-     */
+    /// Returns the next free object number for a newly-created object, never below
+    /// [#objectNumberFloor]. In incremental updates the floor accounts for
+    /// original objects that are preserved in the copied prefix but missing from
+    /// `objects`, preventing a collision with a still-live original number.
     private int nextFreeObjectNumber(Map<PdfObjectKey, PdfBase> objects) {
         return Math.max(getMaxObjectNumber(objects) + 1, objectNumberFloor);
     }
 
-    /**
-     * Reads the trailer's {@code /Size} (one greater than the highest object
-     * number per ISO 32000-1:2008 §7.5.5), or 0 when absent. Used as the
-     * allocation floor for new objects in incremental updates.
-     */
+    /// Reads the trailer's `/Size` (one greater than the highest object
+    /// number per ISO 32000-1:2008 §7.5.5), or 0 when absent. Used as the
+    /// allocation floor for new objects in incremental updates.
     private int trailerSize(PdfDictionary trailer) {
         if (trailer == null) return 0;
         PdfBase size = trailer.get("Size");
         return (size instanceof PdfInteger) ? ((PdfInteger) size).intValue() : 0;
     }
 
-    /**
-     * Finds the old xref offset from the original PDF file for incremental updates.
-     */
+    /// Finds the old xref offset from the original PDF file for incremental updates.
     private long findOldXrefOffset(RandomAccessReader original) throws IOException {
         try {
             return XRefParser.findStartxref(original);
@@ -826,18 +748,16 @@ public final class PDFWriter {
 
     // ========== Compressed PDF 1.5+ writing (Object Streams + XRef Streams) ==========
 
-    /**
-     * Writes a complete PDF with object streams and xref stream (PDF 1.5+).
-     * This produces significantly smaller files than the text-based {@link #write} method.
-     *
-     * <p>Eligible objects are packed into compressed object streams (§7.5.7),
-     * and the cross-reference table is replaced with a compressed xref stream (§7.5.8).</p>
-     *
-     * @param trailer      the trailer dictionary (/Root, /Info, etc.)
-     * @param objects      all objects in the document
-     * @param maxPerStream max objects per object stream
-     * @throws IOException if writing fails
-     */
+    /// Writes a complete PDF with object streams and xref stream (PDF 1.5+).
+    /// This produces significantly smaller files than the text-based [#write] method.
+    ///
+    /// Eligible objects are packed into compressed object streams (§7.5.7),
+    /// and the cross-reference table is replaced with a compressed xref stream (§7.5.8).
+    ///
+    /// @param trailer      the trailer dictionary (/Root, /Info, etc.)
+    /// @param objects      all objects in the document
+    /// @param maxPerStream max objects per object stream
+    /// @throws IOException if writing fails
     public void writeCompressed(PdfDictionary trailer,
                                  Map<PdfObjectKey, PdfBase> objects,
                                  int maxPerStream) throws IOException {
@@ -880,15 +800,13 @@ public final class PDFWriter {
         LOGGER.log(Level.FINE, "Compressed PDF written: {0} bytes", currentOffset);
     }
 
-    /**
-     * Writes an incremental update using an xref stream instead of a text xref table.
-     * Same as {@link #writeIncremental} but uses §7.5.8 format.
-     *
-     * @param original        reader for the original PDF file
-     * @param trailer         the trailer dictionary
-     * @param modifiedObjects the modified/new objects to append
-     * @throws IOException if writing fails
-     */
+    /// Writes an incremental update using an xref stream instead of a text xref table.
+    /// Same as [#writeIncremental] but uses §7.5.8 format.
+    ///
+    /// @param original        reader for the original PDF file
+    /// @param trailer         the trailer dictionary
+    /// @param modifiedObjects the modified/new objects to append
+    /// @throws IOException if writing fails
     public void writeIncrementalWithXRefStream(RandomAccessReader original,
                                                 PdfDictionary trailer,
                                                 Map<PdfObjectKey, PdfBase> modifiedObjects) throws IOException {
@@ -934,20 +852,17 @@ public final class PDFWriter {
         LOGGER.log(Level.FINE, "Incremental update (xref stream) written: {0} bytes total", currentOffset);
     }
 
-    /**
-     * Packs eligible objects into object streams (ISO 32000-1:2008 §7.5.7).
-     *
-     * <p>Objects NOT eligible for compression:</p>
-     * <ul>
-     *   <li>Stream objects (streams cannot nest inside object streams)</li>
-     *   <li>Objects with generation number &gt; 0</li>
-     * </ul>
-     *
-     * @param objects      all objects to write
-     * @param maxPerStream max objects per stream
-     * @return result containing the object streams and compressed object info
-     * @throws IOException if serialization fails
-     */
+    /// Packs eligible objects into object streams (ISO 32000-1:2008 §7.5.7).
+    ///
+    /// Objects NOT eligible for compression:
+    ///
+    ///   - Stream objects (streams cannot nest inside object streams)
+    ///   - Objects with generation number > 0
+    ///
+    /// @param objects      all objects to write
+    /// @param maxPerStream max objects per stream
+    /// @return result containing the object streams and compressed object info
+    /// @throws IOException if serialization fails
     private ObjectStreamResult buildObjectStreams(
             Map<PdfObjectKey, PdfBase> objects, int maxPerStream) throws IOException {
 
@@ -1036,29 +951,25 @@ public final class PDFWriter {
         return new ObjectStreamResult(nonEligible, objStreams, compressedLocations, nextObjStreamNum);
     }
 
-    /**
-     * Writes a cross-reference stream (ISO 32000-1:2008 §7.5.8) instead of a text xref table.
-     * The xref stream is an indirect object that combines the xref data
-     * and the trailer dictionary entries (/Root, /Info, etc.) into a single stream.
-     *
-     * @param trailer             the trailer dictionary entries
-     * @param size                the /Size value (max obj number + 1)
-     * @param compressedLocations map of compressed objects: key → [objStmNum, indexInStream], or null
-     * @throws IOException if writing fails
-     */
+    /// Writes a cross-reference stream (ISO 32000-1:2008 §7.5.8) instead of a text xref table.
+    /// The xref stream is an indirect object that combines the xref data
+    /// and the trailer dictionary entries (/Root, /Info, etc.) into a single stream.
+    ///
+    /// @param trailer             the trailer dictionary entries
+    /// @param size                the /Size value (max obj number + 1)
+    /// @param compressedLocations map of compressed objects: key → [objStmNum, indexInStream], or null
+    /// @throws IOException if writing fails
     private void writeXRefStream(PdfDictionary trailer, int size,
                                   Map<PdfObjectKey, int[]> compressedLocations) throws IOException {
         writeXRefStreamObject(trailer, size, compressedLocations, true);
     }
 
-    /**
-     * Writes the cross-reference stream object itself and returns its byte
-     * offset. With {@code emitStartxref} true this terminates the file
-     * ({@code startxref} + {@code %%EOF}) — the pure xref-stream layout.
-     * With false, the caller appends its own cross-reference section — the
-     * hybrid-reference layout (§7.5.8.4), where a classic table trailer
-     * points here via {@code /XRefStm}.
-     */
+    /// Writes the cross-reference stream object itself and returns its byte
+    /// offset. With `emitStartxref` true this terminates the file
+    /// (`startxref` + `%%EOF`) — the pure xref-stream layout.
+    /// With false, the caller appends its own cross-reference section — the
+    /// hybrid-reference layout (§7.5.8.4), where a classic table trailer
+    /// points here via `/XRefStm`.
     private long writeXRefStreamObject(PdfDictionary trailer, int size,
                                        Map<PdfObjectKey, int[]> compressedLocations,
                                        boolean emitStartxref) throws IOException {
@@ -1169,10 +1080,8 @@ public final class PDFWriter {
         return xrefStreamOffset;
     }
 
-    /**
-     * Writes a single xref entry into the data array at the given byte position.
-     * Fields are written in big-endian format per §7.5.8.
-     */
+    /// Writes a single xref entry into the data array at the given byte position.
+    /// Fields are written in big-endian format per §7.5.8.
     private static void writeXRefEntry(byte[] data, int pos,
                                         int w1, int w2, int w3,
                                         int type, long field2, int field3) {
@@ -1184,7 +1093,7 @@ public final class PDFWriter {
         writeIntBytes(data, offset, w3, field3);
     }
 
-    /** Writes an integer as big-endian bytes into the array. */
+    /// Writes an integer as big-endian bytes into the array.
     private static void writeIntBytes(byte[] data, int offset, int width, int value) {
         for (int i = width - 1; i >= 0; i--) {
             data[offset + i] = (byte) (value & 0xFF);
@@ -1192,7 +1101,7 @@ public final class PDFWriter {
         }
     }
 
-    /** Writes a long as big-endian bytes into the array. */
+    /// Writes a long as big-endian bytes into the array.
     private static void writeLongBytes(byte[] data, int offset, int width, long value) {
         for (int i = width - 1; i >= 0; i--) {
             data[offset + i] = (byte) (value & 0xFF);
@@ -1200,7 +1109,7 @@ public final class PDFWriter {
         }
     }
 
-    /** Returns the number of bytes needed to represent a value. */
+    /// Returns the number of bytes needed to represent a value.
     private static int bytesNeeded(long value) {
         if (value <= 0xFFL) return 1;
         if (value <= 0xFFFFL) return 2;
@@ -1209,7 +1118,7 @@ public final class PDFWriter {
         return 5;
     }
 
-    /** Holds the result of building object streams. */
+    /// Holds the result of building object streams.
     private static final class ObjectStreamResult {
         final Map<PdfObjectKey, PdfBase> nonCompressedObjects;
         final List<ObjectStreamInfo> objectStreams;
@@ -1226,7 +1135,7 @@ public final class PDFWriter {
         }
     }
 
-    /** Information about a generated object stream. */
+    /// Information about a generated object stream.
     private static final class ObjectStreamInfo {
         final PdfObjectKey key;
         final PdfStream stream;

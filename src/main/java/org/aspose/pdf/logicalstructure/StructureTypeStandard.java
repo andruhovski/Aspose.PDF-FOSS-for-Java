@@ -3,18 +3,16 @@ package org.aspose.pdf.logicalstructure;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * Standard structure types for Tagged PDF (ISO 32000-1:2008, §14.8.4, Tables 333–338).
- * Each constant corresponds to a standard structure type name used in the
- * logical structure tree.
- */
+/// Standard structure types for Tagged PDF (ISO 32000-1:2008, §14.8.4, Tables 333–338).
+/// Each constant corresponds to a standard structure type name used in the
+/// logical structure tree.
 public final class StructureTypeStandard {
 
     private final String name;
 
     private StructureTypeStandard(String name) { this.name = name; }
 
-    /** Returns the structure type name (e.g., "P", "H1", "Table"). */
+    /// Returns the structure type name (e.g., "P", "H1", "Table").
     public String getName() { return name; }
 
     @Override
@@ -125,23 +123,19 @@ public final class StructureTypeStandard {
         BY_NAME.put("WP", WP);
     }
 
-    /**
-     * Looks up a standard structure type by name.
-     * Returns the predefined constant if it exists, otherwise creates a custom instance.
-     *
-     * @param name the structure type name
-     * @return the standard type, or a custom instance
-     */
+    /// Looks up a standard structure type by name.
+    /// Returns the predefined constant if it exists, otherwise creates a custom instance.
+    ///
+    /// @param name the structure type name
+    /// @return the standard type, or a custom instance
     public static StructureTypeStandard fromName(String name) {
         StructureTypeStandard std = BY_NAME.get(name);
         return std != null ? std : new StructureTypeStandard(name);
     }
 
-    /**
-     * Returns an unmodifiable map of all standard type names.
-     *
-     * @return the standard types map
-     */
+    /// Returns an unmodifiable map of all standard type names.
+    ///
+    /// @return the standard types map
     public static Map<String, StructureTypeStandard> getStandardTypes() {
         return java.util.Collections.unmodifiableMap(BY_NAME);
     }

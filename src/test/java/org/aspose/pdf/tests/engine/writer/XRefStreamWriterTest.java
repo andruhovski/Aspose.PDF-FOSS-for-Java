@@ -23,18 +23,14 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for XRef Stream and Object Stream writing (PDF 1.5+).
- * ISO 32000-1:2008 §7.5.7 (Object Streams), §7.5.8 (Cross-Reference Streams).
- */
+/// Tests for XRef Stream and Object Stream writing (PDF 1.5+).
+/// ISO 32000-1:2008 §7.5.7 (Object Streams), §7.5.8 (Cross-Reference Streams).
 public class XRefStreamWriterTest {
 
     // ========== Helper methods ==========
 
-    /**
-     * Creates a minimal set of objects: catalog, pages, info dict,
-     * plus a content stream and several small dicts.
-     */
+    /// Creates a minimal set of objects: catalog, pages, info dict,
+    /// plus a content stream and several small dicts.
     private Map<PdfObjectKey, PdfBase> createTestObjects() {
         Map<PdfObjectKey, PdfBase> objects = new LinkedHashMap<>();
 
@@ -73,9 +69,7 @@ public class XRefStreamWriterTest {
         return objects;
     }
 
-    /**
-     * Creates a trailer dict for the test objects with proper indirect references.
-     */
+    /// Creates a trailer dict for the test objects with proper indirect references.
     private PdfDictionary createTrailer() {
         PdfDictionary trailer = new PdfDictionary();
         trailer.set(PdfName.of("Root"), new PdfObjectReference(1, 0));
@@ -83,9 +77,7 @@ public class XRefStreamWriterTest {
         return trailer;
     }
 
-    /**
-     * Writes a compressed PDF to a byte array using the given objects.
-     */
+    /// Writes a compressed PDF to a byte array using the given objects.
     private byte[] writeCompressedPdf(Map<PdfObjectKey, PdfBase> objects,
                                        PdfDictionary trailer,
                                        int maxPerStream) throws IOException {
@@ -95,9 +87,7 @@ public class XRefStreamWriterTest {
         return bos.toByteArray();
     }
 
-    /**
-     * Writes a standard (text xref) PDF for comparison.
-     */
+    /// Writes a standard (text xref) PDF for comparison.
     private byte[] writeStandardPdf(Map<PdfObjectKey, PdfBase> objects,
                                      PdfDictionary trailer) throws IOException {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -108,7 +98,7 @@ public class XRefStreamWriterTest {
 
     // ========== XRef Stream tests ==========
 
-    /** Test 1: Compressed output starts with %PDF-1.5 (version bump). */
+    /// Test 1: Compressed output starts with %PDF-1.5 (version bump).
     @Test
     public void testCompressedOutputVersion() throws IOException {
         byte[] pdf = writeCompressedPdf(createTestObjects(), createTrailer(), 200);
@@ -116,7 +106,7 @@ public class XRefStreamWriterTest {
         assertTrue(header.startsWith("%PDF-1.5"), "Should start with %PDF-1.5, got: " + header);
     }
 
-    /** Test 2: Output contains /Type /XRef stream. */
+    /// Test 2: Output contains /Type /XRef stream.
     @Test
     public void testCompressedOutputContainsXRefStream() throws IOException {
         byte[] pdf = writeCompressedPdf(createTestObjects(), createTrailer(), 200);
@@ -124,7 +114,7 @@ public class XRefStreamWriterTest {
         assertTrue(content.contains("/Type /XRef"), "Should contain /Type /XRef");
     }
 
-    /** Test 3: No "xref" text keyword in output (replaced by xref stream). */
+    /// Test 3: No "xref" text keyword in output (replaced by xref stream).
     @Test
     public void testCompressedOutputNoTextXref() throws IOException {
         byte[] pdf = writeCompressedPdf(createTestObjects(), createTrailer(), 200);
@@ -133,7 +123,7 @@ public class XRefStreamWriterTest {
         assertFalse(content.contains("\nxref\n"), "Should not contain standalone 'xref' keyword");
     }
 
-    /** Test 4: No "trailer" text keyword in output. */
+    /// Test 4: No "trailer" text keyword in output.
     @Test
     public void testCompressedOutputNoTrailer() throws IOException {
         byte[] pdf = writeCompressedPdf(createTestObjects(), createTrailer(), 200);
@@ -141,7 +131,7 @@ public class XRefStreamWriterTest {
         assertFalse(content.contains("\ntrailer\n"), "Should not contain 'trailer' keyword");
     }
 
-    /** Test 5: startxref points to a valid offset. */
+    /// Test 5: startxref points to a valid offset.
     @Test
     public void testStartxrefPointsToXRefStream() throws IOException {
         byte[] pdf = writeCompressedPdf(createTestObjects(), createTrailer(), 200);
@@ -159,7 +149,7 @@ public class XRefStreamWriterTest {
         assertTrue(atOffset.contains("0 obj"), "Offset should point to an obj: " + atOffset);
     }
 
-    /** Hybrid layout (§7.5.8.4): classic table + /XRefStm trailer key + parseable output. */
+    /// Hybrid layout (§7.5.8.4): classic table + /XRefStm trailer key + parseable output.
     @Test
     public void testHybridWritePreservesXRefStm() throws IOException {
         Map<PdfObjectKey, PdfBase> objects = createTestObjects();
@@ -193,7 +183,7 @@ public class XRefStreamWriterTest {
         assertNotNull(parser.getCatalog(), "Hybrid output must reparse");
     }
 
-    /** Without the hybrid flag the plain-table output must not mention XRefStm. */
+    /// Without the hybrid flag the plain-table output must not mention XRefStm.
     @Test
     public void testPlainWriteHasNoXRefStm() throws IOException {
         byte[] pdf = writeStandardPdf(createTestObjects(), createTrailer());
@@ -201,7 +191,7 @@ public class XRefStreamWriterTest {
         assertFalse(content.contains("XRefStm"), "Plain write must not emit XRefStm");
     }
 
-    /** Test 6: XRef stream /W array has 3 elements. */
+    /// Test 6: XRef stream /W array has 3 elements.
     @Test
     public void testXRefStreamWArray() throws IOException {
         byte[] pdf = writeCompressedPdf(createTestObjects(), createTrailer(), 200);
@@ -215,7 +205,7 @@ public class XRefStreamWriterTest {
         assertEquals(3, parts.length, "/W should have 3 elements");
     }
 
-    /** Test 7: XRef stream /Size >= max object number. */
+    /// Test 7: XRef stream /Size >= max object number.
     @Test
     public void testXRefStreamSize() throws IOException {
         Map<PdfObjectKey, PdfBase> objects = createTestObjects();
@@ -228,7 +218,7 @@ public class XRefStreamWriterTest {
         assertTrue(sizeIdx > 0, "Should contain /Size in xref stream");
     }
 
-    /** Test 8: XRef stream contains /Root from trailer. */
+    /// Test 8: XRef stream contains /Root from trailer.
     @Test
     public void testXRefStreamContainsRoot() throws IOException {
         byte[] pdf = writeCompressedPdf(createTestObjects(), createTrailer(), 200);
@@ -242,7 +232,7 @@ public class XRefStreamWriterTest {
         assertTrue(xrefArea.contains("/Root"), "XRef stream dict should contain /Root");
     }
 
-    /** Test 9: Round-trip: write compressed → reparse → same page count. */
+    /// Test 9: Round-trip: write compressed → reparse → same page count.
     @Test
     public void testRoundTripPageCount() throws IOException {
         // First create a standard PDF
@@ -272,7 +262,7 @@ public class XRefStreamWriterTest {
         parser2.close();
     }
 
-    /** Test 10: Round-trip: compressed → reparse → text content intact. */
+    /// Test 10: Round-trip: compressed → reparse → text content intact.
     @Test
     public void testRoundTripContentIntact() throws IOException {
         Map<PdfObjectKey, PdfBase> objects = createTestObjects();
@@ -299,7 +289,7 @@ public class XRefStreamWriterTest {
 
     // ========== Object Stream tests ==========
 
-    /** Test 11: Stream objects are excluded from object streams (remain as regular objects). */
+    /// Test 11: Stream objects are excluded from object streams (remain as regular objects).
     @Test
     public void testStreamObjectsExcludedFromObjStm() throws IOException {
         Map<PdfObjectKey, PdfBase> objects = createTestObjects();
@@ -317,7 +307,7 @@ public class XRefStreamWriterTest {
         assertTrue(content.contains("5 0 obj"), "Stream object should be written standalone");
     }
 
-    /** Test 12: Dict/array objects are packed into ObjStm. */
+    /// Test 12: Dict/array objects are packed into ObjStm.
     @Test
     public void testDictObjectsPackedIntoObjStm() throws IOException {
         Map<PdfObjectKey, PdfBase> objects = createTestObjects();
@@ -328,7 +318,7 @@ public class XRefStreamWriterTest {
         assertTrue(content.contains("/Type /ObjStm"), "Should contain object stream");
     }
 
-    /** Test 13: Object stream has /Type /ObjStm, /N, /First, /Filter. */
+    /// Test 13: Object stream has /Type /ObjStm, /N, /First, /Filter.
     @Test
     public void testObjectStreamHasRequiredKeys() throws IOException {
         Map<PdfObjectKey, PdfBase> objects = createTestObjects();
@@ -348,7 +338,7 @@ public class XRefStreamWriterTest {
         assertTrue(dictArea.contains("/Filter"), "Should contain /Filter");
     }
 
-    /** Test 14: Object stream /N matches number of packed objects. */
+    /// Test 14: Object stream /N matches number of packed objects.
     @Test
     public void testObjectStreamNMatchesCount() throws IOException {
         Map<PdfObjectKey, PdfBase> objects = createTestObjects();
@@ -369,7 +359,7 @@ public class XRefStreamWriterTest {
         assertEquals(4, n, "Should pack 4 objects into object stream");
     }
 
-    /** Test 15: Round-trip: compressed objects → reparse → objects intact. */
+    /// Test 15: Round-trip: compressed objects → reparse → objects intact.
     @Test
     public void testRoundTripCompressedObjectsIntact() throws IOException {
         Map<PdfObjectKey, PdfBase> objects = createTestObjects();
@@ -396,7 +386,7 @@ public class XRefStreamWriterTest {
         parser2.close();
     }
 
-    /** Test 16: objectsPerStream=2 creates multiple ObjStm when there are more objects. */
+    /// Test 16: objectsPerStream=2 creates multiple ObjStm when there are more objects.
     @Test
     public void testMultipleObjectStreams() throws IOException {
         Map<PdfObjectKey, PdfBase> objects = createTestObjects();
@@ -412,7 +402,7 @@ public class XRefStreamWriterTest {
 
     // ========== Integration tests ==========
 
-    /** Test 17: Compressed output is smaller than standard output for many objects. */
+    /// Test 17: Compressed output is smaller than standard output for many objects.
     @Test
     public void testCompressedSmallerThanStandard() throws IOException {
         // Create a document with many small objects to see size benefit
@@ -445,7 +435,7 @@ public class XRefStreamWriterTest {
                 "Compressed (" + compressed.length + ") should be smaller than standard (" + standard.length + ")");
     }
 
-    /** Test 18: PdfSaveOptions flags work correctly. */
+    /// Test 18: PdfSaveOptions flags work correctly.
     @Test
     public void testPdfSaveOptionsFlags() {
         PdfSaveOptions options = new PdfSaveOptions();

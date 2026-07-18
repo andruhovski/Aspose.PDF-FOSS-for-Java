@@ -31,23 +31,21 @@ import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Bug O2 — {@code PDFWriter.collectOrphanStreams} must follow
- * {@link PdfObjectReference} nodes to recover and re-register orphan
- * {@code PdfStream} targets on the second save of the same {@code Document}.
- *
- * <p>On the first save, every appearance Form XObject and content stream is
- * promoted to indirect form, replacing the inline slot with a
- * {@code PdfObjectReference} bound to the just-built objects map. The
- * previous orphan walker only descended into {@code PdfDictionary} and
- * {@code PdfArray} nodes, so on the second save those references were never
- * followed — and the underlying streams were never copied into the new
- * objects map. The output PDF then contained {@code N G R} references to
- * objects that the writer never emitted.</p>
- *
- * <p>Especially catastrophic in the {@code save → encrypt → save} demo flow:
- * 128 dangling references in every encrypted output.</p>
- */
+/// Bug O2 — `PDFWriter.collectOrphanStreams` must follow
+/// [PdfObjectReference] nodes to recover and re-register orphan
+/// `PdfStream` targets on the second save of the same `Document`.
+///
+/// On the first save, every appearance Form XObject and content stream is
+/// promoted to indirect form, replacing the inline slot with a
+/// `PdfObjectReference` bound to the just-built objects map. The
+/// previous orphan walker only descended into `PdfDictionary` and
+/// `PdfArray` nodes, so on the second save those references were never
+/// followed — and the underlying streams were never copied into the new
+/// objects map. The output PDF then contained `N G R` references to
+/// objects that the writer never emitted.
+///
+/// Especially catastrophic in the `save → encrypt → save` demo flow:
+/// 128 dangling references in every encrypted output.
 class SaveTwiceStreamRetentionTest {
 
     @TempDir Path tempDir;

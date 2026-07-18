@@ -1,6 +1,5 @@
 package org.aspose.pdf.engine.script.js.builtins;
 
-import org.aspose.pdf.engine.script.js.interp.Interpreter;
 import org.aspose.pdf.engine.script.js.runtime.JSNumber;
 import org.aspose.pdf.engine.script.js.runtime.JSObject;
 import org.aspose.pdf.engine.script.js.runtime.NativeFunction;
@@ -9,11 +8,9 @@ import org.aspose.pdf.engine.script.js.runtime.Undefined;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-/**
- * Installs Number and Number.prototype (ECMA-262 3rd ed., sec 15.7):
- * {@code toString(radix)}, {@code toFixed}, {@code toExponential},
- * {@code toPrecision}, {@code valueOf} plus the numeric constants.
- */
+/// Installs Number and Number.prototype (ECMA-262 3rd ed., sec 15.7):
+/// `toString(radix)`, `toFixed`, `toExponential`,
+/// `toPrecision`, `valueOf` plus the numeric constants.
 final class NumberBuiltins {
 
     private static final Object UNDEF = Undefined.INSTANCE;

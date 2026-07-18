@@ -4,25 +4,22 @@ import org.aspose.pdf.engine.pdfobjects.PdfInteger;
 import org.aspose.pdf.engine.pdfobjects.PdfName;
 import org.aspose.pdf.engine.pdfobjects.PdfStream;
 
+import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.logging.Logger;
 import java.util.zip.Deflater;
 
-import javax.imageio.ImageIO;
-
-/**
- * Decodes an XFA {@code <image>} (the base64 payload of a {@code <draw>}/{@code <field>} logo or
- * picture) into a PDF Image XObject stream ready to register with
- * {@link org.aspose.pdf.engine.layout.ContentStreamBuilder#registerImage(String, PdfStream)} and
- * paint via {@code cm}+{@code Do}.
- *
- * <p>Mirrors the proven decode used by the document layout engine: a JPEG is forwarded verbatim
- * through {@code /DCTDecode} (lossless reuse); everything else (PNG/GIF/BMP/TIFF) is decoded through
- * {@link ImageIO}, composited against white where it carries alpha, and re-encoded as an 8-bit
- * DeviceRGB {@code /FlateDecode} stream. Zero third-party dependencies (only {@code javax.imageio}).</p>
- */
+/// Decodes an XFA `<image>` (the base64 payload of a `<draw>`/`<field>` logo or
+/// picture) into a PDF Image XObject stream ready to register with
+/// [org.aspose.pdf.engine.layout.ContentStreamBuilder#registerImage(String, PdfStream)] and
+/// paint via `cm`+`Do`.
+///
+/// Mirrors the proven decode used by the document layout engine: a JPEG is forwarded verbatim
+/// through `/DCTDecode` (lossless reuse); everything else (PNG/GIF/BMP/TIFF) is decoded through
+/// [ImageIO], composited against white where it carries alpha, and re-encoded as an 8-bit
+/// DeviceRGB `/FlateDecode` stream. Zero third-party dependencies (only `javax.imageio`).
 public final class XfaImageXObject {
 
     private static final Logger LOG = Logger.getLogger(XfaImageXObject.class.getName());
@@ -30,12 +27,10 @@ public final class XfaImageXObject {
     private XfaImageXObject() {
     }
 
-    /**
-     * Decodes raw image bytes into a PDF Image XObject stream.
-     *
-     * @param raw the decoded image bytes (PNG/JPEG/GIF/BMP/TIFF)
-     * @return the Image XObject stream, or {@code null} if the bytes could not be decoded
-     */
+    /// Decodes raw image bytes into a PDF Image XObject stream.
+    ///
+    /// @param raw the decoded image bytes (PNG/JPEG/GIF/BMP/TIFF)
+    /// @return the Image XObject stream, or `null` if the bytes could not be decoded
     public static PdfStream decode(byte[] raw) {
         if (raw == null || raw.length < 4) {
             return null;
@@ -81,15 +76,13 @@ public final class XfaImageXObject {
         }
     }
 
-    /**
-     * Rasterizes a QR Code module matrix into a 1-bit DeviceGray Image XObject (dark module = black),
-     * surrounded by a {@code quiet}-module white margin (the QR spec mandates &ge;4). One image sample
-     * per module keeps the stream tiny; the {@code cm}+{@code Do} scale to the field box does the rest.
-     *
-     * @param matrix {@code matrix[y][x]} = {@code true} for a dark module
-     * @param quiet  the quiet-zone width in modules (4 per ISO/IEC 18004)
-     * @return the Image XObject stream
-     */
+    /// Rasterizes a QR Code module matrix into a 1-bit DeviceGray Image XObject (dark module = black),
+    /// surrounded by a `quiet`-module white margin (the QR spec mandates ≥4). One image sample
+    /// per module keeps the stream tiny; the `cm`+`Do` scale to the field box does the rest.
+    ///
+    /// @param matrix`matrix[y][x]` = `true` for a dark module
+    /// @param quiet  the quiet-zone width in modules (4 per ISO/IEC 18004)
+    /// @return the Image XObject stream
     public static PdfStream qrImage(boolean[][] matrix, int quiet) {
         int modules = matrix.length;
         // Emit several samples per module so the symbol stays crisp after the viewer scales the image to
@@ -155,7 +148,7 @@ public final class XfaImageXObject {
         return out.toByteArray();
     }
 
-    /** Parses the first JPEG SOFn marker for {width, height, components}, or null. */
+    /// Parses the first JPEG SOFn marker for {width, height, components}, or null.
     private static int[] jpegDimensions(byte[] d) {
         int p = 2;
         while (p + 9 < d.length) {

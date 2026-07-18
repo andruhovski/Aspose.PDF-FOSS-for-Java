@@ -5,11 +5,9 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Smoke tests for {@link Margins}. Confirms the 4-int constructor parameter
- * order ({@code left, right, top, bottom}) matches Aspose.Pdf.Devices.Margins
- * so ports can write {@code new Margins(0, 0, 0, 0)} verbatim from C#.
- */
+/// Smoke tests for [Margins]. Confirms the 4-int constructor parameter
+/// order (`left, right, top, bottom`) matches Aspose.Pdf.Devices.Margins
+/// so ports can write `new Margins(0, 0, 0, 0)` verbatim from C#.
 public class MarginsTest {
 
     @Test

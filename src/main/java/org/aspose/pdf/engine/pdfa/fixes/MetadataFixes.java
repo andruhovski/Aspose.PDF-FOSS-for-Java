@@ -2,15 +2,9 @@ package org.aspose.pdf.engine.pdfa.fixes;
 
 import org.aspose.pdf.ConvertErrorAction;
 import org.aspose.pdf.PdfFormat;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectKey;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
-import org.aspose.pdf.engine.pdfobjects.PdfStream;
-import org.aspose.pdf.engine.pdfobjects.PdfString;
-import org.aspose.pdf.engine.pdfa.PdfAValidationResult;
 import org.aspose.pdf.engine.parser.PDFParser;
+import org.aspose.pdf.engine.pdfa.PdfAValidationResult;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -19,46 +13,37 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.logging.Logger;
 
-/**
- * Metadata-related fixes for PDF/A compliance.
- * <p>
- * These fixes <strong>must run first</strong> during conversion because other fix
- * classes may depend on a well-formed XMP metadata stream being present in the catalog.
- * </p>
- *
- * <p>Responsibilities:</p>
- * <ul>
- *   <li>Create XMP metadata when absent ({@link #ensureXmpMetadata})</li>
- *   <li>Remove compression from the metadata stream ({@link #removeMetadataFilter})</li>
- *   <li>Inject {@code pdfaid:part} / {@code pdfaid:conformance} ({@link #ensurePdfAId})</li>
- *   <li>Synchronise the classic Info dictionary with XMP properties ({@link #syncDocInfoWithXmp})</li>
- * </ul>
- */
+/// Metadata-related fixes for PDF/A compliance.
+///
+/// These fixes **must run first** during conversion because other fix
+/// classes may depend on a well-formed XMP metadata stream being present in the catalog.
+///
+/// Responsibilities:
+///
+///   - Create XMP metadata when absent ([#ensureXmpMetadata])
+///   - Remove compression from the metadata stream ([#removeMetadataFilter])
+///   - Inject `pdfaid:part` / `pdfaid:conformance` ([#ensurePdfAId])
+///   - Synchronise the classic Info dictionary with XMP properties ([#syncDocInfoWithXmp])
 public final class MetadataFixes {
 
     private static final Logger LOG = Logger.getLogger(MetadataFixes.class.getName());
 
-    /**
-     * Creates a new MetadataFixes instance.
-     */
+    /// Creates a new MetadataFixes instance.
     public MetadataFixes() {
         // default
     }
 
-    /**
-     * Ensures the catalog contains an XMP metadata stream.
-     * <p>
-     * If the catalog has no {@code /Metadata} entry, a new XMP packet is created
-     * from the document's Info dictionary (if present) and attached as an
-     * indirect-object stream.
-     * </p>
-     *
-     * @param parser      the parsed PDF
-     * @param format      the target format
-     * @param errorAction the error action strategy
-     * @param result      the validation result to collect warnings/errors
-     * @throws IOException if an I/O error occurs
-     */
+    /// Ensures the catalog contains an XMP metadata stream.
+    ///
+    /// If the catalog has no `/Metadata` entry, a new XMP packet is created
+    /// from the document's Info dictionary (if present) and attached as an
+    /// indirect-object stream.
+    ///
+    /// @param parser      the parsed PDF
+    /// @param format      the target format
+    /// @param errorAction the error action strategy
+    /// @param result      the validation result to collect warnings/errors
+    /// @throws IOException if an I/O error occurs
     public void ensureXmpMetadata(PDFParser parser, PdfFormat format,
                                   ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
         PdfDictionary catalog = parser.getCatalog();
@@ -133,19 +118,16 @@ public final class MetadataFixes {
         result.addWarning("meta.1", "Created XMP metadata stream from DocInfo", "catalog/Metadata", null);
     }
 
-    /**
-     * Removes any filter (compression) from the catalog metadata stream.
-     * <p>
-     * PDF/A requires that the XMP metadata stream be stored uncompressed so that
-     * simple byte-level search tools can locate the {@code pdfaid} namespace.
-     * </p>
-     *
-     * @param parser      the parsed PDF
-     * @param format      the target format
-     * @param errorAction the error action strategy
-     * @param result      the validation result
-     * @throws IOException if an I/O error occurs
-     */
+    /// Removes any filter (compression) from the catalog metadata stream.
+    ///
+    /// PDF/A requires that the XMP metadata stream be stored uncompressed so that
+    /// simple byte-level search tools can locate the `pdfaid` namespace.
+    ///
+    /// @param parser      the parsed PDF
+    /// @param format      the target format
+    /// @param errorAction the error action strategy
+    /// @param result      the validation result
+    /// @throws IOException if an I/O error occurs
     public void removeMetadataFilter(PDFParser parser, PdfFormat format,
                                      ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
         PdfDictionary catalog = parser.getCatalog();
@@ -169,20 +151,17 @@ public final class MetadataFixes {
         }
     }
 
-    /**
-     * Ensures the XMP metadata contains the correct {@code pdfaid:part} and
-     * {@code pdfaid:conformance} values for the target PDF/A profile.
-     * <p>
-     * If the existing XMP already contains these elements but with wrong values,
-     * the entire packet is regenerated.
-     * </p>
-     *
-     * @param parser      the parsed PDF
-     * @param format      the target format
-     * @param errorAction the error action strategy
-     * @param result      the validation result
-     * @throws IOException if an I/O error occurs
-     */
+    /// Ensures the XMP metadata contains the correct `pdfaid:part` and
+    /// `pdfaid:conformance` values for the target PDF/A profile.
+    ///
+    /// If the existing XMP already contains these elements but with wrong values,
+    /// the entire packet is regenerated.
+    ///
+    /// @param parser      the parsed PDF
+    /// @param format      the target format
+    /// @param errorAction the error action strategy
+    /// @param result      the validation result
+    /// @throws IOException if an I/O error occurs
     public void ensurePdfAId(PDFParser parser, PdfFormat format,
                              ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
         if (!format.isPdfA()) {
@@ -247,20 +226,17 @@ public final class MetadataFixes {
         }
     }
 
-    /**
-     * Synchronises the classic {@code /Info} dictionary with XMP metadata.
-     * <p>
-     * If the Info dictionary exists, its values are considered authoritative and
-     * are used to update the XMP packet.  This ensures that readers which look at
-     * either location see consistent values.
-     * </p>
-     *
-     * @param parser      the parsed PDF
-     * @param format      the target format
-     * @param errorAction the error action strategy
-     * @param result      the validation result
-     * @throws IOException if an I/O error occurs
-     */
+    /// Synchronises the classic `/Info` dictionary with XMP metadata.
+    ///
+    /// If the Info dictionary exists, its values are considered authoritative and
+    /// are used to update the XMP packet.  This ensures that readers which look at
+    /// either location see consistent values.
+    ///
+    /// @param parser      the parsed PDF
+    /// @param format      the target format
+    /// @param errorAction the error action strategy
+    /// @param result      the validation result
+    /// @throws IOException if an I/O error occurs
     public void syncDocInfoWithXmp(PDFParser parser, PdfFormat format,
                                    ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
         PdfDictionary trailer = parser.getTrailer();
@@ -322,21 +298,19 @@ public final class MetadataFixes {
     // Internal helpers
     // -------------------------------------------------------------------------
 
-    /**
-     * Builds a complete XMP packet from the supplied document properties.
-     *
-     * @param title       document title
-     * @param creator     author/creator
-     * @param desc        description/subject
-     * @param keywords    keywords
-     * @param creatorTool creator tool
-     * @param producer    producer
-     * @param createDate  creation date in PDF date format (D:YYYYMMDDHHmmSS...)
-     * @param modDate     modification date in PDF date format
-     * @param part        pdfaid:part (1, 2, 3)
-     * @param conformance pdfaid:conformance (A, B, U)
-     * @return the XMP packet as UTF-8 bytes
-     */
+    /// Builds a complete XMP packet from the supplied document properties.
+    ///
+    /// @param title       document title
+    /// @param creator     author/creator
+    /// @param desc        description/subject
+    /// @param keywords    keywords
+    /// @param creatorTool creator tool
+    /// @param producer    producer
+    /// @param createDate  creation date in PDF date format (D:YYYYMMDDHHmmSS...)
+    /// @param modDate     modification date in PDF date format
+    /// @param part        pdfaid:part (1, 2, 3)
+    /// @param conformance pdfaid:conformance (A, B, U)
+    /// @return the XMP packet as UTF-8 bytes
     static byte[] buildXmpPacket(String title, String creator, String desc, String keywords,
                                  String creatorTool, String producer,
                                  String createDate, String modDate,
@@ -417,12 +391,10 @@ public final class MetadataFixes {
         return sb.toString().getBytes(StandardCharsets.UTF_8);
     }
 
-    /**
-     * Converts a PDF date string (D:YYYYMMDDHHmmSS+HH'mm') to ISO 8601 XMP date.
-     *
-     * @param pdfDate the PDF date string
-     * @return the XMP date string, or empty string if the input is empty/null
-     */
+    /// Converts a PDF date string (D:YYYYMMDDHHmmSS+HH'mm') to ISO 8601 XMP date.
+    ///
+    /// @param pdfDate the PDF date string
+    /// @return the XMP date string, or empty string if the input is empty/null
     static String pdfDateToXmpDate(String pdfDate) {
         if (pdfDate == null || pdfDate.isEmpty()) {
             return "";
@@ -470,24 +442,18 @@ public final class MetadataFixes {
         return result.toString();
     }
 
-    /**
-     * Returns the current time as a PDF date string.
-     */
+    /// Returns the current time as a PDF date string.
     private static String currentPdfDate() {
         LocalDateTime now = LocalDateTime.now(ZoneId.systemDefault());
         return "D:" + now.format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
     }
 
-    /**
-     * Returns a non-null string (empty string for null input).
-     */
+    /// Returns a non-null string (empty string for null input).
     private static String safeString(String s) {
         return s == null ? "" : s;
     }
 
-    /**
-     * Finds the maximum object number currently in the parser.
-     */
+    /// Finds the maximum object number currently in the parser.
     private static int findMaxObjectNumber(PDFParser parser) {
         int maxObj = 0;
         for (PdfObjectKey k : parser.getAllObjectKeys()) {
@@ -496,9 +462,7 @@ public final class MetadataFixes {
         return maxObj;
     }
 
-    /**
-     * Escapes XML special characters.
-     */
+    /// Escapes XML special characters.
     static String escapeXml(String text) {
         if (text == null) {
             return "";
@@ -518,9 +482,7 @@ public final class MetadataFixes {
         return sb.toString();
     }
 
-    /**
-     * Replaces or inserts a simple XMP property value.
-     */
+    /// Replaces or inserts a simple XMP property value.
     private static String replaceOrInsertXmpProperty(String xmp, String propName, String value) {
         String openTag = "<" + propName + ">";
         String closeTag = "</" + propName + ">";
@@ -536,9 +498,7 @@ public final class MetadataFixes {
         return xmp; // leave unchanged if can't find
     }
 
-    /**
-     * Inserts a property block into an rdf:Description that uses the given namespace prefix.
-     */
+    /// Inserts a property block into an rdf:Description that uses the given namespace prefix.
     private static String insertPropertyInDescription(String xmp, String nsPrefix, String propBlock) {
         // Try to insert before the closing tag of an rdf:Description that contains the namespace prefix
         String nsSearch = "xmlns:" + nsPrefix + "=";

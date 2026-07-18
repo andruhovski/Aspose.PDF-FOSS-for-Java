@@ -4,22 +4,18 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Sanity tests for the 1D inverse DWT lifting routines used by
- * {@link JPXDecodeFilter}. The tests construct sub-band coefficient inputs
- * with known properties (e.g., LL only, constant) and assert that the
- * inverse lifting produces the expected reconstruction.
- */
+/// Sanity tests for the 1D inverse DWT lifting routines used by
+/// [JPXDecodeFilter]. The tests construct sub-band coefficient inputs
+/// with known properties (e.g., LL only, constant) and assert that the
+/// inverse lifting produces the expected reconstruction.
 public class JPXDecodeFilterDWTTest {
 
     private static final double EPS_97 = 1e-3;
     private static final double K_97   = 1.230174104914001;
 
-    /**
-     * 5/3 inverse DWT on a buffer whose low half is constant K and high half
-     * is zero must reconstruct the constant K everywhere. (5/3 has no extra
-     * scaling — lifting alone is exact for constant input.)
-     */
+    /// 5/3 inverse DWT on a buffer whose low half is constant K and high half
+    /// is zero must reconstruct the constant K everywhere. (5/3 has no extra
+    /// scaling — lifting alone is exact for constant input.)
     @Test
     public void dwt53_constantLow_zeroHigh_reconstructsConstant() {
         int len = 16;
@@ -35,14 +31,12 @@ public class JPXDecodeFilterDWTTest {
         }
     }
 
-    /**
-     * 9/7 inverse DWT: when low half = K (the spec's gain) and high half = 0,
-     * we expect the reconstruction to be 1.0 everywhere (since forward 9/7
-     * of constant-1 input divides the low coefficients by K).
-     *
-     * <p>If the inverse incorrectly multiplied low by 1/K instead of K, the
-     * reconstruction would be 1/K^2 ≈ 0.66 instead of 1.0.</p>
-     */
+    /// 9/7 inverse DWT: when low half = K (the spec's gain) and high half = 0,
+    /// we expect the reconstruction to be 1.0 everywhere (since forward 9/7
+    /// of constant-1 input divides the low coefficients by K).
+    ///
+    /// If the inverse incorrectly multiplied low by 1/K instead of K, the
+    /// reconstruction would be 1/K^2 ≈ 0.66 instead of 1.0.
     @Test
     public void dwt97_constantLow_zeroHigh_reconstructsConstant() {
         int len = 16;
@@ -61,10 +55,8 @@ public class JPXDecodeFilterDWTTest {
         }
     }
 
-    /**
-     * Pins the no-input → no-output behaviour. Zero sub-bands must reconstruct
-     * zero exactly (no scaling can manufacture a signal from a zero input).
-     */
+    /// Pins the no-input → no-output behaviour. Zero sub-bands must reconstruct
+    /// zero exactly (no scaling can manufacture a signal from a zero input).
     @Test
     public void dwt97_zeroLow_zeroHigh_isZero() {
         double[] buf = new double[16];
@@ -74,11 +66,9 @@ public class JPXDecodeFilterDWTTest {
         }
     }
 
-    /**
-     * Alternative 9/7 convention: forward MULTIPLIES low by K instead of
-     * dividing. If THIS is the convention used by Kakadu / JPEG 2000 spec,
-     * feeding low = K to inverse should yield 1.0.
-     */
+    /// Alternative 9/7 convention: forward MULTIPLIES low by K instead of
+    /// dividing. If THIS is the convention used by Kakadu / JPEG 2000 spec,
+    /// feeding low = K to inverse should yield 1.0.
     @Test
     public void dwt97_constantLow_K_check_alternate() {
         int len = 16;
@@ -94,11 +84,9 @@ public class JPXDecodeFilterDWTTest {
         }
     }
 
-    /**
-     * Round-trip check: a manual 9/7 forward DWT followed by our inverse DWT
-     * should recover the original signal. We use a small test signal and
-     * implement the forward lifting inline.
-     */
+    /// Round-trip check: a manual 9/7 forward DWT followed by our inverse DWT
+    /// should recover the original signal. We use a small test signal and
+    /// implement the forward lifting inline.
     @Test
     public void dwt97_roundTrip_smallSignal() {
         double[] orig = {10, 20, 30, 40, 50, 60, 70, 80};

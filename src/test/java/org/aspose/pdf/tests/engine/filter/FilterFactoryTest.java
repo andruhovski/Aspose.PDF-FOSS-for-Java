@@ -13,9 +13,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link FilterFactory}.
- */
+/// Tests for [FilterFactory].
 public class FilterFactoryTest {
 
     @Test

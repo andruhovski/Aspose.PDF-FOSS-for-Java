@@ -17,11 +17,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * B3.1 — XFA JavaScript host binding + load-time execution. A (SOM bridge + accessors + util) and
- * B (calculate topological + cycles, validate report-only, initialize/ready) over the merged Form
- * DOM, asserting computed values land on the FormField (so they reach the render track).
- */
+/// B3.1 — XFA JavaScript host binding + load-time execution. A (SOM bridge + accessors + util) and
+/// B (calculate topological + cycles, validate report-only, initialize/ready) over the merged Form
+/// DOM, asserting computed values land on the FormField (so they reach the render track).
 public class XfaScriptingTest {
 
     private static final String TPL = XfaNode.TEMPLATE_NS;

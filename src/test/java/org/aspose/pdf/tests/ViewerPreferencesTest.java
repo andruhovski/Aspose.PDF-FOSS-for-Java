@@ -6,9 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for ViewerPreferences.
- */
+/// Tests for ViewerPreferences.
 public class ViewerPreferencesTest {
 
     @Test

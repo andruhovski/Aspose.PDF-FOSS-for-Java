@@ -6,24 +6,21 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
-/**
- * Parses inline CSS style strings and applies them to a {@link CssContext}.
- * <p>
- * Supports a practical subset of CSS properties relevant to PDF generation:
- * font-size, font-family, font-weight, font-style, color, background-color,
- * background, text-align, text-decoration, line-height, margin (shorthand
- * and individual sides), width, and height.
- * </p>
- * <p>
- * No third-party dependencies are used. Color parsing handles #hex (3/6 digit),
- * rgb() functional notation, and common named colors.
- * </p>
- */
+/// Parses inline CSS style strings and applies them to a [CssContext].
+///
+/// Supports a practical subset of CSS properties relevant to PDF generation:
+/// font-size, font-family, font-weight, font-style, color, background-color,
+/// background, text-align, text-decoration, line-height, margin (shorthand
+/// and individual sides), width, and height.
+///
+/// No third-party dependencies are used. Color parsing handles #hex (3/6 digit),
+/// rgb() functional notation, and common named colors.
+///
 public final class CssStyleParser {
 
     private static final Logger LOG = Logger.getLogger(CssStyleParser.class.getName());
 
-    /** Named CSS colors mapped to their RGB hex values. */
+    /// Named CSS colors mapped to their RGB hex values.
     private static final Map<String, int[]> NAMED_COLORS = new HashMap<>();
 
     static {
@@ -46,16 +43,13 @@ public final class CssStyleParser {
         // utility class
     }
 
-    /**
-     * Parses an inline CSS style string and applies recognized properties
-     * to the given context.
-     * <p>
-     * Example: {@code "font-size:14px; color:#ff0000; margin:10px 5px"}
-     * </p>
-     *
-     * @param ctx      the context to update
-     * @param styleStr the CSS style attribute value; may be {@code null} or empty
-     */
+    /// Parses an inline CSS style string and applies recognized properties
+    /// to the given context.
+    ///
+    /// Example: `"font-size:14px; color:#ff0000; margin:10px 5px"`
+    ///
+    /// @param ctx      the context to update
+    /// @param styleStr the CSS style attribute value; may be `null` or empty
     public static void applyInlineStyle(CssContext ctx, String styleStr) {
         if (styleStr == null || styleStr.isEmpty()) {
             return;
@@ -79,9 +73,7 @@ public final class CssStyleParser {
         }
     }
 
-    /**
-     * Applies a single CSS property/value pair to the context.
-     */
+    /// Applies a single CSS property/value pair to the context.
     private static void applyProperty(CssContext ctx, String property, String value) {
         switch (property) {
             case "font-size":
@@ -142,26 +134,23 @@ public final class CssStyleParser {
         }
     }
 
-    /**
-     * Parses a CSS dimension value and converts it to PDF points (1pt = 1/72 in).
-     * <p>
-     * Supported units:
-     * <ul>
-     *   <li>{@code px} — pixels, treated as 0.75pt (96 dpi screen assumption)</li>
-     *   <li>{@code pt} — points (1:1)</li>
-     *   <li>{@code em} — relative to {@code base} font size</li>
-     *   <li>{@code %} — percentage of {@code base}</li>
-     *   <li>{@code cm} — centimeters (1cm = 28.3465pt)</li>
-     *   <li>{@code mm} — millimeters (1mm = 2.83465pt)</li>
-     *   <li>{@code in} — inches (1in = 72pt)</li>
-     * </ul>
-     * A bare number (no unit) is treated as points.
-     * </p>
-     *
-     * @param value the CSS dimension string, e.g. "14px", "1.5em", "50%"
-     * @param base  the base value for relative units (em, %)
-     * @return the value in points
-     */
+    /// Parses a CSS dimension value and converts it to PDF points (1pt = 1/72 in).
+    ///
+    /// Supported units:
+    ///
+    ///   - `px` — pixels, treated as 0.75pt (96 dpi screen assumption)
+    ///   - `pt` — points (1:1)
+    ///   - `em` — relative to `base` font size
+    ///   - `%` — percentage of `base`
+    ///   - `cm` — centimeters (1cm = 28.3465pt)
+    ///   - `mm` — millimeters (1mm = 2.83465pt)
+    ///   - `in` — inches (1in = 72pt)
+    ///
+    /// A bare number (no unit) is treated as points.
+    ///
+    /// @param value the CSS dimension string, e.g. "14px", "1.5em", "50%"
+    /// @param base  the base value for relative units (em, %)
+    /// @return the value in points
     public static double parseDimension(String value, double base) {
         if (value == null || value.isEmpty()) {
             return 0;
@@ -202,22 +191,18 @@ public final class CssStyleParser {
         }
     }
 
-    /**
-     * Parses a CSS color value and returns a {@link Color}.
-     * <p>
-     * Supported formats:
-     * <ul>
-     *   <li>{@code #RGB} — 3-digit hex (expanded to 6-digit)</li>
-     *   <li>{@code #RRGGBB} — 6-digit hex</li>
-     *   <li>{@code rgb(R, G, B)} — functional notation with 0-255 integer components</li>
-     *   <li>Named colors: black, white, red, green, blue, gray/grey, yellow,
-     *       orange, purple, navy, silver, transparent</li>
-     * </ul>
-     * </p>
-     *
-     * @param value the CSS color string
-     * @return the parsed {@link Color}, or {@code null} for "transparent" or unparseable values
-     */
+    /// Parses a CSS color value and returns a [Color].
+    ///
+    /// Supported formats:
+    ///
+    ///   - `#RGB` — 3-digit hex (expanded to 6-digit)
+    ///   - `#RRGGBB` — 6-digit hex
+    ///   - `rgb(R, G, B)` — functional notation with 0-255 integer components
+    ///   - Named colors: black, white, red, green, blue, gray/grey, yellow,
+    ///     orange, purple, navy, silver, transparent
+    ///
+    /// @param value the CSS color string
+    /// @return the parsed [Color], or `null` for "transparent" or unparseable values
     public static Color parseColor(String value) {
         if (value == null || value.isEmpty()) {
             return null;
@@ -248,9 +233,7 @@ public final class CssStyleParser {
         return null;
     }
 
-    /**
-     * Parses a hex color string (without the leading '#').
-     */
+    /// Parses a hex color string (without the leading '#').
     private static Color parseHexColor(String hex) {
         try {
             if (hex.length() == 3) {
@@ -272,9 +255,7 @@ public final class CssStyleParser {
         return null;
     }
 
-    /**
-     * Parses the contents of an rgb() function, e.g. "255, 0, 128".
-     */
+    /// Parses the contents of an rgb() function, e.g. "255, 0, 128".
     private static Color parseRgbFunction(String inner) {
         try {
             String[] parts = inner.split(",");
@@ -295,16 +276,13 @@ public final class CssStyleParser {
         }
     }
 
-    /**
-     * Extracts the first font name from a CSS font-family value.
-     * <p>
-     * Strips quotes and returns only the first font in a comma-separated list.
-     * For example, {@code "'Times New Roman', serif"} returns {@code "Times New Roman"}.
-     * </p>
-     *
-     * @param value the CSS font-family string
-     * @return the first font name, trimmed and unquoted
-     */
+    /// Extracts the first font name from a CSS font-family value.
+    ///
+    /// Strips quotes and returns only the first font in a comma-separated list.
+    /// For example, `"'Times New Roman', serif"` returns `"Times New Roman"`.
+    ///
+    /// @param value the CSS font-family string
+    /// @return the first font name, trimmed and unquoted
     public static String parseFont(String value) {
         if (value == null || value.isEmpty()) {
             return "Helvetica";
@@ -319,15 +297,12 @@ public final class CssStyleParser {
         return first.isEmpty() ? "Helvetica" : first;
     }
 
-    /**
-     * Determines whether a CSS font-weight value represents bold.
-     * <p>
-     * Returns {@code true} for the keyword "bold" or numeric weights &ge; 700.
-     * </p>
-     *
-     * @param value the CSS font-weight value
-     * @return {@code true} if the weight is bold
-     */
+    /// Determines whether a CSS font-weight value represents bold.
+    ///
+    /// Returns `true` for the keyword "bold" or numeric weights ≥ 700.
+    ///
+    /// @param value the CSS font-weight value
+    /// @return `true` if the weight is bold
     public static boolean isBold(String value) {
         if (value == null || value.isEmpty()) {
             return false;
@@ -343,21 +318,17 @@ public final class CssStyleParser {
         }
     }
 
-    /**
-     * Parses a CSS margin shorthand value and applies it to the context.
-     * <p>
-     * Supports 1, 2, 3, or 4 values:
-     * <ul>
-     *   <li>1 value: all four margins</li>
-     *   <li>2 values: vertical (top/bottom) and horizontal (left/right)</li>
-     *   <li>3 values: top, horizontal (left/right), bottom</li>
-     *   <li>4 values: top, right, bottom, left</li>
-     * </ul>
-     * </p>
-     *
-     * @param ctx   the context to update
-     * @param value the CSS margin shorthand string
-     */
+    /// Parses a CSS margin shorthand value and applies it to the context.
+    ///
+    /// Supports 1, 2, 3, or 4 values:
+    ///
+    ///   - 1 value: all four margins
+    ///   - 2 values: vertical (top/bottom) and horizontal (left/right)
+    ///   - 3 values: top, horizontal (left/right), bottom
+    ///   - 4 values: top, right, bottom, left
+    ///
+    /// @param ctx   the context to update
+    /// @param value the CSS margin shorthand string
     public static void parseMarginShorthand(CssContext ctx, String value) {
         if (value == null || value.isEmpty()) {
             return;

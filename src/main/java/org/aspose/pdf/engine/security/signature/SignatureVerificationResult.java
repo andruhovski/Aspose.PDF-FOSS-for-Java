@@ -3,9 +3,7 @@ package org.aspose.pdf.engine.security.signature;
 import java.security.cert.X509Certificate;
 import java.util.Date;
 
-/**
- * Result of verifying a PDF signature.
- */
+/// Result of verifying a PDF signature.
 public class SignatureVerificationResult {
 
     private final String fieldName;

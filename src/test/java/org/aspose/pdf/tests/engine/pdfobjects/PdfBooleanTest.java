@@ -8,9 +8,7 @@ import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link PdfBoolean}.
- */
+/// Tests for [PdfBoolean].
 public class PdfBooleanTest {
 
     @Test

@@ -4,23 +4,19 @@ import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
 import org.aspose.pdf.engine.pdfobjects.PdfFloat;
 import org.aspose.pdf.engine.pdfobjects.PdfName;
 
-/**
- * Package-private helpers used by {@link BackgroundArtifact} and
- * {@link WatermarkArtifact} when synthesising raw content-stream bytes:
- * register Standard-14 fonts and opacity {@code /ExtGState} entries on the
- * page's {@code /Resources}, escape PDF literal strings, and extract RGB
- * components from a {@link Color}.
- */
+/// Package-private helpers used by [BackgroundArtifact] and
+/// [WatermarkArtifact] when synthesising raw content-stream bytes:
+/// register Standard-14 fonts and opacity `/ExtGState` entries on the
+/// page's `/Resources`, escape PDF literal strings, and extract RGB
+/// components from a [Color].
 final class ArtifactSupport {
 
     private ArtifactSupport() { }
 
-    /**
-     * Ensures a Type1 Standard-14 font entry exists on the page's
-     * {@code /Resources/Font} and returns its resource name. Reuses an
-     * existing entry if {@code /BaseFont} matches; otherwise registers a
-     * new {@code F<sanitised-name>} entry.
-     */
+    /// Ensures a Type1 Standard-14 font entry exists on the page's
+    /// `/Resources/Font` and returns its resource name. Reuses an
+    /// existing entry if `/BaseFont` matches; otherwise registers a
+    /// new `F<sanitised-name>` entry.
     static String ensureStandardFont(Page page, String baseFont) {
         Resources res = page.ensureResources();
         PdfDictionary fonts = res.getFonts();
@@ -53,11 +49,9 @@ final class ArtifactSupport {
         return name;
     }
 
-    /**
-     * Ensures an {@code /ExtGState} entry providing the given non-stroking
-     * and stroking alpha exists on the page's {@code /Resources} and returns
-     * its resource name.
-     */
+    /// Ensures an `/ExtGState` entry providing the given non-stroking
+    /// and stroking alpha exists on the page's `/Resources` and returns
+    /// its resource name.
     static String ensureOpacityExtGState(Page page, double alpha) {
         Resources res = page.ensureResources();
         PdfDictionary extGs = res.getExtGState();
@@ -93,13 +87,13 @@ final class ArtifactSupport {
         return name;
     }
 
-    /** Returns RGB components in [0,1] for any {@link Color}, falling back to black. */
+    /// Returns RGB components in [0,1] for any [Color], falling back to black.
     static double[] toRgb(Color color) {
         if (color == null) return new double[]{0, 0, 0};
         return new double[]{color.getR(), color.getG(), color.getB()};
     }
 
-    /** Escapes a string for a PDF literal {@code (...)} payload. */
+    /// Escapes a string for a PDF literal `(...)` payload.
     static String escapeLiteral(String s) {
         if (s == null) return "";
         StringBuilder out = new StringBuilder(s.length() + 4);

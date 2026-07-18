@@ -1,50 +1,38 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.pdfobjects.PdfArray;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectCloner;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
-import org.aspose.pdf.engine.pdfobjects.PdfStream;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.io.IOException;
 import java.util.logging.Logger;
 
-/**
- * Imports pages from one {@link Document} into another by performing a full
- * deep copy of the source page's PDF object subgraph into fresh indirect objects
- * belonging to the target document. Cross-document {@code /Parent},
- * {@code /Dest} and {@code /StructParent[s]} references are dropped; shared
- * resources (fonts, images, extended graphics states) appearing on multiple
- * imported pages are cloned exactly once via {@link PdfObjectCloner}.
- * <p>
- * Instances of this class are cheap; reuse one instance per source→target
- * pair so shared resources are deduplicated across multiple imported pages.
- * </p>
- */
+/// Imports pages from one [Document] into another by performing a full
+/// deep copy of the source page's PDF object subgraph into fresh indirect objects
+/// belonging to the target document. Cross-document `/Parent`,
+/// `/Dest` and `/StructParent[s]` references are dropped; shared
+/// resources (fonts, images, extended graphics states) appearing on multiple
+/// imported pages are cloned exactly once via [PdfObjectCloner].
+///
+/// Instances of this class are cheap; reuse one instance per source→target
+/// pair so shared resources are deduplicated across multiple imported pages.
+///
 public final class DocumentPageImporter {
 
     private static final Logger LOG = Logger.getLogger(DocumentPageImporter.class.getName());
 
     private final Document target;
     private final Document source;
-    /**
-     * Long-lived cloner for sub-resource deduplication (fonts, color spaces,
-     * images shared across imported pages). NOT used for the page-root
-     * dictionary itself — see {@link #importPage(Page)} for why.
-     */
+    /// Long-lived cloner for sub-resource deduplication (fonts, color spaces,
+    /// images shared across imported pages). NOT used for the page-root
+    /// dictionary itself — see [#importPage(Page)] for why.
     private final PdfObjectCloner cloner;
 
-    /** Identity set of field dicts reachable from the source /AcroForm /Fields; lazily built. */
+    /// Identity set of field dicts reachable from the source /AcroForm /Fields; lazily built.
     private java.util.Set<PdfDictionary> sourceFormFields;
 
-    /**
-     * @param target target document, receives cloned pages
-     * @param source source document, owns the original pages
-     * @throws IllegalArgumentException if either argument is null
-     * @throws IllegalStateException    if the source is encrypted and not authenticated
-     */
+    /// @param target target document, receives cloned pages
+    /// @param source source document, owns the original pages
+    /// @throws IllegalArgumentException if either argument is null
+    /// @throws IllegalStateException    if the source is encrypted and not authenticated
     public DocumentPageImporter(Document target, Document source) {
         if (target == null) throw new IllegalArgumentException("target must not be null");
         if (source == null) throw new IllegalArgumentException("source must not be null");
@@ -62,12 +50,10 @@ public final class DocumentPageImporter {
         }
     }
 
-    /**
-     * Deep-copies {@code sourcePage} into a new {@link Page} backed by a fresh
-     * page dictionary registered in the target document. The result is not yet
-     * attached to the target page tree — caller is expected to splice it into
-     * {@code target.getPages()} (typically via {@link PageCollection#add(Page)}).
-     */
+    /// Deep-copies `sourcePage` into a new [Page] backed by a fresh
+    /// page dictionary registered in the target document. The result is not yet
+    /// attached to the target page tree — caller is expected to splice it into
+    /// `target.getPages()` (typically via [PageCollection#add(Page)]).
     public Page importPage(Page sourcePage) throws IOException {
         if (sourcePage == null) throw new IllegalArgumentException("sourcePage must not be null");
         PdfDictionary srcDict = sourcePage.getPdfDictionary();
@@ -93,13 +79,11 @@ public final class DocumentPageImporter {
         return newPage;
     }
 
-    /**
-     * Materializes effective inheritable page properties on the cloned page
-     * before it is attached to a different page tree. Without this, pages that
-     * relied on inherited {@code /MediaBox}, {@code /CropBox}, {@code /Rotate}
-     * or {@code /Resources} can silently pick up different values from the
-     * target document's {@code /Pages} root after reparenting.
-     */
+    /// Materializes effective inheritable page properties on the cloned page
+    /// before it is attached to a different page tree. Without this, pages that
+    /// relied on inherited `/MediaBox`, `/CropBox`, `/Rotate`
+    /// or `/Resources` can silently pick up different values from the
+    /// target document's `/Pages` root after reparenting.
     private void materializeInheritedPageProperties(Page sourcePage, PdfDictionary clonedPage) throws IOException {
         Rectangle mediaBox = sourcePage.getMediaBox();
         if (mediaBox != null) {
@@ -127,11 +111,9 @@ public final class DocumentPageImporter {
         }
     }
 
-    /**
-     * Walks the cloned /Annots array: for each annotation dictionary, applies
-     * {@link PdfObjectCloner#cloneAnnotationDict(PdfDictionary)} so /P and /Dest are
-     * dropped, then sets /P to a reference to the new page.
-     */
+    /// Walks the cloned /Annots array: for each annotation dictionary, applies
+    /// [PdfObjectCloner#cloneAnnotationDict(PdfDictionary)] so /P and /Dest are
+    /// dropped, then sets /P to a reference to the new page.
     private void remapAnnotations(PdfDictionary srcPage, PdfDictionary newPage,
                                   PdfObjectReference newPageRef) throws IOException {
         // Work off the source /Annots to control the cloning; the original
@@ -172,12 +154,10 @@ public final class DocumentPageImporter {
         newPage.set(PdfName.ANNOTS, newAnnots);
     }
 
-    /**
-     * Lazily collects (by identity) every field dictionary reachable from the
-     * source document's {@code /AcroForm /Fields} tree. A widget {@code /Parent}
-     * that is absent from this set is a dangling reference (the source has no
-     * AcroForm, or the parent is a junk grouping field) and is dropped on import.
-     */
+    /// Lazily collects (by identity) every field dictionary reachable from the
+    /// source document's `/AcroForm /Fields` tree. A widget `/Parent`
+    /// that is absent from this set is a dangling reference (the source has no
+    /// AcroForm, or the parent is a junk grouping field) and is dropped on import.
     private java.util.Set<PdfDictionary> sourceFormFields() {
         if (sourceFormFields != null) {
             return sourceFormFields;
@@ -252,11 +232,9 @@ public final class DocumentPageImporter {
                 || message.contains("Generation number must be non-negative");
     }
 
-    /**
-     * If /Contents was cloned as an inline PdfStream (or array of inline streams),
-     * promote it/them to indirect objects registered in the target. Writers expect
-     * page content streams to be indirect.
-     */
+    /// If /Contents was cloned as an inline PdfStream (or array of inline streams),
+    /// promote it/them to indirect objects registered in the target. Writers expect
+    /// page content streams to be indirect.
     private void promoteContentsToIndirect(PdfDictionary newPage) {
         PdfBase contents = newPage.get(PdfName.CONTENTS);
         if (contents instanceof PdfStream && ((PdfStream) contents).getObjectKey() == null) {

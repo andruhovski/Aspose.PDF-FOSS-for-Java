@@ -4,19 +4,17 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * Registry of XMP namespace prefix-to-URI mappings (ISO 16684-1).
- * <p>
- * Pre-populated with standard namespaces (Dublin Core, XMP, PDF, etc.).
- * Custom namespaces can be registered at runtime.
- * </p>
- */
+/// Registry of XMP namespace prefix-to-URI mappings (ISO 16684-1).
+///
+/// Pre-populated with standard namespaces (Dublin Core, XMP, PDF, etc.).
+/// Custom namespaces can be registered at runtime.
+///
 public final class XmpNamespaceRegistry {
 
     private final Map<String, String> prefixToUri = new LinkedHashMap<>();
     private final Map<String, String> uriToPrefix = new LinkedHashMap<>();
 
-    /** Creates a registry pre-populated with standard XMP namespaces. */
+    /// Creates a registry pre-populated with standard XMP namespaces.
     public XmpNamespaceRegistry() {
         register("dc", "http://purl.org/dc/elements/1.1/");
         register("xmp", "http://ns.adobe.com/xap/1.0/");
@@ -38,63 +36,51 @@ public final class XmpNamespaceRegistry {
         register("stRef", "http://ns.adobe.com/xap/1.0/sType/ResourceRef#");
     }
 
-    /**
-     * Registers a namespace prefix-URI mapping.
-     *
-     * @param prefix       the namespace prefix (e.g. "dc")
-     * @param namespaceUri the namespace URI
-     */
+    /// Registers a namespace prefix-URI mapping.
+    ///
+    /// @param prefix       the namespace prefix (e.g. "dc")
+    /// @param namespaceUri the namespace URI
     public void register(String prefix, String namespaceUri) {
         if (prefix == null || namespaceUri == null) return;
         prefixToUri.put(prefix, namespaceUri);
         uriToPrefix.put(namespaceUri, prefix);
     }
 
-    /**
-     * Returns the URI for the given prefix, or null if unknown.
-     *
-     * @param prefix the namespace prefix
-     * @return the namespace URI, or null
-     */
+    /// Returns the URI for the given prefix, or null if unknown.
+    ///
+    /// @param prefix the namespace prefix
+    /// @return the namespace URI, or null
     public String getUri(String prefix) {
         return prefixToUri.get(prefix);
     }
 
-    /**
-     * Returns the prefix for the given URI, or null if unknown.
-     *
-     * @param uri the namespace URI
-     * @return the prefix, or null
-     */
+    /// Returns the prefix for the given URI, or null if unknown.
+    ///
+    /// @param uri the namespace URI
+    /// @return the prefix, or null
     public String getPrefix(String uri) {
         return uriToPrefix.get(uri);
     }
 
-    /**
-     * Returns true if the prefix is registered.
-     *
-     * @param prefix the prefix to check
-     * @return true if known
-     */
+    /// Returns true if the prefix is registered.
+    ///
+    /// @param prefix the prefix to check
+    /// @return true if known
     public boolean hasPrefix(String prefix) {
         return prefixToUri.containsKey(prefix);
     }
 
-    /**
-     * Returns an unmodifiable view of all prefix-to-URI mappings.
-     *
-     * @return the prefix-to-URI map
-     */
+    /// Returns an unmodifiable view of all prefix-to-URI mappings.
+    ///
+    /// @return the prefix-to-URI map
     public Map<String, String> getAllMappings() {
         return Collections.unmodifiableMap(prefixToUri);
     }
 
-    /**
-     * Returns the namespace mappings that are actually used by the given properties.
-     *
-     * @param properties the property map keyed by "prefix:localName"
-     * @return map of prefix → URI for used namespaces
-     */
+    /// Returns the namespace mappings that are actually used by the given properties.
+    ///
+    /// @param properties the property map keyed by "prefix:localName"
+    /// @return map of prefix → URI for used namespaces
     public Map<String, String> getUsedNamespaces(Map<String, XmpProperty> properties) {
         Map<String, String> used = new LinkedHashMap<>();
         for (String key : properties.keySet()) {

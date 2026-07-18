@@ -1,36 +1,33 @@
 package org.aspose.pdf.forms;
 
-import org.aspose.pdf.*;
+import org.aspose.pdf.JavaScriptAction;
+import org.aspose.pdf.Page;
+import org.aspose.pdf.PdfAction;
+import org.aspose.pdf.Rectangle;
 import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.io.IOException;
 
-/**
- * Push button field (/FT /Btn, push flag) (ISO 32000-1:2008, §12.7.4.2.2).
- * <p>
- * A push button does not retain a permanent value; instead it activates
- * an action (/A entry) when pressed.
- * </p>
- */
+/// Push button field (/FT /Btn, push flag) (ISO 32000-1:2008, §12.7.4.2.2).
+///
+/// A push button does not retain a permanent value; instead it activates
+/// an action (/A entry) when pressed.
+///
 public class ButtonField extends Field {
 
-    /**
-     * Constructs a push button field from an existing PDF dictionary.
-     *
-     * @param dict     the PDF dictionary backing this field
-     * @param page     the page this field belongs to (may be null)
-     * @param fullName the fully-qualified dotted name
-     */
+    /// Constructs a push button field from an existing PDF dictionary.
+    ///
+    /// @param dict     the PDF dictionary backing this field
+    /// @param page     the page this field belongs to (may be null)
+    /// @param fullName the fully-qualified dotted name
     public ButtonField(PdfDictionary dict, Page page, String fullName) {
         super(dict, page, fullName);
     }
 
-    /**
-     * Constructs a new push button field on the given page with the specified rectangle.
-     *
-     * @param page the page
-     * @param rect the field rectangle
-     */
+    /// Constructs a new push button field on the given page with the specified rectangle.
+    ///
+    /// @param page the page
+    /// @param rect the field rectangle
     public ButtonField(Page page, Rectangle rect) {
         super(new PdfDictionary(), page, "");
         dict.set(PdfName.of("Type"), PdfName.of("Annot"));
@@ -41,11 +38,9 @@ public class ButtonField extends Field {
         setRectLenient(rect);
     }
 
-    /**
-     * Sets the normal caption (/CA in the /MK dictionary).
-     *
-     * @param caption the caption string
-     */
+    /// Sets the normal caption (/CA in the /MK dictionary).
+    ///
+    /// @param caption the caption string
     public void setNormalCaption(String caption) {
         PdfBase mk = dict.get("MK");
         PdfDictionary mkDict;
@@ -58,11 +53,9 @@ public class ButtonField extends Field {
         mkDict.set(PdfName.of("CA"), new PdfString(caption.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
     }
 
-    /**
-     * Returns the normal caption (/CA in the /MK dictionary).
-     *
-     * @return the caption string, or null
-     */
+    /// Returns the normal caption (/CA in the /MK dictionary).
+    ///
+    /// @return the caption string, or null
     public String getNormalCaption() {
         PdfBase mk = dict.get("MK");
         if (mk instanceof PdfDictionary) {
@@ -72,12 +65,10 @@ public class ButtonField extends Field {
         return null;
     }
 
-    /**
-     * Returns the action (/A entry) associated with this push button.
-     *
-     * @return the action, or null if none
-     * @throws IOException if parsing fails
-     */
+    /// Returns the action (/A entry) associated with this push button.
+    ///
+    /// @return the action, or null if none
+    /// @throws IOException if parsing fails
     public PdfAction getAction() throws IOException {
         PdfBase a = dict.get("A");
         if (a instanceof PdfObjectReference) {
@@ -90,13 +81,11 @@ public class ButtonField extends Field {
         return (a instanceof PdfDictionary) ? PdfAction.fromDictionary((PdfDictionary) a, null) : null;
     }
 
-    /**
-     * Sets this push button's activation action ({@code /A}, fired on mouse-up) to a JavaScript action
-     * running {@code script} (ISO 32000-1:2008 §12.6.4.16). Used by the XFA→AcroForm converter to wire
-     * a {@code +}/{@code -} control's original XFA click script onto the converted button.
-     *
-     * @param script the JavaScript source (ignored when {@code null}/blank)
-     */
+    /// Sets this push button's activation action (`/A`, fired on mouse-up) to a JavaScript action
+    /// running `script` (ISO 32000-1:2008 §12.6.4.16). Used by the XFA→AcroForm converter to wire
+    /// a `+`/`-` control's original XFA click script onto the converted button.
+    ///
+    /// @param script the JavaScript source (ignored when `null`/blank)
     public void setOnClickJavaScript(String script) {
         if (script == null || script.trim().isEmpty()) {
             return;

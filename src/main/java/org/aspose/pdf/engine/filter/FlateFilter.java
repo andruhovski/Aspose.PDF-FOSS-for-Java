@@ -10,44 +10,36 @@ import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 
-/**
- * FlateDecode filter (§7.4.4, ISO 32000-1:2008).
- * <p>
- * Compresses and decompresses data using the Deflate algorithm (RFC 1951).
- * This is the most commonly used filter in PDF — approximately 90% of all
- * streams use FlateDecode. Supports optional PNG/TIFF predictors via
- * {@link PredictorDecoder}.
- * </p>
- */
+/// FlateDecode filter (§7.4.4, ISO 32000-1:2008).
+///
+/// Compresses and decompresses data using the Deflate algorithm (RFC 1951).
+/// This is the most commonly used filter in PDF — approximately 90% of all
+/// streams use FlateDecode. Supports optional PNG/TIFF predictors via
+/// [PredictorDecoder].
+///
 public final class FlateFilter implements PdfFilter {
 
     private static final Logger LOG = Logger.getLogger(FlateFilter.class.getName());
 
     private static final int BUFFER_SIZE = 8192;
 
-    /**
-     * Tiny buffer used only for last-resort prefix recovery. The JDK's
-     * {@link Inflater} discards everything produced inside the single
-     * {@code inflate(buf)} call that throws, so the buffer size is the upper
-     * bound on bytes lost before a corruption point. 64 keeps that loss small
-     * while staying large enough to make recovery of multi-KB prefixes cheap.
-     */
+    /// Tiny buffer used only for last-resort prefix recovery. The JDK's
+    /// [Inflater] discards everything produced inside the single
+    /// `inflate(buf)` call that throws, so the buffer size is the upper
+    /// bound on bytes lost before a corruption point. 64 keeps that loss small
+    /// while staying large enough to make recovery of multi-KB prefixes cheap.
     private static final int SMALL_BUFFER_SIZE = 64;
 
-    /**
-     * Creates a FlateFilter instance.
-     */
+    /// Creates a FlateFilter instance.
     public FlateFilter() {
         // Stateless
     }
 
-    /**
-     * {@inheritDoc}
-     * <p>
-     * Decompresses Flate-encoded data. If the data lacks a zlib header (raw deflate),
-     * a fallback with {@code nowrap=true} is attempted automatically.
-     * </p>
-     */
+    /// {@inheritDoc}
+    ///
+    /// Decompresses Flate-encoded data. If the data lacks a zlib header (raw deflate),
+    /// a fallback with `nowrap=true` is attempted automatically.
+    ///
     @Override
     public byte[] decode(byte[] encoded, PdfDictionary params) throws IOException {
         if (encoded == null || encoded.length == 0) {
@@ -93,9 +85,7 @@ public final class FlateFilter implements PdfFilter {
         return result;
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /// {@inheritDoc}
     @Override
     public byte[] encode(byte[] decoded, PdfDictionary params) throws IOException {
         if (decoded == null || decoded.length == 0) {
@@ -124,9 +114,7 @@ public final class FlateFilter implements PdfFilter {
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /// {@inheritDoc}
     @Override
     public PdfName getName() {
         return PdfName.FLATE_DECODE;
@@ -192,17 +180,15 @@ public final class FlateFilter implements PdfFilter {
         }
     }
 
-    /**
-     * Mirrors {@link #inflate(byte[], boolean)} but with {@link #SMALL_BUFFER_SIZE}
-     * and never throws: it returns whatever was decompressed before any
-     * corruption, or {@code null} if not a single byte could be produced. Used
-     * as a last resort when the fast 8 KB path lost all of its output to a
-     * corruption that landed inside the first inflate() call.
-     *
-     * @param data   the raw (encoded) stream bytes
-     * @param nowrap whether to inflate as raw deflate (no zlib header)
-     * @return the recovered prefix, or {@code null} if nothing was recoverable
-     */
+    /// Mirrors [#inflate(byte\[\], boolean)] but with [#SMALL\_BUFFER\_SIZE]
+    /// and never throws: it returns whatever was decompressed before any
+    /// corruption, or `null` if not a single byte could be produced. Used
+    /// as a last resort when the fast 8 KB path lost all of its output to a
+    /// corruption that landed inside the first inflate() call.
+    ///
+    /// @param data   the raw (encoded) stream bytes
+    /// @param nowrap whether to inflate as raw deflate (no zlib header)
+    /// @return the recovered prefix, or `null` if nothing was recoverable
     private static byte[] inflateSmallBuf(byte[] data, boolean nowrap) {
         Inflater inflater = new Inflater(nowrap);
         long limit = DecodeLimits.maxDecodedBytes();

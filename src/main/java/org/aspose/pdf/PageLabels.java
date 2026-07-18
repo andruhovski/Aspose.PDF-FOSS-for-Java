@@ -1,34 +1,21 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfInteger;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
-import org.aspose.pdf.engine.pdfobjects.PdfString;
-import org.aspose.pdf.engine.pdfobjects.NumberTree;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Logger;
 
-/**
- * Page labelling for a PDF document (ISO 32000-1:2008, §12.4.2).
- * Maps page indices to display labels (e.g., "i", "ii", "1", "2", "A-1").
- *
- * <p>Stored as a number tree under {@code /PageLabels} in the catalog.
- * Each entry maps a page index to a label dictionary with:</p>
- * <ul>
- *   <li>/S — numbering style: D (decimal), r (lowercase roman), R (uppercase roman),
- *           a (lowercase alpha), A (uppercase alpha)</li>
- *   <li>/P — label prefix string</li>
- *   <li>/St — starting number (default 1)</li>
- * </ul>
- */
+/// Page labelling for a PDF document (ISO 32000-1:2008, §12.4.2).
+/// Maps page indices to display labels (e.g., "i", "ii", "1", "2", "A-1").
+///
+/// Stored as a number tree under `/PageLabels` in the catalog.
+/// Each entry maps a page index to a label dictionary with:
+///
+///   - /S — numbering style: D (decimal), r (lowercase roman), R (uppercase roman),
+///     a (lowercase alpha), A (uppercase alpha)
+///   - /P — label prefix string
+///   - /St — starting number (default 1)
 public class PageLabels {
 
     private static final Logger LOG = Logger.getLogger(PageLabels.class.getName());
@@ -37,27 +24,23 @@ public class PageLabels {
     private PdfDictionary catalog;
     private PdfDictionary pageLabelsDict;
 
-    /**
-     * A labelling range starting at a page index.
-     */
+    /// A labelling range starting at a page index.
     public static class LabelRange {
-        /** The 0-based page index where this range starts. */
+        /// The 0-based page index where this range starts.
         public final int startPage;
-        /** The numbering style: "D", "r", "R", "a", "A", or null. */
+        /// The numbering style: "D", "r", "R", "a", "A", or null.
         public final String style;
-        /** The label prefix string. */
+        /// The label prefix string.
         public final String prefix;
-        /** The first number in this range (default 1). */
+        /// The first number in this range (default 1).
         public final int startNumber;
 
-        /**
-         * Creates a label range.
-         *
-         * @param startPage   the 0-based starting page index
-         * @param style       the numbering style
-         * @param prefix      the label prefix
-         * @param startNumber the first number in the range
-         */
+        /// Creates a label range.
+        ///
+        /// @param startPage   the 0-based starting page index
+        /// @param style       the numbering style
+        /// @param prefix      the label prefix
+        /// @param startNumber the first number in the range
         public LabelRange(int startPage, String style, String prefix, int startNumber) {
             this.startPage = startPage;
             this.style = style;
@@ -66,13 +49,11 @@ public class PageLabels {
         }
     }
 
-    /**
-     * Parses page labels from the catalog's {@code /PageLabels} number tree.
-     *
-     * @param catalog the document catalog dictionary
-     * @return the page labels, or {@code null} if not present
-     * @throws IOException if parsing fails
-     */
+    /// Parses page labels from the catalog's `/PageLabels` number tree.
+    ///
+    /// @param catalog the document catalog dictionary
+    /// @return the page labels, or `null` if not present
+    /// @throws IOException if parsing fails
     public static PageLabels parse(PdfDictionary catalog) throws IOException {
         PdfBase plObj = resolve(catalog.get("PageLabels"));
         if (!(plObj instanceof PdfDictionary)) return null;
@@ -94,16 +75,13 @@ public class PageLabels {
         return labels.ranges.isEmpty() ? null : labels;
     }
 
-    /**
-     * Updates or adds a page-label range starting at the given 0-based page index.
-     * <p>
-     * The change is immediately written back to the underlying {@code /PageLabels}
-     * number tree in the catalog, so a subsequent document save persists it.
-     * </p>
-     *
-     * @param pageIndex the 0-based page index where the label range starts
-     * @param label the label definition
-     */
+    /// Updates or adds a page-label range starting at the given 0-based page index.
+    ///
+    /// The change is immediately written back to the underlying `/PageLabels`
+    /// number tree in the catalog, so a subsequent document save persists it.
+    ///
+    /// @param pageIndex the 0-based page index where the label range starts
+    /// @param label the label definition
     public void updateLabel(int pageIndex, PageLabel label) {
         if (pageIndex < 0) {
             throw new IllegalArgumentException("pageIndex must be >= 0");
@@ -133,12 +111,10 @@ public class PageLabels {
         syncToCatalog();
     }
 
-    /**
-     * Returns the display label for a given 0-based page index.
-     *
-     * @param pageIndex the 0-based page index
-     * @return the display label string
-     */
+    /// Returns the display label for a given 0-based page index.
+    ///
+    /// @param pageIndex the 0-based page index
+    /// @return the display label string
     public String getLabel(int pageIndex) {
         LabelRange range = null;
         for (LabelRange r : ranges) {
@@ -166,11 +142,9 @@ public class PageLabels {
         return range.prefix + numStr;
     }
 
-    /**
-     * Returns all label ranges.
-     *
-     * @return unmodifiable list of ranges
-     */
+    /// Returns all label ranges.
+    ///
+    /// @return unmodifiable list of ranges
     public List<LabelRange> getRanges() {
         return Collections.unmodifiableList(ranges);
     }
@@ -179,9 +153,7 @@ public class PageLabels {
     //  Number formatting
     // ═══════════════════════════════════════════════════════════════
 
-    /**
-     * Converts an integer to uppercase Roman numerals (1–3999).
-     */
+    /// Converts an integer to uppercase Roman numerals (1–3999).
     static String toRoman(int num) {
         String[] thousands = {"", "M", "MM", "MMM"};
         String[] hundreds  = {"", "C", "CC", "CCC", "CD", "D", "DC", "DCC", "DCCC", "CM"};
@@ -192,9 +164,7 @@ public class PageLabels {
                 + tens[(num % 100) / 10] + ones[num % 10];
     }
 
-    /**
-     * Converts an integer to alphabetic label (1=A, 2=B, ..., 26=Z, 27=AA, ...).
-     */
+    /// Converts an integer to alphabetic label (1=A, 2=B, ..., 26=Z, 27=AA, ...).
     static String toAlpha(int num) {
         StringBuilder sb = new StringBuilder();
         while (num > 0) {

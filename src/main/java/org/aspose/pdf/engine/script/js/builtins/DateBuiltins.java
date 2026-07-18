@@ -10,12 +10,10 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.TimeZone;
 
-/**
- * Installs Date and Date.prototype (ECMA-262 3rd ed., sec 15.9). Provides the
- * time value, component getters/setters (local and UTC), {@code getTime},
- * {@code getTimezoneOffset}, static {@code UTC}/{@code parse} and string
- * formatting. Local-time methods use the host default time zone.
- */
+/// Installs Date and Date.prototype (ECMA-262 3rd ed., sec 15.9). Provides the
+/// time value, component getters/setters (local and UTC), `getTime`,
+/// `getTimezoneOffset`, static `UTC`/`parse` and string
+/// formatting. Local-time methods use the host default time zone.
 final class DateBuiltins {
 
     private static final Object UNDEF = Undefined.INSTANCE;
@@ -203,11 +201,9 @@ final class DateBuiltins {
                 c.get(Calendar.HOUR_OF_DAY), c.get(Calendar.MINUTE), c.get(Calendar.SECOND));
     }
 
-    /**
-     * Parses a limited set of date string formats: ISO-8601
-     * ({@code YYYY-MM-DD} and {@code YYYY-MM-DDTHH:mm:ss(.sss)(Z)}). Other
-     * formats yield {@code NaN} (documented gap).
-     */
+    /// Parses a limited set of date string formats: ISO-8601
+    /// (`YYYY-MM-DD` and `YYYY-MM-DDTHH:mm:ss(.sss)(Z)`). Other
+    /// formats yield `NaN` (documented gap).
     private static double parse(String s) {
         s = JSNumber.trimJs(s);
         try {

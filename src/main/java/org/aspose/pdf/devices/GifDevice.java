@@ -1,50 +1,42 @@
 package org.aspose.pdf.devices;
 
 import javax.imageio.ImageIO;
-import java.awt.Graphics2D;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.logging.Logger;
 
-/**
- * Renders a PDF page to GIF format.
- * <p>
- * GIF is an indexed-colour format limited to 256 colours per frame and has no
- * alpha channel. The rendered image is flattened to RGB on a white background
- * before encoding; quantisation to a 256-colour palette is performed by the
- * standard {@code javax.imageio} GIF writer.
- * </p>
- * <p>
- * The GIF writer is part of the JDK's built-in ImageIO providers
- * ({@code com.sun.imageio.plugins.gif.GIFImageWriter}) and is available on
- * every supported JDK.
- * </p>
- *
- * @see PngDevice
- * @see BmpDevice
- * @see JpegDevice
- */
+/// Renders a PDF page to GIF format.
+///
+/// GIF is an indexed-colour format limited to 256 colours per frame and has no
+/// alpha channel. The rendered image is flattened to RGB on a white background
+/// before encoding; quantisation to a 256-colour palette is performed by the
+/// standard `javax.imageio` GIF writer.
+///
+/// The GIF writer is part of the JDK's built-in ImageIO providers
+/// (`com.sun.imageio.plugins.gif.GIFImageWriter`) and is available on
+/// every supported JDK.
+///
+/// @see PngDevice
+/// @see BmpDevice
+/// @see JpegDevice
 public class GifDevice extends PageDevice {
 
     private static final Logger LOG = Logger.getLogger(GifDevice.class.getName());
 
-    /**
-     * Creates a GIF device with the given resolution.
-     *
-     * @param resolution the rendering resolution
-     */
+    /// Creates a GIF device with the given resolution.
+    ///
+    /// @param resolution the rendering resolution
     public GifDevice(Resolution resolution) {
         super(resolution);
     }
 
-    /**
-     * Creates a GIF device with explicit pixel dimensions and resolution.
-     *
-     * @param width      target width in pixels
-     * @param height     target height in pixels
-     * @param resolution the rendering resolution
-     */
+    /// Creates a GIF device with explicit pixel dimensions and resolution.
+    ///
+    /// @param width      target width in pixels
+    /// @param height     target height in pixels
+    /// @param resolution the rendering resolution
     public GifDevice(int width, int height, Resolution resolution) {
         super(width, height, resolution);
     }

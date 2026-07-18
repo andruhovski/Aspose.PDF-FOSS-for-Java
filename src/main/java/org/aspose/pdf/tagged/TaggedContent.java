@@ -2,12 +2,8 @@ package org.aspose.pdf.tagged;
 
 import org.aspose.pdf.Document;
 import org.aspose.pdf.DocumentInfo;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
-import org.aspose.pdf.engine.pdfobjects.PdfString;
 import org.aspose.pdf.engine.parser.PDFParser;
+import org.aspose.pdf.engine.pdfobjects.*;
 import org.aspose.pdf.logicalstructure.StructTreeRoot;
 import org.aspose.pdf.logicalstructure.StructureElement;
 import org.aspose.pdf.logicalstructure.StructureTextState;
@@ -19,25 +15,24 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
-/**
- * Provides access to a document's tagged (structured) content
- * (ISO 32000-1:2008, §14.8).
- *
- * <p>This is the main entry point for reading and modifying the document's
- * logical structure tree. Implements {@link ITaggedContent} to provide
- * factory methods for creating typed structure elements.</p>
- *
- * <p>Usage:</p>
- * <pre>
- *   ITaggedContent tc = document.getTaggedContent();
- *   tc.setTitle("My Document");
- *   tc.setLanguage("en-US");
- *   StructureElement root = tc.getRootElement();
- *   ParagraphElement p = tc.createParagraphElement();
- *   p.setText("Hello!");
- *   root.appendChild(p.getStructureElement());
- * </pre>
- */
+/// Provides access to a document's tagged (structured) content
+/// (ISO 32000-1:2008, §14.8).
+///
+/// This is the main entry point for reading and modifying the document's
+/// logical structure tree. Implements [ITaggedContent] to provide
+/// factory methods for creating typed structure elements.
+///
+/// Usage:
+///
+/// <pre>
+///   ITaggedContent tc = document.getTaggedContent();
+///   tc.setTitle("My Document");
+///   tc.setLanguage("en-US");
+///   StructureElement root = tc.getRootElement();
+///   ParagraphElement p = tc.createParagraphElement();
+///   p.setText("Hello!");
+///   root.appendChild(p.getStructureElement());
+/// </pre>
 public class TaggedContent implements ITaggedContent {
 
     private static final Logger LOG = Logger.getLogger(TaggedContent.class.getName());
@@ -49,24 +44,20 @@ public class TaggedContent implements ITaggedContent {
     private final List<TOCElement> tocElements = new ArrayList<>();
     private StructureTextState documentTextState;
 
-    /**
-     * Creates a TaggedContent accessor.
-     *
-     * @param document the document
-     * @param catalog  the document catalog dictionary
-     * @param parser   the PDF parser (may be null for new documents)
-     */
+    /// Creates a TaggedContent accessor.
+    ///
+    /// @param document the document
+    /// @param catalog  the document catalog dictionary
+    /// @param parser   the PDF parser (may be null for new documents)
     public TaggedContent(Document document, PdfDictionary catalog, PDFParser parser) {
         this.document = document;
         this.catalog = catalog;
         this.parser = parser;
     }
 
-    /**
-     * Returns the structure tree root, creating one if it doesn't exist.
-     *
-     * @return the structure tree root
-     */
+    /// Returns the structure tree root, creating one if it doesn't exist.
+    ///
+    /// @return the structure tree root
     public StructTreeRoot getStructTreeRoot() {
         if (structTreeRoot == null) {
             PdfBase strObj = resolve(catalog.get("StructTreeRoot"));
@@ -81,9 +72,7 @@ public class TaggedContent implements ITaggedContent {
         return structTreeRoot;
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /// {@inheritDoc}
     @Override
     public StructureElement getRootElement() {
         return getStructTreeRoot().getRootElement();
@@ -93,9 +82,7 @@ public class TaggedContent implements ITaggedContent {
     //  Document-level metadata
     // ═══════════════════════════════════════════════════════════════
 
-    /**
-     * {@inheritDoc}
-     */
+    /// {@inheritDoc}
     @Override
     public void setTitle(String title) {
         if (document != null) {
@@ -107,9 +94,7 @@ public class TaggedContent implements ITaggedContent {
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /// {@inheritDoc}
     @Override
     public String getTitle() {
         if (document != null) {
@@ -123,17 +108,13 @@ public class TaggedContent implements ITaggedContent {
         return null;
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /// {@inheritDoc}
     @Override
     public void setLanguage(String lang) {
         catalog.set(PdfName.of("Lang"), new PdfString(lang));
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /// {@inheritDoc}
     @Override
     public String getLanguage() {
         PdfBase lang = catalog.get("Lang");
@@ -145,14 +126,12 @@ public class TaggedContent implements ITaggedContent {
     //  Structure creation (raw)
     // ═══════════════════════════════════════════════════════════════
 
-    /**
-     * Creates a new structure element with the given type.
-     * The element is not yet attached to the tree — use
-     * {@link StructureElement#appendChild(StructureElement)} to add it.
-     *
-     * @param type the structure type
-     * @return the new element
-     */
+    /// Creates a new structure element with the given type.
+    /// The element is not yet attached to the tree — use
+    /// [StructureElement#appendChild(StructureElement)] to add it.
+    ///
+    /// @param type the structure type
+    /// @return the new element
     public StructureElement createElement(StructureTypeStandard type) {
         PdfDictionary elemDict = new PdfDictionary();
         elemDict.set(PdfName.of("Type"), PdfName.of("StructElem"));
@@ -164,7 +143,7 @@ public class TaggedContent implements ITaggedContent {
     //  Typed element factory methods (ITaggedContent)
     // ═══════════════════════════════════════════════════════════════
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public TOCElement createTOCElement() {
         TOCElement toc = new TOCElement(createElement(StructureTypeStandard.TOC));
@@ -172,19 +151,19 @@ public class TaggedContent implements ITaggedContent {
         return toc;
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public TOCIElement createTOCIElement() {
         return new TOCIElement(createElement(StructureTypeStandard.TOCI));
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public HeaderElement createHeaderElement() {
         return new HeaderElement(createElement(StructureTypeStandard.H));
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public HeaderElement createHeaderElement(int level) {
         StructureTypeStandard type;
@@ -200,145 +179,145 @@ public class TaggedContent implements ITaggedContent {
         return new HeaderElement(createElement(type), level);
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public ParagraphElement createParagraphElement() {
         return new ParagraphElement(createElement(StructureTypeStandard.P));
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public DivElement createDivElement() {
         return new DivElement(createElement(StructureTypeStandard.Div));
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public SpanElement createSpanElement() {
         return new SpanElement(createElement(StructureTypeStandard.Span));
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public LinkElement createLinkElement() {
         return new LinkElement(createElement(StructureTypeStandard.Link));
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public FigureElement createFigureElement() {
         return new FigureElement(createElement(StructureTypeStandard.Figure));
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public TableElement createTableElement() {
         return new TableElement(createElement(StructureTypeStandard.Table));
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public TableTRElement createTableTRElement() {
         return new TableTRElement(createElement(StructureTypeStandard.TR));
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public TableTHElement createTableTHElement() {
         return new TableTHElement(createElement(StructureTypeStandard.TH));
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public TableTDElement createTableTDElement() {
         return new TableTDElement(createElement(StructureTypeStandard.TD));
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public ListElement createListElement() {
         return new ListElement(createElement(StructureTypeStandard.L));
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public ListLIElement createListLIElement() {
         return new ListLIElement(createElement(StructureTypeStandard.LI));
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public SectElement createSectElement() {
         return new SectElement(createElement(StructureTypeStandard.Sect));
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public PartElement createPartElement() {
         return new PartElement(createElement(StructureTypeStandard.Part));
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public NoteElement createNoteElement() {
         return new NoteElement(createElement(StructureTypeStandard.Note));
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public QuoteElement createQuoteElement() {
         return new QuoteElement(createElement(StructureTypeStandard.Quote));
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public FormElement createFormElement() {
         return new FormElement(createElement(StructureTypeStandard.Form));
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public FormulaElement createFormulaElement() {
         return new FormulaElement(createElement(StructureTypeStandard.Formula));
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public ListLblElement createListLblElement() {
         return new ListLblElement(createElement(StructureTypeStandard.Lbl));
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public ListLBodyElement createListLBodyElement() {
         return new ListLBodyElement(createElement(StructureTypeStandard.LBody));
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public TableTHeadElement createTableTHeadElement() {
         return new TableTHeadElement(createElement(StructureTypeStandard.THead));
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public TableTBodyElement createTableTBodyElement() {
         return new TableTBodyElement(createElement(StructureTypeStandard.TBody));
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public TableTFootElement createTableTFootElement() {
         return new TableTFootElement(createElement(StructureTypeStandard.TFoot));
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public StructTreeRoot getStructTreeRootElement() {
         return getStructTreeRoot();
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public StructureTextState getStructureTextState() {
         if (documentTextState == null) {
@@ -351,13 +330,11 @@ public class TaggedContent implements ITaggedContent {
     //  Validation
     // ═══════════════════════════════════════════════════════════════
 
-    /**
-     * Validates the tagged structure before saving. Called automatically
-     * by {@code Document.save()}.
-     *
-     * @throws HeaderElementTextConflictException if a header linked to a TOC page
-     *         has text that conflicts with the TOC page title
-     */
+    /// Validates the tagged structure before saving. Called automatically
+    /// by `Document.save()`.
+    ///
+    /// @throws HeaderElementTextConflictException if a header linked to a TOC page
+    ///         has text that conflicts with the TOC page title
     public void validateBeforeSave() {
         for (TOCElement toc : tocElements) {
             if (toc.getLinkedTocPage() != null && toc.getLinkedTitleHeader() != null) {
@@ -385,9 +362,7 @@ public class TaggedContent implements ITaggedContent {
     //  MarkInfo management
     // ═══════════════════════════════════════════════════════════════
 
-    /**
-     * Ensures /MarkInfo exists in the catalog with /Marked = true.
-     */
+    /// Ensures /MarkInfo exists in the catalog with /Marked = true.
     private void ensureMarkInfo() {
         PdfBase miObj = resolve(catalog.get("MarkInfo"));
         PdfDictionary markInfo;

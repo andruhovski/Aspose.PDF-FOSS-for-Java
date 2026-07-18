@@ -1,23 +1,21 @@
 package org.aspose.pdf.engine.font;
 
+import org.aspose.pdf.engine.parser.PDFParser;
 import org.aspose.pdf.engine.pdfobjects.PdfArray;
 import org.aspose.pdf.engine.pdfobjects.PdfBase;
 import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
 import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.parser.PDFParser;
 
 import java.io.IOException;
 import java.util.logging.Logger;
 
-/**
- * Simple Type 1 font (/Subtype /Type1) — ISO 32000-1:2008, §9.6.
- * <p>
- * Handles Standard 14 fonts as a special case: they require no embedding,
- * and their widths and encoding are provided by {@link StandardFonts}.
- * For non-standard Type 1 fonts, reads /Widths, /FirstChar, /Encoding
- * from the font dictionary.
- * </p>
- */
+/// Simple Type 1 font (/Subtype /Type1) — ISO 32000-1:2008, §9.6.
+///
+/// Handles Standard 14 fonts as a special case: they require no embedding,
+/// and their widths and encoding are provided by [StandardFonts].
+/// For non-standard Type 1 fonts, reads /Widths, /FirstChar, /Encoding
+/// from the font dictionary.
+///
 public class Type1Font extends PdfFont {
 
     private static final Logger LOG = Logger.getLogger(Type1Font.class.getName());
@@ -26,13 +24,11 @@ public class Type1Font extends PdfFont {
     private double[] customWidths;
     private int firstChar;
 
-    /**
-     * Creates a Type1Font from a font dictionary.
-     *
-     * @param fontDict the font dictionary (/Type /Font, /Subtype /Type1)
-     * @param parser   the PDF parser (may be null for Standard 14 fonts)
-     * @throws IOException if reading the font data fails
-     */
+    /// Creates a Type1Font from a font dictionary.
+    ///
+    /// @param fontDict the font dictionary (/Type /Font, /Subtype /Type1)
+    /// @param parser   the PDF parser (may be null for Standard 14 fonts)
+    /// @throws IOException if reading the font data fails
     public Type1Font(PdfDictionary fontDict, PDFParser parser) throws IOException {
         super(fontDict, parser);
 

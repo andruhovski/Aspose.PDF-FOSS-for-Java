@@ -3,22 +3,20 @@ package org.aspose.pdf.engine.script.js.builtins;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 
-/**
- * URI encoding/decoding for the global {@code encodeURI}, {@code decodeURI},
- * {@code encodeURIComponent} and {@code decodeURIComponent} functions
- * (ECMA-262 3rd ed., sec 15.1.3). UTF-8 is used for the octet sequence.
- */
+/// URI encoding/decoding for the global `encodeURI`, `decodeURI`,
+/// `encodeURIComponent` and `decodeURIComponent` functions
+/// (ECMA-262 3rd ed., sec 15.1.3). UTF-8 is used for the octet sequence.
 final class UriCoding {
 
-    /** Characters left unescaped by {@code encodeURI}. */
+    /// Characters left unescaped by `encodeURI`.
     static final String URI_UNRESERVED_RESERVED =
             "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
                     + "-_.!~*'()" + ";/?:@&=+$,#";
-    /** Characters left unescaped by {@code encodeURIComponent}. */
+    /// Characters left unescaped by `encodeURIComponent`.
     static final String COMPONENT_UNRESERVED =
             "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
                     + "-_.!~*'()";
-    /** Reserved set preserved by {@code decodeURI}. */
+    /// Reserved set preserved by `decodeURI`.
     static final String URI_RESERVED_HASH = ";/?:@&=+$,#";
 
     private UriCoding() { }

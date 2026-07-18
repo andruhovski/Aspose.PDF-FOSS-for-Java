@@ -8,14 +8,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * PDF tokenizer: converts a byte stream into a sequence of PDF tokens.
- * Implements a finite state machine that recognizes all PDF token types
- * as defined in ISO 32000-1:2008, §7.2 and §7.3.
- *
- * <p>Token types include numbers, names, strings (literal and hex),
- * keywords, array/dictionary delimiters, and EOF.</p>
- */
+/// PDF tokenizer: converts a byte stream into a sequence of PDF tokens.
+/// Implements a finite state machine that recognizes all PDF token types
+/// as defined in ISO 32000-1:2008, §7.2 and §7.3.
+///
+/// Token types include numbers, names, strings (literal and hex),
+/// keywords, array/dictionary delimiters, and EOF.
 public final class PDFLexer {
 
     private static final Logger LOGGER = Logger.getLogger(PDFLexer.class.getName());
@@ -23,66 +21,60 @@ public final class PDFLexer {
     private final RandomAccessReader reader;
     private Token peekedToken;
 
-    /**
-     * Enumeration of all PDF token types.
-     */
+    /// Enumeration of all PDF token types.
     public enum TokenType {
-        /** Integer number, e.g. {@code 42}, {@code -17} */
+        /// Integer number, e.g. `42`, `-17`
         INTEGER,
-        /** Real number, e.g. {@code 3.14}, {@code .5} */
+        /// Real number, e.g. `3.14`, `.5`
         REAL,
-        /** Name object, e.g. {@code /Type}, {@code /Name#20Test} */
+        /// Name object, e.g. `/Type`, `/Name#20Test`
         NAME,
-        /** Literal string, e.g. {@code (Hello)} */
+        /// Literal string, e.g. `(Hello)`
         LITERAL_STRING,
-        /** Hexadecimal string, e.g. {@code <48656C6C6F>} */
+        /// Hexadecimal string, e.g. `<48656C6C6F>`
         HEX_STRING,
-        /** Keyword: true, false, null, obj, endobj, stream, endstream, xref, trailer, startxref, R, n, f */
+        /// Keyword: true, false, null, obj, endobj, stream, endstream, xref, trailer, startxref, R, n, f
         KEYWORD,
-        /** Array open delimiter {@code [} */
+        /// Array open delimiter `[`
         ARRAY_OPEN,
-        /** Array close delimiter {@code ]} */
+        /// Array close delimiter `]`
         ARRAY_CLOSE,
-        /** Dictionary open delimiter {@code <<} */
+        /// Dictionary open delimiter `<<`
         DICT_OPEN,
-        /** Dictionary close delimiter {@code >>} */
+        /// Dictionary close delimiter `>>`
         DICT_CLOSE,
-        /** End of file */
+        /// End of file
         EOF
     }
 
-    /**
-     * A single PDF token with its type, string value, and file position.
-     */
+    /// A single PDF token with its type, string value, and file position.
     public static final class Token {
         private final TokenType type;
         private final String value;
         private final long position;
 
-        /**
-         * Creates a new token.
-         *
-         * @param type     the token type
-         * @param value    the textual value of the token
-         * @param position the byte position in the source where this token starts
-         */
+        /// Creates a new token.
+        ///
+        /// @param type     the token type
+        /// @param value    the textual value of the token
+        /// @param position the byte position in the source where this token starts
         public Token(TokenType type, String value, long position) {
             this.type = type;
             this.value = value;
             this.position = position;
         }
 
-        /** Returns the token type. */
+        /// Returns the token type.
         public TokenType getType() {
             return type;
         }
 
-        /** Returns the textual value of the token. */
+        /// Returns the textual value of the token.
         public String getValue() {
             return value;
         }
 
-        /** Returns the byte position in the source where this token starts. */
+        /// Returns the byte position in the source where this token starts.
         public long getPosition() {
             return position;
         }
@@ -93,11 +85,9 @@ public final class PDFLexer {
         }
     }
 
-    /**
-     * Constructs a new PDFLexer reading from the given source.
-     *
-     * @param reader the random-access source to read PDF bytes from
-     */
+    /// Constructs a new PDFLexer reading from the given source.
+    ///
+    /// @param reader the random-access source to read PDF bytes from
     public PDFLexer(RandomAccessReader reader) {
         if (reader == null) {
             throw new IllegalArgumentException("reader must not be null");
@@ -105,12 +95,10 @@ public final class PDFLexer {
         this.reader = reader;
     }
 
-    /**
-     * Reads and returns the next token from the input, consuming it.
-     *
-     * @return the next token
-     * @throws IOException if an I/O error occurs
-     */
+    /// Reads and returns the next token from the input, consuming it.
+    ///
+    /// @return the next token
+    /// @throws IOException if an I/O error occurs
     public Token nextToken() throws IOException {
         if (peekedToken != null) {
             Token t = peekedToken;
@@ -120,14 +108,12 @@ public final class PDFLexer {
         return readToken();
     }
 
-    /**
-     * Returns the next token without consuming it.
-     * Subsequent calls to {@code peekToken()} return the same token
-     * until {@code nextToken()} is called.
-     *
-     * @return the next token
-     * @throws IOException if an I/O error occurs
-     */
+    /// Returns the next token without consuming it.
+    /// Subsequent calls to `peekToken()` return the same token
+    /// until `nextToken()` is called.
+    ///
+    /// @return the next token
+    /// @throws IOException if an I/O error occurs
     public Token peekToken() throws IOException {
         if (peekedToken == null) {
             peekedToken = readToken();
@@ -135,31 +121,25 @@ public final class PDFLexer {
         return peekedToken;
     }
 
-    /**
-     * Returns the current byte position in the underlying reader.
-     *
-     * @return the current position
-     */
+    /// Returns the current byte position in the underlying reader.
+    ///
+    /// @return the current position
     public long getPosition() {
         return reader.getPosition();
     }
 
-    /**
-     * Clears any peeked (buffered) token.
-     * Used when the reader position is changed externally (e.g., seek)
-     * to ensure the lexer re-reads from the new position.
-     */
+    /// Clears any peeked (buffered) token.
+    /// Used when the reader position is changed externally (e.g., seek)
+    /// to ensure the lexer re-reads from the new position.
     public void clearPeek() {
         peekedToken = null;
     }
 
-    /**
-     * Skips whitespace characters and comments.
-     * PDF whitespace: 0x00 (NUL), 0x09 (TAB), 0x0A (LF), 0x0C (FF), 0x0D (CR), 0x20 (SPACE).
-     * Comments start with '%' and extend to the end of the line.
-     *
-     * @throws IOException if an I/O error occurs
-     */
+    /// Skips whitespace characters and comments.
+    /// PDF whitespace: 0x00 (NUL), 0x09 (TAB), 0x0A (LF), 0x0C (FF), 0x0D (CR), 0x20 (SPACE).
+    /// Comments start with '%' and extend to the end of the line.
+    ///
+    /// @throws IOException if an I/O error occurs
     public void skipWhitespaceAndComments() throws IOException {
         while (true) {
             int c = reader.peek();
@@ -185,9 +165,7 @@ public final class PDFLexer {
         }
     }
 
-    /**
-     * Internal method to read one token from the source.
-     */
+    /// Internal method to read one token from the source.
     private Token readToken() throws IOException {
         skipWhitespaceAndComments();
 
@@ -251,10 +229,8 @@ public final class PDFLexer {
         }
     }
 
-    /**
-     * Reads a literal string token (§7.3.4.2).
-     * Handles balanced parentheses, escape sequences, and octal escapes.
-     */
+    /// Reads a literal string token (§7.3.4.2).
+    /// Handles balanced parentheses, escape sequences, and octal escapes.
     private Token readLiteralString(long pos) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         int parenDepth = 1;
@@ -349,11 +325,9 @@ public final class PDFLexer {
         return new Token(TokenType.LITERAL_STRING, value, pos);
     }
 
-    /**
-     * Reads a hexadecimal string token (§7.3.4.3).
-     * Hex digits are read until '&gt;', whitespace is ignored.
-     * If odd number of hex digits, a trailing 0 is appended.
-     */
+    /// Reads a hexadecimal string token (§7.3.4.3).
+    /// Hex digits are read until '>', whitespace is ignored.
+    /// If odd number of hex digits, a trailing 0 is appended.
     private Token readHexString(long pos) throws IOException {
         StringBuilder hexChars = new StringBuilder();
 
@@ -400,10 +374,8 @@ public final class PDFLexer {
         return new Token(TokenType.HEX_STRING, value, pos);
     }
 
-    /**
-     * Reads a name token (§7.3.5).
-     * The leading '/' has already been consumed. Decodes {@code #XX} hex escapes.
-     */
+    /// Reads a name token (§7.3.5).
+    /// The leading '/' has already been consumed. Decodes `#XX` hex escapes.
     private Token readName(long pos) throws IOException {
         StringBuilder sb = new StringBuilder();
 
@@ -444,10 +416,8 @@ public final class PDFLexer {
         return new Token(TokenType.NAME, sb.toString(), pos);
     }
 
-    /**
-     * Reads a number token (integer or real).
-     * The first character has already been read.
-     */
+    /// Reads a number token (integer or real).
+    /// The first character has already been read.
     private Token readNumber(int firstChar, long pos) throws IOException {
         StringBuilder sb = new StringBuilder();
         sb.append((char) firstChar);
@@ -472,11 +442,9 @@ public final class PDFLexer {
         return new Token(type, sb.toString(), pos);
     }
 
-    /**
-     * Reads a keyword token (true, false, null, obj, endobj, stream, endstream,
-     * xref, trailer, startxref, R, n, f).
-     * The first character has already been read.
-     */
+    /// Reads a keyword token (true, false, null, obj, endobj, stream, endstream,
+    /// xref, trailer, startxref, R, n, f).
+    /// The first character has already been read.
     private Token readKeyword(int firstChar, long pos) throws IOException {
         StringBuilder sb = new StringBuilder();
         sb.append((char) firstChar);
@@ -520,33 +488,27 @@ public final class PDFLexer {
         return new Token(TokenType.KEYWORD, kw, pos);
     }
 
-    /**
-     * Tests whether a byte is PDF whitespace (§7.2.2, Table 1).
-     *
-     * @param c the byte value to test
-     * @return true if the byte is PDF whitespace
-     */
+    /// Tests whether a byte is PDF whitespace (§7.2.2, Table 1).
+    ///
+    /// @param c the byte value to test
+    /// @return true if the byte is PDF whitespace
     static boolean isWhitespace(int c) {
         return c == 0x00 || c == 0x09 || c == 0x0A || c == 0x0C || c == 0x0D || c == 0x20;
     }
 
-    /**
-     * Tests whether a byte is a PDF delimiter (§7.2.2, Table 2).
-     *
-     * @param c the byte value to test
-     * @return true if the byte is a PDF delimiter
-     */
+    /// Tests whether a byte is a PDF delimiter (§7.2.2, Table 2).
+    ///
+    /// @param c the byte value to test
+    /// @return true if the byte is a PDF delimiter
     static boolean isDelimiter(int c) {
         return c == '(' || c == ')' || c == '<' || c == '>' || c == '['
                 || c == ']' || c == '{' || c == '}' || c == '/' || c == '%';
     }
 
-    /**
-     * Tests whether a character is a valid hexadecimal digit.
-     *
-     * @param c the character to test
-     * @return true if 0-9, a-f, or A-F
-     */
+    /// Tests whether a character is a valid hexadecimal digit.
+    ///
+    /// @param c the character to test
+    /// @return true if 0-9, a-f, or A-F
     private static boolean isHexDigit(int c) {
         return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
     }

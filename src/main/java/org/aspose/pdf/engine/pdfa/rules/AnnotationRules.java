@@ -1,14 +1,13 @@
 package org.aspose.pdf.engine.pdfa.rules;
 
 import org.aspose.pdf.PdfFormat;
+import org.aspose.pdf.engine.parser.PDFParser;
+import org.aspose.pdf.engine.pdfa.PdfARule;
+import org.aspose.pdf.engine.pdfa.PdfAValidationResult;
 import org.aspose.pdf.engine.pdfobjects.PdfArray;
 import org.aspose.pdf.engine.pdfobjects.PdfBase;
 import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
 import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
-import org.aspose.pdf.engine.pdfa.PdfARule;
-import org.aspose.pdf.engine.pdfa.PdfAValidationResult;
-import org.aspose.pdf.engine.parser.PDFParser;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -17,41 +16,36 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Validates annotation requirements for PDF/A compliance.
- *
- * <p>Checks the following ISO 19005 clauses:</p>
- * <ul>
- *   <li>6.5.2 &mdash; Forbidden annotation subtypes</li>
- *   <li>6.5.3 &mdash; /F flags: Print=1, Hidden=0, Invisible=0, NoView=0</li>
- * </ul>
- */
+/// Validates annotation requirements for PDF/A compliance.
+///
+/// Checks the following ISO 19005 clauses:
+///
+///   - 6.5.2 — Forbidden annotation subtypes
+///   - 6.5.3 — /F flags: Print=1, Hidden=0, Invisible=0, NoView=0
 public final class AnnotationRules implements PdfARule {
 
     private static final Logger LOG = Logger.getLogger(AnnotationRules.class.getName());
 
-    /** Annotation subtypes forbidden in PDF/A-1. */
+    /// Annotation subtypes forbidden in PDF/A-1.
     private static final Set<String> FORBIDDEN_PDFA1 = new HashSet<>(Arrays.asList(
             "FileAttachment", "Sound", "Movie"
     ));
 
-    /** Annotation subtypes forbidden in PDF/A-2+. */
+    /// Annotation subtypes forbidden in PDF/A-2+.
     private static final Set<String> FORBIDDEN_PDFA2 = new HashSet<>(Arrays.asList(
             "3D", "Sound", "Screen", "Movie"
     ));
 
-    /** Bit position for Print flag (bit 3, zero-indexed from bit 1). */
+    /// Bit position for Print flag (bit 3, zero-indexed from bit 1).
     private static final int FLAG_PRINT = 1 << 2;
-    /** Bit position for Hidden flag (bit 2). */
+    /// Bit position for Hidden flag (bit 2).
     private static final int FLAG_HIDDEN = 1 << 1;
-    /** Bit position for Invisible flag (bit 1). */
+    /// Bit position for Invisible flag (bit 1).
     private static final int FLAG_INVISIBLE = 1;
-    /** Bit position for NoView flag (bit 6). */
+    /// Bit position for NoView flag (bit 6).
     private static final int FLAG_NOVIEW = 1 << 5;
 
-    /**
-     * Creates a new annotation rules checker.
-     */
+    /// Creates a new annotation rules checker.
     public AnnotationRules() {
         // default constructor
     }
@@ -64,9 +58,7 @@ public final class AnnotationRules implements PdfARule {
         checkPages(parser, format, result);
     }
 
-    /**
-     * Iterates all pages and checks their annotations.
-     */
+    /// Iterates all pages and checks their annotations.
     private void checkPages(PDFParser parser, PdfFormat format, PdfAValidationResult result) {
         PdfDictionary catalog;
         try {
@@ -95,9 +87,7 @@ public final class AnnotationRules implements PdfARule {
         }
     }
 
-    /**
-     * Checks all annotations on a page.
-     */
+    /// Checks all annotations on a page.
     private void checkAnnotations(PdfDictionary page, String pagePath,
                                    PdfFormat format, PdfAValidationResult result) {
         PdfBase annotsRef = page.get("Annots");
@@ -149,9 +139,7 @@ public final class AnnotationRules implements PdfARule {
         }
     }
 
-    /**
-     * Resolves a PdfBase to a PdfDictionary, dereferencing indirect references.
-     */
+    /// Resolves a PdfBase to a PdfDictionary, dereferencing indirect references.
     private static PdfDictionary resolveDict(PdfBase val) {
         if (val instanceof PdfObjectReference) {
             try {
@@ -163,9 +151,7 @@ public final class AnnotationRules implements PdfARule {
         return (val instanceof PdfDictionary) ? (PdfDictionary) val : null;
     }
 
-    /**
-     * Resolves a PdfBase to a PdfArray, dereferencing indirect references.
-     */
+    /// Resolves a PdfBase to a PdfArray, dereferencing indirect references.
     private static PdfArray resolveArray(PdfBase val) {
         if (val instanceof PdfObjectReference) {
             try {

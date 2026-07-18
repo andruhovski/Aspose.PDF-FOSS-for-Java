@@ -1,10 +1,6 @@
 package org.aspose.pdf.engine.xfa.packet;
 
-import org.aspose.pdf.engine.pdfobjects.PdfArray;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfStream;
-import org.aspose.pdf.engine.pdfobjects.PdfString;
+import org.aspose.pdf.engine.pdfobjects.*;
 import org.w3c.dom.Document;
 
 import javax.xml.transform.OutputKeys;
@@ -19,27 +15,23 @@ import java.util.logging.Logger;
 
 import static org.aspose.pdf.engine.xfa.packet.XfaPacketReader.resolveRef;
 
-/**
- * Writes a modified {@link XfaPacketSet} back to the PDF {@code /XFA} entry,
- * replacing the former {@code XfaPacketParser} write path.
- *
- * <p>For a PdfArray entry each packet's stream is updated with the serialized
- * DOM of the matching packet; for a single PdfStream entry the assembled XDP
- * document is serialized back. Behaviour matches the previous implementation.</p>
- */
+/// Writes a modified [XfaPacketSet] back to the PDF `/XFA` entry,
+/// replacing the former `XfaPacketParser` write path.
+///
+/// For a PdfArray entry each packet's stream is updated with the serialized
+/// DOM of the matching packet; for a single PdfStream entry the assembled XDP
+/// document is serialized back. Behaviour matches the previous implementation.
 public final class XfaPacketWriter {
 
     private static final Logger LOG = Logger.getLogger(XfaPacketWriter.class.getName());
 
     private XfaPacketWriter() { }
 
-    /**
-     * Writes packet DOMs back to the {@code /XFA} structures.
-     *
-     * @param xfaEntry the original {@code /XFA} value (PdfArray or PdfStream)
-     * @param set      the (possibly modified) packet set
-     * @throws IOException if serialization/writing fails
-     */
+    /// Writes packet DOMs back to the `/XFA` structures.
+    ///
+    /// @param xfaEntry the original `/XFA` value (PdfArray or PdfStream)
+    /// @param set      the (possibly modified) packet set
+    /// @throws IOException if serialization/writing fails
     public static void writeBack(PdfBase xfaEntry, XfaPacketSet set) throws IOException {
         if (xfaEntry == null) {
             throw new IllegalArgumentException("XFA entry must not be null");
@@ -92,14 +84,12 @@ public final class XfaPacketWriter {
         }
     }
 
-    /**
-     * Serializes a DOM document to UTF-8 bytes (no XML declaration), matching
-     * the prior write path.
-     *
-     * @param doc the document
-     * @return serialized bytes
-     * @throws IOException on transform failure
-     */
+    /// Serializes a DOM document to UTF-8 bytes (no XML declaration), matching
+    /// the prior write path.
+    ///
+    /// @param doc the document
+    /// @return serialized bytes
+    /// @throws IOException on transform failure
     public static byte[] serialize(Document doc) throws IOException {
         try {
             TransformerFactory tf = TransformerFactory.newInstance();

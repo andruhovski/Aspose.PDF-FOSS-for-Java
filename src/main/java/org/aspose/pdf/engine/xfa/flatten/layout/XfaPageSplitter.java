@@ -6,22 +6,20 @@ import org.w3c.dom.Node;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Finds the page <b>split points</b> of a laid-out flowed form (Stage C, sprint L2 PART B):
- * walks the flow top-to-bottom against the per-page content region height and determines
- * where each page's content ends, honouring XFA <b>keep</b> (keep-together) and
- * <b>break</b> (forced break) rules.
- *
- * <p><b>This class FINDS split points; it does NOT split, paginate, or relocate content.</b>
- * The output is data — the boundary node of each page and the remaining overflow — that L3
- * will act on (re-flow the tail onto subsequent pages). A split point partitions the unit
- * sequence; nothing is dropped or duplicated (content conservation).</p>
- *
- * <p>The breakable units are atomic: a table row never splits mid-row, and a keep-together
- * group moves wholly to the next page if it does not fit. A unit taller than the whole region
- * is placed on its own page (it cannot be left off a page); splitting <em>within</em> such an
- * over-tall unit is deferred to L3.</p>
- */
+/// Finds the page **split points** of a laid-out flowed form (Stage C, sprint L2 PART B):
+/// walks the flow top-to-bottom against the per-page content region height and determines
+/// where each page's content ends, honouring XFA **keep** (keep-together) and
+/// **break** (forced break) rules.
+///
+/// **This class FINDS split points; it does NOT split, paginate, or relocate content.**
+/// The output is data — the boundary node of each page and the remaining overflow — that L3
+/// will act on (re-flow the tail onto subsequent pages). A split point partitions the unit
+/// sequence; nothing is dropped or duplicated (content conservation).
+///
+/// The breakable units are atomic: a table row never splits mid-row, and a keep-together
+/// group moves wholly to the next page if it does not fit. A unit taller than the whole region
+/// is placed on its own page (it cannot be left off a page); splitting _within_ such an
+/// over-tall unit is deferred to L3.
 public final class XfaPageSplitter {
 
     private static final double EPS = 1e-6;
@@ -29,13 +27,13 @@ public final class XfaPageSplitter {
     private XfaPageSplitter() {
     }
 
-    /** A page boundary: the first unit that belongs to the next page. */
+    /// A page boundary: the first unit that belongs to the next page.
     public static final class SplitPoint {
-        /** The layout node that starts the next page (page N's content begins here). */
+        /// The layout node that starts the next page (page N's content begins here).
         public final XfaLayoutNode boundaryNode;
-        /** The boundary node's index in the unit sequence. */
+        /// The boundary node's index in the unit sequence.
         public final int boundaryIndex;
-        /** Content height (points) remaining from this boundary to the end of the flow. */
+        /// Content height (points) remaining from this boundary to the end of the flow.
         public final double overflowRemaining;
 
         SplitPoint(XfaLayoutNode boundaryNode, int boundaryIndex, double overflowRemaining) {
@@ -45,15 +43,15 @@ public final class XfaPageSplitter {
         }
     }
 
-    /** The split plan for one laid-out form (no splitting performed). */
+    /// The split plan for one laid-out form (no splitting performed).
     public static final class SplitPlan {
-        /** Per-page content region height (points) used for the fit test. */
+        /// Per-page content region height (points) used for the fit test.
         public final double regionHeight;
-        /** Total laid-out content height (points). */
+        /// Total laid-out content height (points).
         public final double totalContentHeight;
-        /** The split points, in order (empty ⇒ fits on one page). */
+        /// The split points, in order (empty ⇒ fits on one page).
         public final List<SplitPoint> splitPoints;
-        /** Number of breakable units considered. */
+        /// Number of breakable units considered.
         public final int unitCount;
 
         SplitPlan(double regionHeight, double totalContentHeight, List<SplitPoint> splitPoints, int unitCount) {
@@ -63,23 +61,21 @@ public final class XfaPageSplitter {
             this.unitCount = unitCount;
         }
 
-        /** @return the number of pages the content would occupy = split points + 1. */
+        /// @return the number of pages the content would occupy = split points + 1.
         public int pageCount() {
             return splitPoints.size() + 1;
         }
 
-        /** @return {@code true} if the content needs more than one page (a split point exists). */
+        /// @return `true` if the content needs more than one page (a split point exists).
         public boolean overflows() {
             return !splitPoints.isEmpty();
         }
 
-        /**
-         * The unit-index ranges {@code [start, end)} of each page, derived from the split points.
-         * The ranges partition {@code [0, unitCount)} with no gap or overlap — the content
-         * conservation invariant.
-         *
-         * @return one {@code int[]{start,end}} per page, in order
-         */
+        /// The unit-index ranges `[start, end)` of each page, derived from the split points.
+        /// The ranges partition `[0, unitCount)` with no gap or overlap — the content
+        /// conservation invariant.
+        ///
+        /// @return one `int[]{start,end}` per page, in order
         public List<int[]> pageRanges() {
             List<int[]> ranges = new ArrayList<>();
             int start = 0;
@@ -92,28 +88,24 @@ public final class XfaPageSplitter {
         }
     }
 
-    /**
-     * Computes the split plan for a laid-out form: the breakable units are the page-level
-     * objects of the flow (top-level flowed children, descending one level into a flowed
-     * container so its rows become units), measured against the form's per-page region height.
-     *
-     * @param layout the L1/L2 layout result
-     * @return the split plan (split points found, not acted on)
-     */
+    /// Computes the split plan for a laid-out form: the breakable units are the page-level
+    /// objects of the flow (top-level flowed children, descending one level into a flowed
+    /// container so its rows become units), measured against the form's per-page region height.
+    ///
+    /// @param layout the L1/L2 layout result
+    /// @return the split plan (split points found, not acted on)
     public static SplitPlan split(XfaFlowLayout.Result layout) {
         return split(layout, layout.regionHeight);
     }
 
-    /**
-     * Computes the split plan against an explicit per-page region height — used by L4 when a
-     * bookend (overflow leader/trailer) reduces the content room available on every page: the
-     * caller passes {@code regionHeight - leaderHeight - trailerHeight} so the split accounts for
-     * the repeated boilerplate, and the content still fits once the boilerplate is re-inserted.
-     *
-     * @param layout       the L1/L2 layout result
-     * @param regionHeight the effective per-page content region height in points
-     * @return the split plan (split points found, not acted on)
-     */
+    /// Computes the split plan against an explicit per-page region height — used by L4 when a
+    /// bookend (overflow leader/trailer) reduces the content room available on every page: the
+    /// caller passes `regionHeight - leaderHeight - trailerHeight` so the split accounts for
+    /// the repeated boilerplate, and the content still fits once the boilerplate is re-inserted.
+    ///
+    /// @param layout       the L1/L2 layout result
+    /// @param regionHeight the effective per-page content region height in points
+    /// @return the split plan (split points found, not acted on)
     public static SplitPlan split(XfaFlowLayout.Result layout, double regionHeight) {
         // Only a flowed root paginates. A positioned (or default-layout) root places its children
         // by absolute C1 coordinates — they may overlap and are not a top-to-bottom flow, so the
@@ -134,7 +126,7 @@ public final class XfaPageSplitter {
         return plan;
     }
 
-    /** Diagnostic: prints the laid-out node tree with each node's geometry and declared minH/maxH. */
+    /// Diagnostic: prints the laid-out node tree with each node's geometry and declared minH/maxH.
     private static void dumpTree(XfaLayoutNode node, int depth) {
         Element el = node.getSource();
         String name = el == null ? "?" : (el.getLocalName() + ":" + el.getAttribute("name"));
@@ -155,7 +147,7 @@ public final class XfaPageSplitter {
         }
     }
 
-    /** Diagnostic: prints each breakable unit with its geometry and keep/break flags + page ranges. */
+    /// Diagnostic: prints each breakable unit with its geometry and keep/break flags + page ranges.
     private static void dumpSplit(List<XfaLayoutNode> units, SplitPlan plan) {
         System.err.println("=== xfa.dumpSplit: regionH=" + fmt(plan.regionHeight)
                 + " totalH=" + fmt(plan.totalContentHeight) + " units=" + units.size()
@@ -197,25 +189,21 @@ public final class XfaPageSplitter {
                 || "row".equals(layout) || "table".equals(layout);
     }
 
-    /**
-     * Core split algorithm over a unit sequence (each unit's {@code y}/{@code height} are in
-     * content-region coordinates). Walks the units against {@code regionHeight}, grouping
-     * keep-together neighbours and honouring forced breaks, and records a split point before
-     * each unit that starts a new page. No unit is moved or dropped.
-     *
-     * @param units        the breakable units, in flow order
-     * @param regionHeight the per-page content region height in points
-     * @return the split plan
-     */
+    /// Core split algorithm over a unit sequence (each unit's `y`/`height` are in
+    /// content-region coordinates). Walks the units against `regionHeight`, grouping
+    /// keep-together neighbours and honouring forced breaks, and records a split point before
+    /// each unit that starts a new page. No unit is moved or dropped.
+    ///
+    /// @param units        the breakable units, in flow order
+    /// @param regionHeight the per-page content region height in points
+    /// @return the split plan
     public static SplitPlan splitUnits(List<XfaLayoutNode> units, double regionHeight) {
         return splitUnits(units, regionHeight, null);
     }
 
-    /**
-     * As {@link #splitUnits(List, double)} but with the layout {@code rootEl} so the heading-orphan
-     * keep-region logic can bound a keep chain to one top-level section (it stops a chain at the
-     * form root). Pass {@code null} to disable that extension (adjacent keeps only).
-     */
+    /// As [#splitUnits(List, double)] but with the layout `rootEl` so the heading-orphan
+    /// keep-region logic can bound a keep chain to one top-level section (it stops a chain at the
+    /// form root). Pass `null` to disable that extension (adjacent keeps only).
     public static SplitPlan splitUnits(List<XfaLayoutNode> units, double regionHeight, Element rootEl) {
         int n = units.size();
         List<SplitPoint> points = new ArrayList<>();
@@ -331,14 +319,12 @@ public final class XfaPageSplitter {
 
     /* --------------------------- breakable units --------------------------- */
 
-    /**
-     * Derives the page-breakable unit sequence from the layout root: descend through flowed
-     * containers (tb / lr-tb / table subforms) down to <b>atomic</b> units — a table row
-     * (never split mid-row), a leaf field/draw, a positioned block, a keep-intact subform, or
-     * a non-flowed/leaf container. A flowed container that merely groups other flow content is
-     * transparent to the page split; its atomic descendants are the things a page boundary can
-     * fall between.
-     */
+    /// Derives the page-breakable unit sequence from the layout root: descend through flowed
+    /// containers (tb / lr-tb / table subforms) down to **atomic** units — a table row
+    /// (never split mid-row), a leaf field/draw, a positioned block, a keep-intact subform, or
+    /// a non-flowed/leaf container. A flowed container that merely groups other flow content is
+    /// transparent to the page split; its atomic descendants are the things a page boundary can
+    /// fall between.
     public static List<XfaLayoutNode> breakableUnits(XfaLayoutNode root) {
         List<XfaLayoutNode> units = new ArrayList<>();
         if (root == null) {
@@ -361,17 +347,15 @@ public final class XfaPageSplitter {
         }
     }
 
-    /**
-     * Whether the splitter treats {@code node} as a <b>transparent</b> flowed group — one it descends
-     * into so that its leaf children become the breakable units, rather than an atomic block. Such a
-     * container is never emitted as a unit, so its own {@code <fill>}/{@code <border>} (a grey section
-     * panel) must be repainted separately by the paginator as a per-page background.
-     */
+    /// Whether the splitter treats `node` as a **transparent** flowed group — one it descends
+    /// into so that its leaf children become the breakable units, rather than an atomic block. Such a
+    /// container is never emitted as a unit, so its own `<fill>`/`<border>` (a grey section
+    /// panel) must be repainted separately by the paginator as a per-page background.
     public static boolean isTransparentContainer(XfaLayoutNode node) {
         return !isAtomic(node);
     }
 
-    /** Whether a node is an indivisible page-break unit (a boundary can't fall inside it). */
+    /// Whether a node is an indivisible page-break unit (a boundary can't fall inside it).
     private static boolean isAtomic(XfaLayoutNode node) {
         Element el = node.getSource();
         if (el == null || node.getChildren().isEmpty() || node.isPositioned()) {
@@ -393,12 +377,10 @@ public final class XfaPageSplitter {
         return !flowed; // a positioned/default container is one block; a flowed one is transparent
     }
 
-    /**
-     * The closing unit of a keep-region opened by a {@code <keep next>} at index {@code p}: the
-     * nearest later unit carrying {@code <keep previous>} that shares a common ancestor subform with
-     * {@code p} (so the pair is one logical block — a heading and its body). Returns {@code p} when no
-     * such close exists before the chain leaves the section (its ancestor reaches {@code rootEl}).
-     */
+    /// The closing unit of a keep-region opened by a `<keep next>` at index `p`: the
+    /// nearest later unit carrying `<keep previous>` that shares a common ancestor subform with
+    /// `p` (so the pair is one logical block — a heading and its body). Returns `p` when no
+    /// such close exists before the chain leaves the section (its ancestor reaches `rootEl`).
     private static int keepRegionClose(List<XfaLayoutNode> units, int p, Element rootEl) {
         Element pe = units.get(p).getSource();
         if (pe == null) {
@@ -421,12 +403,10 @@ public final class XfaPageSplitter {
         return p;
     }
 
-    /**
-     * Walks back from a keep-region's heading (index {@code p}) over the section's <b>light leading
-     * furniture</b> — zero-height spacers and small keep-flagged titles in the same top-level section —
-     * so the section title travels onto the next page with the heading instead of stranding. Stops at
-     * the first substantial unit or the section boundary (common ancestor with {@code p} is the root).
-     */
+    /// Walks back from a keep-region's heading (index `p`) over the section's **light leading
+    /// furniture** — zero-height spacers and small keep-flagged titles in the same top-level section —
+    /// so the section title travels onto the next page with the heading instead of stranding. Stops at
+    /// the first substantial unit or the section boundary (common ancestor with `p` is the root).
     private static int furnitureStart(List<XfaLayoutNode> units, int p, Element rootEl) {
         Element pe = units.get(p).getSource();
         if (pe == null) {
@@ -454,8 +434,8 @@ public final class XfaPageSplitter {
         return start;
     }
 
-    /** The top-level section {@code el} belongs to: its ancestor that is a direct child of {@code
-     * rootEl} (or {@code el} itself if it is one). Null if {@code el} is not under {@code rootEl}. */
+    /// The top-level section `el` belongs to: its ancestor that is a direct child of
+    /// `rootEl` (or `el` itself if it is one). Null if `el` is not under `rootEl`.
     private static Element sectionOf(Element el, Element rootEl) {
         if (el == null) {
             return null;
@@ -470,7 +450,7 @@ public final class XfaPageSplitter {
         return null;
     }
 
-    /** The nearest ancestor element of {@code a} that also contains {@code b} (their join), or null. */
+    /// The nearest ancestor element of `a` that also contains `b` (their join), or null.
     private static Element commonAncestor(Element a, Element b) {
         for (Node pn = a.getParentNode(); pn instanceof Element; pn = pn.getParentNode()) {
             if (isWithin(b, (Element) pn)) {
@@ -480,7 +460,7 @@ public final class XfaPageSplitter {
         return null;
     }
 
-    /** Whether {@code node} is {@code ancestor} or nested within it. */
+    /// Whether `node` is `ancestor` or nested within it.
     private static boolean isWithin(Element node, Element ancestor) {
         for (Node pn = node; pn != null; pn = pn.getParentNode()) {
             if (pn == ancestor) {
@@ -498,34 +478,30 @@ public final class XfaPageSplitter {
 
     /* ----------------------------- keep / break ---------------------------- */
 
-    /**
-     * A unit keeps with its next sibling: {@code <keep next="contentArea|pageArea|…">}. NOTE:
-     * {@code keep.intact} is deliberately NOT consulted here — {@code intact} means "do not split
-     * THIS object across content areas" (it makes the object atomic, handled by {@link #isAtomic}),
-     * not "stay on the same page as my neighbour". Conflating the two chains every {@code
-     * intact="contentArea"} sibling into one giant unbreakable block, stranding earlier content on a
-     * near-empty page.
-     */
+    /// A unit keeps with its next sibling: `<keep next="contentArea|pageArea|…">`. NOTE:
+    /// `keep.intact` is deliberately NOT consulted here — `intact` means "do not split
+    /// THIS object across content areas" (it makes the object atomic, handled by [#isAtomic]),
+    /// not "stay on the same page as my neighbour". Conflating the two chains every
+    /// `intact="contentArea"` sibling into one giant unbreakable block, stranding earlier content on a
+    /// near-empty page.
     static boolean keepWithNext(Element el) {
         Element keep = firstChild(el, "keep");
         return keep != null && truthyKeep(keep.getAttribute("next"));
     }
 
-    /** A unit keeps with its previous sibling: {@code <keep previous="contentArea|…">} (not {@code intact}; see {@link #keepWithNext}). */
+    /// A unit keeps with its previous sibling: `<keep previous="contentArea|…">` (not `intact`; see [#keepWithNext]).
     static boolean keepWithPrev(Element el) {
         Element keep = firstChild(el, "keep");
         return keep != null && truthyKeep(keep.getAttribute("previous"));
     }
 
-    /** A keep target other than absent/empty/{@code none} means "stay together". */
+    /// A keep target other than absent/empty/`none` means "stay together".
     private static boolean truthyKeep(String v) {
         return v != null && !v.isEmpty() && !"none".equals(v);
     }
 
-    /**
-     * A forced break before the unit: a {@code <break before="contentArea|pageArea|…">}, a
-     * legacy {@code <breakBefore>} child, or a {@code breakBefore} attribute.
-     */
+    /// A forced break before the unit: a `<break before="contentArea|pageArea|…">`, a
+    /// legacy `<breakBefore>` child, or a `breakBefore` attribute.
     static boolean hasBreakBefore(Element el) {
         if (el == null) {
             return false;
@@ -540,7 +516,7 @@ public final class XfaPageSplitter {
         return br != null && truthyBreak(br.getAttribute("before"));
     }
 
-    /** A forced break after the unit (symmetric to {@link #hasBreakBefore}). */
+    /// A forced break after the unit (symmetric to [#hasBreakBefore]).
     static boolean hasBreakAfter(Element el) {
         if (el == null) {
             return false;
@@ -555,7 +531,7 @@ public final class XfaPageSplitter {
         return br != null && truthyBreak(br.getAttribute("after"));
     }
 
-    /** A break target other than absent/empty/{@code auto} forces the break. */
+    /// A break target other than absent/empty/`auto` forces the break.
     private static boolean truthyBreak(String v) {
         return v != null && !v.isEmpty() && !"auto".equals(v);
     }

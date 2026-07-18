@@ -5,9 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link AdobeGlyphList}.
- */
+/// Tests for [AdobeGlyphList].
 public class AdobeGlyphListTest {
 
     @Test

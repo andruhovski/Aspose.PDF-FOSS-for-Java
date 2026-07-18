@@ -1,24 +1,18 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfInteger;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
 import org.aspose.pdf.engine.parser.PDFParser;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Logger;
 
-/**
- * Root outline collection — the /Outlines dictionary in the document catalog
- * (ISO 32000-1:2008, §12.3.3).
- * <p>
- * Represents the entire bookmark tree. Access via {@code document.getOutlines()}.
- * </p>
- */
+/// Root outline collection — the /Outlines dictionary in the document catalog
+/// (ISO 32000-1:2008, §12.3.3).
+///
+/// Represents the entire bookmark tree. Access via `document.getOutlines()`.
+///
 public class OutlineCollection implements Iterable<OutlineItemCollection> {
 
     private static final Logger LOG = Logger.getLogger(OutlineCollection.class.getName());
@@ -28,25 +22,21 @@ public class OutlineCollection implements Iterable<OutlineItemCollection> {
     private final PDFParser parser;
     private List<OutlineItemCollection> items;
 
-    /**
-     * Wraps an existing /Outlines dictionary.
-     *
-     * @param outlinesDict the /Outlines PDF dictionary
-     * @param document     the owning document (may be null)
-     * @param parser       the PDF parser (may be null)
-     */
+    /// Wraps an existing /Outlines dictionary.
+    ///
+    /// @param outlinesDict the /Outlines PDF dictionary
+    /// @param document     the owning document (may be null)
+    /// @param parser       the PDF parser (may be null)
     public OutlineCollection(PdfDictionary outlinesDict, Document document, PDFParser parser) {
         this.outlinesDict = outlinesDict != null ? outlinesDict : new PdfDictionary();
         this.document = document;
         this.parser = parser;
     }
 
-    /**
-     * Creates an empty outline collection (when document has no bookmarks).
-     *
-     * @param document the owning document (may be null)
-     * @param parser   the PDF parser (may be null)
-     */
+    /// Creates an empty outline collection (when document has no bookmarks).
+    ///
+    /// @param document the owning document (may be null)
+    /// @param parser   the PDF parser (may be null)
     public OutlineCollection(Document document, PDFParser parser) {
         this.outlinesDict = new PdfDictionary();
         outlinesDict.set(PdfName.TYPE, PdfName.of("Outlines"));
@@ -55,11 +45,9 @@ public class OutlineCollection implements Iterable<OutlineItemCollection> {
         this.parser = parser;
     }
 
-    /**
-     * Adds a top-level bookmark.
-     *
-     * @param item the bookmark item
-     */
+    /// Adds a top-level bookmark.
+    ///
+    /// @param item the bookmark item
     public void add(OutlineItemCollection item) {
         ensureLoaded();
         // Materialize indirect references in the item dictionary to ensure
@@ -69,10 +57,8 @@ public class OutlineCollection implements Iterable<OutlineItemCollection> {
         rebuildLinks();
     }
 
-    /**
-     * Resolves any indirect references in the dictionary to direct values.
-     * This is needed when copying outline items from one document to another.
-     */
+    /// Resolves any indirect references in the dictionary to direct values.
+    /// This is needed when copying outline items from one document to another.
     private void materializeReferences(PdfDictionary dict) {
         for (PdfName key : new ArrayList<>(dict.keySet())) {
             PdfBase val = dict.get(key.getName());
@@ -89,12 +75,10 @@ public class OutlineCollection implements Iterable<OutlineItemCollection> {
         }
     }
 
-    /**
-     * Returns the bookmark at the given 1-based index.
-     *
-     * @param index the 1-based index
-     * @return the bookmark item
-     */
+    /// Returns the bookmark at the given 1-based index.
+    ///
+    /// @param index the 1-based index
+    /// @return the bookmark item
     public OutlineItemCollection get(int index) {
         ensureLoaded();
         if (index < 1 || index > items.size()) {
@@ -103,41 +87,33 @@ public class OutlineCollection implements Iterable<OutlineItemCollection> {
         return items.get(index - 1);
     }
 
-    /**
-     * Returns the first top-level outline item, or null if the collection is empty.
-     *
-     * @return the first outline item, or null
-     */
+    /// Returns the first top-level outline item, or null if the collection is empty.
+    ///
+    /// @return the first outline item, or null
     public OutlineItemCollection getFirst() {
         ensureLoaded();
         return items.isEmpty() ? null : items.get(0);
     }
 
-    /**
-     * Returns the last top-level outline item, or null if the collection is empty.
-     *
-     * @return the last outline item, or null
-     */
+    /// Returns the last top-level outline item, or null if the collection is empty.
+    ///
+    /// @return the last outline item, or null
     public OutlineItemCollection getLast() {
         ensureLoaded();
         return items.isEmpty() ? null : items.get(items.size() - 1);
     }
 
-    /**
-     * Returns the number of top-level bookmarks.
-     *
-     * @return the count
-     */
+    /// Returns the number of top-level bookmarks.
+    ///
+    /// @return the count
     public int getCount() {
         ensureLoaded();
         return items.size();
     }
 
-    /**
-     * Returns the total number of visible items at all levels.
-     *
-     * @return the visible count
-     */
+    /// Returns the total number of visible items at all levels.
+    ///
+    /// @return the visible count
     public int getVisibleCount() {
         ensureLoaded();
         int count = items.size();
@@ -147,30 +123,24 @@ public class OutlineCollection implements Iterable<OutlineItemCollection> {
         return count;
     }
 
-    /**
-     * Removes a bookmark by 1-based index.
-     *
-     * @param index the 1-based index
-     */
+    /// Removes a bookmark by 1-based index.
+    ///
+    /// @param index the 1-based index
     public void delete(int index) {
         ensureLoaded();
         items.remove(index - 1);
         rebuildLinks();
     }
 
-    /**
-     * Removes all bookmarks.
-     */
+    /// Removes all bookmarks.
     public void clear() {
         items = new ArrayList<>();
         rebuildLinks();
     }
 
-    /**
-     * Deletes the first outline item with the specified title.
-     *
-     * @param title the title to search for
-     */
+    /// Deletes the first outline item with the specified title.
+    ///
+    /// @param title the title to search for
     public void delete(String title) {
         ensureLoaded();
         for (int i = 0; i < items.size(); i++) {
@@ -184,12 +154,10 @@ public class OutlineCollection implements Iterable<OutlineItemCollection> {
         }
     }
 
-    /**
-     * Checks whether this collection contains the specified item.
-     *
-     * @param item the item to search for
-     * @return true if found
-     */
+    /// Checks whether this collection contains the specified item.
+    ///
+    /// @param item the item to search for
+    /// @return true if found
     public boolean contains(OutlineItemCollection item) {
         ensureLoaded();
         for (OutlineItemCollection child : items) {
@@ -205,11 +173,9 @@ public class OutlineCollection implements Iterable<OutlineItemCollection> {
         return items.iterator();
     }
 
-    /**
-     * Returns the underlying PDF dictionary.
-     *
-     * @return the /Outlines dictionary
-     */
+    /// Returns the underlying PDF dictionary.
+    ///
+    /// @return the /Outlines dictionary
     public PdfDictionary getPdfDictionary() { return outlinesDict; }
 
     PDFParser getParser() { return parser; }

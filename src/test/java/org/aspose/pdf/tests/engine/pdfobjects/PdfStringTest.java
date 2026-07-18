@@ -9,9 +9,7 @@ import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link PdfString}.
- */
+/// Tests for [PdfString].
 public class PdfStringTest {
 
     @Test

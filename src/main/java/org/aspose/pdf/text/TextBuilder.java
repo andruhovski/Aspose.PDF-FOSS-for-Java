@@ -3,43 +3,38 @@ package org.aspose.pdf.text;
 import org.aspose.pdf.Color;
 import org.aspose.pdf.Page;
 import org.aspose.pdf.Resources;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
 import org.aspose.pdf.engine.font.ttf.FontDiskLookup;
 import org.aspose.pdf.engine.font.ttf.TrueTypeReader;
 import org.aspose.pdf.engine.font.ttf.Type0FontBuilder;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CodingErrorAction;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
-/**
- * Builds and appends text content to a PDF page by generating content stream operators.
- * <p>
- * Registers fonts in the page resources and produces proper PDF content stream syntax
- * (BT/ET blocks with Tf, Td, Tj operators) as specified in ISO 32000-1:2008, §9.
- * </p>
- */
+/// Builds and appends text content to a PDF page by generating content stream operators.
+///
+/// Registers fonts in the page resources and produces proper PDF content stream syntax
+/// (BT/ET blocks with Tf, Td, Tj operators) as specified in ISO 32000-1:2008, §9.
+///
 public class TextBuilder {
 
-    /** ISO 32000-1 §D.2 WinAnsiEncoding ≡ CP1252. */
+    /// ISO 32000-1 §D.2 WinAnsiEncoding ≡ CP1252.
     private static final Charset WIN_ANSI = Charset.forName("windows-1252");
 
-    /**
-     * Encodes content-stream bytes using WinAnsiEncoding. Built-in Type1
-     * font dictionaries created by this class declare {@code /Encoding
-     * /WinAnsiEncoding}; the text-show payload therefore must be the byte
-     * sequence the font maps from WinAnsi codepoints. Characters outside
-     * CP1252 are replaced with {@code '?'} per the spec recommendation for
-     * unrepresentable glyphs in single-byte fonts.
-     */
+    /// Encodes content-stream bytes using WinAnsiEncoding. Built-in Type1
+    /// font dictionaries created by this class declare `/Encoding
+    /// /WinAnsiEncoding`; the text-show payload therefore must be the byte
+    /// sequence the font maps from WinAnsi codepoints. Characters outside
+    /// CP1252 are replaced with `'?'` per the spec recommendation for
+    /// unrepresentable glyphs in single-byte fonts.
     private static byte[] winAnsi(String s) {
         CharsetEncoder enc = WIN_ANSI.newEncoder()
                 .onMalformedInput(CodingErrorAction.REPLACE)
@@ -59,22 +54,18 @@ public class TextBuilder {
 
     private final Page page;
 
-    /**
-     * Sprint 37: per-builder cache of Type0/Identity-H font registrations.
-     * {@code type0FontResources} maps base font name (e.g. {@code "Arial"})
-     * to its resource alias (e.g. {@code "F2"}); {@code type0Readers} maps
-     * the resource alias to the {@link TrueTypeReader} we need for
-     * Unicode → glyph-ID translation when emitting text.
-     */
+    /// Sprint 37: per-builder cache of Type0/Identity-H font registrations.
+    /// `type0FontResources` maps base font name (e.g. `"Arial"`)
+    /// to its resource alias (e.g. `"F2"`); `type0Readers` maps
+    /// the resource alias to the [TrueTypeReader] we need for
+    /// Unicode → glyph-ID translation when emitting text.
     private final Map<String, String> type0FontResources = new HashMap<>();
     private final Map<String, TrueTypeReader> type0Readers = new HashMap<>();
 
-    /**
-     * Creates a TextBuilder that appends text to the given page.
-     *
-     * @param page the target page
-     * @throws IllegalArgumentException if page is null
-     */
+    /// Creates a TextBuilder that appends text to the given page.
+    ///
+    /// @param page the target page
+    /// @throws IllegalArgumentException if page is null
     public TextBuilder(Page page) {
         if (page == null) {
             throw new IllegalArgumentException("Page must not be null");
@@ -82,16 +73,13 @@ public class TextBuilder {
         this.page = page;
     }
 
-    /**
-     * Appends a single text fragment to the page.
-     * <p>
-     * Registers the font in the page's /Resources/Font dictionary if not already present,
-     * then builds and appends content stream bytes: {@code q BT /Fn size Tf x y Td (text) Tj ET Q}.
-     * </p>
-     *
-     * @param fragment the text fragment to append
-     * @throws IllegalArgumentException if fragment is null
-     */
+    /// Appends a single text fragment to the page.
+    ///
+    /// Registers the font in the page's /Resources/Font dictionary if not already present,
+    /// then builds and appends content stream bytes: `q BT /Fn size Tf x y Td (text) Tj ET Q`.
+    ///
+    /// @param fragment the text fragment to append
+    /// @throws IllegalArgumentException if fragment is null
     public void appendText(TextFragment fragment) {
         if (fragment == null) {
             throw new IllegalArgumentException("TextFragment must not be null");
@@ -267,11 +255,9 @@ public class TextBuilder {
         LOG.fine(() -> "Appended text fragment with " + segments.size() + " segment(s)");
     }
 
-    /**
-     * Sprint 37: true if any character in {@code text} cannot be encoded in
-     * WinAnsiEncoding (ISO 32000-1 §D.2). Used to route text through the
-     * Type0/Identity-H path so Thai/CJK/Arabic/etc. survive save → reopen.
-     */
+    /// Sprint 37: true if any character in `text` cannot be encoded in
+    /// WinAnsiEncoding (ISO 32000-1 §D.2). Used to route text through the
+    /// Type0/Identity-H path so Thai/CJK/Arabic/etc. survive save → reopen.
     private static boolean requiresType0(String text) {
         if (text == null || text.isEmpty()) return false;
         for (int i = 0; i < text.length(); i++) {
@@ -283,14 +269,12 @@ public class TextBuilder {
         return false;
     }
 
-    /**
-     * Fallback font list for Type0 registration when the requested font on
-     * disk lacks glyphs for the supplied text (e.g. Windows Arial has no
-     * Thai). Ordered by glyph coverage — Tahoma is bundled with every recent
-     * Windows release and ships with Thai, Cyrillic, Arabic, Hebrew, Greek
-     * and a wide CJK subset, which is enough for the cases the regression
-     * suite cares about; CJK-heavy text falls through to SimSun.
-     */
+    /// Fallback font list for Type0 registration when the requested font on
+    /// disk lacks glyphs for the supplied text (e.g. Windows Arial has no
+    /// Thai). Ordered by glyph coverage — Tahoma is bundled with every recent
+    /// Windows release and ships with Thai, Cyrillic, Arabic, Hebrew, Greek
+    /// and a wide CJK subset, which is enough for the cases the regression
+    /// suite cares about; CJK-heavy text falls through to SimSun.
     private static final String[] TYPE0_FALLBACK_FONTS = {
             "Tahoma",
             "Arial Unicode MS",
@@ -299,19 +283,17 @@ public class TextBuilder {
             "Noto Sans",
     };
 
-    /**
-     * Sprint 37: lazily register a Type0/Identity-H font for {@code fontName}.
-     * Loads the TTF from disk and verifies its cmap covers every codepoint in
-     * {@code text}; if not, walks {@link #TYPE0_FALLBACK_FONTS} until a font
-     * with full coverage is found. The actual face used may therefore differ
-     * from {@code fontName} — that's the Aspose-style behaviour where text in
-     * "Arial" automatically renders through Tahoma when the original font
-     * has no Thai glyphs.
-     *
-     * @return the resource alias (e.g. {@code "F2"}) on the page's
-     *         {@code /Resources/Font}, or {@code null} when no candidate
-     *         font could be located on disk
-     */
+    /// Sprint 37: lazily register a Type0/Identity-H font for `fontName`.
+    /// Loads the TTF from disk and verifies its cmap covers every codepoint in
+    /// `text`; if not, walks [#TYPE0\_FALLBACK\_FONTS] until a font
+    /// with full coverage is found. The actual face used may therefore differ
+    /// from `fontName` — that's the Aspose-style behaviour where text in
+    /// "Arial" automatically renders through Tahoma when the original font
+    /// has no Thai glyphs.
+    ///
+    /// @return the resource alias (e.g. `"F2"`) on the page's
+    ///         `/Resources/Font`, or `null` when no candidate
+    ///         font could be located on disk
     private String registerType0Font(String fontName, String text) {
         if (fontName == null || fontName.isEmpty()) {
             return null;
@@ -369,10 +351,8 @@ public class TextBuilder {
         return candidateName;
     }
 
-    /**
-     * Loads {@code fontName}'s TTF from disk and assembles its Type0 graph.
-     * Returns {@code null} when the file is missing or the parser rejects it.
-     */
+    /// Loads `fontName`'s TTF from disk and assembles its Type0 graph.
+    /// Returns `null` when the file is missing or the parser rejects it.
     private static Type0FontBuilder.Result tryLoadType0(String fontName) {
         byte[] ttf = FontDiskLookup.loadByName(fontName);
         if (ttf == null) {
@@ -386,12 +366,10 @@ public class TextBuilder {
         }
     }
 
-    /**
-     * Returns {@code true} when every codepoint in {@code text} resolves to a
-     * non-{@code .notdef} glyph through {@code reader}'s cmap. Surrogate
-     * pairs collapse to the single supplementary-plane codepoint that
-     * {@link TrueTypeReader#getGlyphId(int)} expects.
-     */
+    /// Returns `true` when every codepoint in `text` resolves to a
+    /// non-`.notdef` glyph through `reader`'s cmap. Surrogate
+    /// pairs collapse to the single supplementary-plane codepoint that
+    /// [TrueTypeReader#getGlyphId(int)] expects.
     private static boolean coversAllCodepoints(TrueTypeReader reader, String text) {
         if (reader == null || text == null || text.isEmpty()) return false;
         for (int i = 0; i < text.length(); ) {
@@ -402,13 +380,11 @@ public class TextBuilder {
         return true;
     }
 
-    /**
-     * Sprint 37: encode {@code text} as a stream of big-endian 2-byte glyph
-     * IDs (hex), one CID per Unicode codepoint. Missing glyphs fall back to
-     * {@code .notdef} (GID 0); UTF-16 surrogate pairs collapse to the single
-     * supplementary-plane CID that {@link TrueTypeReader#getGlyphId(int)}
-     * returns. Result is the body of a {@code <…> Tj} hex string operand.
-     */
+    /// Sprint 37: encode `text` as a stream of big-endian 2-byte glyph
+    /// IDs (hex), one CID per Unicode codepoint. Missing glyphs fall back to
+    /// `.notdef` (GID 0); UTF-16 surrogate pairs collapse to the single
+    /// supplementary-plane CID that [TrueTypeReader#getGlyphId(int)]
+    /// returns. Result is the body of a `<…> Tj` hex string operand.
     private static String encodeAsCidHex(String text, TrueTypeReader reader) {
         if (text == null || text.isEmpty() || reader == null) return "";
         StringBuilder sb = new StringBuilder(text.length() * 4);
@@ -429,13 +405,11 @@ public class TextBuilder {
         return s != null && s.getFontSize() > 0 ? s.getFontSize() : 12;
     }
 
-    /**
-     * Estimates text width by averaging the typical character advance for the
-     * Helvetica/CourierNew sans-serif family. This is intentionally a rough
-     * heuristic — it powers background rectangles for which a coarse
-     * tolerance suffices; pixel-perfect width would require a real
-     * font-metric table (out of scope).
-     */
+    /// Estimates text width by averaging the typical character advance for the
+    /// Helvetica/CourierNew sans-serif family. This is intentionally a rough
+    /// heuristic — it powers background rectangles for which a coarse
+    /// tolerance suffices; pixel-perfect width would require a real
+    /// font-metric table (out of scope).
     private static double estimateTextWidth(String text, double fontSize) {
         if (text == null || text.isEmpty()) return 0;
         // Average advance ≈ 0.55 em across mixed-width sans-serif text.
@@ -460,15 +434,12 @@ public class TextBuilder {
         write(baos, formatNumber(r) + " " + formatNumber(g) + " " + formatNumber(b) + " rg\n");
     }
 
-    /**
-     * Appends multiple text fragments to the page.
-     * <p>
-     * Each fragment is appended individually by calling {@link #appendText(TextFragment)}.
-     * </p>
-     *
-     * @param fragments the list of text fragments to append
-     * @throws IllegalArgumentException if fragments is null
-     */
+    /// Appends multiple text fragments to the page.
+    ///
+    /// Each fragment is appended individually by calling [#appendText(TextFragment)].
+    ///
+    /// @param fragments the list of text fragments to append
+    /// @throws IllegalArgumentException if fragments is null
     public void appendText(List<TextFragment> fragments) {
         if (fragments == null) {
             throw new IllegalArgumentException("Fragments list must not be null");
@@ -478,16 +449,13 @@ public class TextBuilder {
         }
     }
 
-    /**
-     * Appends a paragraph (multiple lines) to the page.
-     * <p>
-     * Each line is positioned vertically below the previous one using the paragraph's
-     * line spacing multiplied by the font size.
-     * </p>
-     *
-     * @param paragraph the text paragraph to append
-     * @throws IllegalArgumentException if paragraph is null
-     */
+    /// Appends a paragraph (multiple lines) to the page.
+    ///
+    /// Each line is positioned vertically below the previous one using the paragraph's
+    /// line spacing multiplied by the font size.
+    ///
+    /// @param paragraph the text paragraph to append
+    /// @throws IllegalArgumentException if paragraph is null
     public void appendParagraph(TextParagraph paragraph) {
         if (paragraph == null) {
             throw new IllegalArgumentException("TextParagraph must not be null");
@@ -540,14 +508,12 @@ public class TextBuilder {
         LOG.fine(() -> "Appended paragraph with " + lines.size() + " line(s)");
     }
 
-    /**
-     * Registers a font in the page's /Resources/Font dictionary if not already present.
-     * Creates a simple Type1 font dictionary with /Type /Font, /Subtype /Type1,
-     * /BaseFont /&lt;fontName&gt;, /Encoding /WinAnsiEncoding.
-     *
-     * @param fontName the base font name (e.g., "Helvetica", "Times-Roman")
-     * @return the resource name (e.g., "F1", "F2") used to reference this font in the content stream
-     */
+    /// Registers a font in the page's /Resources/Font dictionary if not already present.
+    /// Creates a simple Type1 font dictionary with /Type /Font, /Subtype /Type1,
+    /// /BaseFont /<fontName>, /Encoding /WinAnsiEncoding.
+    ///
+    /// @param fontName the base font name (e.g., "Helvetica", "Times-Roman")
+    /// @return the resource name (e.g., "F1", "F2") used to reference this font in the content stream
     private String registerFont(String fontName) {
         Resources resources = page.ensureResources();
         PdfDictionary resDict = resources.getPdfDictionary();
@@ -602,9 +568,7 @@ public class TextBuilder {
         return resourceName;
     }
 
-    /**
-     * Builds content stream bytes for a single text fragment.
-     */
+    /// Builds content stream bytes for a single text fragment.
     private byte[] buildTextContent(String fontResourceName, TextState state,
                                     double x, double y, String text) {
         double fontSize = resolveFontSize(state);
@@ -644,12 +608,10 @@ public class TextBuilder {
         }
     }
 
-    /**
-     * Escapes a string for use in a PDF literal string: backslash, parentheses, and control chars.
-     *
-     * @param text the input string
-     * @return the escaped string (without enclosing parentheses)
-     */
+    /// Escapes a string for use in a PDF literal string: backslash, parentheses, and control chars.
+    ///
+    /// @param text the input string
+    /// @return the escaped string (without enclosing parentheses)
     static String escapePdfString(String text) {
         if (text == null || text.isEmpty()) {
             return "";
@@ -690,16 +652,14 @@ public class TextBuilder {
         return sb.toString();
     }
 
-    /**
-     * Formats a number for PDF content stream, avoiding unnecessary decimals for integers.
-     *
-     * <p><strong>Locale-independent</strong> by design: PDF syntax recognises
-     * only {@code '.'} as the decimal separator (ISO 32000-1:2008 §7.3.3), so
-     * the formatter must always pin {@link java.util.Locale#ROOT}. Without
-     * the explicit locale, default-locale comma-as-decimal (ru/de/fr/…)
-     * would emit text-show coordinates like {@code 87,2000} that every PDF
-     * viewer treats as separate tokens ({@code Unknown operator ',2000'}).</p>
-     */
+    /// Formats a number for PDF content stream, avoiding unnecessary decimals for integers.
+    ///
+    /// **Locale-independent** by design: PDF syntax recognises
+    /// only `'.'` as the decimal separator (ISO 32000-1:2008 §7.3.3), so
+    /// the formatter must always pin [java.util.Locale#ROOT]. Without
+    /// the explicit locale, default-locale comma-as-decimal (ru/de/fr/…)
+    /// would emit text-show coordinates like `87,2000` that every PDF
+    /// viewer treats as separate tokens (`Unknown operator ',2000'`).
     private static String formatNumber(double value) {
         if (value == (long) value) {
             return Long.toString((long) value);

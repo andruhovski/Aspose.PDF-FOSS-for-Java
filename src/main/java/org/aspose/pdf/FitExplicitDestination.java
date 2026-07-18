@@ -3,9 +3,7 @@ package org.aspose.pdf;
 import org.aspose.pdf.engine.pdfobjects.PdfArray;
 import org.aspose.pdf.engine.pdfobjects.PdfName;
 
-/**
- * Fit explicit destination — display page scaled to fit entirely within window.
- */
+/// Fit explicit destination — display page scaled to fit entirely within window.
 public class FitExplicitDestination extends ExplicitDestination {
 
     public FitExplicitDestination(Page page) { super(page); }

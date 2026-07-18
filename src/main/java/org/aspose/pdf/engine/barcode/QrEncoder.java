@@ -4,34 +4,32 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * A dependency-free QR Code (Model 2) encoder implementing ISO/IEC 18004. Produces the boolean module
- * matrix for a payload at a chosen error-correction level, selecting the smallest fitting version
- * (1&ndash;40) and the best data-mask by the standard penalty rules.
- *
- * <p>Three encoding modes are supported and auto-selected by content: numeric (digits only),
- * alphanumeric (the 45-character QR set), and byte (UTF-8) for anything else — byte mode alone covers
- * arbitrary binary, the others only tighten density. Reed&ndash;Solomon error correction is computed
- * over GF(2<sup>8</sup>) with primitive polynomial {@code 0x11D}; data and ECC codewords are split into
- * the version/level block structure and interleaved per the spec.</p>
- *
- * <p>Used by the XFA renderer to paint a {@code <ui><barcode type="QRCode">} field. The class is pure
- * ({@code java.*} only) and stateless apart from the working buffers of a single {@link #encode} call.</p>
- */
+/// A dependency-free QR Code (Model 2) encoder implementing ISO/IEC 18004. Produces the boolean module
+/// matrix for a payload at a chosen error-correction level, selecting the smallest fitting version
+/// (1–40) and the best data-mask by the standard penalty rules.
+///
+/// Three encoding modes are supported and auto-selected by content: numeric (digits only),
+/// alphanumeric (the 45-character QR set), and byte (UTF-8) for anything else — byte mode alone covers
+/// arbitrary binary, the others only tighten density. Reed–Solomon error correction is computed
+/// over GF(2<sup>8</sup>) with primitive polynomial `0x11D`; data and ECC codewords are split into
+/// the version/level block structure and interleaved per the spec.
+///
+/// Used by the XFA renderer to paint a `<ui><barcode type="QRCode">` field. The class is pure
+/// (`java.*` only) and stateless apart from the working buffers of a single [#encode] call.
 public final class QrEncoder {
 
-    /** Error-correction level. Ordinal {@code L,M,Q,H} = 0..3 indexes the spec block tables. */
+    /// Error-correction level. Ordinal `L,M,Q,H` = 0..3 indexes the spec block tables.
     public enum Ecc {
-        /** ~7% recovery. */
+        /// \~7% recovery.
         LOW(0b01),
-        /** ~15% recovery. */
+        /// \~15% recovery.
         MEDIUM(0b00),
-        /** ~25% recovery. */
+        /// \~25% recovery.
         QUARTILE(0b11),
-        /** ~30% recovery. */
+        /// \~30% recovery.
         HIGH(0b10);
 
-        /** The 2-bit value this level contributes to the format information. */
+        /// The 2-bit value this level contributes to the format information.
         final int formatBits;
 
         Ecc(int formatBits) {
@@ -45,25 +43,21 @@ public final class QrEncoder {
     private QrEncoder() {
     }
 
-    /**
-     * Encodes {@code text} as a QR Code at error-correction level {@code ecc}, auto-selecting the mode.
-     *
-     * @param text the payload (UTF-8 for byte mode)
-     * @param ecc  the error-correction level
-     * @return the module matrix, {@code matrix[y][x]} = {@code true} for a dark module
-     * @throws IllegalArgumentException if the payload exceeds version-40 capacity at {@code ecc}
-     */
+    /// Encodes `text` as a QR Code at error-correction level `ecc`, auto-selecting the mode.
+    ///
+    /// @param text the payload (UTF-8 for byte mode)
+    /// @param ecc  the error-correction level
+    /// @return the module matrix, `matrix[y][x]` = `true` for a dark module
+    /// @throws IllegalArgumentException if the payload exceeds version-40 capacity at `ecc`
     public static boolean[][] encode(String text, Ecc ecc) {
         return encode(text.getBytes(StandardCharsets.UTF_8), text, ecc);
     }
 
-    /**
-     * Encodes raw {@code bytes} as a byte-mode QR Code at level {@code ecc}.
-     *
-     * @param bytes the binary payload
-     * @param ecc   the error-correction level
-     * @return the module matrix ({@code true} = dark)
-     */
+    /// Encodes raw `bytes` as a byte-mode QR Code at level `ecc`.
+    ///
+    /// @param bytes the binary payload
+    /// @param ecc   the error-correction level
+    /// @return the module matrix (`true` = dark)
     public static boolean[][] encodeBytes(byte[] bytes, Ecc ecc) {
         return encode(bytes, null, ecc);
     }
@@ -75,7 +69,7 @@ public final class QrEncoder {
         return new Matrix(e.version, ecc, e.codewords).build();
     }
 
-    /** The selected version plus the final (data + ECC, interleaved) codeword stream. */
+    /// The selected version plus the final (data + ECC, interleaved) codeword stream.
     static final class Encoded {
         final int version;
         final byte[] codewords;
@@ -86,7 +80,7 @@ public final class QrEncoder {
         }
     }
 
-    /** Runs mode/version selection, bit packing, padding and Reed-Solomon — the pre-matrix pipeline. */
+    /// Runs mode/version selection, bit packing, padding and Reed-Solomon — the pre-matrix pipeline.
     static Encoded buildCodewords(byte[] bytes, String text, Ecc ecc) {
         // Choose the densest applicable mode: numeric < alphanumeric < byte.
         Mode mode;
@@ -169,7 +163,7 @@ public final class QrEncoder {
 
     /* --------------------------------------------------- Reed-Solomon + interleave */
 
-    /** Splits data codewords into the version/level blocks, appends per-block ECC, and interleaves. */
+    /// Splits data codewords into the version/level blocks, appends per-block ECC, and interleaves.
     private static byte[] addEccAndInterleave(byte[] data, int version, Ecc ecc) {
         int numBlocks = NUM_BLOCKS[ecc.ordinal()][version];
         int eccLen = ECC_PER_BLOCK[ecc.ordinal()][version];
@@ -208,7 +202,7 @@ public final class QrEncoder {
         return result;
     }
 
-    /** The Reed-Solomon divisor polynomial of the given degree (coefficients, highest term dropped). */
+    /// The Reed-Solomon divisor polynomial of the given degree (coefficients, highest term dropped).
     static byte[] rsGenerator(int degree) {
         byte[] result = new byte[degree];
         result[degree - 1] = 1; // start with the monomial x^0
@@ -225,7 +219,7 @@ public final class QrEncoder {
         return result;
     }
 
-    /** The RS remainder (ECC codewords) of {@code data} divided by {@code generator}. */
+    /// The RS remainder (ECC codewords) of `data` divided by `generator`.
     static byte[] rsRemainder(byte[] data, byte[] generator) {
         byte[] result = new byte[generator.length];
         for (byte b : data) {
@@ -239,7 +233,7 @@ public final class QrEncoder {
         return result;
     }
 
-    /** Multiplies two GF(2^8) elements modulo the QR primitive polynomial {@code 0x11D}. */
+    /// Multiplies two GF(2^8) elements modulo the QR primitive polynomial `0x11D`.
     private static int gfMul(int x, int y) {
         int z = 0;
         for (int i = 7; i >= 0; i--) {
@@ -251,17 +245,15 @@ public final class QrEncoder {
 
     /* ------------------------------------------------------------- capacity tables */
 
-    /** The number of data codewords available at {@code version}/{@code ecc} (raw modules &minus; ECC). */
+    /// The number of data codewords available at `version`/`ecc` (raw modules − ECC).
     static int numDataCodewords(int version, Ecc ecc) {
         return numRawDataModules(version) / 8
                 - ECC_PER_BLOCK[ecc.ordinal()][version] * NUM_BLOCKS[ecc.ordinal()][version];
     }
 
-    /**
-     * The centre coordinates of the alignment patterns for {@code version} (empty for version 1). The
-     * first is always 6; the rest are evenly spaced (the standard step) back from the symbol edge, so
-     * the first gap may be shorter than the others — e.g. v16 = {6, 26, 50, 74}.
-     */
+    /// The centre coordinates of the alignment patterns for `version` (empty for version 1). The
+    /// first is always 6; the rest are evenly spaced (the standard step) back from the symbol edge, so
+    /// the first gap may be shorter than the others — e.g. v16 = {6, 26, 50, 74}.
     static int[] alignmentPositions(int version) {
         if (version == 1) {
             return new int[0];
@@ -278,7 +270,7 @@ public final class QrEncoder {
         return pos;
     }
 
-    /** The number of data-carrying modules in a symbol of {@code version} (total minus function pattern). */
+    /// The number of data-carrying modules in a symbol of `version` (total minus function pattern).
     static int numRawDataModules(int version) {
         int size = version * 4 + 17;
         int result = size * size;
@@ -352,7 +344,7 @@ public final class QrEncoder {
         }
     }
 
-    /** A most-significant-bit-first bit accumulator. */
+    /// A most-significant-bit-first bit accumulator.
     private static final class BitBuffer {
         private final List<Byte> bits = new ArrayList<>();
 
@@ -377,7 +369,7 @@ public final class QrEncoder {
 
     /* --------------------------------------------------------------- module matrix */
 
-    /** Builds the symbol module grid: function patterns, masked data, format/version info. */
+    /// Builds the symbol module grid: function patterns, masked data, format/version info.
     private static final class Matrix {
         private final int version;
         private final Ecc ecc;
@@ -482,7 +474,7 @@ public final class QrEncoder {
             }
         }
 
-        /** Places the interleaved codewords in the zig-zag data region, skipping function modules. */
+        /// Places the interleaved codewords in the zig-zag data region, skipping function modules.
         private void drawCodewords() {
             int bit = 0;
             int total = codewords.length * 8;
@@ -504,7 +496,7 @@ public final class QrEncoder {
             }
         }
 
-        /** Applies data mask {@code m} over non-function modules. */
+        /// Applies data mask `m` over non-function modules.
         private void applyMask(int m) {
             for (int y = 0; y < size; y++) {
                 for (int x = 0; x < size; x++) {

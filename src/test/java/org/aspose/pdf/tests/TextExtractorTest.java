@@ -19,14 +19,10 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link TextExtractor}, {@link TextAbsorber}, and {@link TextFragmentAbsorber}.
- */
+/// Tests for [TextExtractor], [TextAbsorber], and [TextFragmentAbsorber].
 public class TextExtractorTest {
 
-    /**
-     * Helper: creates a minimal Page with a content stream and Helvetica font resource.
-     */
+    /// Helper: creates a minimal Page with a content stream and Helvetica font resource.
     private Page createPageWithText(String contentStreamText) throws IOException {
         // Build font dictionary for F1 = Helvetica
         PdfDictionary fontDict = new PdfDictionary();
@@ -62,15 +58,13 @@ public class TextExtractorTest {
         assertTrue(text.contains("Hello World"), "Expected 'Hello World', got: " + text);
     }
 
-    /**
-     * Decoration detection: a thin filled rule just below text → underline; a thin
-     * rule through the middle → strikeout; a large (non-thin) filled rect is NOT a
-     * rule and must not flag text; a thin rule more than one line-height below the
-     * text is out of band and must not flag it. This locks in the thin-rule filter
-     * and the bounded Y-band search added to keep {@code detectTextDecorations} off
-     * the catastrophic O(fragments × filledRects) path (corpus 57236.pdf: 18,363
-     * fragments × 5,027,972 filled rects ≈ 9×10^10 iterations, a 900s+ hang).
-     */
+    /// Decoration detection: a thin filled rule just below text → underline; a thin
+    /// rule through the middle → strikeout; a large (non-thin) filled rect is NOT a
+    /// rule and must not flag text; a thin rule more than one line-height below the
+    /// text is out of band and must not flag it. This locks in the thin-rule filter
+    /// and the bounded Y-band search added to keep `detectTextDecorations` off
+    /// the catastrophic O(fragments × filledRects) path (corpus 57236.pdf: 18,363
+    /// fragments × 5,027,972 filled rects ≈ 9×10^10 iterations, a 900s+ hang).
     @Test
     public void testUnderlineAndStrikeoutDetectionIgnoresNonRuleRects() throws IOException {
         // Helvetica 12pt "Hello" at (100,700) extracts to rect ≈ [100, 697.6, 127.3, 710.7].

@@ -1,14 +1,7 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.pdfobjects.PdfArray;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfFloat;
-import org.aspose.pdf.engine.pdfobjects.PdfInteger;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
-import org.aspose.pdf.engine.pdfobjects.PdfString;
 import org.aspose.pdf.engine.parser.PDFParser;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -16,14 +9,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Logger;
 
-/**
- * Represents a single bookmark (outline item) in the document outline tree
- * (ISO 32000-1:2008, §12.3.3, Table 153).
- * <p>
- * Each item has a title, optional visual properties (bold, italic, color),
- * a destination or action, and can contain child items forming a hierarchy.
- * </p>
- */
+/// Represents a single bookmark (outline item) in the document outline tree
+/// (ISO 32000-1:2008, §12.3.3, Table 153).
+///
+/// Each item has a title, optional visual properties (bold, italic, color),
+/// a destination or action, and can contain child items forming a hierarchy.
+///
 public class OutlineItemCollection implements Iterable<OutlineItemCollection> {
 
     private static final Logger LOG = Logger.getLogger(OutlineItemCollection.class.getName());
@@ -33,20 +24,16 @@ public class OutlineItemCollection implements Iterable<OutlineItemCollection> {
     private final PDFParser parser;
     private List<OutlineItemCollection> children;
 
-    /**
-     * Creates a new empty bookmark.
-     *
-     * @param outlines the root outline collection
-     */
+    /// Creates a new empty bookmark.
+    ///
+    /// @param outlines the root outline collection
     public OutlineItemCollection(OutlineCollection outlines) {
         this.rootOutlines = outlines;
         this.parser = outlines != null ? outlines.getParser() : null;
         this.dict = new PdfDictionary();
     }
 
-    /**
-     * Wraps an existing outline item dictionary.
-     */
+    /// Wraps an existing outline item dictionary.
     OutlineItemCollection(PdfDictionary dict, OutlineCollection root, PDFParser parser) {
         this.dict = dict != null ? dict : new PdfDictionary();
         this.rootOutlines = root;
@@ -55,22 +42,18 @@ public class OutlineItemCollection implements Iterable<OutlineItemCollection> {
 
     // ── Title ──
 
-    /**
-     * Returns the bookmark title.
-     *
-     * @return the title string
-     */
+    /// Returns the bookmark title.
+    ///
+    /// @return the title string
     public String getTitle() {
         PdfBase t = resolve(dict.get("Title"));
         if (t instanceof PdfString) return ((PdfString) t).getString();
         return "";
     }
 
-    /**
-     * Sets the bookmark title.
-     *
-     * @param title the title
-     */
+    /// Sets the bookmark title.
+    ///
+    /// @param title the title
     public void setTitle(String title) {
         dict.set(PdfName.of("Title"),
                 title != null ? new PdfString(title) : new PdfString(new byte[0]));
@@ -78,49 +61,39 @@ public class OutlineItemCollection implements Iterable<OutlineItemCollection> {
 
     // ── Visual properties (§12.3.3, Table 153: /F, /C) ──
 
-    /**
-     * Returns whether the title is displayed bold.
-     *
-     * @return true if bold
-     */
+    /// Returns whether the title is displayed bold.
+    ///
+    /// @return true if bold
     public boolean getBold() {
         return (dict.getInt("F", 0) & 2) != 0;
     }
 
-    /**
-     * Sets bold display.
-     *
-     * @param bold true for bold
-     */
+    /// Sets bold display.
+    ///
+    /// @param bold true for bold
     public void setBold(boolean bold) {
         int flags = dict.getInt("F", 0);
         dict.set(PdfName.of("F"), PdfInteger.valueOf(bold ? (flags | 2) : (flags & ~2)));
     }
 
-    /**
-     * Returns whether the title is displayed italic.
-     *
-     * @return true if italic
-     */
+    /// Returns whether the title is displayed italic.
+    ///
+    /// @return true if italic
     public boolean getItalic() {
         return (dict.getInt("F", 0) & 1) != 0;
     }
 
-    /**
-     * Sets italic display.
-     *
-     * @param italic true for italic
-     */
+    /// Sets italic display.
+    ///
+    /// @param italic true for italic
     public void setItalic(boolean italic) {
         int flags = dict.getInt("F", 0);
         dict.set(PdfName.of("F"), PdfInteger.valueOf(italic ? (flags | 1) : (flags & ~1)));
     }
 
-    /**
-     * Returns the text color for this bookmark.
-     *
-     * @return the color (defaults to black)
-     */
+    /// Returns the text color for this bookmark.
+    ///
+    /// @return the color (defaults to black)
     public Color getColor() {
         PdfBase c = dict.get("C");
         if (c instanceof PdfArray && ((PdfArray) c).size() == 3) {
@@ -130,11 +103,9 @@ public class OutlineItemCollection implements Iterable<OutlineItemCollection> {
         return Color.BLACK;
     }
 
-    /**
-     * Sets the text color for this bookmark.
-     *
-     * @param color the color
-     */
+    /// Sets the text color for this bookmark.
+    ///
+    /// @param color the color
     public void setColor(Color color) {
         if (color == null) {
             dict.remove(PdfName.of("C"));
@@ -149,12 +120,10 @@ public class OutlineItemCollection implements Iterable<OutlineItemCollection> {
 
     // ── Destination ──
 
-    /**
-     * Returns the destination for this bookmark.
-     *
-     * @return the destination, or null
-     * @throws IOException if parsing fails
-     */
+    /// Returns the destination for this bookmark.
+    ///
+    /// @return the destination, or null
+    /// @throws IOException if parsing fails
     public ExplicitDestination getDestination() throws IOException {
         PdfBase d = resolve(dict.get("Dest"));
         if (d instanceof PdfArray) {
@@ -175,22 +144,18 @@ public class OutlineItemCollection implements Iterable<OutlineItemCollection> {
         return null;
     }
 
-    /**
-     * Sets the destination from a GoToAction.
-     *
-     * @param action the go-to action containing the destination
-     */
+    /// Sets the destination from a GoToAction.
+    ///
+    /// @param action the go-to action containing the destination
     public void setDestination(GoToAction action) {
         if (action != null && action.getDestination() != null) {
             setDestination(action.getDestination());
         }
     }
 
-    /**
-     * Sets the destination (removes action if set).
-     *
-     * @param dest the destination
-     */
+    /// Sets the destination (removes action if set).
+    ///
+    /// @param dest the destination
     public void setDestination(ExplicitDestination dest) {
         if (dest != null) {
             dict.set(PdfName.of("Dest"), dest.toPdfArray());
@@ -200,13 +165,11 @@ public class OutlineItemCollection implements Iterable<OutlineItemCollection> {
         dict.remove(PdfName.of("A"));
     }
 
-    /**
-     * Sets the destination from any {@link IAppointment} — accepts both
-     * {@link ExplicitDestination} (serialized as a {@code /Dest} array) and
-     * {@link NamedDestination} (serialized as a {@code /Dest} byte string).
-     *
-     * @param dest the destination (may be null to clear)
-     */
+    /// Sets the destination from any [IAppointment] — accepts both
+    /// [ExplicitDestination] (serialized as a `/Dest` array) and
+    /// [NamedDestination] (serialized as a `/Dest` byte string).
+    ///
+    /// @param dest the destination (may be null to clear)
     public void setDestination(IAppointment dest) {
         if (dest instanceof ExplicitDestination) {
             setDestination((ExplicitDestination) dest);
@@ -221,13 +184,11 @@ public class OutlineItemCollection implements Iterable<OutlineItemCollection> {
 
     // ── Page display convenience ──
 
-    /**
-     * Returns the nesting depth of this outline item.
-     * Top-level items (direct children of the outline root) have level 1,
-     * their children have level 2, etc.
-     *
-     * @return the nesting level (1-based)
-     */
+    /// Returns the nesting depth of this outline item.
+    /// Top-level items (direct children of the outline root) have level 1,
+    /// their children have level 2, etc.
+    ///
+    /// @return the nesting level (1-based)
     public int getLevel() {
         int level = 1;
         PdfBase parent = resolve(dict.get("Parent"));
@@ -249,35 +210,29 @@ public class OutlineItemCollection implements Iterable<OutlineItemCollection> {
         return level;
     }
 
-    /**
-     * Sets the page display destination for this bookmark.
-     * This is a convenience alias for {@link #setDestination(ExplicitDestination)}.
-     *
-     * @param dest the explicit destination
-     */
+    /// Sets the page display destination for this bookmark.
+    /// This is a convenience alias for [#setDestination(ExplicitDestination)].
+    ///
+    /// @param dest the explicit destination
     public void setPageDisplay(ExplicitDestination dest) {
         setDestination(dest);
     }
 
-    /**
-     * Returns the page display destination for this bookmark.
-     * This is a convenience alias for {@link #getDestination()}.
-     *
-     * @return the explicit destination, or null
-     * @throws IOException if parsing fails
-     */
+    /// Returns the page display destination for this bookmark.
+    /// This is a convenience alias for [#getDestination()].
+    ///
+    /// @return the explicit destination, or null
+    /// @throws IOException if parsing fails
     public ExplicitDestination getPageDisplay() throws IOException {
         return getDestination();
     }
 
-    /**
-     * Sets the zoom factor for an XYZ destination.
-     * If the current destination is already XYZ, updates only the zoom.
-     * Otherwise creates a new XYZ destination targeting the same page with the given zoom.
-     *
-     * @param zoom the zoom factor (1.0 = 100%)
-     * @throws IOException if parsing the current destination fails
-     */
+    /// Sets the zoom factor for an XYZ destination.
+    /// If the current destination is already XYZ, updates only the zoom.
+    /// Otherwise creates a new XYZ destination targeting the same page with the given zoom.
+    ///
+    /// @param zoom the zoom factor (1.0 = 100%)
+    /// @throws IOException if parsing the current destination fails
     public void setPageDisplay_Zoom(double zoom) throws IOException {
         ExplicitDestination current = getDestination();
         if (current instanceof XYZExplicitDestination) {
@@ -294,12 +249,10 @@ public class OutlineItemCollection implements Iterable<OutlineItemCollection> {
         }
     }
 
-    /**
-     * Returns the zoom factor of the current XYZ destination, or 0 if not an XYZ destination.
-     *
-     * @return the zoom factor, or 0
-     * @throws IOException if parsing fails
-     */
+    /// Returns the zoom factor of the current XYZ destination, or 0 if not an XYZ destination.
+    ///
+    /// @return the zoom factor, or 0
+    /// @throws IOException if parsing fails
     public double getPageDisplay_Zoom() throws IOException {
         ExplicitDestination dest = getDestination();
         if (dest instanceof XYZExplicitDestination) {
@@ -310,31 +263,25 @@ public class OutlineItemCollection implements Iterable<OutlineItemCollection> {
 
     // ── Sibling navigation (First, Last, Next, Prev) ──
 
-    /**
-     * Returns the first child outline item, or null if there are no children.
-     *
-     * @return the first child, or null
-     */
+    /// Returns the first child outline item, or null if there are no children.
+    ///
+    /// @return the first child, or null
     public OutlineItemCollection getFirst() {
         ensureChildren();
         return children.isEmpty() ? null : children.get(0);
     }
 
-    /**
-     * Returns the last child outline item, or null if there are no children.
-     *
-     * @return the last child, or null
-     */
+    /// Returns the last child outline item, or null if there are no children.
+    ///
+    /// @return the last child, or null
     public OutlineItemCollection getLast() {
         ensureChildren();
         return children.isEmpty() ? null : children.get(children.size() - 1);
     }
 
-    /**
-     * Returns the next sibling outline item in the linked list, or null.
-     *
-     * @return the next sibling, or null
-     */
+    /// Returns the next sibling outline item in the linked list, or null.
+    ///
+    /// @return the next sibling, or null
     public OutlineItemCollection getNext() {
         PdfBase next = resolve(dict.get("Next"));
         if (next instanceof PdfDictionary) {
@@ -343,11 +290,9 @@ public class OutlineItemCollection implements Iterable<OutlineItemCollection> {
         return null;
     }
 
-    /**
-     * Returns the previous sibling outline item in the linked list, or null.
-     *
-     * @return the previous sibling, or null
-     */
+    /// Returns the previous sibling outline item in the linked list, or null.
+    ///
+    /// @return the previous sibling, or null
     public OutlineItemCollection getPrev() {
         PdfBase prev = resolve(dict.get("Prev"));
         if (prev instanceof PdfDictionary) {
@@ -358,12 +303,10 @@ public class OutlineItemCollection implements Iterable<OutlineItemCollection> {
 
     // ── Action ──
 
-    /**
-     * Returns the action for this bookmark.
-     *
-     * @return the action, or null
-     * @throws IOException if parsing fails
-     */
+    /// Returns the action for this bookmark.
+    ///
+    /// @return the action, or null
+    /// @throws IOException if parsing fails
     public PdfAction getAction() throws IOException {
         PdfBase a = resolve(dict.get("A"));
         if (a instanceof PdfDictionary) {
@@ -373,11 +316,9 @@ public class OutlineItemCollection implements Iterable<OutlineItemCollection> {
         return null;
     }
 
-    /**
-     * Sets the action (removes destination if set).
-     *
-     * @param action the action
-     */
+    /// Sets the action (removes destination if set).
+    ///
+    /// @param action the action
     public void setAction(PdfAction action) {
         if (action != null) {
             dict.set(PdfName.of("A"), action.getPdfDictionary());
@@ -389,23 +330,19 @@ public class OutlineItemCollection implements Iterable<OutlineItemCollection> {
 
     // ── Children ──
 
-    /**
-     * Adds a child bookmark.
-     *
-     * @param child the child item
-     */
+    /// Adds a child bookmark.
+    ///
+    /// @param child the child item
     public void add(OutlineItemCollection child) {
         ensureChildren();
         children.add(child);
         rebuildChildLinks();
     }
 
-    /**
-     * Returns the child at the given 1-based index.
-     *
-     * @param index the 1-based index
-     * @return the child item
-     */
+    /// Returns the child at the given 1-based index.
+    ///
+    /// @param index the 1-based index
+    /// @return the child item
     public OutlineItemCollection get(int index) {
         ensureChildren();
         if (index < 1 || index > children.size()) {
@@ -414,21 +351,17 @@ public class OutlineItemCollection implements Iterable<OutlineItemCollection> {
         return children.get(index - 1);
     }
 
-    /**
-     * Returns the number of direct children.
-     *
-     * @return the count
-     */
+    /// Returns the number of direct children.
+    ///
+    /// @return the count
     public int getCount() {
         ensureChildren();
         return children.size();
     }
 
-    /**
-     * Returns the total visible count (children of open items, recursively).
-     *
-     * @return the visible count
-     */
+    /// Returns the total visible count (children of open items, recursively).
+    ///
+    /// @return the visible count
     public int getVisibleCount() {
         if (!isOpen()) return 0;
         int count = getCount();
@@ -438,51 +371,41 @@ public class OutlineItemCollection implements Iterable<OutlineItemCollection> {
         return count;
     }
 
-    /**
-     * Returns whether this item is open (children visible).
-     *
-     * @return true if open
-     */
+    /// Returns whether this item is open (children visible).
+    ///
+    /// @return true if open
     public boolean isOpen() {
         int c = dict.getInt("Count", 0);
         return c > 0;
     }
 
-    /**
-     * Sets whether this item is open.
-     *
-     * @param open true to open
-     */
+    /// Sets whether this item is open.
+    ///
+    /// @param open true to open
     public void setOpen(boolean open) {
         int c = Math.max(1, Math.abs(dict.getInt("Count", 0)));
         dict.set(PdfName.of("Count"), PdfInteger.valueOf(open ? c : -c));
     }
 
-    /**
-     * Removes a child by 1-based index.
-     *
-     * @param index the 1-based index
-     */
+    /// Removes a child by 1-based index.
+    ///
+    /// @param index the 1-based index
     public void delete(int index) {
         ensureChildren();
         children.remove(index - 1);
         rebuildChildLinks();
     }
 
-    /**
-     * Removes all child outline items from this bookmark.
-     */
+    /// Removes all child outline items from this bookmark.
     public void delete() {
         ensureChildren();
         children.clear();
         rebuildChildLinks();
     }
 
-    /**
-     * Deletes the first child item with the specified title (recursive).
-     *
-     * @param title the title to search for
-     */
+    /// Deletes the first child item with the specified title (recursive).
+    ///
+    /// @param title the title to search for
     public void delete(String title) {
         ensureChildren();
         for (int i = 0; i < children.size(); i++) {
@@ -496,12 +419,10 @@ public class OutlineItemCollection implements Iterable<OutlineItemCollection> {
         }
     }
 
-    /**
-     * Checks whether this item or its descendants contain the specified item.
-     *
-     * @param item the item to search for
-     * @return true if found
-     */
+    /// Checks whether this item or its descendants contain the specified item.
+    ///
+    /// @param item the item to search for
+    /// @return true if found
     public boolean contains(OutlineItemCollection item) {
         ensureChildren();
         for (OutlineItemCollection child : children) {
@@ -517,11 +438,9 @@ public class OutlineItemCollection implements Iterable<OutlineItemCollection> {
         return children.iterator();
     }
 
-    /**
-     * Returns the underlying PDF dictionary.
-     *
-     * @return the dictionary
-     */
+    /// Returns the underlying PDF dictionary.
+    ///
+    /// @return the dictionary
     public PdfDictionary getPdfDictionary() { return dict; }
 
     // ── Internal ──

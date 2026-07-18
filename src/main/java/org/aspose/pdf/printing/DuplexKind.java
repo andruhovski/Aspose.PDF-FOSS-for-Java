@@ -1,15 +1,13 @@
 package org.aspose.pdf.printing;
 
-/**
- * Specifies the duplex setting for a printer.
- */
+/// Specifies the duplex setting for a printer.
 public enum DuplexKind {
-    /** Default duplex setting. */
+    /// Default duplex setting.
     Default,
-    /** Single-sided printing. */
+    /// Single-sided printing.
     Simplex,
-    /** Double-sided horizontal printing. */
+    /// Double-sided horizontal printing.
     Horizontal,
-    /** Double-sided vertical printing. */
+    /// Double-sided vertical printing.
     Vertical
 }

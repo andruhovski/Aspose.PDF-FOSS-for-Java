@@ -12,15 +12,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
-/**
- * Parses XMP XML (ISO 16684-1) into an internal property map.
- * <p>
- * Handles all standard RDF value forms: simple properties (text and attributes),
- * Language Alternatives (rdf:Alt), ordered arrays (rdf:Seq), unordered arrays
- * (rdf:Bag), structures (rdf:Description), and rdf:parseType="Resource".
- * Merges properties from multiple rdf:Description elements.
- * </p>
- */
+/// Parses XMP XML (ISO 16684-1) into an internal property map.
+///
+/// Handles all standard RDF value forms: simple properties (text and attributes),
+/// Language Alternatives (rdf:Alt), ordered arrays (rdf:Seq), unordered arrays
+/// (rdf:Bag), structures (rdf:Description), and rdf:parseType="Resource".
+/// Merges properties from multiple rdf:Description elements.
+///
 public final class XmpParser {
 
     private static final Logger LOG = Logger.getLogger(XmpParser.class.getName());
@@ -29,13 +27,11 @@ public final class XmpParser {
 
     private XmpParser() {}
 
-    /**
-     * Parses XMP XML bytes into a property map and populates the namespace registry.
-     *
-     * @param data     UTF-8 XMP XML bytes (may include xpacket PIs)
-     * @param registry the namespace registry to populate with discovered namespaces
-     * @return map of "prefix:localName" → XmpProperty
-     */
+    /// Parses XMP XML bytes into a property map and populates the namespace registry.
+    ///
+    /// @param data     UTF-8 XMP XML bytes (may include xpacket PIs)
+    /// @param registry the namespace registry to populate with discovered namespaces
+    /// @return map of "prefix:localName" → XmpProperty
     public static Map<String, XmpProperty> parse(byte[] data, XmpNamespaceRegistry registry) {
         Map<String, XmpProperty> properties = new LinkedHashMap<>();
         if (data == null || data.length == 0) return properties;

@@ -16,11 +16,9 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-/**
- * L2 PART A — tabular / horizontal layout B oracle: column x positions, row heights and
- * lr-tb wrap points asserted against hand-computed values; columns aligned across rows with
- * no cell overlap (C oracle).
- */
+/// L2 PART A — tabular / horizontal layout B oracle: column x positions, row heights and
+/// lr-tb wrap points asserted against hand-computed values; columns aligned across rows with
+/// no cell overlap (C oracle).
 public class XfaTabularLayoutTest {
 
     private static final String TPL = XfaNode.TEMPLATE_NS;

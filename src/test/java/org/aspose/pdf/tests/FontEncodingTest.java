@@ -9,9 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link FontEncoding}.
- */
+/// Tests for [FontEncoding].
 public class FontEncodingTest {
 
     @Test

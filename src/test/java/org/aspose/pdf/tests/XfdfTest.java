@@ -17,9 +17,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for XFDF import and export functionality per XFDF Specification 3.0.
- */
+/// Tests for XFDF import and export functionality per XFDF Specification 3.0.
 public class XfdfTest {
 
     // ==================== EXPORT TESTS ====================

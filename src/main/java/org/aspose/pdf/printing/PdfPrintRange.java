@@ -1,13 +1,11 @@
 package org.aspose.pdf.printing;
 
-/**
- * Specifies the portion of the document to print.
- */
+/// Specifies the portion of the document to print.
 public enum PdfPrintRange {
-    /** Print all pages. */
+    /// Print all pages.
     AllPages,
-    /** Print a range of pages specified by FromPage and ToPage. */
+    /// Print a range of pages specified by FromPage and ToPage.
     SomePages,
-    /** Print selected pages. */
+    /// Print selected pages.
     Selection
 }

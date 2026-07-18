@@ -3,37 +3,26 @@ package org.aspose.pdf.engine.script.js.builtins;
 import org.aspose.pdf.engine.script.js.ast.Node;
 import org.aspose.pdf.engine.script.js.interp.Interpreter;
 import org.aspose.pdf.engine.script.js.parser.Parser;
-import org.aspose.pdf.engine.script.js.runtime.JSArray;
-import org.aspose.pdf.engine.script.js.runtime.JSFunction;
-import org.aspose.pdf.engine.script.js.runtime.JSNull;
-import org.aspose.pdf.engine.script.js.runtime.JSNumber;
-import org.aspose.pdf.engine.script.js.runtime.JSObject;
-import org.aspose.pdf.engine.script.js.runtime.NativeFunction;
-import org.aspose.pdf.engine.script.js.runtime.Types;
-import org.aspose.pdf.engine.script.js.runtime.Undefined;
+import org.aspose.pdf.engine.script.js.runtime.*;
 
-/**
- * Installs the ECMAScript 3 standard library into a {@link Realm}
- * (ECMA-262 3rd ed., sec 15). Core intrinsics (Object, Function, Boolean) and
- * the global functions live here; the larger libraries are delegated to
- * companion installers ({@link ArrayBuiltins}, {@link StringBuiltins}, etc.).
- */
+/// Installs the ECMAScript 3 standard library into a [Realm]
+/// (ECMA-262 3rd ed., sec 15). Core intrinsics (Object, Function, Boolean) and
+/// the global functions live here; the larger libraries are delegated to
+/// companion installers ([ArrayBuiltins], [StringBuiltins], etc.).
 public final class Builtins {
 
     static final Object UNDEF = Undefined.INSTANCE;
 
     private Builtins() { }
 
-    /** Returns {@code args[i]} or {@code undefined}. */
+    /// Returns `args[i]` or `undefined`.
     public static Object arg(Object[] args, int i) {
         return i < args.length ? args[i] : UNDEF;
     }
 
-    /**
-     * Installs all standard built-ins into the realm.
-     *
-     * @param r the realm to populate
-     */
+    /// Installs all standard built-ins into the realm.
+    ///
+    /// @param r the realm to populate
     public static void install(Realm r) {
         // --- bootstrap Object.prototype and Function.prototype ---
         JSObject objectProto = new JSObject(null);
@@ -321,13 +310,13 @@ public final class Builtins {
 
     /* ------------------------------ helpers --------------------------- */
 
-    /** Links a constructor and prototype: ctor.prototype = proto, proto.constructor = ctor. */
+    /// Links a constructor and prototype: ctor.prototype = proto, proto.constructor = ctor.
     static void link(JSFunction ctor, JSObject proto) {
         ctor.define("prototype", proto, false, false, false);
         proto.defineHidden("constructor", ctor);
     }
 
-    /** Returns a copy of {@code args} starting at index {@code from}. */
+    /// Returns a copy of `args` starting at index `from`.
     static Object[] sliceArgs(Object[] args, int from) {
         if (from >= args.length) {
             return new Object[0];
@@ -337,7 +326,7 @@ public final class Builtins {
         return out;
     }
 
-    /** Coerces a {@code this} value carrying a string primitive (own or wrapped). */
+    /// Coerces a `this` value carrying a string primitive (own or wrapped).
     static JSArray asArray(Object t) {
         return t instanceof JSArray ? (JSArray) t : null;
     }

@@ -10,11 +10,9 @@ import java.io.ByteArrayOutputStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Redaction must REMOVE the underlying text under the redacted region, not merely
- * paint a box over it (ISO 32000-1 §12.5.6.23) — otherwise the "redacted" text stays
- * extractable and searchable. Guards the G3 fix (PDFNET_40853).
- */
+/// Redaction must REMOVE the underlying text under the redacted region, not merely
+/// paint a box over it (ISO 32000-1 §12.5.6.23) — otherwise the "redacted" text stays
+/// extractable and searchable. Guards the G3 fix (PDFNET\_40853).
 public class RedactionRemovesTextTest {
 
     private static Document docWithTwoLines() throws Exception {

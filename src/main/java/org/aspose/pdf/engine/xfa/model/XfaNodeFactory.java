@@ -16,29 +16,25 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
-/**
- * Maps an XFA element to its typed {@link XfaNode} subclass, routed by the
- * element's namespace family. Each grammar (template, localeSet, sourceSet,
- * connectionSet, dataDescription, config, datasets/data) contributes a registry
- * keyed under its namespace (version-independent via {@link XfaNamespaces}).
- *
- * <p>Unknown namespaces or element names wrap to a plain {@link XfaNode}, so
- * foreign / open-content / user-data elements still participate in the typed
- * tree and round-trip.</p>
- */
+/// Maps an XFA element to its typed [XfaNode] subclass, routed by the
+/// element's namespace family. Each grammar (template, localeSet, sourceSet,
+/// connectionSet, dataDescription, config, datasets/data) contributes a registry
+/// keyed under its namespace (version-independent via [XfaNamespaces]).
+///
+/// Unknown namespaces or element names wrap to a plain [XfaNode], so
+/// foreign / open-content / user-data elements still participate in the typed
+/// tree and round-trip.
 public final class XfaNodeFactory {
 
-    /** Constructor functional interface for a typed node. */
+    /// Constructor functional interface for a typed node.
     public interface Ctor {
-        /**
-         * @param element backing element
-         * @param parent  parent node
-         * @return the typed node
-         */
+        /// @param element backing element
+        /// @param parent  parent node
+        /// @return the typed node
         XfaNode create(Element element, XfaNode parent);
     }
 
-    /** namespace family -> (local name -> constructor). */
+    /// namespace family -> (local name -> constructor).
     private static final Map<String, Map<String, Ctor>> BY_NS = new HashMap<>();
 
     static {
@@ -61,25 +57,21 @@ public final class XfaNodeFactory {
         registrar.accept(m);
     }
 
-    /**
-     * Registers (or overrides) a typed constructor for an element name in a namespace.
-     *
-     * @param namespace element namespace (any version; canonicalised)
-     * @param localName element local name
-     * @param ctor      constructor
-     */
+    /// Registers (or overrides) a typed constructor for an element name in a namespace.
+    ///
+    /// @param namespace element namespace (any version; canonicalised)
+    /// @param localName element local name
+    /// @param ctor      constructor
     public static void register(String namespace, String localName, Ctor ctor) {
         BY_NS.computeIfAbsent(XfaNamespaces.canonical(namespace), k -> new HashMap<>())
                 .put(localName, ctor);
     }
 
-    /**
-     * Wraps a DOM element into its typed node (or a generic {@link XfaNode}).
-     *
-     * @param element the element
-     * @param parent  parent node, or {@code null}
-     * @return the typed node
-     */
+    /// Wraps a DOM element into its typed node (or a generic [XfaNode]).
+    ///
+    /// @param element the element
+    /// @param parent  parent node, or `null`
+    /// @return the typed node
     public static XfaNode wrap(Element element, XfaNode parent) {
         String ns = XfaNamespaces.canonical(element.getNamespaceURI());
         Map<String, Ctor> m = BY_NS.get(ns);
@@ -96,12 +88,10 @@ public final class XfaNodeFactory {
         return new XfaNode(element, parent);
     }
 
-    /**
-     * Loads a packet DOM into the typed tree (its root element).
-     *
-     * @param packetDoc the packet document
-     * @return the typed root node, or {@code null} if the document has no root
-     */
+    /// Loads a packet DOM into the typed tree (its root element).
+    ///
+    /// @param packetDoc the packet document
+    /// @return the typed root node, or `null` if the document has no root
     public static XfaNode load(Document packetDoc) {
         if (packetDoc == null || packetDoc.getDocumentElement() == null) {
             return null;
@@ -109,7 +99,7 @@ public final class XfaNodeFactory {
         return wrap(packetDoc.getDocumentElement(), null);
     }
 
-    /** @return the number of registered namespace families. */
+    /// @return the number of registered namespace families.
     public static int registeredNamespaceCount() {
         return BY_NS.size();
     }

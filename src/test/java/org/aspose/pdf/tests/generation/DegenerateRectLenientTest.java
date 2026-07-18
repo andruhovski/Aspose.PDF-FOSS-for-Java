@@ -15,16 +15,14 @@ import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Sprint 21 / A2 — F-10 sibling cluster. The strict positive-area check on
- * {@link org.aspose.pdf.annotations.Annotation#setRect(Rectangle)} must not
- * leak into the internal construction / incremental-sizing paths used by form
- * fields and naturally-degenerate annotation types. Aspose.PDF stores such
- * rectangles rather than rejecting them, so these constructors must not throw.
- *
- * @see AnnotationRectValidationTest for the public-API strictness contract that
- *      is intentionally preserved.
- */
+/// Sprint 21 / A2 — F-10 sibling cluster. The strict positive-area check on
+/// [org.aspose.pdf.annotations.Annotation#setRect(Rectangle)] must not
+/// leak into the internal construction / incremental-sizing paths used by form
+/// fields and naturally-degenerate annotation types. Aspose.PDF stores such
+/// rectangles rather than rejecting them, so these constructors must not throw.
+///
+/// @see AnnotationRectValidationTest for the public-API strictness contract that
+///      is intentionally preserved.
 class DegenerateRectLenientTest {
 
     @Test

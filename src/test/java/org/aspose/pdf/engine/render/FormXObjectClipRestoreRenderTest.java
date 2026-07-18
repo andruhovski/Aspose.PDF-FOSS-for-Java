@@ -13,22 +13,18 @@ import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * Renderer regression test: graphics-state restore (Q) inside a Form XObject.
- *
- * <p>{@code renderForm} used to ignore the state returned by
- * {@code processOperator}, so a {@code Q} inside a form never restored the
- * state. Successive {@code q <rect> re W n ... Q} blocks (llPDFLib draws every
- * table cell that way — corpus 1493.pdf) intersected their clip rectangles
- * until the clip became empty and everything after the first block vanished:
- * tables rendered as a lone title on a blank page.</p>
- */
+/// Renderer regression test: graphics-state restore (Q) inside a Form XObject.
+///
+/// `renderForm` used to ignore the state returned by
+/// `processOperator`, so a `Q` inside a form never restored the
+/// state. Successive `q <rect> re W n ... Q` blocks (llPDFLib draws every
+/// table cell that way — corpus 1493.pdf) intersected their clip rectangles
+/// until the clip became empty and everything after the first block vanished:
+/// tables rendered as a lone title on a blank page.
 public class FormXObjectClipRestoreRenderTest {
 
-    /**
-     * Builds a one-page PDF whose page content is {@code q /F1 Do Q} followed
-     * by {@code pageTail}; the Form XObject's content stream is {@code form}.
-     */
+    /// Builds a one-page PDF whose page content is `q /F1 Do Q` followed
+    /// by `pageTail`; the Form XObject's content stream is `form`.
     private static byte[] pdfWithForm(String form, String pageTail) {
         String pageContent = "q /F1 Do Q\n" + pageTail;
         StringBuilder body = new StringBuilder("%PDF-1.4\n");
@@ -57,7 +53,7 @@ public class FormXObjectClipRestoreRenderTest {
         return body.toString().getBytes(StandardCharsets.ISO_8859_1);
     }
 
-    /** Renders page 1 at 72 dpi (300x300 px). */
+    /// Renders page 1 at 72 dpi (300x300 px).
     private static BufferedImage render(String form, String pageTail) throws Exception {
         try (Document doc = new Document(new ByteArrayInputStream(pdfWithForm(form, pageTail)))) {
             ByteArrayOutputStream png = new ByteArrayOutputStream();
@@ -66,7 +62,7 @@ public class FormXObjectClipRestoreRenderTest {
         }
     }
 
-    /** Counts dark pixels inside the device-space rectangle (PDF y-up -> image y-down). */
+    /// Counts dark pixels inside the device-space rectangle (PDF y-up -> image y-down).
     private static int inkIn(BufferedImage img, int x0, int y0pdf, int w, int h) {
         int ink = 0;
         int y0 = img.getHeight() - y0pdf - h;
@@ -80,10 +76,8 @@ public class FormXObjectClipRestoreRenderTest {
         return ink;
     }
 
-    /**
-     * Two successive clipped cell blocks inside one form: the second block's
-     * content must survive (its clip must NOT be intersected with the first's).
-     */
+    /// Two successive clipped cell blocks inside one form: the second block's
+    /// content must survive (its clip must NOT be intersected with the first's).
     @Test
     public void secondClippedBlockInsideFormIsPainted() throws Exception {
         String form =
@@ -96,10 +90,8 @@ public class FormXObjectClipRestoreRenderTest {
                 "second clipped block must be painted - Q inside the form must restore the clip");
     }
 
-    /**
-     * A form that leaves a narrow clip behind (q W n without closing Q) must
-     * not clip away page content drawn after the Do.
-     */
+    /// A form that leaves a narrow clip behind (q W n without closing Q) must
+    /// not clip away page content drawn after the Do.
     @Test
     public void pageContentAfterFormIsNotClippedByLeftoverFormClip() throws Exception {
         String form = "q 0 0 1 1 re W n";                                    // leaves a 1x1 clip

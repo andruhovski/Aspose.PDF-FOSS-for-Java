@@ -1,15 +1,13 @@
 package org.aspose.pdf.engine.pattern;
 
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
 import org.aspose.pdf.engine.parser.PDFParser;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
 
 import java.io.IOException;
 
-/**
- * Tensor-product patch mesh — ShadingType 7 (ISO 32000-1:2008, §8.7.4.5.7).
- *
- * <p>Stub: returns background or mid-gray for all coordinates.</p>
- */
+/// Tensor-product patch mesh — ShadingType 7 (ISO 32000-1:2008, §8.7.4.5.7).
+///
+/// Stub: returns background or mid-gray for all coordinates.
 public final class TensorPatchShading extends Shading {
 
     public TensorPatchShading(PdfDictionary dict, PDFParser parser) throws IOException {

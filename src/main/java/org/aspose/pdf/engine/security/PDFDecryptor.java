@@ -4,13 +4,11 @@ import org.aspose.pdf.security.ICustomSecurityHandler;
 
 import java.util.logging.Logger;
 
-/**
- * Decrypts individual PDF objects (strings and streams).
- * <p>
- * Uses {@link PDFCryptoUtils#computeObjectKey} for Algorithm 1 (§7.6.2)
- * per-object key computation.
- * </p>
- */
+/// Decrypts individual PDF objects (strings and streams).
+///
+/// Uses [PDFCryptoUtils#computeObjectKey] for Algorithm 1 (§7.6.2)
+/// per-object key computation.
+///
 public class PDFDecryptor {
 
     private static final Logger LOG = Logger.getLogger(PDFDecryptor.class.getName());
@@ -20,12 +18,10 @@ public class PDFDecryptor {
     private final int revision;
     private final ICustomSecurityHandler customHandler;
 
-    /**
-     * Creates a decryptor with the given key and encryption parameters.
-     *
-     * @param encryptionKey the file encryption key
-     * @param encDict       the encryption dictionary
-     */
+    /// Creates a decryptor with the given key and encryption parameters.
+    ///
+    /// @param encryptionKey the file encryption key
+    /// @param encDict       the encryption dictionary
     public PDFDecryptor(byte[] encryptionKey, PDFEncryptionDict encDict) {
         this.encryptionKey = encryptionKey;
         this.cipherType = encDict.getCipherType();
@@ -33,13 +29,11 @@ public class PDFDecryptor {
         this.customHandler = null;
     }
 
-    /**
-     * Creates a decryptor backed by a custom security handler.
-     *
-     * @param encryptionKey file encryption key
-     * @param encDict       encryption dictionary
-     * @param customHandler custom handler implementation
-     */
+    /// Creates a decryptor backed by a custom security handler.
+    ///
+    /// @param encryptionKey file encryption key
+    /// @param encDict       encryption dictionary
+    /// @param customHandler custom handler implementation
     public PDFDecryptor(byte[] encryptionKey, PDFEncryptionDict encDict, ICustomSecurityHandler customHandler) {
         this.encryptionKey = encryptionKey;
         this.cipherType = encDict.getCipherType();
@@ -47,14 +41,12 @@ public class PDFDecryptor {
         this.customHandler = customHandler;
     }
 
-    /**
-     * Decrypts data belonging to a specific PDF object.
-     *
-     * @param data             the encrypted bytes
-     * @param objectNumber     the object number
-     * @param generationNumber the generation number
-     * @return the decrypted bytes
-     */
+    /// Decrypts data belonging to a specific PDF object.
+    ///
+    /// @param data             the encrypted bytes
+    /// @param objectNumber     the object number
+    /// @param generationNumber the generation number
+    /// @return the decrypted bytes
     public byte[] decrypt(byte[] data, int objectNumber, int generationNumber) {
         if (data == null || data.length == 0) return data;
         try {
@@ -87,23 +79,19 @@ public class PDFDecryptor {
         }
     }
 
-    /** Returns true if the decryptor has a valid key. */
+    /// Returns true if the decryptor has a valid key.
     public boolean isActive() { return encryptionKey != null; }
 
-    /**
-     * Returns a copy of the file encryption key currently used for decryption.
-     *
-     * @return the file encryption key, or {@code null} if decryption is inactive
-     */
+    /// Returns a copy of the file encryption key currently used for decryption.
+    ///
+    /// @return the file encryption key, or `null` if decryption is inactive
     public byte[] getEncryptionKey() {
         return encryptionKey != null ? encryptionKey.clone() : null;
     }
 
-    /**
-     * Returns the custom handler used by this decryptor, if any.
-     *
-     * @return custom handler or {@code null}
-     */
+    /// Returns the custom handler used by this decryptor, if any.
+    ///
+    /// @return custom handler or `null`
     public ICustomSecurityHandler getCustomHandler() {
         return customHandler;
     }

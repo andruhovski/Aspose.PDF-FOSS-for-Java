@@ -5,22 +5,20 @@ import org.aspose.pdf.engine.pdfobjects.PdfBase;
 
 import java.util.List;
 
-/**
- * End path operator (n) without filling or stroking.
- * <p>
- * Ends the path object without filling or stroking it. This operator is a
- * path-painting no-op, primarily used with clipping path operators.
- * See ISO 32000-1:2008, §8.5.3.1, Table 60.
- * </p>
- */
+/// End path operator (n) without filling or stroking.
+///
+/// Ends the path object without filling or stroking it. This operator is a
+/// path-painting no-op, primarily used with clipping path operators.
+/// See ISO 32000-1:2008, §8.5.3.1, Table 60.
+///
 public class EndPath extends Operator {
 
-    /** Creates an EndPath operator. */
+    /// Creates an EndPath operator.
     public EndPath() {
         super("n");
     }
 
-    /** Creates an EndPath operator from parsed operands. */
+    /// Creates an EndPath operator from parsed operands.
     public EndPath(List<PdfBase> operands) {
         super("n", operands);
     }

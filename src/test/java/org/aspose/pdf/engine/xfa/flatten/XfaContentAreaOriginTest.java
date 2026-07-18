@@ -15,11 +15,9 @@ import java.nio.charset.StandardCharsets;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * FIX.3 — contentArea origin (P3): a {@code pageSet} nested inside the root subform (the
- * 408975 shape) is now found, and the contentArea's {@code x}/{@code y} contributes to the
- * positioned coordinate base.
- */
+/// FIX.3 — contentArea origin (P3): a `pageSet` nested inside the root subform (the
+/// 408975 shape) is now found, and the contentArea's `x`/`y` contributes to the
+/// positioned coordinate base.
 public class XfaContentAreaOriginTest {
 
     private static final String TPL = XfaNode.TEMPLATE_NS;

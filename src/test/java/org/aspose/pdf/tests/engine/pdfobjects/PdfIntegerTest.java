@@ -8,9 +8,7 @@ import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link PdfInteger}.
- */
+/// Tests for [PdfInteger].
 public class PdfIntegerTest {
 
     @Test

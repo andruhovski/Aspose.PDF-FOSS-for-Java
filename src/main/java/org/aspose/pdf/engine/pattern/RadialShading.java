@@ -1,15 +1,13 @@
 package org.aspose.pdf.engine.pattern;
 
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
 import org.aspose.pdf.engine.function.PdfFunction;
 import org.aspose.pdf.engine.parser.PDFParser;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
 
 import java.io.IOException;
 
-/**
- * Radial shading / radial gradient — ShadingType 3 (ISO 32000-1:2008, §8.7.4.5.3).
- * Defines a gradient between two circles: (x0, y0, r0) and (x1, y1, r1).
- */
+/// Radial shading / radial gradient — ShadingType 3 (ISO 32000-1:2008, §8.7.4.5.3).
+/// Defines a gradient between two circles: (x0, y0, r0) and (x1, y1, r1).
 public final class RadialShading extends Shading {
 
     private final double x0, y0, r0, x1, y1, r1;
@@ -17,13 +15,11 @@ public final class RadialShading extends Shading {
     private final PdfFunction function;
     private final boolean extendStart, extendEnd;
 
-    /**
-     * Creates a RadialShading from its dictionary.
-     *
-     * @param dict   the shading dictionary
-     * @param parser the PDF parser
-     * @throws IOException if the function cannot be parsed
-     */
+    /// Creates a RadialShading from its dictionary.
+    ///
+    /// @param dict   the shading dictionary
+    /// @param parser the PDF parser
+    /// @throws IOException if the function cannot be parsed
     public RadialShading(PdfDictionary dict, PDFParser parser) throws IOException {
         super(dict, parser);
         double[] coords = getNumberArray(dict, "Coords");
@@ -85,16 +81,16 @@ public final class RadialShading extends Shading {
         return function.evaluate(new double[]{t});
     }
 
-    /** Returns the start circle X center. */
+    /// Returns the start circle X center.
     public double getX0() { return x0; }
-    /** Returns the start circle Y center. */
+    /// Returns the start circle Y center.
     public double getY0() { return y0; }
-    /** Returns the start circle radius. */
+    /// Returns the start circle radius.
     public double getR0() { return r0; }
-    /** Returns the end circle X center. */
+    /// Returns the end circle X center.
     public double getX1() { return x1; }
-    /** Returns the end circle Y center. */
+    /// Returns the end circle Y center.
     public double getY1() { return y1; }
-    /** Returns the end circle radius. */
+    /// Returns the end circle radius.
     public double getR1() { return r1; }
 }

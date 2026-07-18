@@ -1,24 +1,18 @@
 package org.aspose.pdf.engine.colorspace;
 
 import org.aspose.pdf.Resources;
-import org.aspose.pdf.engine.pdfobjects.PdfArray;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfInteger;
-import org.aspose.pdf.engine.pdfobjects.PdfStream;
-import org.aspose.pdf.engine.pdfobjects.PdfString;
 import org.aspose.pdf.engine.parser.PDFParser;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.io.IOException;
 import java.util.logging.Logger;
 
-/**
- * Indexed color space (ISO 32000-1:2008, §8.6.6.3).
- * <p>
- * Maps a single integer index (0..hival) to a color in the base color space
- * via a lookup table. The table has (hival+1) entries, each consisting of
- * as many bytes as the base color space has components.
- * </p>
- */
+/// Indexed color space (ISO 32000-1:2008, §8.6.6.3).
+///
+/// Maps a single integer index (0..hival) to a color in the base color space
+/// via a lookup table. The table has (hival+1) entries, each consisting of
+/// as many bytes as the base color space has components.
+///
 public class IndexedColorSpace extends ColorSpaceBase {
 
     private static final Logger LOG = Logger.getLogger(IndexedColorSpace.class.getName());
@@ -27,28 +21,24 @@ public class IndexedColorSpace extends ColorSpaceBase {
     private final int hival;
     private final byte[] lookupTable;
 
-    /**
-     * Creates an IndexedColorSpace.
-     *
-     * @param base        the base color space
-     * @param hival       the maximum valid index (0..hival)
-     * @param lookupTable the palette: (hival+1) * base.components bytes
-     */
+    /// Creates an IndexedColorSpace.
+    ///
+    /// @param base        the base color space
+    /// @param hival       the maximum valid index (0..hival)
+    /// @param lookupTable the palette: (hival+1) \* base.components bytes
     public IndexedColorSpace(ColorSpaceBase base, int hival, byte[] lookupTable) {
         this.base = base != null ? base : DeviceRGB.INSTANCE;
         this.hival = Math.max(0, Math.min(hival, 255));
         this.lookupTable = lookupTable != null ? lookupTable : new byte[0];
     }
 
-    /**
-     * Creates an IndexedColorSpace from a PdfArray: [/Indexed base hival lookup].
-     *
-     * @param arr       the PdfArray definition
-     * @param resources the page resources (may be null)
-     * @param parser    the PDF parser (may be null)
-     * @return the IndexedColorSpace
-     * @throws IOException if parsing fails
-     */
+    /// Creates an IndexedColorSpace from a PdfArray: [/Indexed base hival lookup].
+    ///
+    /// @param arr       the PdfArray definition
+    /// @param resources the page resources (may be null)
+    /// @param parser    the PDF parser (may be null)
+    /// @return the IndexedColorSpace
+    /// @throws IOException if parsing fails
     public static IndexedColorSpace fromArray(PdfArray arr, Resources resources,
                                                PDFParser parser) throws IOException {
         if (arr.size() < 4) {
@@ -86,26 +76,20 @@ public class IndexedColorSpace extends ColorSpaceBase {
     @Override
     public int getNumberOfComponents() { return 1; }
 
-    /**
-     * Returns the base color space.
-     *
-     * @return the base color space
-     */
+    /// Returns the base color space.
+    ///
+    /// @return the base color space
     public ColorSpaceBase getBase() { return base; }
 
-    /**
-     * Returns the maximum valid index.
-     *
-     * @return the hival
-     */
+    /// Returns the maximum valid index.
+    ///
+    /// @return the hival
     public int getHival() { return hival; }
 
-    /**
-     * Looks up a palette entry, returning the base color space components.
-     *
-     * @param index the palette index (0..hival)
-     * @return the color components in the base color space, each in [0, 1]
-     */
+    /// Looks up a palette entry, returning the base color space components.
+    ///
+    /// @param index the palette index (0..hival)
+    /// @return the color components in the base color space, each in [0, 1]
     public double[] lookupColor(int index) {
         int nc = base.getNumberOfComponents();
         int safeIndex = Math.max(0, Math.min(index, hival));
@@ -117,7 +101,7 @@ public class IndexedColorSpace extends ColorSpaceBase {
         return components;
     }
 
-    /** Palette index -> base components -> base space's RGB. */
+    /// Palette index -> base components -> base space's RGB.
     @Override
     public int toRGBInt(double[] comps) {
         if (comps == null || comps.length == 0) return 0xFF000000;

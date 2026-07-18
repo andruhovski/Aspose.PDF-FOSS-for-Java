@@ -12,9 +12,7 @@ import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for ASN.1 DER parser and encoder.
- */
+/// Tests for ASN.1 DER parser and encoder.
 public class DERParserTest {
 
     @Test

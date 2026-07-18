@@ -1,34 +1,30 @@
 package org.aspose.pdf.engine.function;
 
+import org.aspose.pdf.engine.parser.PDFParser;
 import org.aspose.pdf.engine.pdfobjects.PdfArray;
 import org.aspose.pdf.engine.pdfobjects.PdfBase;
 import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
 import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
-import org.aspose.pdf.engine.pdfobjects.PdfStream;
-import org.aspose.pdf.engine.parser.PDFParser;
 
 import java.io.IOException;
 import java.util.logging.Logger;
 
-/**
- * Abstract base for PDF functions (ISO 32000-1:2008, §7.10).
- * Functions map m input values to n output values.
- *
- * <p>Four function types are defined:</p>
- * <ul>
- *   <li>Type 0 — Sampled (lookup table with interpolation)</li>
- *   <li>Type 2 — Exponential Interpolation</li>
- *   <li>Type 3 — Stitching (combines subfunctions)</li>
- *   <li>Type 4 — PostScript Calculator</li>
- * </ul>
- */
+/// Abstract base for PDF functions (ISO 32000-1:2008, §7.10).
+/// Functions map m input values to n output values.
+///
+/// Four function types are defined:
+///
+///   - Type 0 — Sampled (lookup table with interpolation)
+///   - Type 2 — Exponential Interpolation
+///   - Type 3 — Stitching (combines subfunctions)
+///   - Type 4 — PostScript Calculator
 public abstract class PdfFunction {
 
     private static final Logger LOG = Logger.getLogger(PdfFunction.class.getName());
 
-    /** Domain: [min0 max0 min1 max1 ...] — 2*m values for m inputs. */
+    /// Domain: [min0 max0 min1 max1 ...] — 2\*m values for m inputs.
     protected final double[] domain;
-    /** Range: [min0 max0 min1 max1 ...] — 2*n values for n outputs. May be null. */
+    /// Range: [min0 max0 min1 max1 ...] — 2\*n values for n outputs. May be null.
     protected final double[] range;
 
     protected PdfFunction(double[] domain, double[] range) {
@@ -36,40 +32,34 @@ public abstract class PdfFunction {
         this.range = range;
     }
 
-    /**
-     * Evaluates the function for the given input values.
-     *
-     * @param input the input values (length = getInputDimension())
-     * @return the output values (length = getOutputDimension())
-     */
+    /// Evaluates the function for the given input values.
+    ///
+    /// @param input the input values (length = getInputDimension())
+    /// @return the output values (length = getOutputDimension())
     public abstract double[] evaluate(double[] input);
 
-    /** Returns the number of input values. */
+    /// Returns the number of input values.
     public int getInputDimension() { return domain.length / 2; }
 
-    /** Returns the number of output values. */
+    /// Returns the number of output values.
     public int getOutputDimension() { return range != null ? range.length / 2 : 0; }
 
-    /**
-     * Clamps a value to the given interval.
-     *
-     * @param val the value
-     * @param min the minimum
-     * @param max the maximum
-     * @return the clamped value
-     */
+    /// Clamps a value to the given interval.
+    ///
+    /// @param val the value
+    /// @param min the minimum
+    /// @param max the maximum
+    /// @return the clamped value
     protected static double clamp(double val, double min, double max) {
         return Math.max(min, Math.min(max, val));
     }
 
-    /**
-     * Factory: parses a function from a PDF object (dictionary or stream).
-     *
-     * @param obj    the function object
-     * @param parser the PDF parser for resolving references
-     * @return the parsed function, or {@code null} if unparseable
-     * @throws IOException if parsing fails
-     */
+    /// Factory: parses a function from a PDF object (dictionary or stream).
+    ///
+    /// @param obj    the function object
+    /// @param parser the PDF parser for resolving references
+    /// @return the parsed function, or `null` if unparseable
+    /// @throws IOException if parsing fails
     public static PdfFunction parse(PdfBase obj, PDFParser parser) throws IOException {
         obj = resolveRef(obj, parser);
         if (!(obj instanceof PdfDictionary)) return null;
@@ -90,13 +80,11 @@ public abstract class PdfFunction {
         }
     }
 
-    /**
-     * Extracts a numeric array from a dictionary entry.
-     *
-     * @param dict the dictionary
-     * @param key  the key
-     * @return the array of doubles, or {@code null} if not present
-     */
+    /// Extracts a numeric array from a dictionary entry.
+    ///
+    /// @param dict the dictionary
+    /// @param key  the key
+    /// @return the array of doubles, or `null` if not present
     protected static double[] getNumberArray(PdfDictionary dict, String key) {
         PdfBase val = dict.get(key);
         if (val instanceof PdfArray) {
@@ -114,9 +102,7 @@ public abstract class PdfFunction {
         return result;
     }
 
-    /**
-     * Creates an array filled with a given value.
-     */
+    /// Creates an array filled with a given value.
     protected static double[] fillArray(int length, double value) {
         double[] arr = new double[length];
         java.util.Arrays.fill(arr, value);

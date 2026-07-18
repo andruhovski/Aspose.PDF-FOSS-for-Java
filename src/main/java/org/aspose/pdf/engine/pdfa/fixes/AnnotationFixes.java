@@ -2,33 +2,29 @@ package org.aspose.pdf.engine.pdfa.fixes;
 
 import org.aspose.pdf.ConvertErrorAction;
 import org.aspose.pdf.PdfFormat;
+import org.aspose.pdf.engine.parser.PDFParser;
+import org.aspose.pdf.engine.pdfa.PdfAValidationResult;
 import org.aspose.pdf.engine.pdfobjects.PdfArray;
 import org.aspose.pdf.engine.pdfobjects.PdfBase;
 import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
 import org.aspose.pdf.engine.pdfobjects.PdfInteger;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectKey;
-import org.aspose.pdf.engine.pdfa.PdfAValidationResult;
-import org.aspose.pdf.engine.parser.PDFParser;
 
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Logger;
 
-/**
- * Annotation-related fixes for PDF/A compliance.
- * <p>
- * Removes forbidden annotation types (FileAttachment, Sound, Movie) and corrects
- * the {@code /F} (flags) field on remaining annotations to satisfy the requirements
- * of ISO 19005-1:2005, 6.5.3.
- * </p>
- */
+/// Annotation-related fixes for PDF/A compliance.
+///
+/// Removes forbidden annotation types (FileAttachment, Sound, Movie) and corrects
+/// the `/F` (flags) field on remaining annotations to satisfy the requirements
+/// of ISO 19005-1:2005, 6.5.3.
+///
 public final class AnnotationFixes {
 
     private static final Logger LOG = Logger.getLogger(AnnotationFixes.class.getName());
 
-    /** Annotation flag bit positions (§12.5.3, Table 165). */
+    /// Annotation flag bit positions (§12.5.3, Table 165).
     private static final int FLAG_INVISIBLE = 0x0001;
     private static final int FLAG_HIDDEN    = 0x0002;
     private static final int FLAG_PRINT     = 0x0004;
@@ -36,7 +32,7 @@ public final class AnnotationFixes {
     private static final int FLAG_NO_ROTATE = 0x0010;
     private static final int FLAG_NO_VIEW   = 0x0020;
 
-    /** Annotation subtypes that are forbidden in PDF/A. */
+    /// Annotation subtypes that are forbidden in PDF/A.
     private static final Set<String> FORBIDDEN_SUBTYPES = new HashSet<>();
     static {
         FORBIDDEN_SUBTYPES.add("FileAttachment");
@@ -44,27 +40,22 @@ public final class AnnotationFixes {
         FORBIDDEN_SUBTYPES.add("Movie");
     }
 
-    /**
-     * Creates a new AnnotationFixes instance.
-     */
+    /// Creates a new AnnotationFixes instance.
     public AnnotationFixes() {
         // default
     }
 
-    /**
-     * Removes forbidden annotation types (FileAttachment, Sound, Movie) from every
-     * page's {@code /Annots} array.
-     * <p>
-     * When {@code errorAction} is {@link ConvertErrorAction#Delete}, the annotations
-     * are silently removed.  Otherwise a warning is logged but no removal occurs.
-     * </p>
-     *
-     * @param parser      the parsed PDF
-     * @param format      the target format
-     * @param errorAction the error action strategy
-     * @param result      the validation result
-     * @throws IOException if an I/O error occurs
-     */
+    /// Removes forbidden annotation types (FileAttachment, Sound, Movie) from every
+    /// page's `/Annots` array.
+    ///
+    /// When `errorAction` is [ConvertErrorAction#Delete], the annotations
+    /// are silently removed.  Otherwise a warning is logged but no removal occurs.
+    ///
+    /// @param parser      the parsed PDF
+    /// @param format      the target format
+    /// @param errorAction the error action strategy
+    /// @param result      the validation result
+    /// @throws IOException if an I/O error occurs
     public void removeForbiddenAnnotations(PDFParser parser, PdfFormat format,
                                            ConvertErrorAction errorAction,
                                            PdfAValidationResult result) throws IOException {
@@ -80,20 +71,17 @@ public final class AnnotationFixes {
         processPageTreeForForbiddenAnnotations(parser, (PdfDictionary) pagesObj, errorAction, result);
     }
 
-    /**
-     * Fixes annotation flag bits on all annotations across all pages.
-     * <p>
-     * PDF/A requires: Print flag ON, Hidden/Invisible/NoView flags OFF.
-     * For Text annotations, NoZoom and NoRotate should also be set.
-     * (ISO 19005-1:2005, 6.5.3)
-     * </p>
-     *
-     * @param parser      the parsed PDF
-     * @param format      the target format
-     * @param errorAction the error action strategy
-     * @param result      the validation result
-     * @throws IOException if an I/O error occurs
-     */
+    /// Fixes annotation flag bits on all annotations across all pages.
+    ///
+    /// PDF/A requires: Print flag ON, Hidden/Invisible/NoView flags OFF.
+    /// For Text annotations, NoZoom and NoRotate should also be set.
+    /// (ISO 19005-1:2005, 6.5.3)
+    ///
+    /// @param parser      the parsed PDF
+    /// @param format      the target format
+    /// @param errorAction the error action strategy
+    /// @param result      the validation result
+    /// @throws IOException if an I/O error occurs
     public void fixAnnotationFlags(PDFParser parser, PdfFormat format,
                                    ConvertErrorAction errorAction,
                                    PdfAValidationResult result) throws IOException {
@@ -113,9 +101,7 @@ public final class AnnotationFixes {
     // Internal helpers
     // -------------------------------------------------------------------------
 
-    /**
-     * Recursively walks the page tree removing forbidden annotations.
-     */
+    /// Recursively walks the page tree removing forbidden annotations.
     private void processPageTreeForForbiddenAnnotations(PDFParser parser, PdfDictionary node,
                                                         ConvertErrorAction errorAction,
                                                         PdfAValidationResult result) throws IOException {
@@ -172,9 +158,7 @@ public final class AnnotationFixes {
         }
     }
 
-    /**
-     * Recursively walks the page tree fixing annotation flags.
-     */
+    /// Recursively walks the page tree fixing annotation flags.
     private void processPageTreeForFlags(PDFParser parser, PdfDictionary node,
                                          PdfAValidationResult result) throws IOException {
         String type = node.getNameAsString("Type");
@@ -217,9 +201,7 @@ public final class AnnotationFixes {
         }
     }
 
-    /**
-     * Fixes flag bits on a single annotation dictionary.
-     */
+    /// Fixes flag bits on a single annotation dictionary.
     private void fixSingleAnnotationFlags(PdfDictionary annotDict, PdfAValidationResult result, int idx) {
         int flags = annotDict.getInt("F", 0);
         int original = flags;

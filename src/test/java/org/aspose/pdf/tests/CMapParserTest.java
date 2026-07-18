@@ -9,9 +9,7 @@ import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link CMapParser} and {@link ToUnicodeCMap}.
- */
+/// Tests for [CMapParser] and [ToUnicodeCMap].
 public class CMapParserTest {
 
     @Test

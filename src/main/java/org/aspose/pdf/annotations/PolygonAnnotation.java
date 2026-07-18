@@ -1,58 +1,51 @@
 package org.aspose.pdf.annotations;
 
-import org.aspose.pdf.*;
+import org.aspose.pdf.Color;
+import org.aspose.pdf.Page;
+import org.aspose.pdf.Point;
+import org.aspose.pdf.Rectangle;
 import org.aspose.pdf.engine.pdfobjects.*;
 
-/**
- * Polygon annotation (ISO 32000-1:2008, Section 12.5.6.9, /Subtype /Polygon).
- * <p>
- * A polygon annotation displays a closed polygon on the page. The vertices
- * of the polygon are specified by the /Vertices array.
- * </p>
- */
+/// Polygon annotation (ISO 32000-1:2008, Section 12.5.6.9, /Subtype /Polygon).
+///
+/// A polygon annotation displays a closed polygon on the page. The vertices
+/// of the polygon are specified by the /Vertices array.
+///
 public class PolygonAnnotation extends MarkupAnnotation {
 
     private Color interiorColor;
 
-    /**
-     * Constructs a polygon annotation from an existing PDF dictionary.
-     *
-     * @param dict the PDF dictionary backing this annotation
-     * @param page the page this annotation belongs to
-     */
+    /// Constructs a polygon annotation from an existing PDF dictionary.
+    ///
+    /// @param dict the PDF dictionary backing this annotation
+    /// @param page the page this annotation belongs to
     public PolygonAnnotation(PdfDictionary dict, Page page) {
         super(dict, page);
     }
 
-    /**
-     * Constructs a new polygon annotation with the given rectangle on the specified page.
-     *
-     * @param page the page this annotation belongs to
-     * @param rect the annotation rectangle
-     */
+    /// Constructs a new polygon annotation with the given rectangle on the specified page.
+    ///
+    /// @param page the page this annotation belongs to
+    /// @param rect the annotation rectangle
     public PolygonAnnotation(Page page, Rectangle rect) {
         super(page, rect);
         dict.set(PdfName.of("Subtype"), PdfName.of("Polygon"));
     }
 
-    /**
-     * Constructs a new polygon annotation with the given rectangle and vertices.
-     *
-     * @param page     the page this annotation belongs to
-     * @param rect     the annotation rectangle
-     * @param vertices the vertices of the polygon as an array of {@link Point} objects
-     */
+    /// Constructs a new polygon annotation with the given rectangle and vertices.
+    ///
+    /// @param page     the page this annotation belongs to
+    /// @param rect     the annotation rectangle
+    /// @param vertices the vertices of the polygon as an array of [Point] objects
     public PolygonAnnotation(Page page, Rectangle rect, Point[] vertices) {
         super(page, rect);
         dict.set(PdfName.of("Subtype"), PdfName.of("Polygon"));
         setVertexPoints(vertices);
     }
 
-    /**
-     * Returns the vertices of the polygon as an array of coordinate pairs [x1, y1, x2, y2, ...].
-     *
-     * @return the vertices array, or null if not set
-     */
+    /// Returns the vertices of the polygon as an array of coordinate pairs [x1, y1, x2, y2, ...].
+    ///
+    /// @return the vertices array, or null if not set
     public double[] getVertices() {
         PdfBase v = dict.get("Vertices");
         if (v instanceof PdfArray) {
@@ -66,11 +59,9 @@ public class PolygonAnnotation extends MarkupAnnotation {
         return null;
     }
 
-    /**
-     * Returns the vertices of the polygon as an array of {@link Point} objects.
-     *
-     * @return the vertices as Points, or null if not set
-     */
+    /// Returns the vertices of the polygon as an array of [Point] objects.
+    ///
+    /// @return the vertices as Points, or null if not set
     public Point[] getVertexPoints() {
         double[] coords = getVertices();
         if (coords == null || coords.length < 2) return null;
@@ -82,11 +73,9 @@ public class PolygonAnnotation extends MarkupAnnotation {
         return points;
     }
 
-    /**
-     * Sets the vertices of the polygon from an array of {@link Point} objects.
-     *
-     * @param vertices the vertices to set
-     */
+    /// Sets the vertices of the polygon from an array of [Point] objects.
+    ///
+    /// @param vertices the vertices to set
     public void setVertexPoints(Point[] vertices) {
         if (vertices == null) {
             dict.remove(PdfName.of("Vertices"));
@@ -100,11 +89,9 @@ public class PolygonAnnotation extends MarkupAnnotation {
         dict.set(PdfName.of("Vertices"), arr);
     }
 
-    /**
-     * Returns the interior color used to fill the polygon (/IC entry).
-     *
-     * @return the interior color, or null if not set
-     */
+    /// Returns the interior color used to fill the polygon (/IC entry).
+    ///
+    /// @return the interior color, or null if not set
     public Color getInteriorColor() {
         if (interiorColor != null) return interiorColor;
         PdfBase ic = dict.get("IC");
@@ -115,11 +102,9 @@ public class PolygonAnnotation extends MarkupAnnotation {
         return null;
     }
 
-    /**
-     * Sets the interior color used to fill the polygon (/IC entry).
-     *
-     * @param color the interior color, or null to remove
-     */
+    /// Sets the interior color used to fill the polygon (/IC entry).
+    ///
+    /// @param color the interior color, or null to remove
     public void setInteriorColor(Color color) {
         this.interiorColor = color;
         if (color == null) {

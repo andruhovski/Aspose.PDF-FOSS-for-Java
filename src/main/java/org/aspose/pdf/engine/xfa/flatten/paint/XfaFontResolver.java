@@ -5,63 +5,47 @@ import org.aspose.pdf.Page;
 import org.aspose.pdf.engine.font.ttf.FontDiskLookup;
 import org.aspose.pdf.engine.font.ttf.TrueTypeReader;
 import org.aspose.pdf.engine.font.ttf.Type0FontBuilder;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
-import org.aspose.pdf.engine.pdfobjects.PdfStream;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
-/**
- * Resolves the real font a piece of XFA text should be painted in, in strict priority order, and
- * builds an embeddable {@code /Type0} font from it (XFA-FONTEMBED sprint). Lifts the font-AA floor:
- * text is drawn in the actual family (Arial/…) instead of the standard-14 Helvetica substitute, so
- * glyph shapes match the reference render.
- *
- * <p>Priority (deterministic, licence-clean):</p>
- * <ol>
- *   <li><b>Embedded-in-source-PDF</b> — a font program already embedded in the source document
- *       ({@code /FontDescriptor/FontFile2}) whose family matches; reused verbatim (the user's own
- *       document — licence-safe, best fidelity).</li>
- *   <li><b>Host system font</b> — discovered on disk via {@link FontDiskLookup#loadStyled} over the
- *       configured dirs ({@code -Dxfa.fontDir}, default OS roots), style-aware.</li>
- *   <li><b>Substitution</b> — none found ⇒ {@code resolve} returns {@code null} and the painter keeps
- *       its standard-14 Helvetica path.</li>
- * </ol>
- *
- * <p><b>No proprietary font is ever bundled</b>: source fonts come from the user's PDF, host fonts
- * from the machine at runtime. The whole feature is gated by {@code -Dxfa.embedFonts} (default on);
- * a {@link #disabled()} resolver reproduces the pre-sprint substitution behaviour exactly (used by
- * the WinAnsi unit tests).</p>
- */
+/// Resolves the real font a piece of XFA text should be painted in, in strict priority order, and
+/// builds an embeddable `/Type0` font from it (XFA-FONTEMBED sprint). Lifts the font-AA floor:
+/// text is drawn in the actual family (Arial/…) instead of the standard-14 Helvetica substitute, so
+/// glyph shapes match the reference render.
+///
+/// Priority (deterministic, licence-clean):
+///
+///   1. **Embedded-in-source-PDF** — a font program already embedded in the source document
+///     (`/FontDescriptor/FontFile2`) whose family matches; reused verbatim (the user's own
+///     document — licence-safe, best fidelity).
+///   2. **Host system font** — discovered on disk via [FontDiskLookup#loadStyled] over the
+///     configured dirs (`-Dxfa.fontDir`, default OS roots), style-aware.
+///   3. **Substitution** — none found ⇒ `resolve` returns `null` and the painter keeps
+///     its standard-14 Helvetica path.
+///
+/// **No proprietary font is ever bundled**: source fonts come from the user's PDF, host fonts
+/// from the machine at runtime. The whole feature is gated by `-Dxfa.embedFonts` (default on);
+/// a [#disabled()] resolver reproduces the pre-sprint substitution behaviour exactly (used by
+/// the WinAnsi unit tests).
 public final class XfaFontResolver {
 
     private static final Logger LOG = Logger.getLogger(XfaFontResolver.class.getName());
     private static final Pattern SUBSET_PREFIX = Pattern.compile("^[A-Z]{6}\\+");
 
-    /** How a family was resolved (for reporting). */
+    /// How a family was resolved (for reporting).
     public enum Source { SOURCE_PDF, HOST, FALLBACK }
 
-    /** A resolved, embeddable font: a unique resource key, the Type0 dict, and the reader for GIDs. */
+    /// A resolved, embeddable font: a unique resource key, the Type0 dict, and the reader for GIDs.
     public static final class Embedded {
-        /** Unique {@code registerFont} key (one per family+style). */
+        /// Unique `registerFont` key (one per family+style).
         public final String fontKey;
-        /** The assembled {@code /Type0} font dictionary to attach under {@code /Resources/Font}. */
+        /// The assembled `/Type0` font dictionary to attach under `/Resources/Font`.
         public final PdfDictionary type0Dict;
-        /** The reader providing Unicode→GID for {@code markFontAsType0}/{@code showText}. */
+        /// The reader providing Unicode→GID for `markFontAsType0`/`showText`.
         public final TrueTypeReader reader;
 
         Embedded(String fontKey, PdfDictionary type0Dict, TrueTypeReader reader) {
@@ -84,13 +68,11 @@ public final class XfaFontResolver {
         this.enabled = enabled;
     }
 
-    /**
-     * Builds a resolver configured from system properties ({@code xfa.embedFonts}, {@code xfa.fontDir})
-     * and the source document's embedded fonts (priority 1).
-     *
-     * @param source the source PDF whose embedded fonts may be reused, or {@code null}
-     * @return a resolver (possibly {@link #disabled()} when {@code xfa.embedFonts=false})
-     */
+    /// Builds a resolver configured from system properties (`xfa.embedFonts`, `xfa.fontDir`)
+    /// and the source document's embedded fonts (priority 1).
+    ///
+    /// @param source the source PDF whose embedded fonts may be reused, or `null`
+    /// @return a resolver (possibly [#disabled()] when `xfa.embedFonts=false`)
     public static XfaFontResolver create(Document source) {
         boolean enabled = !"false".equalsIgnoreCase(System.getProperty("xfa.embedFonts", "true"));
         if (!enabled) {
@@ -102,26 +84,24 @@ public final class XfaFontResolver {
         return new XfaFontResolver(src, dirs, true);
     }
 
-    /** A resolver that never embeds (the painter keeps its Helvetica substitution) — exact legacy behaviour. */
+    /// A resolver that never embeds (the painter keeps its Helvetica substitution) — exact legacy behaviour.
     public static XfaFontResolver disabled() {
         return new XfaFontResolver(Collections.emptyMap(), new String[0], false);
     }
 
-    /** @return {@code true} if embedding is active. */
+    /// @return `true` if embedding is active.
     public boolean isEnabled() {
         return enabled;
     }
 
-    /**
-     * Resolves the font for a requested family/style to an embeddable Type0 font, or {@code null} if
-     * the painter should fall back to its standard-14 substitute. Results (including misses) are cached
-     * so a family is resolved and embedded once.
-     *
-     * @param typeface the XFA {@code <font typeface>} family, e.g. {@code "Arial"}
-     * @param bold     bold requested
-     * @param italic   italic requested
-     * @return the embedded font, or {@code null} to fall back
-     */
+    /// Resolves the font for a requested family/style to an embeddable Type0 font, or `null` if
+    /// the painter should fall back to its standard-14 substitute. Results (including misses) are cached
+    /// so a family is resolved and embedded once.
+    ///
+    /// @param typeface the XFA `<font typeface>` family, e.g. `"Arial"`
+    /// @param bold     bold requested
+    /// @param italic   italic requested
+    /// @return the embedded font, or `null` to fall back
     public Embedded resolve(String typeface, boolean bold, boolean italic) {
         if (!enabled) {
             return null;
@@ -139,7 +119,7 @@ public final class XfaFontResolver {
         return e;
     }
 
-    /** @return the embedded font previously registered under {@code fontKey} (for the merge step), or {@code null}. */
+    /// @return the embedded font previously registered under `fontKey` (for the merge step), or `null`.
     public Embedded embeddedFor(String fontKey) {
         for (Embedded e : cache.values()) {
             if (e != null && e.fontKey.equals(fontKey)) {
@@ -149,12 +129,12 @@ public final class XfaFontResolver {
         return null;
     }
 
-    /** @return families resolved, mapped to how (source/host) — for the findings report. */
+    /// @return families resolved, mapped to how (source/host) — for the findings report.
     public Map<String, Source> resolvedVia() {
         return Collections.unmodifiableMap(resolvedVia);
     }
 
-    /** @return resolve keys that fell back to substitution. */
+    /// @return resolve keys that fell back to substitution.
     public Set<String> fellBack() {
         return Collections.unmodifiableSet(fellBack);
     }
@@ -198,10 +178,8 @@ public final class XfaFontResolver {
 
     /* ------------------------- source-PDF extraction ------------------------ */
 
-    /**
-     * Scans a source document's page (and Form-XObject) font resources for embedded TrueType programs
-     * ({@code /FontFile2}) and indexes them by normalized family name. Best-effort and exception-safe.
-     */
+    /// Scans a source document's page (and Form-XObject) font resources for embedded TrueType programs
+    /// (`/FontFile2`) and indexes them by normalized family name. Best-effort and exception-safe.
     static Map<String, byte[]> extractEmbeddedFonts(Document doc) {
         Map<String, byte[]> out = new HashMap<>();
         try {
@@ -310,7 +288,7 @@ public final class XfaFontResolver {
         return val instanceof PdfDictionary ? (PdfDictionary) val : null;
     }
 
-    /** Normalizes a family/BaseFont to a match key: strip subset prefix, lowercase, drop style/suffix words. */
+    /// Normalizes a family/BaseFont to a match key: strip subset prefix, lowercase, drop style/suffix words.
     static String normalize(String name) {
         if (name == null) {
             return "";
@@ -332,7 +310,7 @@ public final class XfaFontResolver {
         return b.toString();
     }
 
-    /** @return true when the family reads as a serif face (so the fallback picks Times/serif). */
+    /// @return true when the family reads as a serif face (so the fallback picks Times/serif).
     private static boolean isSerif(String family) {
         String s = family.toLowerCase(Locale.ROOT);
         return s.contains("times") || s.contains("serif") || s.contains("roman") || s.contains("georgia")
@@ -340,7 +318,7 @@ public final class XfaFontResolver {
                 || s.contains("palatino") || s.contains("cambria");
     }
 
-    /** @return true when the family reads as a monospace face (so the fallback picks Courier/mono). */
+    /// @return true when the family reads as a monospace face (so the fallback picks Courier/mono).
     private static boolean isMono(String family) {
         String s = family.toLowerCase(Locale.ROOT);
         return s.contains("courier") || s.contains("mono") || s.contains("consol")

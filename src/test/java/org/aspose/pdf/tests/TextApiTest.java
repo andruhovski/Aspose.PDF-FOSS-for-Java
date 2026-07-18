@@ -1,6 +1,5 @@
 package org.aspose.pdf.tests;
 
-import org.aspose.pdf.Color;
 import org.aspose.pdf.Page;
 import org.aspose.pdf.Rectangle;
 import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
@@ -10,10 +9,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for text API value types: Position, TextState, TextSegment,
- * TextFragment, TextFragmentCollection, TextExtractionOptions, TextSearchOptions.
- */
+/// Tests for text API value types: Position, TextState, TextSegment,
+/// TextFragment, TextFragmentCollection, TextExtractionOptions, TextSearchOptions.
 public class TextApiTest {
 
     // ---- Position ----

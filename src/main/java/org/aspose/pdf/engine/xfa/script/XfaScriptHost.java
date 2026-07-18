@@ -15,20 +15,14 @@ import org.aspose.pdf.engine.xfa.model.XfaNodeFactory;
 import org.aspose.pdf.engine.xfa.model.template.Template;
 import org.w3c.dom.Element;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-/**
- * The XFA scripting host (Stage B / B3.1 PART A): owns one JS-0 {@link Engine}, injects the XFA host
- * objects the corpus scripts use ({@code xfa} + {@code host}/{@code app}/{@code util}/{@code console}/
- * {@code event}) onto the global object, and bridges {@code xfa.resolveNode}/{@code resolveNodes} to
- * the Stage-A {@link SomResolver} over the merged Form DOM. A script runs with {@code this} bound to
- * its current node; node value reads/writes go through {@link FormField} so a calculate/initialize
- * result flows into the render track.
- */
+/// The XFA scripting host (Stage B / B3.1 PART A): owns one JS-0 [Engine], injects the XFA host
+/// objects the corpus scripts use (`xfa` + `host`/`app`/`util`/`console`/
+/// `event`) onto the global object, and bridges `xfa.resolveNode`/`resolveNodes` to
+/// the Stage-A [SomResolver] over the merged Form DOM. A script runs with `this` bound to
+/// its current node; node value reads/writes go through [FormField] so a calculate/initialize
+/// result flows into the render track.
 public final class XfaScriptHost {
 
     private final Engine engine;
@@ -36,51 +30,45 @@ public final class XfaScriptHost {
     private final FormDom dom;
     private final SomResolver som = new SomResolver();
     private final Map<Element, FormField> fieldByElement = new IdentityHashMap<>();
-    /** Canonical (parent-linked) tree node per element — {@link FormField#getFormNode} is detached. */
+    /// Canonical (parent-linked) tree node per element — [FormField#getFormNode] is detached.
     private final Map<Element, XfaNode> treeByElement = new IdentityHashMap<>();
     private final Map<Element, XfaScriptNode> nodeCache = new IdentityHashMap<>();
     private final Template template;
-    /** Variable-occurrence container name → {min, max(-1=unbounded)} from the template {@code <occur>}. */
+    /// Variable-occurrence container name → {min, max(-1=unbounded)} from the template `<occur>`.
     private final Map<String, int[]> occurByName = new HashMap<>();
-    /** Variable-occurrence container name → a template subform element (clone source for a fresh instance). */
+    /// Variable-occurrence container name → a template subform element (clone source for a fresh instance).
     private final Map<String, Element> templateByName = new HashMap<>();
-    /**
-     * instanceManager per (parent element, child container name) — node-scoped so {@code node._child}
-     * resolves to the manager anchored at THIS node (not an ambiguous global, since a name like
-     * {@code po} recurs under several parents). Covers both present-instance and zero-instance slots.
-     */
+    /// instanceManager per (parent element, child container name) — node-scoped so `node._child`
+    /// resolves to the manager anchored at THIS node (not an ambiguous global, since a name like
+    /// `po` recurs under several parents). Covers both present-instance and zero-instance slots.
     private final Map<Element, Map<String, XfaInstanceManager>> imByParent = new IdentityHashMap<>();
     private JSObject globalRef;
 
-    /** Recorded host side effects (app.alert / console.println / host.messageBox) for diagnostics. */
+    /// Recorded host side effects (app.alert / console.println / host.messageBox) for diagnostics.
     private final List<String> messages = new ArrayList<>();
-    /** Form-level script-object libraries loaded / that failed to evaluate (JS-0 parser/host gaps). */
+    /// Form-level script-object libraries loaded / that failed to evaluate (JS-0 parser/host gaps).
     private int libsLoaded;
     private int libsFailed;
-    /** The node whose script is currently executing (the SOM resolution origin for {@code xfa.resolveNode}). */
+    /// The node whose script is currently executing (the SOM resolution origin for `xfa.resolveNode`).
     private XfaScriptNode currentNode;
-    /** Shared absent-node (B3.5.1) returned when a SOM/child step resolves to nothing — lazily built. */
+    /// Shared absent-node (B3.5.1) returned when a SOM/child step resolves to nothing — lazily built.
     private XfaAbsentNode absentNode;
-    /** Re-entrancy depth of {@code node.execEvent(...)} — bounds a handler that triggers another handler. */
+    /// Re-entrancy depth of `node.execEvent(...)` — bounds a handler that triggers another handler.
     int execEventDepth;
-    /** Max synchronous {@code execEvent} nesting (a handler-runs-handler guard, not the interactive loop). */
+    /// Max synchronous `execEvent` nesting (a handler-runs-handler guard, not the interactive loop).
     static final int MAX_EXEC_DEPTH = 16;
 
-    /**
-     * Builds a host over a merged Form DOM (no template → no instanceManager).
-     *
-     * @param dom the merged Form DOM (the script's form tree + field values)
-     */
+    /// Builds a host over a merged Form DOM (no template → no instanceManager).
+    ///
+    /// @param dom the merged Form DOM (the script's form tree + field values)
     public XfaScriptHost(FormDom dom) {
         this(dom, null);
     }
 
-    /**
-     * Builds a host over a merged Form DOM with the template (for instanceManager occur limits).
-     *
-     * @param dom the merged Form DOM
-     * @param tpl the template (variable-occurrence limits + clone prototypes), or {@code null}
-     */
+    /// Builds a host over a merged Form DOM with the template (for instanceManager occur limits).
+    ///
+    /// @param dom the merged Form DOM
+    /// @param tpl the template (variable-occurrence limits + clone prototypes), or `null`
     public XfaScriptHost(FormDom dom, Template tpl) {
         this.dom = dom;
         this.template = tpl;
@@ -104,7 +92,7 @@ public final class XfaScriptHost {
         loadScriptObjects();
     }
 
-    /** Records each template container's {@code <occur>} limits + a clone prototype, by name. */
+    /// Records each template container's `<occur>` limits + a clone prototype, by name.
     private void indexOccur(Element el) {
         String ln = local(el);
         if ("subform".equals(ln) || "subformSet".equals(ln)) {
@@ -126,12 +114,10 @@ public final class XfaScriptHost {
         }
     }
 
-    /**
-     * Exposes {@code _<name>} for each variable-occurrence container as its instanceManager. The
-     * manager is bound to the container's parent (where the same-named instance siblings live) and
-     * the template occur limits. A form-DOM parent may hold several distinct variable-occurrence
-     * names; each gets its own {@code _name}.
-     */
+    /// Exposes `_<name>` for each variable-occurrence container as its instanceManager. The
+    /// manager is bound to the container's parent (where the same-named instance siblings live) and
+    /// the template occur limits. A form-DOM parent may hold several distinct variable-occurrence
+    /// names; each gets its own `_name`.
     private void injectInstanceManagers() {
         if (template == null || occurByName.isEmpty() || dom.getRoot() == null) {
             return;
@@ -175,30 +161,28 @@ public final class XfaScriptHost {
         }
     }
 
-    /** Registers an instanceManager in both the parent-scoped registry and the legacy {@code _name} global. */
+    /// Registers an instanceManager in both the parent-scoped registry and the legacy `_name` global.
     private void register(Element parentEl, String name, XfaInstanceManager mgr) {
         imByParent.computeIfAbsent(parentEl, k -> new HashMap<>()).put(name, mgr);
         globalRef.defineHidden("_" + name, mgr); // legacy global (node.instanceManager bridge)
     }
 
-    /** @return the instanceManager registered for ({@code parentEl}, {@code name}), or null. */
+    /// @return the instanceManager registered for (`parentEl`, `name`), or null.
     private XfaInstanceManager imFor(Element parentEl, String name) {
         Map<String, XfaInstanceManager> m = parentEl == null ? null : imByParent.get(parentEl);
         return m == null ? null : m.get(name);
     }
 
-    /**
-     * Resolves the instanceManager for a variable-occurrence child container of {@code parent} named
-     * {@code name} — backing the {@code node._<name>} accessor (e.g. {@code this.parent._po}). Anchored
-     * at the specific parent, so a name shared by several parents resolves to the right manager.
-     *
-     * @return the child's instanceManager, or {@code null} if {@code parent} has no such occur child
-     */
+    /// Resolves the instanceManager for a variable-occurrence child container of `parent` named
+    /// `name` — backing the `node._<name>` accessor (e.g. `this.parent._po`). Anchored
+    /// at the specific parent, so a name shared by several parents resolves to the right manager.
+    ///
+    /// @return the child's instanceManager, or `null` if `parent` has no such occur child
     XfaInstanceManager instanceManagerForChild(XfaNode parent, String name) {
         return parent == null ? null : imFor(parent.getElement(), name);
     }
 
-    /** Imports a template subform prototype into the form document so a fresh instance can be cloned. */
+    /// Imports a template subform prototype into the form document so a fresh instance can be cloned.
     private Element importProto(Element templateSubform) {
         if (templateSubform == null || dom.getDocument() == null) {
             return null;
@@ -221,7 +205,7 @@ public final class XfaScriptHost {
         }
     }
 
-    /** A form-level script-object library: its JS source plus the {@code <script name>} (may be empty). */
+    /// A form-level script-object library: its JS source plus the `<script name>` (may be empty).
     private static final class Lib {
         final String name;
         final String source;
@@ -231,17 +215,15 @@ public final class XfaScriptHost {
         }
     }
 
-    /**
-     * Pre-loads the form's script-object function libraries: XFA forms define reusable helpers in
-     * {@code <variables><script name="N">} blocks that per-field calculate/event scripts call as
-     * {@code N.helper(...)} (qualified, the dominant corpus form) or {@code helper(...)} (bare). Each
-     * JS block is evaluated once in the shared engine global so its {@code function} declarations are
-     * in scope (bare calls), and the functions it defines are additionally bound to an object
-     * {@code N} so the qualified calls resolve too (B3.3 — the measured dominant unlock). Because
-     * function declarations are hoisted before any top-level statement runs, a library that throws at
-     * load (e.g. a top-level navigation) still exposes its hoisted helpers. A failed block is tracked
-     * (not fatal).
-     */
+    /// Pre-loads the form's script-object function libraries: XFA forms define reusable helpers in
+    /// `<variables><script name="N">` blocks that per-field calculate/event scripts call as
+    /// `N.helper(...)` (qualified, the dominant corpus form) or `helper(...)` (bare). Each
+    /// JS block is evaluated once in the shared engine global so its `function` declarations are
+    /// in scope (bare calls), and the functions it defines are additionally bound to an object
+    /// `N` so the qualified calls resolve too (B3.3 — the measured dominant unlock). Because
+    /// function declarations are hoisted before any top-level statement runs, a library that throws at
+    /// load (e.g. a top-level navigation) still exposes its hoisted helpers. A failed block is tracked
+    /// (not fatal).
     private void loadScriptObjects() {
         if (dom.getRoot() == null) {
             return;
@@ -263,17 +245,15 @@ public final class XfaScriptHost {
         }
     }
 
-    /**
-     * Binds the functions a just-loaded library added to the global scope onto an object named after
-     * the script object ({@code <script name="N">}), so a qualified call {@code N.helper()} resolves
-     * (the bare globals the eval already created keep {@code helper()} working). The object shadows any
-     * node-wrapper global of the same name (a {@code <script name="N">} node is otherwise injected as a
-     * value-less node wrapper, which is exactly why {@code N.helper} returned undefined before B3.3).
-     *
-     * @param global the engine global object
-     * @param name   the script-object name {@code N}
-     * @param before the global's own keys captured immediately before this library was evaluated
-     */
+    /// Binds the functions a just-loaded library added to the global scope onto an object named after
+    /// the script object (`<script name="N">`), so a qualified call `N.helper()` resolves
+    /// (the bare globals the eval already created keep `helper()` working). The object shadows any
+    /// node-wrapper global of the same name (a `<script name="N">` node is otherwise injected as a
+    /// value-less node wrapper, which is exactly why `N.helper` returned undefined before B3.3).
+    ///
+    /// @param global the engine global object
+    /// @param name   the script-object name `N`
+    /// @param before the global's own keys captured immediately before this library was evaluated
     private void exposeScriptObject(JSObject global, String name, java.util.Set<String> before) {
         Object existing = global.hasOwnProperty(name) ? global.get(name) : null;
         JSObject obj;
@@ -296,12 +276,12 @@ public final class XfaScriptHost {
         global.defineHidden(name, obj);
     }
 
-    /** @return form-level script-object libraries successfully evaluated. */
+    /// @return form-level script-object libraries successfully evaluated.
     public int getLibsLoaded() {
         return libsLoaded;
     }
 
-    /** @return script-object libraries that failed to evaluate (JS-0 parser / host gaps). */
+    /// @return script-object libraries that failed to evaluate (JS-0 parser / host gaps).
     public int getLibsFailed() {
         return libsFailed;
     }
@@ -324,7 +304,7 @@ public final class XfaScriptHost {
         }
     }
 
-    /** Builds the canonical parent-linked node per element (walking the root tree, whose children carry parents). */
+    /// Builds the canonical parent-linked node per element (walking the root tree, whose children carry parents).
     private void indexTree(XfaNode node) {
         treeByElement.putIfAbsent(node.getElement(), node);
         for (XfaNode c : node.getChildren()) {
@@ -334,7 +314,7 @@ public final class XfaScriptHost {
 
     /* ------------------------------ instance mutation ------------------------------ */
 
-    /** @return the canonical parent-linked node for an element (registering it + descendants if new). */
+    /// @return the canonical parent-linked node for an element (registering it + descendants if new).
     XfaNode canonical(Element e) {
         XfaNode n = treeByElement.get(e);
         if (n != null) {
@@ -347,14 +327,14 @@ public final class XfaScriptHost {
         return node;
     }
 
-    /** Called after a new instance subform is inserted: register its node tree + fields + named globals. */
+    /// Called after a new instance subform is inserted: register its node tree + fields + named globals.
     void onInstanceAdded(Element instance) {
         XfaNode node = canonical(instance);
         registerFieldsUnder(node);
         injectNamedGlobals();
     }
 
-    /** Called before an instance is removed: drop its fields + cached wrappers + tree entries. */
+    /// Called before an instance is removed: drop its fields + cached wrappers + tree entries.
     void onInstanceRemoved(Element instance) {
         List<Element> sub = new ArrayList<>();
         collectElements(instance, sub);
@@ -368,7 +348,7 @@ public final class XfaScriptHost {
         }
     }
 
-    /** Registers a {@link FormField} for every leaf {@code <field>}/{@code <exclGroup>} under a new instance. */
+    /// Registers a [FormField] for every leaf `<field>`/`<exclGroup>` under a new instance.
     private void registerFieldsUnder(XfaNode node) {
         String ln = node.getElementName();
         if ("field".equals(ln) || "exclGroup".equals(ln)) {
@@ -442,12 +422,10 @@ public final class XfaScriptHost {
         return null;
     }
 
-    /**
-     * Injects each named node as a global so an unqualified SOM name in a script ({@code Qty.rawValue})
-     * resolves to its node — XFA scripts run in a scope where sibling names are visible. Builtins are
-     * never shadowed (a field named {@code Date} stays reachable via {@code resolveNode}); duplicate
-     * names resolve last-wins (a flat-scope approximation — nested same-name fields are a tracked gap).
-     */
+    /// Injects each named node as a global so an unqualified SOM name in a script (`Qty.rawValue`)
+    /// resolves to its node — XFA scripts run in a scope where sibling names are visible. Builtins are
+    /// never shadowed (a field named `Date` stays reachable via `resolveNode`); duplicate
+    /// names resolve last-wins (a flat-scope approximation — nested same-name fields are a tracked gap).
     private void injectNamedGlobals() {
         JSObject global = engine.getGlobalObject();
         for (Map.Entry<Element, XfaNode> e : treeByElement.entrySet()) {
@@ -461,14 +439,12 @@ public final class XfaScriptHost {
 
     /* ------------------------------ execution ------------------------------ */
 
-    /**
-     * Runs a script source with {@code this} bound to {@code current}.
-     *
-     * @param source  the JavaScript source
-     * @param current the current node (the script's {@code this} and SOM origin)
-     * @return the completion value (the calculate result), or {@code null} on a script error
-     * @throws XfaScriptError if the script throws or fails to parse
-     */
+    /// Runs a script source with `this` bound to `current`.
+    ///
+    /// @param source  the JavaScript source
+    /// @param current the current node (the script's `this` and SOM origin)
+    /// @return the completion value (the calculate result), or `null` on a script error
+    /// @throws XfaScriptError if the script throws or fails to parse
     public Object run(String source, XfaScriptNode current) {
         XfaScriptNode prev = currentNode;
         currentNode = current;
@@ -487,19 +463,17 @@ public final class XfaScriptHost {
         }
     }
 
-    /** Lazily-built FormCalc evaluator (B2) — shares this host's SOM resolver + value bridge. */
+    /// Lazily-built FormCalc evaluator (B2) — shares this host's SOM resolver + value bridge.
     private FormCalcEngine formCalc;
 
-    /**
-     * Runs a FormCalc script with {@code current} as the {@code $} reference + SOM origin (B2). A
-     * sibling to {@link #run} for the JS path; the carrier's value flows back through the same
-     * {@link FormField} bridge so a FormCalc calculate reaches the render track.
-     *
-     * @param source  the FormCalc source
-     * @param current the carrier node
-     * @return the computed value (Double/String/null)
-     * @throws FormCalcError on a lex/parse/eval failure
-     */
+    /// Runs a FormCalc script with `current` as the `$` reference + SOM origin (B2). A
+    /// sibling to [#run] for the JS path; the carrier's value flows back through the same
+    /// [FormField] bridge so a FormCalc calculate reaches the render track.
+    ///
+    /// @param source  the FormCalc source
+    /// @param current the carrier node
+    /// @return the computed value (Double/String/null)
+    /// @throws FormCalcError on a lex/parse/eval failure
     public Object runFormCalc(String source, XfaScriptNode current) {
         if (formCalc == null) {
             formCalc = new FormCalcEngine(this);
@@ -513,12 +487,12 @@ public final class XfaScriptHost {
         }
     }
 
-    /** @return the FormCalc builtins encountered but not yet implemented (a tracked B2 gap). */
+    /// @return the FormCalc builtins encountered but not yet implemented (a tracked B2 gap).
     public java.util.Set<String> getFormCalcUnimplemented() {
         return formCalc == null ? java.util.Collections.emptySet() : formCalc.unimplemented();
     }
 
-    /** Builds a readable "Name: message" from a thrown JS Error value (else its string form). */
+    /// Builds a readable "Name: message" from a thrown JS Error value (else its string form).
     private static String describeThrown(Object thrown) {
         if (thrown instanceof JSObject) {
             JSObject o = (JSObject) thrown;
@@ -533,10 +507,8 @@ public final class XfaScriptHost {
 
     /* ------------------------------ node wrappers ------------------------------ */
 
-    /**
-     * @return the shared absent node (B3.5.1) — the null-object returned when a SOM expression or a
-     * dotted child step finds nothing, so the next property read is a benign empty, not a throw.
-     */
+    /// @return the shared absent node (B3.5.1) — the null-object returned when a SOM expression or a
+    /// dotted child step finds nothing, so the next property read is a benign empty, not a throw.
     XfaAbsentNode absent() {
         if (absentNode == null) {
             absentNode = new XfaAbsentNode(this, realm.objectPrototype);
@@ -544,7 +516,7 @@ public final class XfaScriptHost {
         return absentNode;
     }
 
-    /** @return the script node wrapping {@code node} (cached). */
+    /// @return the script node wrapping `node` (cached).
     public XfaScriptNode wrap(XfaNode node) {
         if (node == null) {
             return null;
@@ -560,14 +532,14 @@ public final class XfaScriptHost {
         return w;
     }
 
-    /** @return the form-DOM root as a script node. */
+    /// @return the form-DOM root as a script node.
     public XfaScriptNode formRoot() {
         return dom.getRoot() == null ? null : wrap(dom.getRoot());
     }
 
     /* ------------------------------ value bridge ------------------------------ */
 
-    /** Reads a node's value (the field's bound/computed value), or {@code null} if none. */
+    /// Reads a node's value (the field's bound/computed value), or `null` if none.
     String readValue(XfaNode node) {
         FormField f = fieldByElement.get(node.getElement());
         if (f != null) {
@@ -583,7 +555,7 @@ public final class XfaScriptHost {
         return null;
     }
 
-    /** Writes a node's value through the {@link FormField} (so the render track sees it). */
+    /// Writes a node's value through the [FormField] (so the render track sees it).
     void writeValue(XfaNode node, String v) {
         FormField f = fieldByElement.get(node.getElement());
         if (f != null) {
@@ -592,25 +564,23 @@ public final class XfaScriptHost {
         // else: a non-field node (container) — XFA scripts rarely write these; left as a tracked gap.
     }
 
-    /** @return the FormField for a node, or {@code null}. */
+    /// @return the FormField for a node, or `null`.
     FormField fieldFor(XfaNode node) {
         return fieldByElement.get(node.getElement());
     }
 
-    /** The XFA datasets (data) packet namespace — the class of nodes {@code xfa.datasets.createNode} builds. */
+    /// The XFA datasets (data) packet namespace — the class of nodes `xfa.datasets.createNode` builds.
     static final String DATASETS_NS = "http://www.xfa.org/schema/xfa-data/1.0/";
 
-    /**
-     * Creates a new, detached node of the given class (B3.4 — {@code xfa.form.createNode("field","x")}
-     * / {@code xfa.datasets.createNode("dataValue","x")}). The node is backed by a fresh element in the
-     * Form-DOM document so it can be attached via {@link #appendChild} / {@link #insertChild} and then
-     * resolved, computed and painted.
-     *
-     * @param className the XFA class (element local name): {@code subform}/{@code field}/{@code dataValue}/…
-     * @param name      the node name (may be empty)
-     * @param dataNs    {@code true} for a datasets (data) node, {@code false} for a template/form node
-     * @return the detached node, or {@code null} if it cannot be created
-     */
+    /// Creates a new, detached node of the given class (B3.4 — `xfa.form.createNode("field","x")`
+    /// / `xfa.datasets.createNode("dataValue","x")`). The node is backed by a fresh element in the
+    /// Form-DOM document so it can be attached via [#appendChild] / [#insertChild] and then
+    /// resolved, computed and painted.
+    ///
+    /// @param className the XFA class (element local name): `subform`/`field`/`dataValue`/…
+    /// @param name      the node name (may be empty)
+    /// @param dataNs`true` for a datasets (data) node, `false` for a template/form node
+    /// @return the detached node, or `null` if it cannot be created
     XfaScriptNode createNode(String className, String name, boolean dataNs) {
         if (className == null || className.isEmpty() || dom.getDocument() == null) {
             return null;
@@ -623,12 +593,12 @@ public final class XfaScriptHost {
         return wrap(XfaNodeFactory.wrap(e, null));
     }
 
-    /** Appends {@code child} under {@code parent} (the {@code node.nodes.append(createNode(...))} pattern). */
+    /// Appends `child` under `parent` (the `node.nodes.append(createNode(...))` pattern).
     void appendChild(XfaNode parent, XfaNode child) {
         insertChild(parent, child, null);
     }
 
-    /** Inserts {@code child} under {@code parent} before {@code ref} (or appends when {@code ref} is null). */
+    /// Inserts `child` under `parent` before `ref` (or appends when `ref` is null).
     void insertChild(XfaNode parent, XfaNode child, XfaNode ref) {
         if (parent == null || child == null || parent.getElement() == null || child.getElement() == null) {
             return;
@@ -651,7 +621,7 @@ public final class XfaScriptHost {
         onInstanceAdded(ce);
     }
 
-    /** Detaches {@code child} from {@code parent} (the {@code node.nodes.remove(child)} pattern). */
+    /// Detaches `child` from `parent` (the `node.nodes.remove(child)` pattern).
     void removeChild(XfaNode parent, XfaNode child) {
         if (child == null || child.getElement() == null || child.getElement().getParentNode() == null) {
             return;
@@ -660,14 +630,12 @@ public final class XfaScriptHost {
         child.getElement().getParentNode().removeChild(child.getElement());
     }
 
-    /**
-     * Resolves the instanceManager exposed for a node's variable-occurrence name (the {@code _<name>}
-     * global from {@link #injectInstanceManagers()}), backing the {@code node.instanceManager}
-     * accessor scripts use ({@code subform.instanceManager.addInstance(...)}) — B3.3 IM closure.
-     *
-     * @param node the (instance) subform node
-     * @return its instanceManager, or {@code null} if the container is not variable-occurrence
-     */
+    /// Resolves the instanceManager exposed for a node's variable-occurrence name (the `_<name>`
+    /// global from [#injectInstanceManagers()]), backing the `node.instanceManager`
+    /// accessor scripts use (`subform.instanceManager.addInstance(...)`) — B3.3 IM closure.
+    ///
+    /// @param node the (instance) subform node
+    /// @return its instanceManager, or `null` if the container is not variable-occurrence
     XfaInstanceManager instanceManagerFor(XfaNode node) {
         if (node == null || node.getName() == null || node.getName().isEmpty()) {
             return null;
@@ -676,7 +644,7 @@ public final class XfaScriptHost {
         return m instanceof XfaInstanceManager ? (XfaInstanceManager) m : null;
     }
 
-    /** Whether a field is numeric-typed (numericEdit UI, or a decimal/float/integer value) — its rawValue is a number. */
+    /// Whether a field is numeric-typed (numericEdit UI, or a decimal/float/integer value) — its rawValue is a number.
     boolean isNumericField(XfaNode node) {
         XfaNode ui = node.getChild("ui");
         if (ui != null) {
@@ -705,17 +673,15 @@ public final class XfaScriptHost {
 
     /* ------------------------------ SOM bridge ------------------------------ */
 
-    /**
-     * Resolves a single node for a SOM expression, relative to {@code from} (the current node).
-     *
-     * @return the wrapped node, or {@code null} if nothing matches
-     */
+    /// Resolves a single node for a SOM expression, relative to `from` (the current node).
+    ///
+    /// @return the wrapped node, or `null` if nothing matches
     XfaScriptNode resolveOne(String expr, XfaScriptNode from) {
         XfaNode n = som.resolveNode(expr, contextFor(from));
         return n == null ? null : wrap(n);
     }
 
-    /** Resolves all nodes for a SOM expression as a plain list of script nodes (the FormCalc node-set). */
+    /// Resolves all nodes for a SOM expression as a plain list of script nodes (the FormCalc node-set).
     List<XfaScriptNode> resolveList(String expr, XfaScriptNode from) {
         List<XfaNode> ns = som.resolveNodes(expr, contextFor(from));
         List<XfaScriptNode> out = new ArrayList<>(ns.size());
@@ -725,7 +691,7 @@ public final class XfaScriptHost {
         return out;
     }
 
-    /** Resolves all nodes for a SOM expression as a JS array of script nodes. */
+    /// Resolves all nodes for a SOM expression as a JS array of script nodes.
     JSArray resolveMany(String expr, XfaScriptNode from) {
         List<XfaNode> ns = som.resolveNodes(expr, contextFor(from));
         JSArray a = realm.newArray();
@@ -759,7 +725,7 @@ public final class XfaScriptHost {
         return realm;
     }
 
-    /** @return the recorded host side effects (alerts / messages). */
+    /// @return the recorded host side effects (alerts / messages).
     public List<String> getMessages() {
         return messages;
     }
@@ -856,7 +822,7 @@ public final class XfaScriptHost {
         return i < a.length ? a[i] : Undefined.INSTANCE;
     }
 
-    /** The optional name argument (index 1) as a string, or {@code ""} when absent/undefined. */
+    /// The optional name argument (index 1) as a string, or `""` when absent/undefined.
     private static String nameArg(org.aspose.pdf.engine.script.js.interp.Interpreter i, Object[] a) {
         Object v = arg(a, 1);
         return v instanceof Undefined ? "" : i.toStringJS(v);

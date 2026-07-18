@@ -5,46 +5,38 @@ import org.w3c.dom.Element;
 
 import java.util.List;
 
-/**
- * The {@code <xfa:datasets>} packet wrapper. This element is not described by
- * the XFA data model (which defines only the inner {@code <data>} subtree), so it
- * is hand-modelled here as a typed container over otherwise-generic content.
- *
- * <p>The actual user-data tree under {@code <xfa:data>} mirrors the form's data
- * hierarchy and is therefore form-specific — it stays generic. This container
- * exposes the data root and named data nodes for A4 binding to consume, without
- * imposing any schema on the user data.</p>
- */
+/// The `<xfa:datasets>` packet wrapper. This element is not described by
+/// the XFA data model (which defines only the inner `<data>` subtree), so it
+/// is hand-modelled here as a typed container over otherwise-generic content.
+///
+/// The actual user-data tree under `<xfa:data>` mirrors the form's data
+/// hierarchy and is therefore form-specific — it stays generic. This container
+/// exposes the data root and named data nodes for A4 binding to consume, without
+/// imposing any schema on the user data.
 public final class Datasets extends XfaNode {
 
-    /** XFA data namespace (version-independent family covered by the factory). */
+    /// XFA data namespace (version-independent family covered by the factory).
     public static final String DATA_NS = "http://www.xfa.org/schema/xfa-data/1.0/";
 
-    /**
-     * Wraps a backing {@code datasets} element.
-     *
-     * @param element backing element
-     * @param parent  parent node, or {@code null}
-     */
+    /// Wraps a backing `datasets` element.
+    ///
+    /// @param element backing element
+    /// @param parent  parent node, or `null`
     public Datasets(Element element, XfaNode parent) {
         super(element, parent);
     }
 
-    /**
-     * The {@code <xfa:data>} child (the user-data root), typed as {@link Data}.
-     *
-     * @return the data node, or {@code null} if absent
-     */
+    /// The `<xfa:data>` child (the user-data root), typed as [Data].
+    ///
+    /// @return the data node, or `null` if absent
     public Data getData() {
         XfaNode n = getChild("data");
         return n instanceof Data ? (Data) n : (n == null ? null : new Data(n.getElement(), this));
     }
 
-    /**
-     * Ensures and returns the {@code <xfa:data>} child.
-     *
-     * @return the data node
-     */
+    /// Ensures and returns the `<xfa:data>` child.
+    ///
+    /// @return the data node
     public Data ensureData() {
         Data d = getData();
         if (d != null) {
@@ -56,20 +48,16 @@ public final class Datasets extends XfaNode {
         return new Data(created, this);
     }
 
-    /**
-     * The {@code <xfa:Script>} dataset-level script child (inert; held as text), if present.
-     *
-     * @return the script node, or {@code null}
-     */
+    /// The `<xfa:Script>` dataset-level script child (inert; held as text), if present.
+    ///
+    /// @return the script node, or `null`
     public XfaNode getScript() {
         return getChild("Script");
     }
 
-    /**
-     * All top-level data records/groups under {@code <xfa:data>} (named data nodes).
-     *
-     * @return the data root's child nodes, or empty if there is no data root
-     */
+    /// All top-level data records/groups under `<xfa:data>` (named data nodes).
+    ///
+    /// @return the data root's child nodes, or empty if there is no data root
     public List<XfaNode> getDataChildren() {
         Data d = getData();
         return d == null ? java.util.Collections.emptyList() : d.getChildren();

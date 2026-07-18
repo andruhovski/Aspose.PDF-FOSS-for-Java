@@ -2,22 +2,20 @@ package org.aspose.pdf.engine.script.js.ast;
 
 import java.util.List;
 
-/**
- * Abstract syntax tree for ECMAScript 3 (ECMA-262 3rd ed.).
- *
- * <p>The whole node hierarchy is expressed as nested static classes of
- * {@code Node} to keep the grammar in one place. Every node carries the
- * 1-based source position of its first token for diagnostics. Fields are
- * {@code public final} as this is an internal, immutable parse product.</p>
- */
+/// Abstract syntax tree for ECMAScript 3 (ECMA-262 3rd ed.).
+///
+/// The whole node hierarchy is expressed as nested static classes of
+/// `Node` to keep the grammar in one place. Every node carries the
+/// 1-based source position of its first token for diagnostics. Fields are
+/// `public final` as this is an internal, immutable parse product.
 public abstract class Node {
 
-    /** 1-based source line of the node's first token. */
+    /// 1-based source line of the node's first token.
     public int line;
-    /** 1-based source column of the node's first token. */
+    /// 1-based source column of the node's first token.
     public int column;
 
-    /** Sets the source position; returns {@code this} for chaining. */
+    /// Sets the source position; returns `this` for chaining.
     public Node at(int line, int column) {
         this.line = line;
         this.column = column;
@@ -26,44 +24,44 @@ public abstract class Node {
 
     /* ======================= Program & statements ===================== */
 
-    /** A complete parsed program (list of top-level statements). */
+    /// A complete parsed program (list of top-level statements).
     public static final class Program extends Node {
         public final List<Node> body;
         public Program(List<Node> body) { this.body = body; }
     }
 
-    /** {@code { ... }} block. */
+    /// `{ ... }` block.
     public static final class Block extends Node {
         public final List<Node> body;
         public Block(List<Node> body) { this.body = body; }
     }
 
-    /** A single declarator inside a {@code var} statement. */
+    /// A single declarator inside a `var` statement.
     public static final class VarDeclarator {
         public final String name;
         public final Node init; // may be null
         public VarDeclarator(String name, Node init) { this.name = name; this.init = init; }
     }
 
-    /** {@code var a = 1, b;} */
+    /// `var a = 1, b;`
     public static final class VarStmt extends Node {
         public final List<VarDeclarator> declarations;
         public VarStmt(List<VarDeclarator> declarations) { this.declarations = declarations; }
     }
 
-    /** Lone {@code ;} */
+    /// Lone `;`
     public static final class EmptyStmt extends Node { }
 
-    /** Debugger statement (parsed, no-op). */
+    /// Debugger statement (parsed, no-op).
     public static final class DebuggerStmt extends Node { }
 
-    /** Expression used as a statement. */
+    /// Expression used as a statement.
     public static final class ExprStmt extends Node {
         public final Node expression;
         public ExprStmt(Node expression) { this.expression = expression; }
     }
 
-    /** {@code if (test) consequent else alternate} */
+    /// `if (test) consequent else alternate`
     public static final class IfStmt extends Node {
         public final Node test;
         public final Node consequent;
@@ -73,21 +71,21 @@ public abstract class Node {
         }
     }
 
-    /** {@code do body while (test)} */
+    /// `do body while (test)`
     public static final class DoWhileStmt extends Node {
         public final Node body;
         public final Node test;
         public DoWhileStmt(Node body, Node test) { this.body = body; this.test = test; }
     }
 
-    /** {@code while (test) body} */
+    /// `while (test) body`
     public static final class WhileStmt extends Node {
         public final Node test;
         public final Node body;
         public WhileStmt(Node test, Node body) { this.test = test; this.body = body; }
     }
 
-    /** {@code for (init; test; update) body} */
+    /// `for (init; test; update) body`
     public static final class ForStmt extends Node {
         public final Node init;   // VarStmt or Expr or null
         public final Node test;   // Expr or null
@@ -98,7 +96,7 @@ public abstract class Node {
         }
     }
 
-    /** {@code for (left in right) body} */
+    /// `for (left in right) body`
     public static final class ForInStmt extends Node {
         public final Node left;  // VarStmt (single) or LHS expression
         public final Node right;
@@ -108,39 +106,39 @@ public abstract class Node {
         }
     }
 
-    /** {@code continue label?;} */
+    /// `continue label?;`
     public static final class ContinueStmt extends Node {
         public final String label; // may be null
         public ContinueStmt(String label) { this.label = label; }
     }
 
-    /** {@code break label?;} */
+    /// `break label?;`
     public static final class BreakStmt extends Node {
         public final String label; // may be null
         public BreakStmt(String label) { this.label = label; }
     }
 
-    /** {@code return arg?;} */
+    /// `return arg?;`
     public static final class ReturnStmt extends Node {
         public final Node argument; // may be null
         public ReturnStmt(Node argument) { this.argument = argument; }
     }
 
-    /** {@code with (object) body} */
+    /// `with (object) body`
     public static final class WithStmt extends Node {
         public final Node object;
         public final Node body;
         public WithStmt(Node object, Node body) { this.object = object; this.body = body; }
     }
 
-    /** One {@code case x:} or {@code default:} clause. */
+    /// One `case x:` or `default:` clause.
     public static final class SwitchCase {
         public final Node test; // null = default
         public final List<Node> body;
         public SwitchCase(Node test, List<Node> body) { this.test = test; this.body = body; }
     }
 
-    /** {@code switch (disc) { ... }} */
+    /// `switch (disc) { ... }`
     public static final class SwitchStmt extends Node {
         public final Node discriminant;
         public final List<SwitchCase> cases;
@@ -149,13 +147,13 @@ public abstract class Node {
         }
     }
 
-    /** {@code throw arg;} */
+    /// `throw arg;`
     public static final class ThrowStmt extends Node {
         public final Node argument;
         public ThrowStmt(Node argument) { this.argument = argument; }
     }
 
-    /** {@code try { } catch (p) { } finally { }} */
+    /// `try { } catch (p) { } finally { }`
     public static final class TryStmt extends Node {
         public final Node block;
         public final String catchParam;   // may be null
@@ -167,7 +165,7 @@ public abstract class Node {
         }
     }
 
-    /** {@code function name(params) body} declaration. */
+    /// `function name(params) body` declaration.
     public static final class FunctionDecl extends Node {
         public final String name;
         public final List<String> params;
@@ -177,7 +175,7 @@ public abstract class Node {
         }
     }
 
-    /** {@code label: statement} */
+    /// `label: statement`
     public static final class LabeledStmt extends Node {
         public final String label;
         public final Node body;
@@ -186,63 +184,63 @@ public abstract class Node {
 
     /* ========================== Expressions =========================== */
 
-    /** Numeric literal. */
+    /// Numeric literal.
     public static final class NumberLit extends Node {
         public final double value;
         public NumberLit(double value) { this.value = value; }
     }
 
-    /** String literal (already decoded). */
+    /// String literal (already decoded).
     public static final class StringLit extends Node {
         public final String value;
         public StringLit(String value) { this.value = value; }
     }
 
-    /** {@code true} / {@code false}. */
+    /// `true` / `false`.
     public static final class BoolLit extends Node {
         public final boolean value;
         public BoolLit(boolean value) { this.value = value; }
     }
 
-    /** {@code null}. */
+    /// `null`.
     public static final class NullLit extends Node { }
 
-    /** {@code /pat/flags} literal. */
+    /// `/pat/flags` literal.
     public static final class RegexLit extends Node {
         public final String pattern;
         public final String flags;
         public RegexLit(String pattern, String flags) { this.pattern = pattern; this.flags = flags; }
     }
 
-    /** Identifier reference. */
+    /// Identifier reference.
     public static final class Ident extends Node {
         public final String name;
         public Ident(String name) { this.name = name; }
     }
 
-    /** {@code this}. */
+    /// `this`.
     public static final class ThisExpr extends Node { }
 
-    /** {@code [a, , c]} array literal; {@code null} elements are elisions. */
+    /// `[a, , c]` array literal; `null` elements are elisions.
     public static final class ArrayLit extends Node {
         public final List<Node> elements;
         public ArrayLit(List<Node> elements) { this.elements = elements; }
     }
 
-    /** One {@code key: value} entry of an object literal. */
+    /// One `key: value` entry of an object literal.
     public static final class Property {
         public final String key;
         public final Node value;
         public Property(String key, Node value) { this.key = key; this.value = value; }
     }
 
-    /** {@code { k: v, ... }} object literal. */
+    /// `{ k: v, ... }` object literal.
     public static final class ObjectLit extends Node {
         public final List<Property> properties;
         public ObjectLit(List<Property> properties) { this.properties = properties; }
     }
 
-    /** {@code function name?(params) body} expression. */
+    /// `function name?(params) body` expression.
     public static final class FunctionExpr extends Node {
         public final String name; // may be null
         public final List<String> params;
@@ -252,7 +250,7 @@ public abstract class Node {
         }
     }
 
-    /** Unary prefix operator: {@code ! ~ + - typeof void delete}. */
+    /// Unary prefix operator: `! ~ + - typeof void delete`.
     public static final class UnaryExpr extends Node {
         public final String operator;
         public final Node argument;
@@ -261,7 +259,7 @@ public abstract class Node {
         }
     }
 
-    /** {@code ++}/{@code --}, prefix or postfix. */
+    /// `++`/`--`, prefix or postfix.
     public static final class UpdateExpr extends Node {
         public final String operator;
         public final Node argument;
@@ -271,7 +269,7 @@ public abstract class Node {
         }
     }
 
-    /** Binary operator (arithmetic, relational, equality, bitwise, shift, {@code instanceof}, {@code in}). */
+    /// Binary operator (arithmetic, relational, equality, bitwise, shift, `instanceof`, `in`).
     public static final class BinaryExpr extends Node {
         public final String operator;
         public final Node left;
@@ -281,7 +279,7 @@ public abstract class Node {
         }
     }
 
-    /** {@code &&} / {@code ||} short-circuit operator. */
+    /// `&&` / `||` short-circuit operator.
     public static final class LogicalExpr extends Node {
         public final String operator;
         public final Node left;
@@ -291,7 +289,7 @@ public abstract class Node {
         }
     }
 
-    /** Assignment {@code = += -= ...}. */
+    /// Assignment `= += -= ...`.
     public static final class AssignExpr extends Node {
         public final String operator;
         public final Node target;
@@ -301,7 +299,7 @@ public abstract class Node {
         }
     }
 
-    /** {@code test ? cons : alt}. */
+    /// `test ? cons : alt`.
     public static final class ConditionalExpr extends Node {
         public final Node test;
         public final Node consequent;
@@ -311,7 +309,7 @@ public abstract class Node {
         }
     }
 
-    /** {@code callee(args)}. */
+    /// `callee(args)`.
     public static final class CallExpr extends Node {
         public final Node callee;
         public final List<Node> arguments;
@@ -320,7 +318,7 @@ public abstract class Node {
         }
     }
 
-    /** {@code new callee(args)}. */
+    /// `new callee(args)`.
     public static final class NewExpr extends Node {
         public final Node callee;
         public final List<Node> arguments;
@@ -329,7 +327,7 @@ public abstract class Node {
         }
     }
 
-    /** {@code object.property} or {@code object[property]}. */
+    /// `object.property` or `object[property]`.
     public static final class MemberExpr extends Node {
         public final Node object;
         public final Node property; // Ident (static) or Expr (computed)
@@ -339,7 +337,7 @@ public abstract class Node {
         }
     }
 
-    /** Comma operator {@code a, b, c}. */
+    /// Comma operator `a, b, c`.
     public static final class SequenceExpr extends Node {
         public final List<Node> expressions;
         public SequenceExpr(List<Node> expressions) { this.expressions = expressions; }

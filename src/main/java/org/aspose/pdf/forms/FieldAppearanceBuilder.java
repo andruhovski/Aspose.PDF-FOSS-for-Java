@@ -1,64 +1,50 @@
 package org.aspose.pdf.forms;
 
-import org.aspose.pdf.Color;
 import org.aspose.pdf.Rectangle;
-import org.aspose.pdf.engine.pdfobjects.PdfArray;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfFloat;
-import org.aspose.pdf.engine.pdfobjects.PdfInteger;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfNull;
-import org.aspose.pdf.engine.pdfobjects.PdfStream;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 
-/**
- * Builds Form-XObject {@code /AP/N} appearance streams for form fields
- * (checkbox and radio-button options).
- *
- * <p>Per ISO 32000-1:2008 §12.7.4.3, form-field widget annotations must have
- * an {@code /AP/N} entry that is either a stream (single-state fields like
- * text/button) or a dictionary keyed by state name (multi-state like checkbox
- * {@code /Yes /Off} and radio {@code /<option> /Off}). Without proper
- * {@code /AP/N}, viewers only render the field if {@code /NeedAppearances}
- * is true in the AcroForm dictionary, which is non-portable.</p>
- *
- * <p>This builder uses the standard Zapf Dingbats font (a Type-1 standard
- * 14 font, requires no embedding) for box-style glyphs and a simple
- * black-on-white square for the off state.</p>
- *
- * <p>Closes F-10: previously {@link CheckboxField} and {@link RadioButtonField}
- * stored {@link PdfNull#INSTANCE} placeholders or zero-BBox empty streams in
- * {@code /AP/N}, causing {@link Field#getAppearance()} to return null states.</p>
- */
+/// Builds Form-XObject `/AP/N` appearance streams for form fields
+/// (checkbox and radio-button options).
+///
+/// Per ISO 32000-1:2008 §12.7.4.3, form-field widget annotations must have
+/// an `/AP/N` entry that is either a stream (single-state fields like
+/// text/button) or a dictionary keyed by state name (multi-state like checkbox
+/// `/Yes /Off` and radio `/<option> /Off`). Without proper
+/// `/AP/N`, viewers only render the field if `/NeedAppearances`
+/// is true in the AcroForm dictionary, which is non-portable.
+///
+/// This builder uses the standard Zapf Dingbats font (a Type-1 standard
+/// 14 font, requires no embedding) for box-style glyphs and a simple
+/// black-on-white square for the off state.
+///
+/// Closes F-10: previously [CheckboxField] and [RadioButtonField]
+/// stored [PdfNull#INSTANCE] placeholders or zero-BBox empty streams in
+/// `/AP/N`, causing [Field#getAppearance()] to return null states.
 public final class FieldAppearanceBuilder {
 
     private FieldAppearanceBuilder() {}
 
-    /**
-     * Builds a checkbox appearance Form-XObject for the given state and glyph.
-     *
-     * @param rect the widget rectangle (used for /BBox)
-     * @param checked {@code true} for "on" state (renders the glyph),
-     *                {@code false} for "Off" (empty stream)
-     * @param style the box style; null defaults to {@link BoxStyle#Check}
-     * @return a {@link PdfStream} wrapped as Form-XObject
-     */
+    /// Builds a checkbox appearance Form-XObject for the given state and glyph.
+    ///
+    /// @param rect the widget rectangle (used for /BBox)
+    /// @param checked`true` for "on" state (renders the glyph),
+    ///                `false` for "Off" (empty stream)
+    /// @param style the box style; null defaults to [BoxStyle#Check]
+    /// @return a [PdfStream] wrapped as Form-XObject
     public static PdfStream buildCheckboxAppearance(Rectangle rect, boolean checked, BoxStyle style) {
         return buildBoxAppearance(rect, checked, style != null ? style : BoxStyle.Check);
     }
 
-    /**
-     * Builds a radio-button appearance Form-XObject for the given state.
-     * Defaults to a circle glyph when style is null (radio convention).
-     *
-     * @param rect the widget rectangle
-     * @param selected whether the option is selected
-     * @param style the box style; null defaults to {@link BoxStyle#Circle}
-     * @return a {@link PdfStream} wrapped as Form-XObject
-     */
+    /// Builds a radio-button appearance Form-XObject for the given state.
+    /// Defaults to a circle glyph when style is null (radio convention).
+    ///
+    /// @param rect the widget rectangle
+    /// @param selected whether the option is selected
+    /// @param style the box style; null defaults to [BoxStyle#Circle]
+    /// @return a [PdfStream] wrapped as Form-XObject
     public static PdfStream buildRadioAppearance(Rectangle rect, boolean selected, BoxStyle style) {
         return buildBoxAppearance(rect, selected, style != null ? style : BoxStyle.Circle);
     }
@@ -103,16 +89,14 @@ public final class FieldAppearanceBuilder {
         return stream;
     }
 
-    /**
-     * Installs the per-state appearance streams on a widget dictionary. Replaces
-     * any existing {@code /AP/N/<state>} entries (including {@link PdfNull}
-     * placeholders) and sets {@code /AS} to {@code "Off"} if not already set.
-     *
-     * @param widgetDict the widget annotation dictionary
-     * @param onStateStream the stream for the "on" state
-     * @param onStateName the name of the on state (e.g. {@code "Yes"})
-     * @param offStateStream the stream for {@code "Off"}
-     */
+    /// Installs the per-state appearance streams on a widget dictionary. Replaces
+    /// any existing `/AP/N/<state>` entries (including [PdfNull]
+    /// placeholders) and sets `/AS` to `"Off"` if not already set.
+    ///
+    /// @param widgetDict the widget annotation dictionary
+    /// @param onStateStream the stream for the "on" state
+    /// @param onStateName the name of the on state (e.g. `"Yes"`)
+    /// @param offStateStream the stream for `"Off"`
     public static void installAppearance(PdfDictionary widgetDict,
                                          PdfStream onStateStream,
                                          String onStateName,
@@ -145,11 +129,9 @@ public final class FieldAppearanceBuilder {
         }
     }
 
-    /**
-     * Returns {@code true} if {@code /AP/N} on the given widget contains any
-     * {@link PdfNull} placeholder or is missing entirely. Used by attach paths
-     * to detect when to (re)generate appearances.
-     */
+    /// Returns `true` if `/AP/N` on the given widget contains any
+    /// [PdfNull] placeholder or is missing entirely. Used by attach paths
+    /// to detect when to (re)generate appearances.
     public static boolean isAppearanceIncomplete(PdfDictionary widgetDict) {
         PdfBase apVal = widgetDict.get(PdfName.of("AP"));
         if (!(apVal instanceof PdfDictionary)) return true;
@@ -202,10 +184,8 @@ public final class FieldAppearanceBuilder {
         return resources;
     }
 
-    /**
-     * Returns the single-character Zapf Dingbats string for the given box style.
-     * Codes are the standard PDF check-glyph mapping (Adobe Acrobat convention).
-     */
+    /// Returns the single-character Zapf Dingbats string for the given box style.
+    /// Codes are the standard PDF check-glyph mapping (Adobe Acrobat convention).
     private static String boxStyleToGlyph(BoxStyle style) {
         if (style == null) return "4";
         switch (style) {

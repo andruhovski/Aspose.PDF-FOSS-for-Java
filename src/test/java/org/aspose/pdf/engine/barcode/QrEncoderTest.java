@@ -8,13 +8,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
-/**
- * Validates {@link QrEncoder} against the ISO/IEC 18004 Annex&nbsp;I worked example (numeric
- * "01234567", version&nbsp;1, level&nbsp;M) — the published data and error-correction codewords — plus
- * the structural invariants of the produced symbol (size, finder and timing patterns) and the capacity
- * tables. The spec example pins down the hardest, mode-independent parts: Reed&ndash;Solomon over
- * GF(2<sup>8</sup>), padding, and block layout.
- */
+/// Validates [QrEncoder] against the ISO/IEC 18004 Annex&nbsp;I worked example (numeric
+/// "01234567", version&nbsp;1, level&nbsp;M) — the published data and error-correction codewords — plus
+/// the structural invariants of the produced symbol (size, finder and timing patterns) and the capacity
+/// tables. The spec example pins down the hardest, mode-independent parts: Reed–Solomon over
+/// GF(2<sup>8</sup>), padding, and block layout.
 class QrEncoderTest {
 
     // ISO/IEC 18004 Annex I: "01234567" encoded at version 1, level M.

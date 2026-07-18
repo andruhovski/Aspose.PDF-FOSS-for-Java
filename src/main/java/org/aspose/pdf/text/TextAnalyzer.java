@@ -3,48 +3,38 @@ package org.aspose.pdf.text;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * Chooses the more reliable textual representation between two candidate
- * strings. This is a lightweight compatibility helper for legacy
- * TextFragmentAbsorber tests and prefers readable business-style Latin text
- * over obviously garbled symbol-decoded output.
- */
+/// Chooses the more reliable textual representation between two candidate
+/// strings. This is a lightweight compatibility helper for legacy
+/// TextFragmentAbsorber tests and prefers readable business-style Latin text
+/// over obviously garbled symbol-decoded output.
 public class TextAnalyzer {
 
-    /**
-     * Supported analyzer languages.
-     */
+    /// Supported analyzer languages.
     public enum Language {
         English
     }
 
-    /**
-     * Supported analyzer styles.
-     */
+    /// Supported analyzer styles.
     public enum TextStyle {
         Business
     }
 
     private static final AtomicInteger CALLS = new AtomicInteger();
 
-    /**
-     * Creates a new analyzer.
-     *
-     * @param language ignored for now but preserved for API compatibility
-     * @param style ignored for now but preserved for API compatibility
-     */
+    /// Creates a new analyzer.
+    ///
+    /// @param language ignored for now but preserved for API compatibility
+    /// @param style ignored for now but preserved for API compatibility
     public TextAnalyzer(Language language, TextStyle style) {
         // Compatibility constructor. Current heuristic is language-agnostic.
     }
 
-    /**
-     * Chooses the more reliable text candidate.
-     *
-     * @param preferred the first candidate
-     * @param alternate the second candidate
-     * @param fontName the font hint
-     * @return the candidate that looks more readable
-     */
+    /// Chooses the more reliable text candidate.
+    ///
+    /// @param preferred the first candidate
+    /// @param alternate the second candidate
+    /// @param fontName the font hint
+    /// @return the candidate that looks more readable
     public String chooseReliable(String preferred, String alternate, String fontName) {
         CALLS.incrementAndGet();
         int preferredScore = readabilityScore(preferred, fontName);
@@ -52,9 +42,7 @@ public class TextAnalyzer {
         return preferredScore >= alternateScore ? preferred : alternate;
     }
 
-    /**
-     * Clears accumulated statistics.
-     */
+    /// Clears accumulated statistics.
     public static void clearStatistics() {
         CALLS.set(0);
     }

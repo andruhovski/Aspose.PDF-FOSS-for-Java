@@ -1,23 +1,21 @@
 package org.aspose.pdf;
 
+import org.aspose.pdf.engine.parser.PDFParser;
 import org.aspose.pdf.engine.pdfobjects.PdfBase;
 import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
 import org.aspose.pdf.engine.pdfobjects.PdfName;
 import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
-import org.aspose.pdf.engine.parser.PDFParser;
 
 import java.io.IOException;
 import java.util.logging.Logger;
 
-/**
- * Wraps a PDF resource dictionary (ISO 32000-1:2008, §7.8.3).
- * <p>
- * A resource dictionary maps resource names to objects required for rendering
- * page content: fonts, XObjects, graphics states, color spaces, patterns,
- * shadings, and properties. Each getter lazily retrieves the corresponding
- * sub-dictionary and dereferences indirect object references.
- * </p>
- */
+/// Wraps a PDF resource dictionary (ISO 32000-1:2008, §7.8.3).
+///
+/// A resource dictionary maps resource names to objects required for rendering
+/// page content: fonts, XObjects, graphics states, color spaces, patterns,
+/// shadings, and properties. Each getter lazily retrieves the corresponding
+/// sub-dictionary and dereferences indirect object references.
+///
 public class Resources {
 
     private static final Logger LOG = Logger.getLogger(Resources.class.getName());
@@ -33,23 +31,19 @@ public class Resources {
     private final PdfDictionary dict;
     private final PDFParser parser;
 
-    /**
-     * Creates a Resources wrapper around the given PDF dictionary.
-     *
-     * @param dict the /Resources dictionary from a page or form XObject
-     * @throws IllegalArgumentException if dict is null
-     */
+    /// Creates a Resources wrapper around the given PDF dictionary.
+    ///
+    /// @param dict the /Resources dictionary from a page or form XObject
+    /// @throws IllegalArgumentException if dict is null
     public Resources(PdfDictionary dict) {
         this(dict, null);
     }
 
-    /**
-     * Creates a Resources wrapper with a PDF parser for resolving indirect references.
-     *
-     * @param dict   the /Resources dictionary
-     * @param parser the PDF parser (may be null)
-     * @throws IllegalArgumentException if dict is null
-     */
+    /// Creates a Resources wrapper with a PDF parser for resolving indirect references.
+    ///
+    /// @param dict   the /Resources dictionary
+    /// @param parser the PDF parser (may be null)
+    /// @throws IllegalArgumentException if dict is null
     public Resources(PdfDictionary dict, PDFParser parser) {
         if (dict == null) {
             throw new IllegalArgumentException("Resources dictionary must not be null");
@@ -59,74 +53,58 @@ public class Resources {
         LOG.fine(() -> "Resources created with " + dict.size() + " entries");
     }
 
-    /**
-     * Returns the /Font sub-dictionary, or null if absent.
-     *
-     * @return the font dictionary, or null
-     */
+    /// Returns the /Font sub-dictionary, or null if absent.
+    ///
+    /// @return the font dictionary, or null
     public PdfDictionary getFonts() {
         return getSubDictionary(FONT);
     }
 
-    /**
-     * Returns the /XObject sub-dictionary, or null if absent.
-     *
-     * @return the XObject dictionary, or null
-     */
+    /// Returns the /XObject sub-dictionary, or null if absent.
+    ///
+    /// @return the XObject dictionary, or null
     public PdfDictionary getXObjects() {
         return getSubDictionary(XOBJECT);
     }
 
-    /**
-     * Returns the /ExtGState sub-dictionary, or null if absent.
-     *
-     * @return the extended graphics state dictionary, or null
-     */
+    /// Returns the /ExtGState sub-dictionary, or null if absent.
+    ///
+    /// @return the extended graphics state dictionary, or null
     public PdfDictionary getExtGState() {
         return getSubDictionary(EXT_G_STATE);
     }
 
-    /**
-     * Returns the /ColorSpace sub-dictionary, or null if absent.
-     *
-     * @return the color space dictionary, or null
-     */
+    /// Returns the /ColorSpace sub-dictionary, or null if absent.
+    ///
+    /// @return the color space dictionary, or null
     public PdfDictionary getColorSpaces() {
         return getSubDictionary(COLOR_SPACE);
     }
 
-    /**
-     * Returns the /Pattern sub-dictionary, or null if absent.
-     *
-     * @return the pattern dictionary, or null
-     */
+    /// Returns the /Pattern sub-dictionary, or null if absent.
+    ///
+    /// @return the pattern dictionary, or null
     public PdfDictionary getPatterns() {
         return getSubDictionary(PATTERN);
     }
 
-    /**
-     * Returns the /Shading sub-dictionary, or null if absent.
-     *
-     * @return the shading dictionary, or null
-     */
+    /// Returns the /Shading sub-dictionary, or null if absent.
+    ///
+    /// @return the shading dictionary, or null
     public PdfDictionary getShadings() {
         return getSubDictionary(SHADING);
     }
 
-    /**
-     * Returns the /Properties sub-dictionary, or null if absent.
-     *
-     * @return the properties dictionary, or null
-     */
+    /// Returns the /Properties sub-dictionary, or null if absent.
+    ///
+    /// @return the properties dictionary, or null
     public PdfDictionary getProperties() {
         return getSubDictionary(PROPERTIES);
     }
 
-    /**
-     * Returns the collection of image XObjects from /XObject.
-     *
-     * @return the image collection, or null if no /XObject dictionary
-     */
+    /// Returns the collection of image XObjects from /XObject.
+    ///
+    /// @return the image collection, or null if no /XObject dictionary
     public XImageCollection getImages() {
         PdfDictionary xobjects = getXObjects();
         if (xobjects == null) {
@@ -137,14 +115,13 @@ public class Resources {
         return new XImageCollection(dict, xobjects, parser);
     }
 
-    /**
-     * Returns the collection of Form XObjects from /XObject (ISO 32000-1:2008, §8.10).
-     * <p>The collection is a live view: entries added to the underlying /XObject
-     * dictionary with {@code /Subtype /Form} appear on subsequent access. Lazily
-     * creates the /XObject sub-dictionary if absent.</p>
-     *
-     * @return the form collection (never null; may be empty)
-     */
+    /// Returns the collection of Form XObjects from /XObject (ISO 32000-1:2008, §8.10).
+    ///
+    /// The collection is a live view: entries added to the underlying /XObject
+    /// dictionary with `/Subtype /Form` appear on subsequent access. Lazily
+    /// creates the /XObject sub-dictionary if absent.
+    ///
+    /// @return the form collection (never null; may be empty)
     public XFormCollection getForms() {
         PdfDictionary xobjects = getXObjects();
         if (xobjects == null) {
@@ -154,21 +131,17 @@ public class Resources {
         return new XFormCollection(xobjects, parser);
     }
 
-    /**
-     * Returns the underlying PDF dictionary.
-     *
-     * @return the raw PDF dictionary
-     */
+    /// Returns the underlying PDF dictionary.
+    ///
+    /// @return the raw PDF dictionary
     public PdfDictionary getPdfDictionary() {
         return dict;
     }
 
-    /**
-     * Retrieves a sub-dictionary by key, dereferencing indirect references if needed.
-     *
-     * @param key the dictionary key
-     * @return the sub-dictionary, or null if absent or not a dictionary
-     */
+    /// Retrieves a sub-dictionary by key, dereferencing indirect references if needed.
+    ///
+    /// @param key the dictionary key
+    /// @return the sub-dictionary, or null if absent or not a dictionary
     private PdfDictionary getSubDictionary(PdfName key) {
         PdfBase value = dict.get(key);
         if (value == null) {

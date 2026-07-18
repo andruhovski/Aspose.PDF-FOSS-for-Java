@@ -1,11 +1,7 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
-import org.aspose.pdf.engine.pdfobjects.NameTree;
 import org.aspose.pdf.engine.parser.PDFParser;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -14,16 +10,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
-/**
- * Collection of embedded files (attachments) in a PDF document.
- * <p>
- * Wraps the {@code /Names → /EmbeddedFiles} name tree in the catalog
- * (ISO 32000-1:2008, §7.11.4). Traversal and mutation go through
- * {@link NameTree}, which keeps {@code /Names} sorted and {@code /Limits}
- * in sync after every insert/delete. Uses 1-based indexing (Aspose
- * convention).
- * </p>
- */
+/// Collection of embedded files (attachments) in a PDF document.
+///
+/// Wraps the `/Names → /EmbeddedFiles` name tree in the catalog
+/// (ISO 32000-1:2008, §7.11.4). Traversal and mutation go through
+/// [NameTree], which keeps `/Names` sorted and `/Limits`
+/// in sync after every insert/delete. Uses 1-based indexing (Aspose
+/// convention).
+///
 public class EmbeddedFileCollection implements Iterable<FileSpecification> {
 
     private static final Logger LOG = Logger.getLogger(EmbeddedFileCollection.class.getName());
@@ -40,7 +34,7 @@ public class EmbeddedFileCollection implements Iterable<FileSpecification> {
         this.parser = parser;
     }
 
-    /** Returns the file at the given 1-based index. */
+    /// Returns the file at the given 1-based index.
     public FileSpecification get(int index) {
         ensureLoaded();
         if (index < 1 || index > files.size())
@@ -48,26 +42,24 @@ public class EmbeddedFileCollection implements Iterable<FileSpecification> {
         return files.get(index - 1);
     }
 
-    /** Returns the number of embedded files. */
+    /// Returns the number of embedded files.
     public int getCount() { ensureLoaded(); return files.size(); }
 
-    /** Returns the number of embedded files (alias). */
+    /// Returns the number of embedded files (alias).
     public int size() { return getCount(); }
 
-    /** Adds a file specification. */
+    /// Adds a file specification.
     public void add(FileSpecification fs) {
         ensureLoaded();
         files.add(fs);
         addToNameTree(fs);
     }
 
-    /**
-     * Returns the file specification with the given name.
-     * Searches by the /F (file name) entry of each file specification.
-     *
-     * @param name the file name to search for
-     * @return the matching FileSpecification, or null if not found
-     */
+    /// Returns the file specification with the given name.
+    /// Searches by the /F (file name) entry of each file specification.
+    ///
+    /// @param name the file name to search for
+    /// @return the matching FileSpecification, or null if not found
     public FileSpecification get(String name) {
         ensureLoaded();
         if (name == null) return null;
@@ -77,7 +69,7 @@ public class EmbeddedFileCollection implements Iterable<FileSpecification> {
         return null;
     }
 
-    /** Removes all embedded files. */
+    /// Removes all embedded files.
     public void delete() {
         ensureLoaded();
         files.clear();
@@ -92,7 +84,7 @@ public class EmbeddedFileCollection implements Iterable<FileSpecification> {
         }
     }
 
-    /** Removes by 1-based index. */
+    /// Removes by 1-based index.
     public void delete(int index) {
         ensureLoaded();
         FileSpecification removed = files.remove(index - 1);
@@ -101,13 +93,11 @@ public class EmbeddedFileCollection implements Iterable<FileSpecification> {
         }
     }
 
-    /**
-     * Removes the first embedded file with the given name (Aspose semantics —
-     * if a portfolio carries multiple attachments under the same {@code /F},
-     * only one is removed per call).
-     *
-     * @param name the file name to remove
-     */
+    /// Removes the first embedded file with the given name (Aspose semantics —
+    /// if a portfolio carries multiple attachments under the same `/F`,
+    /// only one is removed per call).
+    ///
+    /// @param name the file name to remove
     public void delete(String name) {
         ensureLoaded();
         if (name == null) return;
@@ -170,11 +160,9 @@ public class EmbeddedFileCollection implements Iterable<FileSpecification> {
         }
     }
 
-    /**
-     * Returns the {@code /Names → /EmbeddedFiles} root dictionary, optionally
-     * creating it (and its parent {@code /Names}) when {@code createIfMissing}
-     * is true.
-     */
+    /// Returns the `/Names → /EmbeddedFiles` root dictionary, optionally
+    /// creating it (and its parent `/Names`) when `createIfMissing`
+    /// is true.
     private PdfDictionary embeddedFilesRoot(boolean createIfMissing) throws IOException {
         PdfDictionary catalog = document.getCatalog();
         PdfBase names = resolveRef(catalog.get(NAMES));

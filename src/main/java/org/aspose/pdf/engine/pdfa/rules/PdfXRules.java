@@ -1,43 +1,31 @@
 package org.aspose.pdf.engine.pdfa.rules;
 
 import org.aspose.pdf.PdfFormat;
-import org.aspose.pdf.engine.pdfobjects.PdfArray;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectKey;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
-import org.aspose.pdf.engine.pdfobjects.PdfString;
+import org.aspose.pdf.engine.parser.PDFParser;
 import org.aspose.pdf.engine.pdfa.PdfARule;
 import org.aspose.pdf.engine.pdfa.PdfAValidationResult;
-import org.aspose.pdf.engine.parser.PDFParser;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.io.IOException;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Validates PDF/X compliance requirements.
- *
- * <p>Only fires when the target format is a PDF/X variant. Checks:</p>
- * <ul>
- *   <li>Info dict must have /GTS_PDFXVersion</li>
- *   <li>PDF/X-1a: /GTS_PDFXConformance required</li>
- *   <li>/Trapped must be True or False (not Unknown)</li>
- *   <li>Each page must have /TrimBox or /ArtBox</li>
- *   <li>Catalog must have /OutputIntents with /S=/GTS_PDFX</li>
- *   <li>No /Encrypt (PDF/X-1a)</li>
- *   <li>All fonts must be embedded</li>
- * </ul>
- */
+/// Validates PDF/X compliance requirements.
+///
+/// Only fires when the target format is a PDF/X variant. Checks:
+///
+///   - Info dict must have /GTS\_PDFXVersion
+///   - PDF/X-1a: /GTS\_PDFXConformance required
+///   - /Trapped must be True or False (not Unknown)
+///   - Each page must have /TrimBox or /ArtBox
+///   - Catalog must have /OutputIntents with /S=/GTS\_PDFX
+///   - No /Encrypt (PDF/X-1a)
+///   - All fonts must be embedded
 public final class PdfXRules implements PdfARule {
 
     private static final Logger LOG = Logger.getLogger(PdfXRules.class.getName());
 
-    /**
-     * Creates a new PDF/X rules checker.
-     */
+    /// Creates a new PDF/X rules checker.
     public PdfXRules() {
         // default constructor
     }
@@ -55,9 +43,7 @@ public final class PdfXRules implements PdfARule {
         checkFontsEmbedded(parser, result);
     }
 
-    /**
-     * Checks /Info dictionary for required PDF/X entries.
-     */
+    /// Checks /Info dictionary for required PDF/X entries.
     private void checkInfoDict(PDFParser parser, PdfFormat format,
                                 PdfAValidationResult result) {
         PdfDictionary trailer = parser.getTrailer();
@@ -107,9 +93,7 @@ public final class PdfXRules implements PdfARule {
         }
     }
 
-    /**
-     * Checks that the catalog has /OutputIntents with /S=/GTS_PDFX.
-     */
+    /// Checks that the catalog has /OutputIntents with /S=/GTS\_PDFX.
     private void checkOutputIntents(PDFParser parser, PdfAValidationResult result) {
         PdfDictionary catalog;
         try {
@@ -147,9 +131,7 @@ public final class PdfXRules implements PdfARule {
         }
     }
 
-    /**
-     * Checks that each page has /TrimBox or /ArtBox.
-     */
+    /// Checks that each page has /TrimBox or /ArtBox.
     private void checkPages(PDFParser parser, PdfAValidationResult result) {
         PdfDictionary catalog;
         try {
@@ -184,9 +166,7 @@ public final class PdfXRules implements PdfARule {
         }
     }
 
-    /**
-     * Checks no /Encrypt (PDF/X-1a).
-     */
+    /// Checks no /Encrypt (PDF/X-1a).
     private void checkEncrypt(PDFParser parser, PdfFormat format,
                                PdfAValidationResult result) {
         if (!format.isPdfX1a()) {
@@ -201,9 +181,7 @@ public final class PdfXRules implements PdfARule {
         }
     }
 
-    /**
-     * Checks that all fonts are embedded (all font descriptors have FontFile/2/3).
-     */
+    /// Checks that all fonts are embedded (all font descriptors have FontFile/2/3).
     private void checkFontsEmbedded(PDFParser parser, PdfAValidationResult result) {
         PdfDictionary catalog;
         try {
@@ -247,9 +225,7 @@ public final class PdfXRules implements PdfARule {
         }
     }
 
-    /**
-     * Checks a single font for embedding.
-     */
+    /// Checks a single font for embedding.
     private void checkFontEmbedded(PdfDictionary font, String fontPath,
                                     PdfAValidationResult result) {
         String subtype = font.getNameAsString("Subtype");
@@ -274,9 +250,7 @@ public final class PdfXRules implements PdfARule {
         checkFontDescriptorEmbedded(font, fontPath, result);
     }
 
-    /**
-     * Checks FontDescriptor for FontFile/2/3.
-     */
+    /// Checks FontDescriptor for FontFile/2/3.
     private void checkFontDescriptorEmbedded(PdfDictionary font, String fontPath,
                                               PdfAValidationResult result) {
         PdfDictionary fd = resolveDict(font.get("FontDescriptor"));
@@ -299,9 +273,7 @@ public final class PdfXRules implements PdfARule {
         }
     }
 
-    /**
-     * Resolves a PdfBase to a PdfDictionary, dereferencing indirect references.
-     */
+    /// Resolves a PdfBase to a PdfDictionary, dereferencing indirect references.
     private static PdfDictionary resolveDict(PdfBase val) {
         if (val instanceof PdfObjectReference) {
             try {
@@ -313,9 +285,7 @@ public final class PdfXRules implements PdfARule {
         return (val instanceof PdfDictionary) ? (PdfDictionary) val : null;
     }
 
-    /**
-     * Resolves a PdfBase to a PdfArray, dereferencing indirect references.
-     */
+    /// Resolves a PdfBase to a PdfArray, dereferencing indirect references.
     private static PdfArray resolveArray(PdfBase val) {
         if (val instanceof PdfObjectReference) {
             try {

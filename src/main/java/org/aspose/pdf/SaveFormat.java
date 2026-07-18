@@ -1,13 +1,11 @@
 package org.aspose.pdf;
 
-/**
- * Specifies the format for saving a document.
- */
+/// Specifies the format for saving a document.
 public enum SaveFormat {
-    /** PDF format. */
+    /// PDF format.
     Pdf,
-    /** HTML format. */
+    /// HTML format.
     Html,
-    /** XML format. */
+    /// XML format.
     Xml
 }

@@ -1,35 +1,29 @@
 package org.aspose.pdf.engine.xfa.script;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-/**
- * FormCalc front-end (B2.1) — a hand-written lexer + recursive-descent parser producing an AST for
- * the XFA FormCalc calculation language (XFA spec § object-model "FormCalc", p.964+). FormCalc is the
- * spec default for an untyped {@code <script>} and is DISTINCT from JavaScript: typeless,
- * expression-based, case-insensitive keywords/builtins, {@code if…then…elseif…else…endif} control,
- * and SOM node references (resolved by the SAME Stage-A {@link org.aspose.pdf.engine.xfa.binding.som.SomResolver}
- * the JS path uses).
- *
- * <p>Scoped to the grammar the B2.0 corpus probe measured: arithmetic ({@code + - * /}), comparison
- * ({@code == &lt;&gt; &lt; &gt; &lt;= &gt;=} and the word forms {@code eq ne lt le gt ge}), logical
- * ({@code and or not}), string concat ({@code &amp;}), {@code if/then/elseif/else/endif}, assignment,
- * function calls and SOM references with {@code [*]}/{@code [n]}/predicate indices. {@code for}/
- * {@code foreach}/{@code while} loops (zero corpus demand) are a tracked grammar gap — a {@code for}
- * token raises {@link FormCalcError} rather than mis-parsing.</p>
- */
+/// FormCalc front-end (B2.1) — a hand-written lexer + recursive-descent parser producing an AST for
+/// the XFA FormCalc calculation language (XFA spec § object-model "FormCalc", p.964+). FormCalc is the
+/// spec default for an untyped `<script>` and is DISTINCT from JavaScript: typeless,
+/// expression-based, case-insensitive keywords/builtins, `if…then…elseif…else…endif` control,
+/// and SOM node references (resolved by the SAME Stage-A [org.aspose.pdf.engine.xfa.binding.som.SomResolver]
+/// the JS path uses).
+///
+/// Scoped to the grammar the B2.0 corpus probe measured: arithmetic (`+ - * /`), comparison
+/// (`== &lt;&gt; &lt; &gt; &lt;= &gt;=` and the word forms `eq ne lt le gt ge`), logical
+/// (`and or not`), string concat (`&amp;`), `if/then/elseif/else/endif`, assignment,
+/// function calls and SOM references with `[*]`/`[n]`/predicate indices. `for`/
+/// `foreach`/`while` loops (zero corpus demand) are a tracked grammar gap — a `for`
+/// token raises [FormCalcError] rather than mis-parsing.
 final class FormCalcParser {
 
     /* ------------------------------ AST ------------------------------ */
 
-    /** Base AST node. */
+    /// Base AST node.
     abstract static class Node {
     }
 
-    /** A numeric literal. */
+    /// A numeric literal.
     static final class Num extends Node {
         final double value;
         Num(double v) {
@@ -37,7 +31,7 @@ final class FormCalcParser {
         }
     }
 
-    /** A string literal. */
+    /// A string literal.
     static final class Str extends Node {
         final String value;
         Str(String v) {
@@ -45,11 +39,11 @@ final class FormCalcParser {
         }
     }
 
-    /** The {@code null} literal. */
+    /// The `null` literal.
     static final class Null extends Node {
     }
 
-    /** A SOM reference (a node path: {@code numQty}, {@code Row4[*].cost}, {@code $}, {@code $.font.fill}). */
+    /// A SOM reference (a node path: `numQty`, `Row4[*].cost`, `$`, `$.font.fill`).
     static final class Ref extends Node {
         final String path;
         Ref(String p) {
@@ -57,7 +51,7 @@ final class FormCalcParser {
         }
     }
 
-    /** A unary operation ({@code - + not}). */
+    /// A unary operation (`- + not`).
     static final class Unary extends Node {
         final String op;
         final Node operand;
@@ -67,7 +61,7 @@ final class FormCalcParser {
         }
     }
 
-    /** A binary operation (arithmetic / comparison / logical / concat). */
+    /// A binary operation (arithmetic / comparison / logical / concat).
     static final class Bin extends Node {
         final String op;
         final Node left;
@@ -79,7 +73,7 @@ final class FormCalcParser {
         }
     }
 
-    /** A function call ({@code Sum(...)}, {@code Concat(...)}, {@code Exists(...)}). */
+    /// A function call (`Sum(...)`, `Concat(...)`, `Exists(...)`).
     static final class Call extends Node {
         final String name;
         final List<Node> args;
@@ -89,7 +83,7 @@ final class FormCalcParser {
         }
     }
 
-    /** An assignment ({@code $ = expr}, {@code Total.rawValue = expr}, {@code $.presence = "hidden"}). */
+    /// An assignment (`$ = expr`, `Total.rawValue = expr`, `$.presence = "hidden"`).
     static final class Assign extends Node {
         final Ref target;
         final Node value;
@@ -99,7 +93,7 @@ final class FormCalcParser {
         }
     }
 
-    /** An {@code if … then … [elseif …]* [else …] endif} expression (its value is the taken branch). */
+    /// An `if … then … [elseif …]* [else …] endif` expression (its value is the taken branch).
     static final class If extends Node {
         final Node cond;
         final Block thenBlock;
@@ -111,7 +105,7 @@ final class FormCalcParser {
         }
     }
 
-    /** An expression list — its value is the value of the last expression. */
+    /// An expression list — its value is the value of the last expression.
     static final class Block extends Node {
         final List<Node> stmts;
         Block(List<Node> stmts) {
@@ -147,13 +141,11 @@ final class FormCalcParser {
         this.src = src;
     }
 
-    /**
-     * Parses FormCalc source into an AST.
-     *
-     * @param src the FormCalc script
-     * @return the top-level {@link Block}
-     * @throws FormCalcError on a lex/parse error (including an unimplemented {@code for}/{@code while})
-     */
+    /// Parses FormCalc source into an AST.
+    ///
+    /// @param src the FormCalc script
+    /// @return the top-level [Block]
+    /// @throws FormCalcError on a lex/parse error (including an unimplemented `for`/`while`)
     static Block parse(String src) {
         FormCalcParser fp = new FormCalcParser(src == null ? "" : src);
         fp.lex();
@@ -317,7 +309,7 @@ final class FormCalcParser {
         }
     }
 
-    /** Parses a statement list until EOF or a stop keyword (then/elseif/else/endif). */
+    /// Parses a statement list until EOF or a stop keyword (then/elseif/else/endif).
     private Block parseBlock(Set<String> stops) {
         List<Node> stmts = new ArrayList<>();
         skipSeps();
@@ -377,7 +369,7 @@ final class FormCalcParser {
         return new If(cond, thenB, elseBranch);
     }
 
-    /** Parses an {@code elseif} as a nested If (the chain shares the single trailing {@code endif}). */
+    /// Parses an `elseif` as a nested If (the chain shares the single trailing `endif`).
     private Node parseIf2() {
         next(); // 'elseif'
         Node cond = parseExpr();
@@ -473,7 +465,7 @@ final class FormCalcParser {
         return toks.get(p - 1).text;
     }
 
-    /** Normalises a comparison operator token to a canonical symbol. */
+    /// Normalises a comparison operator token to a canonical symbol.
     private static String normOp(Tok t) {
         switch (t.text.toLowerCase()) {
             case "eq": return "==";
@@ -534,7 +526,7 @@ final class FormCalcParser {
         return new Call(name, args);
     }
 
-    /** Builds a SOM path string ({@code Row4[*].cost}, {@code $.font.fill}) the resolver understands. */
+    /// Builds a SOM path string (`Row4[*].cost`, `$.font.fill`) the resolver understands.
     private Node parseRef() {
         StringBuilder path = new StringBuilder();
         Tok first = next();
@@ -560,7 +552,7 @@ final class FormCalcParser {
         return new Ref(path.toString());
     }
 
-    /** Reads a bracket index/predicate, reconstructing the inner text (strings re-quoted). */
+    /// Reads a bracket index/predicate, reconstructing the inner text (strings re-quoted).
     private String readBracket() {
         expect(T.LB);
         StringBuilder inner = new StringBuilder();

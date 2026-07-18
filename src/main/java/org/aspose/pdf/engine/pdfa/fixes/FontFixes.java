@@ -2,44 +2,30 @@ package org.aspose.pdf.engine.pdfa.fixes;
 
 import org.aspose.pdf.ConvertErrorAction;
 import org.aspose.pdf.PdfFormat;
-import org.aspose.pdf.engine.pdfobjects.PdfArray;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfInteger;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectKey;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
-import org.aspose.pdf.engine.pdfobjects.PdfStream;
-import org.aspose.pdf.engine.pdfobjects.PdfString;
-import org.aspose.pdf.engine.pdfa.PdfAValidationResult;
 import org.aspose.pdf.engine.parser.PDFParser;
+import org.aspose.pdf.engine.pdfa.PdfAValidationResult;
+import org.aspose.pdf.engine.pdfobjects.*;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
-import java.util.zip.DeflaterOutputStream;
 
-/**
- * Font-related fixes for PDF/A compliance.
- * <p>
- * Because we cannot embed font programs we do not have access to, these fixes
- * are limited in scope.  The primary capabilities are:
- * </p>
- * <ul>
- *   <li>Generate a {@code /ToUnicode} CMap for standard-encoded fonts that lack one</li>
- *   <li>Generate a {@code /CharSet} string for subset Type 1 fonts</li>
- *   <li>Generate a {@code /CIDSet} stream for subset CID fonts</li>
- *   <li>Log warnings for unembedded fonts that cannot be fixed automatically</li>
- * </ul>
- */
+/// Font-related fixes for PDF/A compliance.
+///
+/// Because we cannot embed font programs we do not have access to, these fixes
+/// are limited in scope.  The primary capabilities are:
+///
+///   - Generate a `/ToUnicode` CMap for standard-encoded fonts that lack one
+///   - Generate a `/CharSet` string for subset Type 1 fonts
+///   - Generate a `/CIDSet` stream for subset CID fonts
+///   - Log warnings for unembedded fonts that cannot be fixed automatically
 public final class FontFixes {
 
     private static final Logger LOG = Logger.getLogger(FontFixes.class.getName());
 
-    /** WinAnsiEncoding mapping: byte value (32..255) -> Unicode code point. */
+    /// WinAnsiEncoding mapping: byte value (32..255) -> Unicode code point.
     private static final Map<Integer, Integer> WIN_ANSI_MAP = new HashMap<>();
 
     static {
@@ -81,27 +67,22 @@ public final class FontFixes {
         }
     }
 
-    /**
-     * Creates a new FontFixes instance.
-     */
+    /// Creates a new FontFixes instance.
     public FontFixes() {
         // default
     }
 
-    /**
-     * Generates a {@code /ToUnicode} CMap for fonts that use WinAnsiEncoding or
-     * MacRomanEncoding but lack a {@code /ToUnicode} entry.
-     * <p>
-     * PDF/A Level A requires every font to have a way to map character codes to
-     * Unicode (ISO 19005-1:2005, 6.3.8).
-     * </p>
-     *
-     * @param parser      the parsed PDF
-     * @param format      the target format
-     * @param errorAction the error action strategy
-     * @param result      the validation result
-     * @throws IOException if an I/O error occurs
-     */
+    /// Generates a `/ToUnicode` CMap for fonts that use WinAnsiEncoding or
+    /// MacRomanEncoding but lack a `/ToUnicode` entry.
+    ///
+    /// PDF/A Level A requires every font to have a way to map character codes to
+    /// Unicode (ISO 19005-1:2005, 6.3.8).
+    ///
+    /// @param parser      the parsed PDF
+    /// @param format      the target format
+    /// @param errorAction the error action strategy
+    /// @param result      the validation result
+    /// @throws IOException if an I/O error occurs
     public void generateToUnicodeCMap(PDFParser parser, PdfFormat format,
                                       ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
         for (PdfObjectKey key : parser.getAllObjectKeys()) {
@@ -157,20 +138,17 @@ public final class FontFixes {
         }
     }
 
-    /**
-     * Generates a {@code /CharSet} string for subset Type 1 fonts that lack one.
-     * <p>
-     * The /CharSet string lists the glyph names present in the font. For PDF/A-1
-     * this is required in the font descriptor of subset Type 1 fonts
-     * (ISO 19005-1:2005, 6.3.5).
-     * </p>
-     *
-     * @param parser      the parsed PDF
-     * @param format      the target format
-     * @param errorAction the error action strategy
-     * @param result      the validation result
-     * @throws IOException if an I/O error occurs
-     */
+    /// Generates a `/CharSet` string for subset Type 1 fonts that lack one.
+    ///
+    /// The /CharSet string lists the glyph names present in the font. For PDF/A-1
+    /// this is required in the font descriptor of subset Type 1 fonts
+    /// (ISO 19005-1:2005, 6.3.5).
+    ///
+    /// @param parser      the parsed PDF
+    /// @param format      the target format
+    /// @param errorAction the error action strategy
+    /// @param result      the validation result
+    /// @throws IOException if an I/O error occurs
     public void generateCharSet(PDFParser parser, PdfFormat format,
                                 ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
         for (PdfObjectKey key : parser.getAllObjectKeys()) {
@@ -223,19 +201,16 @@ public final class FontFixes {
         }
     }
 
-    /**
-     * Generates a {@code /CIDSet} stream for subset CID fonts that lack one.
-     * <p>
-     * For PDF/A, CIDFont subsets must include a CIDSet stream that indicates
-     * which CIDs are present (ISO 19005-1:2005, 6.3.6).
-     * </p>
-     *
-     * @param parser      the parsed PDF
-     * @param format      the target format
-     * @param errorAction the error action strategy
-     * @param result      the validation result
-     * @throws IOException if an I/O error occurs
-     */
+    /// Generates a `/CIDSet` stream for subset CID fonts that lack one.
+    ///
+    /// For PDF/A, CIDFont subsets must include a CIDSet stream that indicates
+    /// which CIDs are present (ISO 19005-1:2005, 6.3.6).
+    ///
+    /// @param parser      the parsed PDF
+    /// @param format      the target format
+    /// @param errorAction the error action strategy
+    /// @param result      the validation result
+    /// @throws IOException if an I/O error occurs
     public void generateCIDSet(PDFParser parser, PdfFormat format,
                                ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
         for (PdfObjectKey key : parser.getAllObjectKeys()) {
@@ -300,16 +275,14 @@ public final class FontFixes {
         }
     }
 
-    /**
-     * Logs warnings for fonts that are not embedded and cannot be fixed
-     * automatically (we lack the font program data).
-     *
-     * @param parser      the parsed PDF
-     * @param format      the target format
-     * @param errorAction the error action strategy
-     * @param result      the validation result
-     * @throws IOException if an I/O error occurs
-     */
+    /// Logs warnings for fonts that are not embedded and cannot be fixed
+    /// automatically (we lack the font program data).
+    ///
+    /// @param parser      the parsed PDF
+    /// @param format      the target format
+    /// @param errorAction the error action strategy
+    /// @param result      the validation result
+    /// @throws IOException if an I/O error occurs
     public void logUnembeddedFonts(PDFParser parser, PdfFormat format,
                                    ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
         for (PdfObjectKey key : parser.getAllObjectKeys()) {
@@ -368,9 +341,7 @@ public final class FontFixes {
     // Internal helpers
     // -------------------------------------------------------------------------
 
-    /**
-     * Builds a ToUnicode CMap for WinAnsiEncoding covering firstChar..lastChar.
-     */
+    /// Builds a ToUnicode CMap for WinAnsiEncoding covering firstChar..lastChar.
     private static byte[] buildWinAnsiCMap(int firstChar, int lastChar) {
         StringBuilder sb = new StringBuilder(4096);
         sb.append("/CIDInit /ProcSet findresource begin\n");
@@ -414,9 +385,7 @@ public final class FontFixes {
         return sb.toString().getBytes(StandardCharsets.US_ASCII);
     }
 
-    /**
-     * Builds a /CharSet string listing standard glyph names for codes firstChar..lastChar.
-     */
+    /// Builds a /CharSet string listing standard glyph names for codes firstChar..lastChar.
     private static String buildCharSetString(int firstChar, int lastChar) {
         // Standard glyph names for WinAnsi codes 32..126
         String[] stdNames = {
@@ -445,9 +414,7 @@ public final class FontFixes {
         return sb.toString();
     }
 
-    /**
-     * Estimates the maximum CID from a /W (widths) array.
-     */
+    /// Estimates the maximum CID from a /W (widths) array.
     private static int estimateMaxCidFromW(PdfArray wArray) {
         int maxCid = 255;
         for (int i = 0; i < wArray.size(); i++) {
@@ -462,10 +429,8 @@ public final class FontFixes {
         return maxCid;
     }
 
-    /**
-     * Builds a CIDSet bitmap marking CIDs 0..lastCid as present.
-     * The CIDSet is a byte array where bit N represents CID N (MSB first).
-     */
+    /// Builds a CIDSet bitmap marking CIDs 0..lastCid as present.
+    /// The CIDSet is a byte array where bit N represents CID N (MSB first).
     private static byte[] buildCidSetBitmap(int lastCid) {
         int byteCount = (lastCid / 8) + 1;
         byte[] bitmap = new byte[byteCount];
@@ -478,9 +443,7 @@ public final class FontFixes {
         return bitmap;
     }
 
-    /**
-     * Checks if a font name is one of the standard 14 PDF fonts.
-     */
+    /// Checks if a font name is one of the standard 14 PDF fonts.
     private static boolean isStandard14(String name) {
         // Strip subset prefix if present
         String n = name.contains("+") ? name.substring(name.indexOf('+') + 1) : name;
@@ -495,9 +458,7 @@ public final class FontFixes {
         }
     }
 
-    /**
-     * Finds the maximum object number currently in the parser.
-     */
+    /// Finds the maximum object number currently in the parser.
     private static int findMaxObjectNumber(PDFParser parser) {
         int maxObj = 0;
         for (PdfObjectKey k : parser.getAllObjectKeys()) {

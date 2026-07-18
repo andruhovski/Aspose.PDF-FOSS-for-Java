@@ -9,11 +9,9 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Parses HTML (possibly malformed) into a DOM Document.
- * Strategy: wrap in XHTML envelope, try strict XML parse,
- * if fails, clean up common issues and retry.
- */
+/// Parses HTML (possibly malformed) into a DOM Document.
+/// Strategy: wrap in XHTML envelope, try strict XML parse,
+/// if fails, clean up common issues and retry.
 public class HtmlTagParser {
     private static final Logger LOG = Logger.getLogger(HtmlTagParser.class.getName());
 
@@ -21,7 +19,7 @@ public class HtmlTagParser {
         "area","base","br","col","embed","hr","img","input",
         "link","meta","param","source","track","wbr");
 
-    /** HTML5 boolean attributes that need value for XML: disabled → disabled="disabled" */
+    /// HTML5 boolean attributes that need value for XML: disabled → disabled="disabled"
     private static final Set<String> BOOLEAN_ATTRS = Set.of(
         "allowfullscreen","async","autofocus","autoplay","checked","controls",
         "default","defer","disabled","formnovalidate","hidden","ismap","loop",
@@ -52,27 +50,25 @@ public class HtmlTagParser {
         Pattern.compile("\\s+xmlns\\s*=\\s*\"[^\"]*\"");
     private static final Pattern XMLNS_SQ_PATTERN =
         Pattern.compile("\\s+xmlns\\s*=\\s*'[^']*'");
-    /** Missing space between an attribute value's closing quote and the next attr. */
+    /// Missing space between an attribute value's closing quote and the next attr.
     private static final Pattern ATTR_GAP_PATTERN =
         Pattern.compile("([\"'])([a-zA-Z])");
-    /** Unquoted attribute values: name=value -> name="value". */
+    /// Unquoted attribute values: name=value -> name="value".
     private static final Pattern UNQUOTED_ATTR_PATTERN =
         Pattern.compile("(?<=\\s)(\\w+)=([a-zA-Z][a-zA-Z0-9_.:-]*)(?=\\s|/?>)");
 
-    /** Single alternation over all void elements: 1 pass instead of 14. */
+    /// Single alternation over all void elements: 1 pass instead of 14.
     private static final Pattern VOID_ELEMENTS_PATTERN =
         Pattern.compile("(?i)<(" + String.join("|", VOID_ELEMENTS)
             + ")(\\s[^>]*?)?\\s*(?<!/)>");
-    /** Single alternation over all boolean attributes: 1 pass instead of 21. */
+    /// Single alternation over all boolean attributes: 1 pass instead of 21.
     private static final Pattern BOOLEAN_ATTRS_PATTERN =
         Pattern.compile("(?i)(<[a-zA-Z][^>]*\\s)(" + String.join("|", BOOLEAN_ATTRS)
             + ")(?=\\s|/?>)");
 
-    /**
-     * Named HTML entities mapped to their replacement characters. Used by the
-     * single-pass entity scanner. XML built-ins (amp/lt/gt/quot/apos) and
-     * numeric entities are intentionally absent — they are passed through.
-     */
+    /// Named HTML entities mapped to their replacement characters. Used by the
+    /// single-pass entity scanner. XML built-ins (amp/lt/gt/quot/apos) and
+    /// numeric entities are intentionally absent — they are passed through.
     private static final Map<String, String> NAMED_ENTITIES = Map.ofEntries(
         Map.entry("nbsp", " "),    Map.entry("mdash", "—"),
         Map.entry("ndash", "–"),   Map.entry("laquo", "«"),
@@ -93,17 +89,15 @@ public class HtmlTagParser {
 
     private HtmlTagParser() {} // utility class
 
-    /**
-     * Parses the given HTML string into a DOM {@link org.w3c.dom.Document}.
-     *
-     * <p>The parser first attempts a strict XML parse after wrapping the input
-     * in a minimal XHTML envelope. If that fails (e.g. due to unclosed tags or
-     * HTML entities), it applies common clean-up heuristics and retries.</p>
-     *
-     * @param html the HTML string to parse; may be a fragment or a full document
-     * @return a DOM Document representing the parsed HTML
-     * @throws IOException if the HTML cannot be parsed even after clean-up
-     */
+    /// Parses the given HTML string into a DOM [org.w3c.dom.Document].
+    ///
+    /// The parser first attempts a strict XML parse after wrapping the input
+    /// in a minimal XHTML envelope. If that fails (e.g. due to unclosed tags or
+    /// HTML entities), it applies common clean-up heuristics and retries.
+    ///
+    /// @param html the HTML string to parse; may be a fragment or a full document
+    /// @return a DOM Document representing the parsed HTML
+    /// @throws IOException if the HTML cannot be parsed even after clean-up
     public static org.w3c.dom.Document parse(String html) throws IOException {
         // Try strict parse first
         try {
@@ -140,9 +134,7 @@ public class HtmlTagParser {
         }
     }
 
-    /**
-     * Cleans common HTML constructs that are not valid XML.
-     */
+    /// Cleans common HTML constructs that are not valid XML.
     static String cleanHtml(String html) {
         // Remove IE conditional comments: <!--[if ...]>...<![endif]-->
         html = IE_CONDITIONAL_PATTERN.matcher(html).replaceAll("");
@@ -201,19 +193,17 @@ public class HtmlTagParser {
         return html;
     }
 
-    /**
-     * Single forward scan that, in one pass over the input:
-     * <ul>
-     *   <li>passes through XML built-in entities ({@code &amp; &lt; &gt; &quot; &apos;});</li>
-     *   <li>passes through numeric entities ({@code &#123;}, {@code &#x1A;});</li>
-     *   <li>replaces known named entities (e.g. {@code &nbsp;}) with their character;</li>
-     *   <li>maps unknown named entities to U+FFFD;</li>
-     *   <li>escapes a bare {@code &} (not starting an entity) to {@code &amp;}.</li>
-     * </ul>
-     * This replaces the previous ~31 sequential {@link String#replace} calls plus
-     * two catch-all regex passes, which on a 5&nbsp;MB document meant dozens of full
-     * copies of the string.
-     */
+    /// Single forward scan that, in one pass over the input:
+    ///
+    ///   - passes through XML built-in entities (`&amp; &lt; &gt; &quot; &apos;`);
+    ///   - passes through numeric entities (`&#123;`, `&#x1A;`);
+    ///   - replaces known named entities (e.g. `&nbsp;`) with their character;
+    ///   - maps unknown named entities to U+FFFD;
+    ///   - escapes a bare `&` (not starting an entity) to `&amp;`.
+    ///
+    /// This replaces the previous \~31 sequential [String#replace] calls plus
+    /// two catch-all regex passes, which on a 5&nbsp;MB document meant dozens of full
+    /// copies of the string.
     private static String replaceHtmlEntitiesAndEscapeAmps(String html) {
         int len = html.length();
         StringBuilder sb = new StringBuilder(len + len / 16); // small slack
@@ -260,9 +250,7 @@ public class HtmlTagParser {
         return sb.toString();
     }
 
-    /**
-     * Aggressive clean: remove unknown/problematic tags, fix structural issues.
-     */
+    /// Aggressive clean: remove unknown/problematic tags, fix structural issues.
     private static String aggressiveClean(String html) {
         // Remove tags that commonly cause XML issues
         html = html.replaceAll("(?i)<(audio|video|iframe|object|embed|canvas|svg|math|noscript)" +
@@ -288,10 +276,8 @@ public class HtmlTagParser {
         return "<html><body>" + html + "</body></html>";
     }
 
-    /**
-     * Auto-closes unclosed tags of the given name by inserting closing tags
-     * before the next opening tag of the same name or before certain parent closes.
-     */
+    /// Auto-closes unclosed tags of the given name by inserting closing tags
+    /// before the next opening tag of the same name or before certain parent closes.
     private static String autoCloseTag(String html, String tag) {
         StringBuilder sb = new StringBuilder();
         String lower = html.toLowerCase();
@@ -325,9 +311,7 @@ public class HtmlTagParser {
         return sb.toString();
     }
 
-    /**
-     * Ensures the HTML string has a minimal XML-compatible structure.
-     */
+    /// Ensures the HTML string has a minimal XML-compatible structure.
     static String ensureXmlStructure(String html) {
         html = html.replaceAll("(?i)<\\?xml[^?]*\\?>", "").trim();
         html = html.replaceAll("(?i)<!DOCTYPE[^>]*>", "").trim();
@@ -362,9 +346,7 @@ public class HtmlTagParser {
         return html;
     }
 
-    /**
-     * Escapes text for safe inclusion in XML.
-     */
+    /// Escapes text for safe inclusion in XML.
     private static String escapeXml(String text) {
         return text.replace("&", "&amp;")
                    .replace("<", "&lt;")
@@ -372,9 +354,7 @@ public class HtmlTagParser {
                    .replace("\"", "&quot;");
     }
 
-    /**
-     * Parses the given XML string into a DOM Document using JAXP.
-     */
+    /// Parses the given XML string into a DOM Document using JAXP.
     private static org.w3c.dom.Document parseAsXml(String xml) throws Exception {
         javax.xml.parsers.DocumentBuilderFactory factory =
             javax.xml.parsers.DocumentBuilderFactory.newInstance();

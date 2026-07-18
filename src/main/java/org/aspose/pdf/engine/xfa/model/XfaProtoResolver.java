@@ -4,44 +4,36 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Logger;
 
-/**
- * Resolves XFA prototype references at the model level: {@code use} (intra-document
- * prototype by id) and {@code usehref} (prototype by href/id), plus {@code proto}
- * packet sources (XFA 3.0 sec on {@code use}/{@code usehref}).
- *
- * <p>A referencing element <em>inherits</em> the prototype's attributes and
- * children; locally specified properties win. Resolution is grammar-level (not
- * data binding). Prototype chains are followed; cycles are detected and reported
- * (never infinite-looped); unresolved references degrade with a WARNING.</p>
- *
- * <p>Resolution materialises inheritance into the DOM (missing attributes copied,
- * missing-by-name children appended). It is an explicit operation — a tree that
- * is never resolved round-trips unchanged.</p>
- */
+/// Resolves XFA prototype references at the model level: `use` (intra-document
+/// prototype by id) and `usehref` (prototype by href/id), plus `proto`
+/// packet sources (XFA 3.0 sec on `use`/`usehref`).
+///
+/// A referencing element _inherits_ the prototype's attributes and
+/// children; locally specified properties win. Resolution is grammar-level (not
+/// data binding). Prototype chains are followed; cycles are detected and reported
+/// (never infinite-looped); unresolved references degrade with a WARNING.
+///
+/// Resolution materialises inheritance into the DOM (missing attributes copied,
+/// missing-by-name children appended). It is an explicit operation — a tree that
+/// is never resolved round-trips unchanged.
 public final class XfaProtoResolver {
 
     private static final Logger LOG = Logger.getLogger(XfaProtoResolver.class.getName());
 
-    /** Outcome of a resolution pass. */
+    /// Outcome of a resolution pass.
     public static final class Report {
         private int resolved;
         private final List<String> unresolved = new ArrayList<>();
         private final List<String> cycles = new ArrayList<>();
 
-        /** @return number of references successfully resolved. */
+        /// @return number of references successfully resolved.
         public int getResolvedCount() { return resolved; }
-        /** @return descriptions of references that could not be resolved. */
+        /// @return descriptions of references that could not be resolved.
         public List<String> getUnresolved() { return unresolved; }
-        /** @return descriptions of detected reference cycles. */
+        /// @return descriptions of detected reference cycles.
         public List<String> getCycles() { return cycles; }
 
         @Override
@@ -55,11 +47,9 @@ public final class XfaProtoResolver {
     private final Map<String, XfaNode> protoSources = new HashMap<>();
     private final Report report = new Report();
 
-    /**
-     * Creates a resolver over a template tree.
-     *
-     * @param root the typed template root (its subtree is indexed by {@code id})
-     */
+    /// Creates a resolver over a template tree.
+    ///
+    /// @param root the typed template root (its subtree is indexed by `id`)
     public XfaProtoResolver(XfaNode root) {
         this.root = root;
         if (root != null) {
@@ -67,13 +57,11 @@ public final class XfaProtoResolver {
         }
     }
 
-    /**
-     * Registers an external prototype source (e.g. a {@code proto} packet),
-     * addressable by an href key used in {@code usehref}.
-     *
-     * @param hrefKey the href (the part before {@code #} in a usehref)
-     * @param source  the prototype source root node
-     */
+    /// Registers an external prototype source (e.g. a `proto` packet),
+    /// addressable by an href key used in `usehref`.
+    ///
+    /// @param hrefKey the href (the part before `#` in a usehref)
+    /// @param source  the prototype source root node
     public void addProtoSource(String hrefKey, XfaNode source) {
         if (hrefKey != null && source != null) {
             protoSources.put(hrefKey, source);
@@ -81,11 +69,9 @@ public final class XfaProtoResolver {
         }
     }
 
-    /**
-     * Resolves all {@code use}/{@code usehref} references in the tree.
-     *
-     * @return a report of resolved / unresolved / cyclic references
-     */
+    /// Resolves all `use`/`usehref` references in the tree.
+    ///
+    /// @return a report of resolved / unresolved / cyclic references
     public Report resolve() {
         List<Element> refs = new ArrayList<>();
         collectRefs(root.getElement(), refs);
@@ -128,7 +114,7 @@ public final class XfaProtoResolver {
         onPath.remove(e);
     }
 
-    /** Copies prototype attributes the node lacks, and appends prototype children absent by name. */
+    /// Copies prototype attributes the node lacks, and appends prototype children absent by name.
     private void merge(Element node, Element proto) {
         NamedNodeMap atts = proto.getAttributes();
         for (int i = 0; i < atts.getLength(); i++) {

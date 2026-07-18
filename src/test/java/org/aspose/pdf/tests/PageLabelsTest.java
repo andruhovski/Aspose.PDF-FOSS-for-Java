@@ -12,9 +12,7 @@ import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for page labels (§12.4.2).
- */
+/// Tests for page labels (§12.4.2).
 public class PageLabelsTest {
 
     @Test

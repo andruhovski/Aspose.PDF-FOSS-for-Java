@@ -1,45 +1,37 @@
 package org.aspose.pdf.forms.xfa;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.logging.Logger;
-
 import javax.xml.XMLConstants;
 import javax.xml.namespace.NamespaceContext;
+import java.util.*;
+import java.util.logging.Logger;
 
-/**
- * Namespace context for XFA XML documents.
- * Implements {@link javax.xml.namespace.NamespaceContext} to support XPath queries
- * over XFA template, datasets, and other packets.
- * <p>
- * Auto-detects the template namespace version (2.6, 2.8, or 3.0) from the actual
- * XML and registers it under the "tpl" prefix.
- * </p>
- */
+/// Namespace context for XFA XML documents.
+/// Implements [javax.xml.namespace.NamespaceContext] to support XPath queries
+/// over XFA template, datasets, and other packets.
+///
+/// Auto-detects the template namespace version (2.6, 2.8, or 3.0) from the actual
+/// XML and registers it under the "tpl" prefix.
+///
 public class XfaNamespaceContext implements NamespaceContext {
 
     private static final Logger LOGGER = Logger.getLogger(XfaNamespaceContext.class.getName());
 
-    /** Default XDP namespace. */
+    /// Default XDP namespace.
     public static final String XDP_NS = "http://ns.adobe.com/xdp/";
 
-    /** Default template namespace (3.0). May be overridden by detection. */
+    /// Default template namespace (3.0). May be overridden by detection.
     public static final String TEMPLATE_NS_DEFAULT = "http://www.xfa.org/schema/xfa-template/3.0/";
 
-    /** Data namespace. */
+    /// Data namespace.
     public static final String DATA_NS = "http://www.xfa.org/schema/xfa-data/1.0/";
 
-    /** Config namespace (default). */
+    /// Config namespace (default).
     public static final String CONFIG_NS_DEFAULT = "http://www.xfa.org/schema/xci/3.0/";
 
-    /** Locale set namespace. */
+    /// Locale set namespace.
     public static final String LOCALE_NS = "http://www.xfa.org/schema/xfa-locale-set/2.7/";
 
-    /** Form namespace. */
+    /// Form namespace.
     public static final String FORM_NS = "http://www.xfa.org/schema/xfa-form/2.8/";
 
     private static final String TEMPLATE_NS_PREFIX = "http://www.xfa.org/schema/xfa-template/";
@@ -48,12 +40,10 @@ public class XfaNamespaceContext implements NamespaceContext {
     private final Map<String, String> prefixToUri;
     private final Map<String, List<String>> uriToPrefix;
 
-    /**
-     * Creates namespace context with auto-detection of template version.
-     *
-     * @param templateDoc the template XML document (may be null)
-     * @param datasetsDoc the datasets XML document (may be null)
-     */
+    /// Creates namespace context with auto-detection of template version.
+    ///
+    /// @param templateDoc the template XML document (may be null)
+    /// @param datasetsDoc the datasets XML document (may be null)
     public XfaNamespaceContext(org.w3c.dom.Document templateDoc,
                                org.w3c.dom.Document datasetsDoc) {
         // Step 1: Initialize default mappings
@@ -97,13 +87,11 @@ public class XfaNamespaceContext implements NamespaceContext {
         }
     }
 
-    /**
-     * Returns the namespace URI bound to the given prefix.
-     *
-     * @param prefix the namespace prefix to look up
-     * @return the namespace URI, or {@link XMLConstants#NULL_NS_URI} if not bound
-     * @throws IllegalArgumentException if prefix is null
-     */
+    /// Returns the namespace URI bound to the given prefix.
+    ///
+    /// @param prefix the namespace prefix to look up
+    /// @return the namespace URI, or [XMLConstants#NULL\_NS\_URI] if not bound
+    /// @throws IllegalArgumentException if prefix is null
     @Override
     public String getNamespaceURI(String prefix) {
         if (prefix == null) {
@@ -122,13 +110,11 @@ public class XfaNamespaceContext implements NamespaceContext {
         return uri != null ? uri : XMLConstants.NULL_NS_URI;
     }
 
-    /**
-     * Returns a prefix bound to the given namespace URI, or null if none is bound.
-     *
-     * @param namespaceURI the namespace URI to look up
-     * @return a prefix bound to the URI, or null
-     * @throws IllegalArgumentException if namespaceURI is null
-     */
+    /// Returns a prefix bound to the given namespace URI, or null if none is bound.
+    ///
+    /// @param namespaceURI the namespace URI to look up
+    /// @return a prefix bound to the URI, or null
+    /// @throws IllegalArgumentException if namespaceURI is null
     @Override
     public String getPrefix(String namespaceURI) {
         if (namespaceURI == null) {
@@ -138,13 +124,11 @@ public class XfaNamespaceContext implements NamespaceContext {
         return (prefixes != null && !prefixes.isEmpty()) ? prefixes.get(0) : null;
     }
 
-    /**
-     * Returns an iterator over all prefixes bound to the given namespace URI.
-     *
-     * @param namespaceURI the namespace URI to look up
-     * @return an iterator over bound prefixes (may be empty)
-     * @throws IllegalArgumentException if namespaceURI is null
-     */
+    /// Returns an iterator over all prefixes bound to the given namespace URI.
+    ///
+    /// @param namespaceURI the namespace URI to look up
+    /// @return an iterator over bound prefixes (may be empty)
+    /// @throws IllegalArgumentException if namespaceURI is null
     @Override
     public Iterator<String> getPrefixes(String namespaceURI) {
         if (namespaceURI == null) {

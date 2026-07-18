@@ -12,14 +12,12 @@ import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * The {@code util} host object (Stage B / B3.1 A.3) — the XFA date helpers the corpus's "Date" demand
- * actually used (this is where it lived, not the JS {@code Date} engine): {@code util.printd(picture,
- * date)} formats a JS {@code Date} by an XFA/Acrobat date picture, {@code util.scand(picture, str)}
- * parses a string back to a {@code Date}. Supports the common picture tokens (YYYY/YY, MMMM/MMM/MM/M,
- * DD/D, HH/hh/mm/ss) in the host default locale; non-English month names / exotic pictures are a
- * tracked gap. Times are computed in UTC for determinism (headless).
- */
+/// The `util` host object (Stage B / B3.1 A.3) — the XFA date helpers the corpus's "Date" demand
+/// actually used (this is where it lived, not the JS `Date` engine): `util.printd(picture,
+/// date)` formats a JS `Date` by an XFA/Acrobat date picture, `util.scand(picture, str)`
+/// parses a string back to a `Date`. Supports the common picture tokens (YYYY/YY, MMMM/MMM/MM/M,
+/// DD/D, HH/hh/mm/ss) in the host default locale; non-English month names / exotic pictures are a
+/// tracked gap. Times are computed in UTC for determinism (headless).
 final class XfaUtil {
 
     private static final TimeZone UTC = TimeZone.getTimeZone("UTC");

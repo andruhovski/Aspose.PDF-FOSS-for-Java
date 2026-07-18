@@ -1,33 +1,28 @@
 package org.aspose.pdf.annotations;
 
-import org.aspose.pdf.*;
+import org.aspose.pdf.Page;
+import org.aspose.pdf.Rectangle;
 import org.aspose.pdf.engine.pdfobjects.*;
 
-/**
- * Underline annotation (ISO 32000-1:2008, Section 12.5.6.10, /Subtype /Underline).
- * <p>
- * An underline annotation appears as an underline beneath the text. The region
- * is specified by the /QuadPoints array.
- * </p>
- */
+/// Underline annotation (ISO 32000-1:2008, Section 12.5.6.10, /Subtype /Underline).
+///
+/// An underline annotation appears as an underline beneath the text. The region
+/// is specified by the /QuadPoints array.
+///
 public class UnderlineAnnotation extends MarkupAnnotation {
 
-    /**
-     * Constructs an underline annotation from an existing PDF dictionary.
-     *
-     * @param dict the PDF dictionary backing this annotation
-     * @param page the page this annotation belongs to
-     */
+    /// Constructs an underline annotation from an existing PDF dictionary.
+    ///
+    /// @param dict the PDF dictionary backing this annotation
+    /// @param page the page this annotation belongs to
     public UnderlineAnnotation(PdfDictionary dict, Page page) {
         super(dict, page);
     }
 
-    /**
-     * Constructs a new underline annotation with the given rectangle on the specified page.
-     *
-     * @param page the page this annotation belongs to
-     * @param rect the annotation rectangle
-     */
+    /// Constructs a new underline annotation with the given rectangle on the specified page.
+    ///
+    /// @param page the page this annotation belongs to
+    /// @param rect the annotation rectangle
     public UnderlineAnnotation(Page page, Rectangle rect) {
         super(page, rect);
         dict.set(PdfName.of("Subtype"), PdfName.of("Underline"));
@@ -39,11 +34,9 @@ public class UnderlineAnnotation extends MarkupAnnotation {
         });
     }
 
-    /**
-     * Returns the quadrilateral points defining the underlined regions.
-     *
-     * @return the quad points array, or null if not set
-     */
+    /// Returns the quadrilateral points defining the underlined regions.
+    ///
+    /// @return the quad points array, or null if not set
     public double[] getQuadPoints() {
         PdfBase qp = dict.get("QuadPoints");
         if (qp instanceof PdfArray) {
@@ -57,11 +50,9 @@ public class UnderlineAnnotation extends MarkupAnnotation {
         return null;
     }
 
-    /**
-     * Sets the quadrilateral points defining the underlined regions.
-     *
-     * @param points the quad points array (multiples of 8 values)
-     */
+    /// Sets the quadrilateral points defining the underlined regions.
+    ///
+    /// @param points the quad points array (multiples of 8 values)
     public void setQuadPoints(double[] points) {
         if (points == null) return;
         PdfArray arr = new PdfArray();
@@ -71,15 +62,13 @@ public class UnderlineAnnotation extends MarkupAnnotation {
         dict.set(PdfName.of("QuadPoints"), arr);
     }
 
-    /**
-     * Sets multiple quadrilaterals at once. See
-     * {@link HighlightAnnotation#setQuadPoints(double[][])} for the contract;
-     * each sub-array is {@code [TLx TLy TRx TRy BLx BLy BRx BRy]} per
-     * ISO 32000-1:2008 §12.5.6.10 Table 179.
-     *
-     * @param quads array of {@code double[8]} quadrilaterals;
-     *              passing {@code null} removes the {@code /QuadPoints} entry.
-     */
+    /// Sets multiple quadrilaterals at once. See
+    /// [HighlightAnnotation#setQuadPoints(double\[\]\[\])] for the contract;
+    /// each sub-array is `[TLx TLy TRx TRy BLx BLy BRx BRy]` per
+    /// ISO 32000-1:2008 §12.5.6.10 Table 179.
+    ///
+    /// @param quads array of `double[8]` quadrilaterals;
+    ///              passing `null` removes the `/QuadPoints` entry.
     public void setQuadPoints(double[][] quads) {
         if (quads == null) {
             dict.set(PdfName.of("QuadPoints"), (PdfBase) null);

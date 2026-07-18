@@ -10,9 +10,7 @@ import java.util.zip.Deflater;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link FlateFilter}.
- */
+/// Tests for [FlateFilter].
 public class FlateFilterTest {
 
     private final FlateFilter filter = new FlateFilter();

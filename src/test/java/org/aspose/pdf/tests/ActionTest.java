@@ -8,9 +8,7 @@ import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for PdfAction subclasses and ExplicitDestination types.
- */
+/// Tests for PdfAction subclasses and ExplicitDestination types.
 public class ActionTest {
 
     private Page createPage() {

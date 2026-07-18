@@ -8,11 +8,9 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Unit tests for auto-derivation of {@code /QuadPoints} from the bounding
- * rectangle in the {@code (Page, Rectangle)} constructors of text-markup
- * annotations (matches C# Aspose behavior — Bug #8).
- */
+/// Unit tests for auto-derivation of `/QuadPoints` from the bounding
+/// rectangle in the `(Page, Rectangle)` constructors of text-markup
+/// annotations (matches C# Aspose behavior — Bug #8).
 public class TextMarkupAnnotationCtorTests {
 
     @Test

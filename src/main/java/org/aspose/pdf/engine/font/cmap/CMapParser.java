@@ -7,39 +7,33 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
-/**
- * Parses CMap data into a {@link ToUnicodeCMap} (ISO 32000-1:2008, §9.10).
- * <p>
- * Handles both {@code beginbfchar}/{@code endbfchar} and
- * {@code beginbfrange}/{@code endbfrange} sections. Supports hex-encoded
- * character codes and Unicode values, including multi-codepoint mappings
- * for ligatures.
- * </p>
- */
+/// Parses CMap data into a [ToUnicodeCMap] (ISO 32000-1:2008, §9.10).
+///
+/// Handles both `beginbfchar`/`endbfchar` and
+/// `beginbfrange`/`endbfrange` sections. Supports hex-encoded
+/// character codes and Unicode values, including multi-codepoint mappings
+/// for ligatures.
+///
 public final class CMapParser {
 
     private static final Logger LOG = Logger.getLogger(CMapParser.class.getName());
 
-    /**
-     * Upper bound on a single bfrange expansion. Conformant ranges cannot
-     * cross their high-byte boundary (≤ 256 codes, Adobe CMap spec §1.4.1);
-     * 64k allows sloppy-but-finite producers while stopping corrupt entries
-     * like {@code <0000> <7FFFFFFF>} from materialising billions of map
-     * entries (OOM + minutes of CPU — corpus 38236.PDF).
-     */
+    /// Upper bound on a single bfrange expansion. Conformant ranges cannot
+    /// cross their high-byte boundary (≤ 256 codes, Adobe CMap spec §1.4.1);
+    /// 64k allows sloppy-but-finite producers while stopping corrupt entries
+    /// like `<0000> <7FFFFFFF>` from materialising billions of map
+    /// entries (OOM + minutes of CPU — corpus 38236.PDF).
     private static final int MAX_BFRANGE_SPAN = 0x10000;
 
     private CMapParser() {
         // Utility class
     }
 
-    /**
-     * Parses a ToUnicode CMap from raw byte data.
-     *
-     * @param cmapData the raw CMap stream bytes
-     * @return the parsed ToUnicodeCMap
-     * @throws IOException if parsing fails
-     */
+    /// Parses a ToUnicode CMap from raw byte data.
+    ///
+    /// @param cmapData the raw CMap stream bytes
+    /// @return the parsed ToUnicodeCMap
+    /// @throws IOException if parsing fails
     public static ToUnicodeCMap parseToUnicode(byte[] cmapData) throws IOException {
         if (cmapData == null || cmapData.length == 0) {
             return new ToUnicodeCMap(new HashMap<>());
@@ -52,13 +46,11 @@ public final class CMapParser {
         return new ToUnicodeCMap(mappings);
     }
 
-    /**
-     * Parses a ToUnicode CMap from a PdfStream.
-     *
-     * @param stream the CMap stream
-     * @return the parsed ToUnicodeCMap
-     * @throws IOException if parsing or decoding fails
-     */
+    /// Parses a ToUnicode CMap from a PdfStream.
+    ///
+    /// @param stream the CMap stream
+    /// @return the parsed ToUnicodeCMap
+    /// @throws IOException if parsing or decoding fails
     public static ToUnicodeCMap parseToUnicode(PdfStream stream) throws IOException {
         if (stream == null) {
             return new ToUnicodeCMap(new HashMap<>());
@@ -67,10 +59,8 @@ public final class CMapParser {
         return parseToUnicode(data);
     }
 
-    /**
-     * Parses beginbfchar/endbfchar sections.
-     * Format: beginbfchar <srcCode> <dstUnicode> endbfchar
-     */
+    /// Parses beginbfchar/endbfchar sections.
+    /// Format: beginbfchar <srccode> <dstunicode> endbfchar</dstunicode></srccode>
     private static void parseBfChars(String text, Map<Integer, String> mappings) {
         int searchFrom = 0;
         while (true) {
@@ -85,11 +75,9 @@ public final class CMapParser {
         }
     }
 
-    /**
-     * Parses beginbfrange/endbfrange sections.
-     * Format: beginbfrange <srcCodeLo> <srcCodeHi> <dstUnicodeStart> endbfrange
-     * Or:     beginbfrange <srcCodeLo> <srcCodeHi> [<dst1> <dst2> ...] endbfrange
-     */
+    /// Parses beginbfrange/endbfrange sections.
+    /// Format: beginbfrange <srccodelo> <srccodehi> <dstunicodestart> endbfrange
+    /// Or:     beginbfrange <srccodelo> <srccodehi> [<dst1> <dst2> ...] endbfrange</dst2></dst1></srccodehi></srccodelo></dstunicodestart></srccodehi></srccodelo>
     private static void parseBfRanges(String text, Map<Integer, String> mappings) {
         int searchFrom = 0;
         while (true) {
@@ -229,11 +217,9 @@ public final class CMapParser {
         }
     }
 
-    /**
-     * Converts a hex string to a Unicode string.
-     * Each 4 hex digits = one UTF-16 code unit.
-     * Supports multi-codepoint mappings (8+ hex digits = ligature).
-     */
+    /// Converts a hex string to a Unicode string.
+    /// Each 4 hex digits = one UTF-16 code unit.
+    /// Supports multi-codepoint mappings (8+ hex digits = ligature).
     private static String hexToUnicodeString(String hex) {
         hex = hex.replaceAll("\\s", "");
         if (hex.length() <= 4) {

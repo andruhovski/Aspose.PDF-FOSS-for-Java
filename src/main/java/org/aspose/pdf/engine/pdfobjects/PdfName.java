@@ -7,14 +7,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
-/**
- * PDF name object (§7.3.5, ISO 32000-1:2008).
- * <p>
- * An atomic symbol used as keys in dictionaries. Names are interned: all PdfName instances
- * with the same value share a single object (like {@link String#intern()}).
- * Characters outside 0x21..0x7E or delimiter characters are hex-encoded as {@code #XX}.
- * </p>
- */
+/// PDF name object (§7.3.5, ISO 32000-1:2008).
+///
+/// An atomic symbol used as keys in dictionaries. Names are interned: all PdfName instances
+/// with the same value share a single object (like [String#intern()]).
+/// Characters outside 0x21..0x7E or delimiter characters are hex-encoded as `#XX`.
+///
 public final class PdfName extends PdfBase implements Comparable<PdfName> {
 
     private static final Logger LOG = Logger.getLogger(PdfName.class.getName());
@@ -96,13 +94,11 @@ public final class PdfName extends PdfBase implements Comparable<PdfName> {
         return CACHE.computeIfAbsent(name, PdfName::new);
     }
 
-    /**
-     * Returns a PdfName for the given decoded name. Instances are interned (cached).
-     *
-     * @param name the decoded name (without leading '/')
-     * @return the interned PdfName
-     * @throws IllegalArgumentException if name is null
-     */
+    /// Returns a PdfName for the given decoded name. Instances are interned (cached).
+    ///
+    /// @param name the decoded name (without leading '/')
+    /// @return the interned PdfName
+    /// @throws IllegalArgumentException if name is null
     public static PdfName of(String name) {
         if (name == null) {
             throw new IllegalArgumentException("Name must not be null");
@@ -110,33 +106,29 @@ public final class PdfName extends PdfBase implements Comparable<PdfName> {
         return CACHE.computeIfAbsent(name, PdfName::new);
     }
 
-    /**
-     * Ignored: PdfName instances are interned singletons shared across every
-     * document (see {@link #CACHE}). The base class stores the write-time
-     * object key in mutable state, but a shared singleton must never carry a
-     * per-document indirect identity — doing so leaks one document's object
-     * number into every later write of the same name. Concretely, a writer
-     * that assigned (say) {@code 14 0} to {@code /WinAnsiEncoding} while
-     * serialising document A would make document B emit {@code /Encoding 14 0 R}
-     * pointing at an object that does not exist in B, corrupting the font.
-     * <p>
-     * Names are valid as direct objects everywhere they appear (ISO 32000-1
-     * §7.3.5), so keeping a name non-indirect simply serialises it inline,
-     * which is always correct. This override makes that invariant explicit.
-     *
-     * @param key ignored
-     */
+    /// Ignored: PdfName instances are interned singletons shared across every
+    /// document (see [#CACHE]). The base class stores the write-time
+    /// object key in mutable state, but a shared singleton must never carry a
+    /// per-document indirect identity — doing so leaks one document's object
+    /// number into every later write of the same name. Concretely, a writer
+    /// that assigned (say) `14 0` to `/WinAnsiEncoding` while
+    /// serialising document A would make document B emit `/Encoding 14 0 R`
+    /// pointing at an object that does not exist in B, corrupting the font.
+    ///
+    /// Names are valid as direct objects everywhere they appear (ISO 32000-1
+    /// §7.3.5), so keeping a name non-indirect simply serialises it inline,
+    /// which is always correct. This override makes that invariant explicit.
+    ///
+    /// @param key ignored
     @Override
     public void setObjectKey(PdfObjectKey key) {
         // no-op: see Javadoc — interned names are always written inline.
     }
 
-    /**
-     * Decodes a PDF name token (with {@code #XX} hex escapes) to a PdfName.
-     *
-     * @param pdfToken the raw token from the PDF (without leading '/')
-     * @return the decoded PdfName
-     */
+    /// Decodes a PDF name token (with `#XX` hex escapes) to a PdfName.
+    ///
+    /// @param pdfToken the raw token from the PDF (without leading '/')
+    /// @return the decoded PdfName
     public static PdfName fromPdfToken(String pdfToken) {
         if (pdfToken == null || pdfToken.isEmpty()) {
             return of("");
@@ -162,20 +154,16 @@ public final class PdfName extends PdfBase implements Comparable<PdfName> {
         return of(new String(baos.toByteArray(), StandardCharsets.UTF_8));
     }
 
-    /**
-     * Returns the decoded name (without leading '/').
-     *
-     * @return the name string
-     */
+    /// Returns the decoded name (without leading '/').
+    ///
+    /// @return the name string
     public String getName() {
         return name;
     }
 
-    /**
-     * Returns the decoded name value. Alias for {@link #getName()}.
-     *
-     * @return the name string
-     */
+    /// Returns the decoded name value. Alias for [#getName()].
+    ///
+    /// @return the name string
     public String getValue() {
         return name;
     }
@@ -212,9 +200,7 @@ public final class PdfName extends PdfBase implements Comparable<PdfName> {
         return "/" + name;
     }
 
-    /**
-     * Encodes a name string to PDF syntax bytes: "/" followed by hex-escaped characters.
-     */
+    /// Encodes a name string to PDF syntax bytes: "/" followed by hex-escaped characters.
     private static byte[] encode(String name) {
         byte[] utf8 = name.getBytes(StandardCharsets.UTF_8);
         ByteArrayOutputStream baos = new ByteArrayOutputStream(utf8.length + 1);
@@ -232,9 +218,7 @@ public final class PdfName extends PdfBase implements Comparable<PdfName> {
         return baos.toByteArray();
     }
 
-    /**
-     * Returns true if the byte is a PDF delimiter that must be hex-encoded in names.
-     */
+    /// Returns true if the byte is a PDF delimiter that must be hex-encoded in names.
     private static boolean isDelimiter(int b) {
         return b == '#' || b == '(' || b == ')' || b == '<' || b == '>'
                 || b == '[' || b == ']' || b == '{' || b == '}' || b == '/' || b == '%';

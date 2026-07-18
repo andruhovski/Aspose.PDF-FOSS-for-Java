@@ -12,9 +12,7 @@ import java.io.ByteArrayOutputStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link XImageCollection}.
- */
+/// Tests for [XImageCollection].
 public class XImageCollectionTest {
 
     private PdfDictionary createXObjectDict() {

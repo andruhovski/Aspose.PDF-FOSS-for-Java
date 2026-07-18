@@ -6,13 +6,11 @@ import org.aspose.pdf.engine.xfa.model.XfaNode;
 
 import java.util.List;
 
-/**
- * The XFA node list a node exposes as {@code node.nodes} (B3.4). Scripts build structure dynamically
- * with {@code container.nodes.append(xfa.form.createNode("field","x"))} and prune it with
- * {@code .remove(child)}; {@code item(i)} / {@code length} iterate. Mutations go through
- * {@link XfaScriptHost} so the canonical Form-DOM tree, fields and named globals stay consistent and
- * the change reaches compute/render.
- */
+/// The XFA node list a node exposes as `node.nodes` (B3.4). Scripts build structure dynamically
+/// with `container.nodes.append(xfa.form.createNode("field","x"))` and prune it with
+/// `.remove(child)`; `item(i)` / `length` iterate. Mutations go through
+/// [XfaScriptHost] so the canonical Form-DOM tree, fields and named globals stay consistent and
+/// the change reaches compute/render.
 final class XfaNodeList extends JSObject {
 
     private final XfaScriptHost host;

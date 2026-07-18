@@ -32,24 +32,22 @@ import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * "Every single stream must decrypt" — strict regression guard against
- * any future change that produces ciphertext Adobe Reader (or any
- * spec-compliant reader) would reject.
- *
- * <p>Walks the saved file's raw bytes, finds every {@code N G obj ...
- * stream ... endstream} block, derives the file key from the password
- * using the library's own {@link PDFKeyDerivation}, and runs AES-256-CBC
- * (or AES-128-CBC for V=4) over the IV-prefixed ciphertext. Any stream
- * that fails PKCS#7 validation, has {@code /Length 0}, or has misaligned
- * length fails the test.</p>
- *
- * <p>This test predates and would have caught Bug R (empty appearance
- * streams), the previous double-encryption regressions, and the
- * Adobe-rejects-due-to-wrong-PDF-version bug — the latter does not
- * affect stream decryption but is caught by
- * {@link #aes256EncryptedFile_headerIsAtLeastPdf17AndDeclaresAdbeExt}.</p>
- */
+/// "Every single stream must decrypt" — strict regression guard against
+/// any future change that produces ciphertext Adobe Reader (or any
+/// spec-compliant reader) would reject.
+///
+/// Walks the saved file's raw bytes, finds every `N G obj ...
+/// stream ... endstream` block, derives the file key from the password
+/// using the library's own [PDFKeyDerivation], and runs AES-256-CBC
+/// (or AES-128-CBC for V=4) over the IV-prefixed ciphertext. Any stream
+/// that fails PKCS#7 validation, has `/Length 0`, or has misaligned
+/// length fails the test.
+///
+/// This test predates and would have caught Bug R (empty appearance
+/// streams), the previous double-encryption regressions, and the
+/// Adobe-rejects-due-to-wrong-PDF-version bug — the latter does not
+/// affect stream decryption but is caught by
+/// [#aes256EncryptedFile\_headerIsAtLeastPdf17AndDeclaresAdbeExt].
 class EveryStreamDecryptsTest {
 
     @TempDir Path tempDir;
@@ -84,7 +82,7 @@ class EveryStreamDecryptsTest {
             "(\\d+) (\\d+) obj\\s*(.*?)\\s*endobj", Pattern.MULTILINE | Pattern.DOTALL);
     private static final Pattern LEN_RE = Pattern.compile("/Length\\s+(\\d+)");
 
-    /** Header-only parse to recover the encryption dict, then derive the file key. */
+    /// Header-only parse to recover the encryption dict, then derive the file key.
     private static byte[] deriveFileKey(byte[] pdfBytes, String password) throws Exception {
         org.aspose.pdf.engine.parser.PDFParser parser =
                 new org.aspose.pdf.engine.parser.PDFParser(
@@ -111,8 +109,8 @@ class EveryStreamDecryptsTest {
         return PDFKeyDerivation.computeEncryptionKeyR2R4(pwBytes, encDict, documentId);
     }
 
-    /** Per ISO 32000-1 §7.6.2 Algorithm 1: per-object key = MD5(fileKey || objNum_LE3 || gen_LE2 ||
-     *  [salt for AES])[:Math.min(16, n+5)]. */
+    /// Per ISO 32000-1 §7.6.2 Algorithm 1: per-object key = MD5(fileKey || objNum\_LE3 || gen\_LE2 ||
+    ///  [salt for AES])[:Math.min(16, n+5)].
     private static byte[] perObjectKey(byte[] fileKey, int objNum, int gen, boolean aes) throws Exception {
         java.security.MessageDigest md = java.security.MessageDigest.getInstance("MD5");
         md.update(fileKey);
@@ -213,8 +211,8 @@ class EveryStreamDecryptsTest {
         assertTrue(a.total > 0, "no streams found — wrong PDF?");
     }
 
-    /** Build a doc with many appendToContentStream calls + form widgets to
-     *  exercise as many encryption-bearing object types as the demo does. */
+    /// Build a doc with many appendToContentStream calls + form widgets to
+    ///  exercise as many encryption-bearing object types as the demo does.
     private Document buildBusyDoc() throws IOException {
         Document doc = new Document();
         Page p = doc.getPages().add();
