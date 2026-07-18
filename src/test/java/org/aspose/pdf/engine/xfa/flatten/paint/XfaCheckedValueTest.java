@@ -9,11 +9,9 @@ import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests {@link XfaPainter#isCheckedValue}: a checkButton's CHECKED state is defined by its
- * authored on-value (first {@code <items>} entry, typed {@code <text>} or {@code <integer>}),
- * not by generic truthiness — a form may author on-values like "2", "03" or even "0".
- */
+/// Tests [XfaPainter#isCheckedValue]: a checkButton's CHECKED state is defined by its
+/// authored on-value (first `<items>` entry, typed `<text>` or `<integer>`),
+/// not by generic truthiness — a form may author on-values like "2", "03" or even "0".
 public class XfaCheckedValueTest {
 
     private static Element field(String itemsXml) throws Exception {

@@ -9,45 +9,36 @@ import org.aspose.pdf.engine.pdfobjects.PdfFloat;
 import org.aspose.pdf.engine.pdfobjects.PdfInteger;
 
 import java.io.IOException;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Deque;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Logger;
 
-/**
- * Extracts table structures from PDF pages by analyzing text positions
- * and ruling lines to identify rows, columns, and cells.
- * <p>
- * The algorithm clusters text fragments by Y-coordinate to detect rows,
- * then by X-coordinate within each row to detect columns/cells.
- * A group of consecutive rows with a consistent column structure is
- * recognized as a table.
- * </p>
- */
+/// Extracts table structures from PDF pages by analyzing text positions
+/// and ruling lines to identify rows, columns, and cells.
+///
+/// The algorithm clusters text fragments by Y-coordinate to detect rows,
+/// then by X-coordinate within each row to detect columns/cells.
+/// A group of consecutive rows with a consistent column structure is
+/// recognized as a table.
+///
 public class TableAbsorber {
 
     private static final Logger LOG = Logger.getLogger(TableAbsorber.class.getName());
 
-    /** Tolerance in points for same-row Y-coordinate detection. */
+    /// Tolerance in points for same-row Y-coordinate detection.
     private static final double ROW_TOLERANCE = 3.0;
 
-    /** Minimum number of columns required to consider a group of rows as a table. */
+    /// Minimum number of columns required to consider a group of rows as a table.
     private static final int MIN_COLUMNS = 2;
 
-    /** Minimum number of rows required to consider a group as a table. */
+    /// Minimum number of rows required to consider a group as a table.
     private static final int MIN_ROWS = 2;
 
     private final List<AbsorbedTable> tables = new ArrayList<>();
 
-    /**
-     * Visits a page and extracts table structures.
-     *
-     * @param page the page to analyze
-     * @throws IOException if text extraction fails
-     */
+    /// Visits a page and extracts table structures.
+    ///
+    /// @param page the page to analyze
+    /// @throws IOException if text extraction fails
     public void visit(Page page) throws IOException {
         tables.clear();
 
@@ -100,28 +91,26 @@ public class TableAbsorber {
 
     // ================= Ruled-grid detection =================
 
-    /** Segment endpoint / level-merge tolerance in points. */
+    /// Segment endpoint / level-merge tolerance in points.
     private static final double RULE_TOLERANCE = 3.0;
 
-    /** Two grid levels closer than this merge into one rule (points). */
+    /// Two grid levels closer than this merge into one rule (points).
     private static final double LEVEL_MERGE = 2.0;
 
-    /** Axis-alignment tolerance: max cross-axis drift for a rule (points). */
+    /// Axis-alignment tolerance: max cross-axis drift for a rule (points).
     private static final double AXIS_DRIFT = 0.7;
 
-    /** Safety cap — pages with more rule segments fall back to the heuristic. */
+    /// Safety cap — pages with more rule segments fall back to the heuristic.
     private static final int MAX_RULE_SEGMENTS = 5000;
 
-    /**
-     * Detects tables from ruling lines: collects the stroked/filled
-     * axis-aligned path segments of the page (CTM applied), clusters
-     * touching segments into connected grid regions, and slices each region
-     * into rows/columns at the distinct horizontal/vertical rule levels.
-     * Text fragments are assigned to cells by their anchor point.
-     *
-     * @return the ruled tables in top-to-bottom page order; empty when the
-     *         page has no usable rulings
-     */
+    /// Detects tables from ruling lines: collects the stroked/filled
+    /// axis-aligned path segments of the page (CTM applied), clusters
+    /// touching segments into connected grid regions, and slices each region
+    /// into rows/columns at the distinct horizontal/vertical rule levels.
+    /// Text fragments are assigned to cells by their anchor point.
+    ///
+    /// @return the ruled tables in top-to-bottom page order; empty when the
+    ///         page has no usable rulings
     private List<AbsorbedTable> detectRuledTables(Page page, List<TextFragment> fragments) {
         List<double[]> segments;
         try {
@@ -148,12 +137,10 @@ public class TableAbsorber {
         return result;
     }
 
-    /**
-     * Walks the page content stream tracking q/Q/cm and collects the
-     * axis-aligned segments of every painted path ({@code m/l} polylines and
-     * {@code re} rectangle edges). Curves and clipping-only paths are
-     * ignored. Each segment is {x1, y1, x2, y2} in device space.
-     */
+    /// Walks the page content stream tracking q/Q/cm and collects the
+    /// axis-aligned segments of every painted path (`m/l` polylines and
+    /// `re` rectangle edges). Curves and clipping-only paths are
+    /// ignored. Each segment is {x1, y1, x2, y2} in device space.
     private List<double[]> collectRuleSegments(Page page) throws IOException {
         OperatorCollection ops = page.getContents();
         List<double[]> segments = new ArrayList<>();
@@ -240,7 +227,7 @@ public class TableAbsorber {
         return segments;
     }
 
-    /** Adds the (transformed) segment to {@code path} if it is axis-aligned. */
+    /// Adds the (transformed) segment to `path` if it is axis-aligned.
     private static void addSegment(List<double[]> path, double[] ctm,
                                    double x1, double y1, double x2, double y2) {
         double dx1 = ctm[0] * x1 + ctm[2] * y1 + ctm[4];
@@ -259,7 +246,7 @@ public class TableAbsorber {
                 Math.max(dx1, dx2), Math.max(dy1, dy2)});
     }
 
-    /** 3x2 PDF matrix multiplication: result = m × ctm. */
+    /// 3x2 PDF matrix multiplication: result = m × ctm.
     private static double[] multiply(double[] m, double[] ctm) {
         return new double[]{
                 m[0] * ctm[0] + m[1] * ctm[2],
@@ -281,7 +268,7 @@ public class TableAbsorber {
         return 0;
     }
 
-    /** Groups segments whose bounding boxes touch (within tolerance) into clusters. */
+    /// Groups segments whose bounding boxes touch (within tolerance) into clusters.
     private static List<List<double[]>> clusterSegments(List<double[]> segments) {
         int n = segments.size();
         int[] component = new int[n];
@@ -321,12 +308,10 @@ public class TableAbsorber {
         return clusters;
     }
 
-    /**
-     * Slices one rule cluster into a row/column grid and fills the cells
-     * with the text fragments whose anchor falls inside. Returns {@code null}
-     * when the cluster has fewer than two horizontal or vertical rule levels
-     * (a lone underline is not a table).
-     */
+    /// Slices one rule cluster into a row/column grid and fills the cells
+    /// with the text fragments whose anchor falls inside. Returns `null`
+    /// when the cluster has fewer than two horizontal or vertical rule levels
+    /// (a lone underline is not a table).
     private AbsorbedTable buildRuledTable(List<double[]> cluster, List<TextFragment> fragments) {
         List<Double> hLevels = new ArrayList<>();
         List<Double> vLevels = new ArrayList<>();
@@ -371,7 +356,7 @@ public class TableAbsorber {
         return table;
     }
 
-    /** Merges {@code value} into the level list within {@link #LEVEL_MERGE}. */
+    /// Merges `value` into the level list within [#LEVEL\_MERGE].
     private static void addLevel(List<Double> levels, double value) {
         for (int i = 0; i < levels.size(); i++) {
             if (Math.abs(levels.get(i) - value) <= LEVEL_MERGE) {
@@ -381,7 +366,7 @@ public class TableAbsorber {
         levels.add(value);
     }
 
-    /** The point used to place a fragment into a cell: rect centre, else position. */
+    /// The point used to place a fragment into a cell: rect centre, else position.
     private static double[] anchorOf(TextFragment f) {
         Rectangle r = f.getRectangle();
         if (r != null && r.getWidth() > 0) {
@@ -391,18 +376,14 @@ public class TableAbsorber {
         return p != null ? new double[]{p.getXIndent(), p.getYIndent()} : null;
     }
 
-    /**
-     * Returns the list of tables detected on the last visited page.
-     *
-     * @return unmodifiable list of absorbed tables
-     */
+    /// Returns the list of tables detected on the last visited page.
+    ///
+    /// @return unmodifiable list of absorbed tables
     public List<AbsorbedTable> getTableList() {
         return Collections.unmodifiableList(tables);
     }
 
-    /**
-     * Groups text fragments into rows based on Y-coordinate proximity.
-     */
+    /// Groups text fragments into rows based on Y-coordinate proximity.
     private List<List<TextFragment>> groupByY(List<TextFragment> fragments) {
         List<List<TextFragment>> rows = new ArrayList<>();
         List<TextFragment> currentRow = new ArrayList<>();
@@ -435,10 +416,8 @@ public class TableAbsorber {
         return rows;
     }
 
-    /**
-     * Detects groups of consecutive rows that form tables.
-     * A table is a sequence of rows where each row has at least MIN_COLUMNS fragments.
-     */
+    /// Detects groups of consecutive rows that form tables.
+    /// A table is a sequence of rows where each row has at least MIN\_COLUMNS fragments.
     private List<List<List<TextFragment>>> detectTableGroups(List<List<TextFragment>> rows) {
         List<List<List<TextFragment>>> groups = new ArrayList<>();
         List<List<TextFragment>> currentGroup = new ArrayList<>();
@@ -459,9 +438,7 @@ public class TableAbsorber {
         return groups;
     }
 
-    /**
-     * Builds an AbsorbedTable from a group of rows.
-     */
+    /// Builds an AbsorbedTable from a group of rows.
     private AbsorbedTable buildTable(List<List<TextFragment>> rowFragments) {
         AbsorbedTable table = new AbsorbedTable();
         double minX = Double.MAX_VALUE, minY = Double.MAX_VALUE;

@@ -2,35 +2,29 @@ package org.aspose.pdf.engine.filter;
 
 import java.util.logging.Logger;
 
-/**
- * Adaptive binary arithmetic decoder for JBIG2 (MQ-coder).
- * Implements the arithmetic coding procedures specified in ISO/IEC 11544
- * (ITU T.88) Annex E (normative) and Annex F (software conventions).
- *
- * <p>Each coding context (CX) maintains:</p>
- * <ul>
- *   <li>I(CX): index into the Qe probability estimation table (0–46)</li>
- *   <li>MPS(CX): the more probable symbol (0 or 1)</li>
- * </ul>
- *
- * <p>The decoder maintains registers:</p>
- * <ul>
- *   <li>A — interval register (16-bit effective)</li>
- *   <li>C — code register (32-bit)</li>
- *   <li>CT — count of available bits in C</li>
- *   <li>BP — byte pointer into the compressed data</li>
- * </ul>
- *
- * @see JBIG2DecodeFilter
- */
+/// Adaptive binary arithmetic decoder for JBIG2 (MQ-coder).
+/// Implements the arithmetic coding procedures specified in ISO/IEC 11544
+/// (ITU T.88) Annex E (normative) and Annex F (software conventions).
+///
+/// Each coding context (CX) maintains:
+///
+///   - I(CX): index into the Qe probability estimation table (0–46)
+///   - MPS(CX): the more probable symbol (0 or 1)
+///
+/// The decoder maintains registers:
+///
+///   - A — interval register (16-bit effective)
+///   - C — code register (32-bit)
+///   - CT — count of available bits in C
+///   - BP — byte pointer into the compressed data
+///
+/// @see JBIG2DecodeFilter
 public final class ArithmeticDecoder {
 
     private static final Logger LOG = Logger.getLogger(ArithmeticDecoder.class.getName());
 
-    /**
-     * Qe probability estimation table (Table E.1, 47 entries).
-     * Each row: {Qe value, NMPS index, NLPS index, SWITCH flag}.
-     */
+    /// Qe probability estimation table (Table E.1, 47 entries).
+    /// Each row: {Qe value, NMPS index, NLPS index, SWITCH flag}.
     private static final int[][] QE_TABLE = {
         {0x5601, 1,  1,  1}, // 0
         {0x3401, 2,  6,  0}, // 1
@@ -91,13 +85,11 @@ public final class ArithmeticDecoder {
     private final int[] contextI;   // I(CX) index into QE_TABLE
     private final int[] contextMPS; // MPS(CX) value (0 or 1)
 
-    /**
-     * Creates and initializes a new arithmetic decoder.
-     *
-     * @param data        the compressed data byte array
-     * @param offset      the starting byte offset in the data
-     * @param numContexts the number of coding contexts to allocate
-     */
+    /// Creates and initializes a new arithmetic decoder.
+    ///
+    /// @param data        the compressed data byte array
+    /// @param offset      the starting byte offset in the data
+    /// @param numContexts the number of coding contexts to allocate
     public ArithmeticDecoder(byte[] data, int offset, int numContexts) {
         this.data = data;
         this.bp = offset;
@@ -107,10 +99,8 @@ public final class ArithmeticDecoder {
         initDec();
     }
 
-    /**
-     * INITDEC — initializes the decoder.
-     * Annex F, Figure F.1 (software conventions).
-     */
+    /// INITDEC — initializes the decoder.
+    /// Annex F, Figure F.1 (software conventions).
     private void initDec() {
         // Read first byte XOR 0xFF, shift left 16
         int b = (bp < data.length) ? (data[bp++] & 0xFF) : 0xFF;
@@ -121,12 +111,10 @@ public final class ArithmeticDecoder {
         A = 0x8000;
     }
 
-    /**
-     * Decodes one binary decision using the specified context.
-     *
-     * @param cx the context index (0 to numContexts-1)
-     * @return the decoded symbol (0 or 1)
-     */
+    /// Decodes one binary decision using the specified context.
+    ///
+    /// @param cx the context index (0 to numContexts-1)
+    /// @return the decoded symbol (0 or 1)
     public int decode(int cx) {
         int qe = QE_TABLE[contextI[cx]][0];
         A -= qe;
@@ -146,14 +134,12 @@ public final class ArithmeticDecoder {
         }
     }
 
-    /**
-     * Decodes an integer value using the IAID (Integer Arithmetic Integer Decoder)
-     * procedure specified in §A.3. Uses a binary tree of contexts.
-     *
-     * @param cxIAID   the base context index for IAID contexts
-     * @param symCodeLen number of bits in the symbol code (SBSYMCODELEN)
-     * @return the decoded integer value
-     */
+    /// Decodes an integer value using the IAID (Integer Arithmetic Integer Decoder)
+    /// procedure specified in §A.3. Uses a binary tree of contexts.
+    ///
+    /// @param cxIAID   the base context index for IAID contexts
+    /// @param symCodeLen number of bits in the symbol code (SBSYMCODELEN)
+    /// @return the decoded integer value
     public int decodeIAID(int cxIAID, int symCodeLen) {
         // §A.3: decode SYMCODELEN bits, building a context tree
         int prev = 1;
@@ -165,13 +151,11 @@ public final class ArithmeticDecoder {
         return prev - (1 << symCodeLen);
     }
 
-    /**
-     * Decodes an integer using the Integer Arithmetic Decoding procedure (§A.2).
-     * Returns the decoded integer, or Integer.MIN_VALUE if OOB (out of band).
-     *
-     * @param cxIA base context index (needs 512 contexts starting at cxIA)
-     * @return decoded integer value, or Integer.MIN_VALUE for OOB
-     */
+    /// Decodes an integer using the Integer Arithmetic Decoding procedure (§A.2).
+    /// Returns the decoded integer, or Integer.MIN\_VALUE if OOB (out of band).
+    ///
+    /// @param cxIA base context index (needs 512 contexts starting at cxIA)
+    /// @return decoded integer value, or Integer.MIN\_VALUE for OOB
     public int decodeInteger(int cxIA) {
         // §A.2: Integer arithmetic decoding procedure
         int prev = 1;
@@ -231,19 +215,15 @@ public final class ArithmeticDecoder {
         }
     }
 
-    /**
-     * Decodes one bit for the integer arithmetic procedure using context tree.
-     */
+    /// Decodes one bit for the integer arithmetic procedure using context tree.
     private int decodeBitIA(int cxBase, int prev) {
         // Context = cxBase + prev (limited to 512 contexts)
         int cx = cxBase + Math.min(prev, 511);
         return decode(cx);
     }
 
-    /**
-     * Decodes multiple bits for the integer arithmetic procedure.
-     * Each bit uses a fixed context offset.
-     */
+    /// Decodes multiple bits for the integer arithmetic procedure.
+    /// Each bit uses a fixed context offset.
     private int decodeBitsIA(int cxBase, int prev, int numBits) {
         int value = 0;
         for (int i = 0; i < numBits; i++) {
@@ -256,10 +236,8 @@ public final class ArithmeticDecoder {
         return value;
     }
 
-    /**
-     * MPS exchange procedure — handles conditional exchange
-     * when A < Qe after subtracting Qe in the MPS path.
-     */
+    /// MPS exchange procedure — handles conditional exchange
+    /// when A < Qe after subtracting Qe in the MPS path.
     private int mpsExchange(int cx) {
         int qe = QE_TABLE[contextI[cx]][0];
         if (A < qe) {
@@ -279,10 +257,8 @@ public final class ArithmeticDecoder {
         }
     }
 
-    /**
-     * LPS exchange procedure — handles conditional exchange
-     * when A < Qe in the LPS path.
-     */
+    /// LPS exchange procedure — handles conditional exchange
+    /// when A < Qe in the LPS path.
     private int lpsExchange(int cx) {
         int qe = QE_TABLE[contextI[cx]][0];
         if (A < qe) {
@@ -303,10 +279,8 @@ public final class ArithmeticDecoder {
         }
     }
 
-    /**
-     * RENORMD — renormalization of the decoder.
-     * Annex E §E.3.3: shift A and C left until A >= 0x8000.
-     */
+    /// RENORMD — renormalization of the decoder.
+    /// Annex E §E.3.3: shift A and C left until A >= 0x8000.
     private void renormD() {
         do {
             if (CT == 0) byteIn();
@@ -316,10 +290,8 @@ public final class ArithmeticDecoder {
         } while ((A & 0x8000) == 0);
     }
 
-    /**
-     * BYTEIN — reads one byte into the C register.
-     * Annex E §E.3.4: handles 0xFF byte stuffing for marker detection.
-     */
+    /// BYTEIN — reads one byte into the C register.
+    /// Annex E §E.3.4: handles 0xFF byte stuffing for marker detection.
     private void byteIn() {
         if (bp < data.length) {
             int b = data[bp++] & 0xFF;
@@ -345,29 +317,23 @@ public final class ArithmeticDecoder {
         }
     }
 
-    /**
-     * Resets a context to its default state (I=0, MPS=0).
-     *
-     * @param cx the context index to reset
-     */
+    /// Resets a context to its default state (I=0, MPS=0).
+    ///
+    /// @param cx the context index to reset
     public void resetContext(int cx) {
         contextI[cx] = 0;
         contextMPS[cx] = 0;
     }
 
-    /**
-     * Resets all contexts to their default state.
-     */
+    /// Resets all contexts to their default state.
     public void resetAllContexts() {
         java.util.Arrays.fill(contextI, 0);
         java.util.Arrays.fill(contextMPS, 0);
     }
 
-    /**
-     * Returns the current byte position in the data stream.
-     *
-     * @return the byte pointer offset
-     */
+    /// Returns the current byte position in the data stream.
+    ///
+    /// @return the byte pointer offset
     public int getBytePointer() {
         return bp;
     }

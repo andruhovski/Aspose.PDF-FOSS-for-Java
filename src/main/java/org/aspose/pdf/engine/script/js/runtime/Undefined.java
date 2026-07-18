@@ -1,15 +1,13 @@
 package org.aspose.pdf.engine.script.js.runtime;
 
-/**
- * The ECMAScript {@code undefined} value (the sole instance of the Undefined type).
- *
- * <p>JavaScript values are represented as Java objects: {@code Undefined.INSTANCE},
- * {@link JSNull#NULL}, {@link Boolean}, {@link Double}, {@link String} and
- * {@link JSObject}. This singleton stands in for {@code undefined}.</p>
- */
+/// The ECMAScript `undefined` value (the sole instance of the Undefined type).
+///
+/// JavaScript values are represented as Java objects: `Undefined.INSTANCE`,
+/// [JSNull#NULL], [Boolean], [Double], [String] and
+/// [JSObject]. This singleton stands in for `undefined`.
 public final class Undefined {
 
-    /** The single {@code undefined} value. */
+    /// The single `undefined` value.
     public static final Undefined INSTANCE = new Undefined();
 
     private Undefined() { }

@@ -11,9 +11,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for typed operator subclasses and ContentStreamParser typed output.
- */
+/// Tests for typed operator subclasses and ContentStreamParser typed output.
 public class TypedOperatorsTest {
 
     // ---- No-operand operators ----

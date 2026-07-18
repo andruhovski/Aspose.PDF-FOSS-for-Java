@@ -1,18 +1,7 @@
 package org.aspose.pdf.engine.parser;
 
-import org.aspose.pdf.engine.pdfobjects.PdfArray;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfBoolean;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfFloat;
-import org.aspose.pdf.engine.pdfobjects.PdfInteger;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfNull;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectKey;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
-import org.aspose.pdf.engine.pdfobjects.PdfStream;
-import org.aspose.pdf.engine.pdfobjects.PdfString;
 import org.aspose.pdf.engine.io.RandomAccessReader;
+import org.aspose.pdf.engine.pdfobjects.*;
 import org.aspose.pdf.engine.security.PDFDecryptor;
 import org.aspose.pdf.engine.security.PDFEncryptionDict;
 import org.aspose.pdf.engine.security.StandardSecurityHandler;
@@ -22,24 +11,18 @@ import org.aspose.pdf.security.ICustomSecurityHandler;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Full PDF file parser implementing lazy object loading.
- * Parses the PDF header, cross-reference table, and trailer on {@link #parse()},
- * then loads individual objects on demand via {@link #getObject(PdfObjectKey)}.
- *
- * <p>Conforms to ISO 32000-1:2008, §7.5 (File Structure).</p>
- */
+/// Full PDF file parser implementing lazy object loading.
+/// Parses the PDF header, cross-reference table, and trailer on [#parse()],
+/// then loads individual objects on demand via [#getObject(PdfObjectKey)].
+///
+/// Conforms to ISO 32000-1:2008, §7.5 (File Structure).
 public final class PDFParser implements Closeable {
 
     private static final Logger LOGGER = Logger.getLogger(PDFParser.class.getName());
@@ -55,23 +38,21 @@ public final class PDFParser implements Closeable {
     private PdfDictionary trailer;
     private Map<PdfObjectKey, XRefEntry> xrefEntries;
 
-    /** Object cache for lazy loading (thread-safe). */
+    /// Object cache for lazy loading (thread-safe).
     private final Map<PdfObjectKey, PdfBase> objectCache = new ConcurrentHashMap<>();
 
-    /** Guard against circular references during object loading (thread-safe). */
+    /// Guard against circular references during object loading (thread-safe).
     private final Set<PdfObjectKey> loadingInProgress = ConcurrentHashMap.newKeySet();
 
-    /** Decryptor for encrypted PDFs. Null for unencrypted documents. */
+    /// Decryptor for encrypted PDFs. Null for unencrypted documents.
     private PDFDecryptor decryptor;
 
-    /** Object key of the /Encrypt dictionary — must NOT be decrypted. */
+    /// Object key of the /Encrypt dictionary — must NOT be decrypted.
     private PdfObjectKey encryptDictKey;
 
-    /**
-     * Constructs a new PDFParser for the given source.
-     *
-     * @param reader the random-access reader for the PDF file
-     */
+    /// Constructs a new PDFParser for the given source.
+    ///
+    /// @param reader the random-access reader for the PDF file
     public PDFParser(RandomAccessReader reader) {
         if (reader == null) {
             throw new IllegalArgumentException("reader must not be null");
@@ -81,12 +62,10 @@ public final class PDFParser implements Closeable {
         this.xrefParser = new XRefParser(reader, lexer);
     }
 
-    /**
-     * Parses the PDF file structure: header, cross-reference, and trailer.
-     * Does NOT load any objects — they are loaded lazily on demand.
-     *
-     * @throws IOException if the file is not a valid PDF or cannot be read
-     */
+    /// Parses the PDF file structure: header, cross-reference, and trailer.
+    /// Does NOT load any objects — they are loaded lazily on demand.
+    ///
+    /// @throws IOException if the file is not a valid PDF or cannot be read
     public void parse() throws IOException {
         LOGGER.log(Level.FINE, "Starting PDF parse");
 
@@ -182,14 +161,12 @@ public final class PDFParser implements Closeable {
         return scanned;
     }
 
-    /**
-     * Loads an object by its key (object number + generation number).
-     * Objects are cached after first load.
-     *
-     * @param key the object key
-     * @return the PDF object, or {@link PdfNull#INSTANCE} if not found
-     * @throws IOException if the object cannot be read
-     */
+    /// Loads an object by its key (object number + generation number).
+    /// Objects are cached after first load.
+    ///
+    /// @param key the object key
+    /// @return the PDF object, or [PdfNull#INSTANCE] if not found
+    /// @throws IOException if the object cannot be read
     public synchronized PdfBase getObject(PdfObjectKey key) throws IOException {
         if (key == null) {
             return PdfNull.INSTANCE;
@@ -263,41 +240,33 @@ public final class PDFParser implements Closeable {
         }
     }
 
-    /**
-     * Loads an object by object number (generation 0).
-     *
-     * @param objectNumber the object number
-     * @return the PDF object
-     * @throws IOException if the object cannot be read
-     */
+    /// Loads an object by object number (generation 0).
+    ///
+    /// @param objectNumber the object number
+    /// @return the PDF object
+    /// @throws IOException if the object cannot be read
     public PdfBase getObject(int objectNumber) throws IOException {
         return getObject(new PdfObjectKey(objectNumber, 0));
     }
 
-    /**
-     * Returns the trailer dictionary.
-     *
-     * @return the trailer dictionary
-     */
+    /// Returns the trailer dictionary.
+    ///
+    /// @return the trailer dictionary
     public PdfDictionary getTrailer() {
         return trailer;
     }
 
-    /**
-     * Returns the PDF version (e.g. 1.4, 1.7, 2.0).
-     *
-     * @return the PDF version number
-     */
+    /// Returns the PDF version (e.g. 1.4, 1.7, 2.0).
+    ///
+    /// @return the PDF version number
     public float getVersion() {
         return pdfVersion;
     }
 
-    /**
-     * Returns the root catalog dictionary (the value of /Root in the trailer).
-     *
-     * @return the catalog dictionary
-     * @throws IOException if the catalog cannot be loaded
-     */
+    /// Returns the root catalog dictionary (the value of /Root in the trailer).
+    ///
+    /// @return the catalog dictionary
+    /// @throws IOException if the catalog cannot be loaded
     public PdfDictionary getCatalog() throws IOException {
         PdfBase rootRef = trailer.get(PdfName.of("Root"));
         PdfBase root;
@@ -360,13 +329,11 @@ public final class PDFParser implements Closeable {
         return findCatalogByDirectScan(scannedEntries);
     }
 
-    /**
-     * Loads each entry from its scan-derived byte offset directly, bypassing
-     * the (presumably-corrupted) xref table. The first dictionary tagged
-     * {@code /Type /Catalog} wins; the xref entry and trailer {@code /Root}
-     * are rewritten so subsequent {@code getObject(key)} calls return the
-     * same catalog rather than the integer the bad offset used to decode to.
-     */
+    /// Loads each entry from its scan-derived byte offset directly, bypassing
+    /// the (presumably-corrupted) xref table. The first dictionary tagged
+    /// `/Type /Catalog` wins; the xref entry and trailer `/Root`
+    /// are rewritten so subsequent `getObject(key)` calls return the
+    /// same catalog rather than the integer the bad offset used to decode to.
     private PdfDictionary findCatalogByDirectScan(Map<PdfObjectKey, XRefEntry> scannedEntries)
             throws IOException {
         for (Map.Entry<PdfObjectKey, XRefEntry> e : scannedEntries.entrySet()) {
@@ -422,17 +389,15 @@ public final class PDFParser implements Closeable {
         return null;
     }
 
-    /**
-     * Returns all known object keys from the cross-reference table.
-     *
-     * <p>Returns a SNAPSHOT: {@link #getObject} may add recovered entries to
-     * the table mid-iteration (missing-object scan), so handing out the live
-     * key set makes every {@code for (key : getAllObjectKeys()) getObject(key)}
-     * loop throw {@link java.util.ConcurrentModificationException} on damaged
-     * files.</p>
-     *
-     * @return the set of all object keys known at the time of the call
-     */
+    /// Returns all known object keys from the cross-reference table.
+    ///
+    /// Returns a SNAPSHOT: [#getObject] may add recovered entries to
+    /// the table mid-iteration (missing-object scan), so handing out the live
+    /// key set makes every `for (key : getAllObjectKeys()) getObject(key)`
+    /// loop throw [java.util.ConcurrentModificationException] on damaged
+    /// files.
+    ///
+    /// @return the set of all object keys known at the time of the call
     public Set<PdfObjectKey> getAllObjectKeys() {
         if (xrefEntries == null) {
             return java.util.Collections.emptySet();
@@ -440,25 +405,21 @@ public final class PDFParser implements Closeable {
         return new java.util.LinkedHashSet<>(xrefEntries.keySet());
     }
 
-    /**
-     * Initializes decryption if the PDF is encrypted.
-     * Must be called after parse() and before loading any objects.
-     *
-     * @param password the user/owner password (null or empty for default)
-     * @throws IOException if authentication fails
-     */
+    /// Initializes decryption if the PDF is encrypted.
+    /// Must be called after parse() and before loading any objects.
+    ///
+    /// @param password the user/owner password (null or empty for default)
+    /// @throws IOException if authentication fails
     public void initSecurity(byte[] password) throws IOException {
         initSecurity(password, null);
     }
 
-    /**
-     * Initializes decryption if the PDF is encrypted.
-     * Must be called after parse() and before loading any objects.
-     *
-     * @param password the user/owner password (null or empty for default)
-     * @param customHandler optional custom security handler for non-standard filters
-     * @throws IOException if authentication fails
-     */
+    /// Initializes decryption if the PDF is encrypted.
+    /// Must be called after parse() and before loading any objects.
+    ///
+    /// @param password the user/owner password (null or empty for default)
+    /// @param customHandler optional custom security handler for non-standard filters
+    /// @throws IOException if authentication fails
     public void initSecurity(byte[] password, ICustomSecurityHandler customHandler) throws IOException {
         if (trailer == null) return;
         PdfBase encryptRef = trailer.get(PdfName.of("Encrypt"));
@@ -529,37 +490,29 @@ public final class PDFParser implements Closeable {
         LOGGER.fine(() -> "Encryption initialized: V=" + encDict.getV() + " R=" + encDict.getR());
     }
 
-    /**
-     * Returns true if this document is encrypted.
-     */
+    /// Returns true if this document is encrypted.
     public boolean isEncrypted() {
         return trailer != null && trailer.get(PdfName.of("Encrypt")) != null;
     }
 
-    /**
-     * Sets the decryptor directly (for testing).
-     */
+    /// Sets the decryptor directly (for testing).
     public void setDecryptor(PDFDecryptor decryptor) {
         this.decryptor = decryptor;
     }
 
-    /**
-     * Returns the active decryptor, if the document was opened successfully with encryption.
-     *
-     * @return the decryptor, or {@code null} for unencrypted documents
-     */
+    /// Returns the active decryptor, if the document was opened successfully with encryption.
+    ///
+    /// @return the decryptor, or `null` for unencrypted documents
     public PDFDecryptor getDecryptor() {
         return decryptor;
     }
 
-    /**
-     * Resolves a PDF object reference to the actual object.
-     * If the input is already a direct object, returns it as-is.
-     *
-     * @param obj the object or reference to resolve
-     * @return the resolved object
-     * @throws IOException if resolution fails
-     */
+    /// Resolves a PDF object reference to the actual object.
+    /// If the input is already a direct object, returns it as-is.
+    ///
+    /// @param obj the object or reference to resolve
+    /// @return the resolved object
+    /// @throws IOException if resolution fails
     public PdfBase resolveReference(PdfBase obj) throws IOException {
         if (obj instanceof PdfObjectReference) {
             PdfObjectKey key = ((PdfObjectReference) obj).getKey();
@@ -568,13 +521,11 @@ public final class PDFParser implements Closeable {
         return obj;
     }
 
-    /**
-     * Parses an object body at the current lexer position.
-     * This is the main recursive descent parser for PDF objects.
-     *
-     * @return the parsed PDF object
-     * @throws IOException if parsing fails
-     */
+    /// Parses an object body at the current lexer position.
+    /// This is the main recursive descent parser for PDF objects.
+    ///
+    /// @return the parsed PDF object
+    /// @throws IOException if parsing fails
     public PdfBase parseObjectBody() throws IOException {
         PDFLexer.Token token = lexer.peekToken();
 
@@ -703,10 +654,8 @@ public final class PDFParser implements Closeable {
 
     // ========== Private implementation methods ==========
 
-    /**
-     * Parses the PDF/FDF header (%PDF-X.Y or %FDF-X.Y).
-     * FDF (Forms Data Format) files use the same PDF object model as PDF (ISO 32000-1 §12.7.7).
-     */
+    /// Parses the PDF/FDF header (%PDF-X.Y or %FDF-X.Y).
+    /// FDF (Forms Data Format) files use the same PDF object model as PDF (ISO 32000-1 §12.7.7).
     private void parseHeader() throws IOException {
         reader.seek(0);
         String line = reader.readLine();
@@ -769,10 +718,8 @@ public final class PDFParser implements Closeable {
         return Math.min(pdfHeaderPos, fdfHeaderPos);
     }
 
-    /**
-     * Loads an in-use object from its byte offset.
-     * If the xref offset is incorrect, falls back to scanning for the object header.
-     */
+    /// Loads an in-use object from its byte offset.
+    /// If the xref offset is incorrect, falls back to scanning for the object header.
     private PdfBase loadInUseObject(PdfObjectKey key, XRefEntry entry) throws IOException {
         loadingInProgress.add(key);
         try {
@@ -828,11 +775,9 @@ public final class PDFParser implements Closeable {
         }
     }
 
-    /**
-     * Tries to position the reader at the object body (after "objNum genNum obj")
-     * at the given offset. Returns true if successful, false if the offset is wrong.
-     * Resets reader/lexer state cleanly on failure.
-     */
+    /// Tries to position the reader at the object body (after "objNum genNum obj")
+    /// at the given offset. Returns true if successful, false if the offset is wrong.
+    /// Resets reader/lexer state cleanly on failure.
     private boolean trySeekToObj(PdfObjectKey key, long offset) throws IOException {
         if (offset < 0 || offset > reader.getLength()) {
             return false;
@@ -877,13 +822,11 @@ public final class PDFParser implements Closeable {
         return false;
     }
 
-    /**
-     * Scans the entire file for an object header matching "objNum genNum obj".
-     * Used as a fallback when xref offsets are incorrect.
-     *
-     * @param key the object key to find
-     * @return the byte offset of the object header, or -1 if not found
-     */
+    /// Scans the entire file for an object header matching "objNum genNum obj".
+    /// Used as a fallback when xref offsets are incorrect.
+    ///
+    /// @param key the object key to find
+    /// @return the byte offset of the object header, or -1 if not found
     private long scanForObject(PdfObjectKey key, long expectedOffset) throws IOException {
         byte[] pattern = (key.getObjectNumber() + " " + key.getGenerationNumber() + " obj").getBytes(StandardCharsets.US_ASCII);
         // Prefer candidates at or after the broken xref offset. In corrupted
@@ -915,18 +858,14 @@ public final class PDFParser implements Closeable {
         return -1;
     }
 
-    /**
-     * Checks if the byte at the given position is a PDF whitespace character.
-     */
+    /// Checks if the byte at the given position is a PDF whitespace character.
     private static boolean isWhitespace(RandomAccessReader reader, long pos) throws IOException {
         reader.seek(pos);
         int b = reader.read();
         return b == ' ' || b == '\n' || b == '\r' || b == '\t' || b == '\f' || b == 0;
     }
 
-    /**
-     * Loads a compressed object from an object stream.
-     */
+    /// Loads a compressed object from an object stream.
     private PdfBase loadCompressedObject(PdfObjectKey key, XRefEntry entry) throws IOException {
         loadingInProgress.add(key);
         try {
@@ -991,10 +930,8 @@ public final class PDFParser implements Closeable {
         }
     }
 
-    /**
-     * Recursively fixes resolvers on PdfObjectReferences within a parsed object tree
-     * so they point to this (main) parser instead of a temporary stream parser.
-     */
+    /// Recursively fixes resolvers on PdfObjectReferences within a parsed object tree
+    /// so they point to this (main) parser instead of a temporary stream parser.
     private void fixResolvers(PdfBase object) {
         if (object instanceof PdfObjectReference) {
             ((PdfObjectReference) object).setResolver(k -> {
@@ -1017,9 +954,7 @@ public final class PDFParser implements Closeable {
         }
     }
 
-    /**
-     * Parses an array object.
-     */
+    /// Parses an array object.
     private PdfArray parseArray() throws IOException {
         lexer.nextToken(); // consume '['
         PdfArray array = new PdfArray();
@@ -1039,9 +974,7 @@ public final class PDFParser implements Closeable {
         return array;
     }
 
-    /**
-     * Parses a dictionary object (after consuming '&lt;&lt;').
-     */
+    /// Parses a dictionary object (after consuming '<<').
     private PdfDictionary parseDictionary() throws IOException {
         lexer.nextToken(); // consume '<<'
         PdfDictionary dict = new PdfDictionary();
@@ -1142,14 +1075,12 @@ public final class PDFParser implements Closeable {
         return Character.isLetter(first);
     }
 
-    /**
-     * Parses a stream object. The dictionary has already been parsed.
-     * Per ISO 32000-1:2008, §7.3.8.1: after "stream" keyword,
-     * exactly CR+LF or LF (NOT CR alone).
-     *
-     * @param dict the stream's dictionary
-     * @return a PdfStream wrapping the dictionary and raw data
-     */
+    /// Parses a stream object. The dictionary has already been parsed.
+    /// Per ISO 32000-1:2008, §7.3.8.1: after "stream" keyword,
+    /// exactly CR+LF or LF (NOT CR alone).
+    ///
+    /// @param dict the stream's dictionary
+    /// @return a PdfStream wrapping the dictionary and raw data
     private PdfStream parseStream(PdfDictionary dict) throws IOException {
         // Consume "stream" keyword
         lexer.nextToken();
@@ -1278,13 +1209,9 @@ public final class PDFParser implements Closeable {
 
     // ── Decryption support ──
 
-    /**
-     * Recursively decrypts an object: replaces PdfString bytes with decrypted bytes,
-     * and attaches the decryptor to PdfStream instances.
-     */
-    /**
-     * Best-effort fallback for malformed streams with missing or invalid /Length.
-     */
+    /// Recursively decrypts an object: replaces PdfString bytes with decrypted bytes,
+    /// and attaches the decryptor to PdfStream instances.
+    /// Best-effort fallback for malformed streams with missing or invalid /Length.
     private int inferStreamLength(long streamDataStart) throws IOException {
         byte[] endstreamPattern = "endstream".getBytes(StandardCharsets.US_ASCII);
         long endstreamPos = reader.findForward(endstreamPattern, streamDataStart);
@@ -1380,13 +1307,11 @@ public final class PDFParser implements Closeable {
         return result;
     }
 
-    /**
-     * Clears the dirty flag on an object and its direct children (non-recursive
-     * through references). Called after loading/parsing to ensure freshly-loaded
-     * objects do not appear as modified.
-     *
-     * @param obj the object to clean
-     */
+    /// Clears the dirty flag on an object and its direct children (non-recursive
+    /// through references). Called after loading/parsing to ensure freshly-loaded
+    /// objects do not appear as modified.
+    ///
+    /// @param obj the object to clean
     private void clearDirtyRecursive(PdfBase obj) {
         if (obj == null) return;
         obj.setDirty(false);
@@ -1408,11 +1333,9 @@ public final class PDFParser implements Closeable {
         }
     }
 
-    /**
-     * Closes the underlying reader, releasing any associated resources.
-     *
-     * @throws IOException if an I/O error occurs
-     */
+    /// Closes the underlying reader, releasing any associated resources.
+    ///
+    /// @throws IOException if an I/O error occurs
     @Override
     public void close() throws IOException {
         reader.close();

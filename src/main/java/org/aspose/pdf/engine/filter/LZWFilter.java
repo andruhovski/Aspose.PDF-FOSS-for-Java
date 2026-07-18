@@ -7,17 +7,14 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.logging.Logger;
 
-/**
- * LZWDecode filter (§7.4.4.2, ISO 32000-1:2008).
- * <p>
- * Decompresses LZW-encoded data as found in older PDF files (pre-1.4).
- * Uses variable-width codes (9–12 bits), MSB-first bit ordering, with
- * clear-table code 256 and EOD code 257.
- * </p>
- * <p>
- * Encoding is not supported — modern PDFs should use FlateDecode instead.
- * </p>
- */
+/// LZWDecode filter (§7.4.4.2, ISO 32000-1:2008).
+///
+/// Decompresses LZW-encoded data as found in older PDF files (pre-1.4).
+/// Uses variable-width codes (9–12 bits), MSB-first bit ordering, with
+/// clear-table code 256 and EOD code 257.
+///
+/// Encoding is not supported — modern PDFs should use FlateDecode instead.
+///
 public final class LZWFilter implements PdfFilter {
 
     private static final Logger LOG = Logger.getLogger(LZWFilter.class.getName());
@@ -28,19 +25,15 @@ public final class LZWFilter implements PdfFilter {
     private static final int MAX_CODE_SIZE = 12;
     private static final int MAX_TABLE_SIZE = 1 << MAX_CODE_SIZE; // 4096
 
-    /**
-     * Creates an LZWFilter instance.
-     */
+    /// Creates an LZWFilter instance.
     public LZWFilter() {
         // Stateless
     }
 
-    /**
-     * {@inheritDoc}
-     * <p>
-     * Decodes LZW-compressed data per the PDF specification.
-     * </p>
-     */
+    /// {@inheritDoc}
+    ///
+    /// Decodes LZW-compressed data per the PDF specification.
+    ///
     @Override
     public byte[] decode(byte[] encoded, PdfDictionary params) throws IOException {
         if (encoded == null || encoded.length == 0) {
@@ -171,22 +164,17 @@ public final class LZWFilter implements PdfFilter {
         return result;
     }
 
-    /**
-     * {@inheritDoc}
-     * <p>
-     * LZW encoding is not supported. Use FlateDecode for new PDF streams.
-     * </p>
-     *
-     * @throws UnsupportedOperationException always
-     */
+    /// {@inheritDoc}
+    ///
+    /// LZW encoding is not supported. Use FlateDecode for new PDF streams.
+    ///
+    /// @throws UnsupportedOperationException always
     @Override
     public byte[] encode(byte[] decoded, PdfDictionary params) throws IOException {
         throw new IOException("LZW encoding not supported. Use FlateDecode.");
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /// {@inheritDoc}
     @Override
     public PdfName getName() {
         return PdfName.LZW_DECODE;
@@ -206,9 +194,7 @@ public final class LZWFilter implements PdfFilter {
         return PredictorDecoder.decode(data, predictor, columns, colors, bpc);
     }
 
-    /**
-     * MSB-first bit reader for LZW decoding.
-     */
+    /// MSB-first bit reader for LZW decoding.
     private static final class BitReader {
         private final byte[] data;
         private int bytePos;
@@ -220,12 +206,10 @@ public final class LZWFilter implements PdfFilter {
             this.bitPos = 8;
         }
 
-        /**
-         * Reads the specified number of bits as an integer value.
-         *
-         * @param numBits number of bits to read (1–12)
-         * @return the value, or -1 if not enough data
-         */
+        /// Reads the specified number of bits as an integer value.
+        ///
+        /// @param numBits number of bits to read (1–12)
+        /// @return the value, or -1 if not enough data
         int readBits(int numBits) {
             int result = 0;
             int bitsNeeded = numBits;

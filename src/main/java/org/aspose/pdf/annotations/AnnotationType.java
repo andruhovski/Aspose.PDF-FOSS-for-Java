@@ -1,54 +1,52 @@
 package org.aspose.pdf.annotations;
 
-/**
- * Enumerates the standard PDF annotation types (ISO 32000-1:2008, §12.5.6).
- * <p>
- * Each value corresponds to a /Subtype name in the annotation dictionary.
- * </p>
- */
+/// Enumerates the standard PDF annotation types (ISO 32000-1:2008, §12.5.6).
+///
+/// Each value corresponds to a /Subtype name in the annotation dictionary.
+///
 public enum AnnotationType {
 
-    /** Text (sticky note) annotation. */
+    /// Text (sticky note) annotation.
     Text("Text"),
-    /** Link annotation. */
+    /// Link annotation.
     Link("Link"),
-    /** Free text annotation. */
+    /// Free text annotation.
     FreeText("FreeText"),
-    /** Line annotation. */
+    /// Line annotation.
     Line("Line"),
-    /** Square annotation. */
+    /// Square annotation.
     Square("Square"),
-    /** Circle annotation. */
+    /// Circle annotation.
     Circle("Circle"),
-    /** Polygon annotation. */
+    /// Polygon annotation.
     Polygon("Polygon"),
-    /** Polyline annotation. */
+    /// Polyline annotation.
     PolyLine("PolyLine"),
-    /** Highlight annotation. */
+    /// Highlight annotation.
     Highlight("Highlight"),
-    /** Underline annotation. */
+    /// Underline annotation.
     Underline("Underline"),
-    /** Squiggly underline annotation. */
+    /// Squiggly underline annotation.
     Squiggly("Squiggly"),
-    /** Strikeout annotation. */
+    /// Strikeout annotation.
     StrikeOut("StrikeOut"),
-    /** Stamp annotation. */
+    /// Stamp annotation.
     Stamp("Stamp"),
-    /** Caret annotation. */
+    /// Caret annotation.
     Caret("Caret"),
-    /** Ink (freehand) annotation. */
+    /// Ink (freehand) annotation.
     Ink("Ink"),
-    /** Popup annotation. */
+    /// Popup annotation.
     Popup("Popup"),
-    /** File attachment annotation. */
+    /// File attachment annotation.
     FileAttachment("FileAttachment"),
-    /** Widget (form field) annotation. */
+    /// Widget (form field) annotation.
     Widget("Widget"),
-    /** Redaction annotation. */
+    /// Redaction annotation.
     Redact("Redact"),
-    /** Watermark annotation. */
+    /// Watermark annotation.
     Watermark("Watermark"),
-    /** Screen annotation. */
+    /// Screen annotation.
     Screen("Screen");
 
     private final String subtype;
@@ -57,21 +55,17 @@ public enum AnnotationType {
         this.subtype = subtype;
     }
 
-    /**
-     * Returns the PDF /Subtype name for this annotation type.
-     *
-     * @return the subtype string
-     */
+    /// Returns the PDF /Subtype name for this annotation type.
+    ///
+    /// @return the subtype string
     public String getSubtype() {
         return subtype;
     }
 
-    /**
-     * Looks up an AnnotationType by its PDF /Subtype name.
-     *
-     * @param subtype the subtype string
-     * @return the matching AnnotationType, or null if not found
-     */
+    /// Looks up an AnnotationType by its PDF /Subtype name.
+    ///
+    /// @param subtype the subtype string
+    /// @return the matching AnnotationType, or null if not found
     public static AnnotationType fromSubtype(String subtype) {
         for (AnnotationType at : values()) {
             if (at.subtype.equals(subtype)) return at;

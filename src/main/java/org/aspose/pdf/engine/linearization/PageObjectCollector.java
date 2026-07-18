@@ -1,50 +1,31 @@
 package org.aspose.pdf.engine.linearization;
 
-import org.aspose.pdf.engine.pdfobjects.PdfArray;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfNull;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectKey;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
 import org.aspose.pdf.engine.parser.PDFParser;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Logger;
 
-/**
- * Walks the object graph from each page to classify objects for linearization.
- * ISO 32000-1:2008 Annex F §F.3.
- *
- * <p>Objects are classified as:</p>
- * <ul>
- *   <li><b>Page-private:</b> referenced by exactly one page</li>
- *   <li><b>Shared:</b> referenced by multiple pages</li>
- *   <li><b>Document-level:</b> not referenced by any page (catalog, page tree, info, etc.)</li>
- * </ul>
- */
+/// Walks the object graph from each page to classify objects for linearization.
+/// ISO 32000-1:2008 Annex F §F.3.
+///
+/// Objects are classified as:
+///
+///   - **Page-private:** referenced by exactly one page
+///   - **Shared:** referenced by multiple pages
+///   - **Document-level:** not referenced by any page (catalog, page tree, info, etc.)
 public final class PageObjectCollector {
 
     private static final Logger LOG = Logger.getLogger(PageObjectCollector.class.getName());
 
     private PageObjectCollector() {}
 
-    /**
-     * Collects and classifies all objects in the document for linearization.
-     *
-     * @param parser the PDF parser with all objects accessible
-     * @return a {@link LinearizationPlan} grouping objects by linearization part
-     * @throws IOException if objects cannot be loaded
-     */
+    /// Collects and classifies all objects in the document for linearization.
+    ///
+    /// @param parser the PDF parser with all objects accessible
+    /// @return a [LinearizationPlan] grouping objects by linearization part
+    /// @throws IOException if objects cannot be loaded
     public static LinearizationPlan collect(PDFParser parser) throws IOException {
         PdfDictionary catalog = parser.getCatalog();
         Set<PdfObjectKey> allKeys = parser.getAllObjectKeys();
@@ -112,13 +93,11 @@ public final class PageObjectCollector {
                 otherPagePrivate, sharedObjects, documentLevel, numPages);
     }
 
-    /**
-     * Returns true if {@code key} resolves to a linearization parameter dictionary
-     * (a dictionary whose first/identifying entry is {@code /Linearized}, ISO
-     * 32000-1 Annex F.2.2). Such a dictionary is meaningful only as the first
-     * object of a linearized file; one left over from an already-linearized
-     * source is stale and must not be re-emitted.
-     */
+    /// Returns true if `key` resolves to a linearization parameter dictionary
+    /// (a dictionary whose first/identifying entry is `/Linearized`, ISO
+    /// 32000-1 Annex F.2.2). Such a dictionary is meaningful only as the first
+    /// object of a linearized file; one left over from an already-linearized
+    /// source is stale and must not be re-emitted.
     private static boolean isStaleLinearizationDict(PDFParser parser, PdfObjectKey key) {
         try {
             PdfBase obj = parser.getObject(key);
@@ -129,10 +108,8 @@ public final class PageObjectCollector {
         }
     }
 
-    /**
-     * Collects the object keys of all page objects by traversing the page tree.
-     * Returns them in document order (the order they appear in the tree).
-     */
+    /// Collects the object keys of all page objects by traversing the page tree.
+    /// Returns them in document order (the order they appear in the tree).
     static List<PdfObjectKey> collectPageKeys(
             PdfDictionary catalog, PDFParser parser) throws IOException {
         List<PdfObjectKey> pageKeys = new ArrayList<>();
@@ -144,9 +121,7 @@ public final class PageObjectCollector {
         return pageKeys;
     }
 
-    /**
-     * Recursively flattens the page tree to collect page object keys.
-     */
+    /// Recursively flattens the page tree to collect page object keys.
     private static void flattenPageTree(PdfDictionary node, PDFParser parser,
                                          List<PdfObjectKey> result) throws IOException {
         String type = node.getType();
@@ -183,10 +158,8 @@ public final class PageObjectCollector {
         }
     }
 
-    /**
-     * Collects the keys of all page tree intermediate nodes (/Type /Pages).
-     * These are document-level objects and should not be assigned to any page.
-     */
+    /// Collects the keys of all page tree intermediate nodes (/Type /Pages).
+    /// These are document-level objects and should not be assigned to any page.
     private static Set<PdfObjectKey> collectPageTreeKeys(
             PdfDictionary catalog, PDFParser parser) throws IOException {
         Set<PdfObjectKey> treeKeys = new HashSet<>();
@@ -223,11 +196,9 @@ public final class PageObjectCollector {
         }
     }
 
-    /**
-     * BFS from a page object — collects all transitively referenced indirect objects.
-     * Does not cross into page tree nodes (those are document-level).
-     * Does not follow /Parent references (would go up the tree).
-     */
+    /// BFS from a page object — collects all transitively referenced indirect objects.
+    /// Does not cross into page tree nodes (those are document-level).
+    /// Does not follow /Parent references (would go up the tree).
     private static Set<PdfObjectKey> collectPageObjectGraph(
             PDFParser parser, PdfObjectKey pageKey,
             Set<PdfObjectKey> pageTreeKeys) throws IOException {
@@ -248,10 +219,8 @@ public final class PageObjectCollector {
         return visited;
     }
 
-    /**
-     * Extracts indirect references from a PDF object, adding new keys to the queue.
-     * Does not follow /Parent references.
-     */
+    /// Extracts indirect references from a PDF object, adding new keys to the queue.
+    /// Does not follow /Parent references.
     private static void collectReferences(PdfBase obj, Queue<PdfObjectKey> queue,
                                            Set<PdfObjectKey> visited,
                                            Set<PdfObjectKey> excluded) {

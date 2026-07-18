@@ -3,8 +3,8 @@ package org.aspose.pdf.engine.xfa.flatten.paint;
 import org.aspose.pdf.Document;
 import org.aspose.pdf.Page;
 import org.aspose.pdf.Rectangle;
-import org.aspose.pdf.engine.layout.ContentStreamBuilder;
 import org.aspose.pdf.engine.font.StandardFonts;
+import org.aspose.pdf.engine.layout.ContentStreamBuilder;
 import org.aspose.pdf.engine.pdfobjects.PdfBase;
 import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
 import org.aspose.pdf.engine.pdfobjects.PdfName;
@@ -20,82 +20,70 @@ import org.w3c.dom.Node;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
-import java.util.ArrayList;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
-/**
- * Paints positioned XFA content (Stage C, sprint C2) into a page content stream:
- * box model (fill + border edges + corners), field/caption text, honouring
- * {@code presence}. Coordinates come from the C1 resolver ({@link XfaGeometry}) —
- * paint lands exactly where C1 positioned it. Flowed content (no positioned
- * geometry) is NOT painted (deferred to C3); {@code presence} hidden/invisible is
- * NOT painted (this suppresses the draft-watermark exposure, ticket 46656).
- *
- * <p>Document order = Z-order: containers paint before their children, so a
- * subform background sits behind its fields. Reuses {@link ContentStreamBuilder}
- * and the standard-font metric tables — no second rendering stack.</p>
- */
+/// Paints positioned XFA content (Stage C, sprint C2) into a page content stream:
+/// box model (fill + border edges + corners), field/caption text, honouring
+/// `presence`. Coordinates come from the C1 resolver ([XfaGeometry]) —
+/// paint lands exactly where C1 positioned it. Flowed content (no positioned
+/// geometry) is NOT painted (deferred to C3); `presence` hidden/invisible is
+/// NOT painted (this suppresses the draft-watermark exposure, ticket 46656).
+///
+/// Document order = Z-order: containers paint before their children, so a
+/// subform background sits behind its fields. Reuses [ContentStreamBuilder]
+/// and the standard-font metric tables — no second rendering stack.
 public final class XfaPainter {
 
-    /**
-     * Decoded Image XObject per {@code <image>} element, so a logo recurring on every page of a
-     * multi-page form is decoded+deflated once and its XObject shared (weak keys → GC'd with the DOM).
-     */
+    /// Decoded Image XObject per `<image>` element, so a logo recurring on every page of a
+    /// multi-page form is decoded+deflated once and its XObject shared (weak keys → GC'd with the DOM).
     private static final Map<Element, org.aspose.pdf.engine.pdfobjects.PdfStream> IMAGE_CACHE
             = java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
 
     private XfaPainter() {
     }
 
-    /** Outcome of a paint pass. */
+    /// Outcome of a paint pass.
     public static final class Result {
-        /** Objects that produced marks. */
+        /// Objects that produced marks.
         public int painted;
-        /** Objects skipped because {@code presence} = hidden/invisible (incl. subtree). */
+        /// Objects skipped because `presence` = hidden/invisible (incl. subtree).
         public int presenceHidden;
-        /** Objects skipped because they are flowed (no positioned geometry — C3). */
+        /// Objects skipped because they are flowed (no positioned geometry — C3).
         public int flowedSkipped;
-        /** Objects skipped because {@code relevant} excludes the print context (interactive-only). */
+        /// Objects skipped because `relevant` excludes the print context (interactive-only).
         public int printSkipped;
-        /** Box fills painted. */
+        /// Box fills painted.
         public int fills;
-        /** Box borders painted. */
+        /// Box borders painted.
         public int borders;
-        /** Text runs painted (field values). */
+        /// Text runs painted (field values).
         public int texts;
-        /** Captions painted. */
+        /// Captions painted.
         public int captions;
-        /** Image XObjects painted (logos / pictures). */
+        /// Image XObjects painted (logos / pictures).
         public int images;
     }
 
-    /**
-     * Paints the positioned content of {@code dom} onto page 1 of {@code doc}.
-     *
-     * @param doc the document (a page is added if it has none)
-     * @param dom the merged Form DOM
-     * @param tpl the template (for the contentArea origin), or {@code null}
-     * @return the paint result
-     * @throws Exception on document access failure
-     */
+    /// Paints the positioned content of `dom` onto page 1 of `doc`.
+    ///
+    /// @param doc the document (a page is added if it has none)
+    /// @param dom the merged Form DOM
+    /// @param tpl the template (for the contentArea origin), or `null`
+    /// @return the paint result
+    /// @throws Exception on document access failure
     public static Result paint(Document doc, FormDom dom, Template tpl) throws Exception {
         return paint(doc, dom, tpl, XfaFontResolver.create(null));
     }
 
-    /**
-     * Paints the positioned content of {@code dom}, embedding real fonts resolved by {@code resolver}
-     * (XFA-FONTEMBED) when available, else the standard-14 substitute.
-     *
-     * @param doc      the document
-     * @param dom      the merged Form DOM
-     * @param tpl      the template, or {@code null}
-     * @param resolver the font resolver (embedded&gt;host&gt;substitution); never {@code null}
-     * @return the paint result
-     * @throws Exception on document access failure
-     */
+    /// Paints the positioned content of `dom`, embedding real fonts resolved by `resolver`
+    /// (XFA-FONTEMBED) when available, else the standard-14 substitute.
+    ///
+    /// @param doc      the document
+    /// @param dom      the merged Form DOM
+    /// @param tpl      the template, or `null`
+    /// @param resolver the font resolver (embedded>host>substitution); never `null`
+    /// @return the paint result
+    /// @throws Exception on document access failure
     public static Result paint(Document doc, FormDom dom, Template tpl, XfaFontResolver resolver) throws Exception {
         Result r = new Result();
         if (doc.getPages().getCount() == 0) {
@@ -123,27 +111,23 @@ public final class XfaPainter {
         return r;
     }
 
-    /**
-     * Builds the paint content stream for {@code dom} at the given page height WITHOUT
-     * attaching it to any page (the geometry/self-consistency oracle inspects the bytes).
-     *
-     * @param dom    the merged Form DOM
-     * @param tpl    the template (contentArea origin), or {@code null}
-     * @param pageH  the page height in points (for the Y-flip)
-     * @param r      the result accumulator (filled in)
-     * @return the builder holding the painted bytes and font registrations
-     */
+    /// Builds the paint content stream for `dom` at the given page height WITHOUT
+    /// attaching it to any page (the geometry/self-consistency oracle inspects the bytes).
+    ///
+    /// @param dom    the merged Form DOM
+    /// @param tpl    the template (contentArea origin), or `null`
+    /// @param pageH  the page height in points (for the Y-flip)
+    /// @param r      the result accumulator (filled in)
+    /// @return the builder holding the painted bytes and font registrations
     public static ContentStreamBuilder buildContent(FormDom dom, Template tpl, double pageH, Result r) {
         return buildContent(dom, tpl, pageH, r, XfaFontResolver.disabled());
     }
 
-    /**
-     * Builds the paint content stream, embedding fonts via {@code resolver} (XFA-FONTEMBED). The
-     * no-resolver overload uses a {@link XfaFontResolver#disabled()} resolver = the standard-14
-     * substitution behaviour (so the byte-level paint unit tests stay WinAnsi).
-     *
-     * @param resolver the font resolver (embedded&gt;host&gt;substitution)
-     */
+    /// Builds the paint content stream, embedding fonts via `resolver` (XFA-FONTEMBED). The
+    /// no-resolver overload uses a [XfaFontResolver#disabled()] resolver = the standard-14
+    /// substitution behaviour (so the byte-level paint unit tests stay WinAnsi).
+    ///
+    /// @param resolver the font resolver (embedded>host>substitution)
     public static ContentStreamBuilder buildContent(FormDom dom, Template tpl, double pageH, Result r,
                                                     XfaFontResolver resolver) {
         double[] base = contentAreaOrigin(tpl);
@@ -162,14 +146,12 @@ public final class XfaPainter {
 
     /* ------------------------- L3 per-object reuse hooks ------------------------- */
 
-    /**
-     * Whether an object should paint in the print/flatten output: not {@code presence}
-     * hidden/invisible, and {@code relevant} does not exclude print. Exposed so the L3
-     * paginator can apply the SAME gating the C2 walk does, per Layout-DOM object.
-     *
-     * @param el the source element
-     * @return {@code true} if the object (and its subtree) should be painted
-     */
+    /// Whether an object should paint in the print/flatten output: not `presence`
+    /// hidden/invisible, and `relevant` does not exclude print. Exposed so the L3
+    /// paginator can apply the SAME gating the C2 walk does, per Layout-DOM object.
+    ///
+    /// @param el the source element
+    /// @return `true` if the object (and its subtree) should be painted
     public static boolean isPaintableForPrint(Element el) {
         if (el == null) {
             return false;
@@ -181,41 +163,35 @@ public final class XfaPainter {
         return relevantForPrint(el);
     }
 
-    /**
-     * Paints one already-placed object (box fill/border + caption/value text) at a
-     * pre-resolved PDF rectangle, reusing the validated C2 paint primitives. The L3 paginator
-     * calls this per Layout-DOM node (with the page's Y-flip already applied) — no paint logic
-     * is re-implemented; this is exactly the body the C2 tree walk runs per positioned node.
-     *
-     * @param el   the source element (font/fill/border/caption read from it)
-     * @param ff   the bound field (value text), or {@code null}
-     * @param rect the object's rectangle in PDF user space (page-local, already flipped)
-     * @param b    the content stream being built
-     * @param r    the result accumulator
-     * @return {@code true} if any mark was produced
-     */
+    /// Paints one already-placed object (box fill/border + caption/value text) at a
+    /// pre-resolved PDF rectangle, reusing the validated C2 paint primitives. The L3 paginator
+    /// calls this per Layout-DOM node (with the page's Y-flip already applied) — no paint logic
+    /// is re-implemented; this is exactly the body the C2 tree walk runs per positioned node.
+    ///
+    /// @param el   the source element (font/fill/border/caption read from it)
+    /// @param ff   the bound field (value text), or `null`
+    /// @param rect the object's rectangle in PDF user space (page-local, already flipped)
+    /// @param b    the content stream being built
+    /// @param r    the result accumulator
+    /// @return `true` if any mark was produced
     public static boolean paintPlaced(Element el, FormField ff, Rectangle rect,
                                       ContentStreamBuilder b, Result r) {
         return paintPlaced(el, ff, rect, b, r, XfaFontResolver.disabled());
     }
 
-    /**
-     * Paints one placed object, embedding real fonts via {@code resolver} (XFA-FONTEMBED) — the L3
-     * paginator's per-node entry.
-     *
-     * @param resolver the font resolver (embedded&gt;host&gt;substitution)
-     */
+    /// Paints one placed object, embedding real fonts via `resolver` (XFA-FONTEMBED) — the L3
+    /// paginator's per-node entry.
+    ///
+    /// @param resolver the font resolver (embedded>host>substitution)
     public static boolean paintPlaced(Element el, FormField ff, Rectangle rect,
                                       ContentStreamBuilder b, Result r, XfaFontResolver resolver) {
         return paintPlaced(el, ff, java.util.Collections.emptyMap(), rect, b, r, resolver);
     }
 
-    /**
-     * Paints one placed object with access to the element→field map, so a radio/checkbox can resolve
-     * its selected state from its enclosing {@code exclGroup}'s value.
-     *
-     * @param byElement element→{@link FormField} map (for the exclGroup selection lookup)
-     */
+    /// Paints one placed object with access to the element→field map, so a radio/checkbox can resolve
+    /// its selected state from its enclosing `exclGroup`'s value.
+    ///
+    /// @param byElement element→[FormField] map (for the exclGroup selection lookup)
     public static boolean paintPlaced(Element el, FormField ff, Map<Element, FormField> byElement,
                                       Rectangle rect, ContentStreamBuilder b, Result r,
                                       XfaFontResolver resolver) {
@@ -234,14 +210,12 @@ public final class XfaPainter {
         return any;
     }
 
-    /**
-     * Paints a field's static chrome only — its box (fill/border) and its {@code <caption>} label —
-     * but NOT its bound value. Used by the AcroForm converter: the value is carried by the interactive
-     * widget placed over this rect, so painting it here too would double-render it (the merged Form DOM
-     * keeps the value in {@code <value><text>}, which {@link #paintPlaced} would otherwise draw).
-     *
-     * @return {@code true} if anything was drawn
-     */
+    /// Paints a field's static chrome only — its box (fill/border) and its `<caption>` label —
+    /// but NOT its bound value. Used by the AcroForm converter: the value is carried by the interactive
+    /// widget placed over this rect, so painting it here too would double-render it (the merged Form DOM
+    /// keeps the value in `<value><text>`, which [#paintPlaced] would otherwise draw).
+    ///
+    /// @return `true` if anything was drawn
     public static boolean paintBoxAndCaption(Element el, Rectangle rect, ContentStreamBuilder b,
                                              Result r, XfaFontResolver resolver) {
         boolean any = false;
@@ -291,14 +265,12 @@ public final class XfaPainter {
         return any;
     }
 
-    /**
-     * Attaches a built content stream to a page and registers its fonts (the exact attach
-     * step {@link #paint} performs), for the L3 per-page emit.
-     *
-     * @param page the target page
-     * @param b    the built content
-     * @throws Exception on document access failure
-     */
+    /// Attaches a built content stream to a page and registers its fonts (the exact attach
+    /// step [#paint] performs), for the L3 per-page emit.
+    ///
+    /// @param page the target page
+    /// @param b    the built content
+    /// @throws Exception on document access failure
     public static void attach(Page page, ContentStreamBuilder b) throws Exception {
         byte[] bytes = b.toByteArray();
         if (bytes.length > 0) {
@@ -378,16 +350,14 @@ public final class XfaPainter {
         return drawBoxBorderFill(border, fill, rect, b, r);
     }
 
-    /**
-     * Paints a {@code <draw>} whose {@code <value>} is a vector shape — a {@code <rectangle>} (optionally
-     * rounded and/or filled) or a straight {@code <line>}. XFA stores page-furniture frames and rules as
-     * a shape <em>value</em> rather than a container {@code <border>}: e.g. 11902's full-page rounded
-     * {@code Rectangle1} frame lives in the {@code <pageArea>} as {@code <value><rectangle><edge/><corner
-     * radius="5.08mm"/>}. A {@code <rectangle>}'s {@code <edge>}+{@code <corner>} children are exactly a
-     * single-edge rounded border, so this reuses the box border/fill primitive.
-     *
-     * @return {@code true} if any mark was produced
-     */
+    /// Paints a `<draw>` whose `<value>` is a vector shape — a `<rectangle>` (optionally
+    /// rounded and/or filled) or a straight `<line>`. XFA stores page-furniture frames and rules as
+    /// a shape _value_ rather than a container `<border>`: e.g. 11902's full-page rounded
+    /// `Rectangle1` frame lives in the `<pageArea>` as `<value><rectangle><edge/><corner
+    /// radius="5.08mm"/>`. A `<rectangle>`'s `<edge>`+`<corner>` children are exactly a
+    /// single-edge rounded border, so this reuses the box border/fill primitive.
+    ///
+    /// @return `true` if any mark was produced
     private static boolean paintDrawShape(Element el, Rectangle rect, ContentStreamBuilder b, Result r) {
         Element value = firstChildOf(el, "value");
         if (value == null) {
@@ -430,16 +400,14 @@ public final class XfaPainter {
         return false;
     }
 
-    /**
-     * Paints the {@code <ui>} widget's data-entry box (its {@code <border>}/{@code <fill>}) around the
-     * field's <b>value</b> rectangle — the sunken/edged input box Adobe draws for the editable area,
-     * NOT spanning the caption strip. A checkButton's widget is excluded (it draws its own mark via
-     * {@link #paintCheckButton}).
-     *
-     * @param el        the field element
-     * @param valueRect the value sub-rectangle (full rect minus the caption reserve)
-     * @return {@code true} if any mark was produced
-     */
+    /// Paints the `<ui>` widget's data-entry box (its `<border>`/`<fill>`) around the
+    /// field's **value** rectangle — the sunken/edged input box Adobe draws for the editable area,
+    /// NOT spanning the caption strip. A checkButton's widget is excluded (it draws its own mark via
+    /// [#paintCheckButton]).
+    ///
+    /// @param el        the field element
+    /// @param valueRect the value sub-rectangle (full rect minus the caption reserve)
+    /// @return `true` if any mark was produced
     private static boolean paintUiBox(Element el, Rectangle valueRect, ContentStreamBuilder b, Result r) {
         Element ui = firstChildOf(el, "ui");
         Element widget = ui != null ? firstEl(ui) : null;
@@ -460,31 +428,27 @@ public final class XfaPainter {
         return drawBoxBorderFill(border, fill, valueRect, b, r, WHITE);
     }
 
-    /** White, the default fill of a field data-entry box when its {@code <fill>} declares no colour. */
+    /// White, the default fill of a field data-entry box when its `<fill>` declares no colour.
     private static final float[] WHITE = {1f, 1f, 1f};
 
-    /** Strokes/fills a box from a resolved {@code <border>}/{@code <fill>} pair within {@code rect}. */
+    /// Strokes/fills a box from a resolved `<border>`/`<fill>` pair within `rect`.
     private static boolean drawBoxBorderFill(Element border, Element fill, Rectangle rect,
                                              ContentStreamBuilder b, Result r) {
         return drawBoxBorderFill(border, fill, rect, b, r, null);
     }
 
-    /**
-     * Strokes/fills a box from a resolved {@code <border>}/{@code <fill>} pair within {@code rect}.
-     * {@code defaultFill} (or {@code null}) is used when a present, visible {@code <fill>} declares no
-     * {@code <color>} — white for a field data-entry box, nothing for a generic container.
-     */
+    /// Strokes/fills a box from a resolved `<border>`/`<fill>` pair within `rect`.
+    /// `defaultFill` (or `null`) is used when a present, visible `<fill>` declares no
+    /// `<color>` — white for a field data-entry box, nothing for a generic container.
     private static boolean drawBoxBorderFill(Element border, Element fill, Rectangle rect,
                                              ContentStreamBuilder b, Result r, float[] defaultFill) {
         return drawBoxBorderFill(border, fill, rect, b, r, defaultFill, true);
     }
 
-    /**
-     * As {@link #drawBoxBorderFill(Element, Element, Rectangle, ContentStreamBuilder, Result, float[])}
-     * but {@code roundCorners=false} forces square corners regardless of any {@code <corner radius>} —
-     * used for {@code <value><rectangle>} page-frame shapes, which Adobe draws with sharp corners even
-     * when the template declares a corner radius.
-     */
+    /// As [#drawBoxBorderFill(Element, Element, Rectangle, ContentStreamBuilder, Result, float\[\])]
+    /// but `roundCorners=false` forces square corners regardless of any `<corner radius>` —
+    /// used for `<value><rectangle>` page-frame shapes, which Adobe draws with sharp corners even
+    /// when the template declares a corner radius.
     private static boolean drawBoxBorderFill(Element border, Element fill, Rectangle rect,
                                              ContentStreamBuilder b, Result r, float[] defaultFill,
                                              boolean roundCorners) {
@@ -558,7 +522,7 @@ public final class XfaPainter {
         return any;
     }
 
-    /** Sets up state for one edge (color + width); returns false to skip an invisible edge. */
+    /// Sets up state for one edge (color + width); returns false to skip an invisible edge.
     private static boolean strokeEdge(ContentStreamBuilder b, Element edge) {
         if (edge == null || !isVisiblePresence(edge)) {
             return false;
@@ -578,7 +542,7 @@ public final class XfaPainter {
         return true;
     }
 
-    /** Approximates a rounded rectangle subpath with four Bézier corners. */
+    /// Approximates a rounded rectangle subpath with four Bézier corners.
     private static void roundedRect(ContentStreamBuilder b, double x, double y, double w, double h, double rad) {
         double k = 0.5523 * rad;
         double xr = x + w, yt = y + h;
@@ -596,12 +560,10 @@ public final class XfaPainter {
 
     /* ------------------------------- image ---------------------------------- */
 
-    /**
-     * The decoded bytes of an object's embedded {@code <value><image>} (a base64 logo/picture), or
-     * {@code null} when the object carries no image. XFA stores the image inline as the base64 text
-     * of an {@code <image contentType="image/...">} element (the {@code href}-referenced external form
-     * is not embedded and is not resolved here).
-     */
+    /// The decoded bytes of an object's embedded `<value><image>` (a base64 logo/picture), or
+    /// `null` when the object carries no image. XFA stores the image inline as the base64 text
+    /// of an `<image contentType="image/...">` element (the `href`-referenced external form
+    /// is not embedded and is not resolved here).
     private static byte[] imageBytes(Element el) {
         Element value = firstChildOf(el, "value");
         Element image = value == null ? null : firstChildOf(value, "image");
@@ -620,13 +582,11 @@ public final class XfaPainter {
         }
     }
 
-    /**
-     * Paints an embedded image into {@code box}, honouring the XFA {@code <image aspect>} fit policy:
-     * {@code none} stretches to the box; {@code actual} draws at native size (clamped to the box);
-     * everything else ({@code fit}, the default) scales the picture to fit inside the box preserving
-     * its aspect ratio, centred. The image is registered as a page Image XObject and painted with a
-     * {@code cm}+{@code Do}.
-     */
+    /// Paints an embedded image into `box`, honouring the XFA `<image aspect>` fit policy:
+    /// `none` stretches to the box; `actual` draws at native size (clamped to the box);
+    /// everything else (`fit`, the default) scales the picture to fit inside the box preserving
+    /// its aspect ratio, centred. The image is registered as a page Image XObject and painted with a
+    /// `cm`+`Do`.
     private static boolean paintImage(Element el, byte[] raw, Rectangle box, ContentStreamBuilder b,
                                       Result r) {
         if (box.getWidth() <= 0 || box.getHeight() <= 0) {
@@ -683,7 +643,7 @@ public final class XfaPainter {
 
     /* --------------------------- checkButton / radio ---------------------------- */
 
-    /** The checkButton widget's drawn side length: its {@code <checkButton size>} clamped to the box. */
+    /// The checkButton widget's drawn side length: its `<checkButton size>` clamped to the box.
     private static double checkButtonSize(Element cb, Rectangle box) {
         double size = measure(attr(cb, "size", "10pt"));
         if (Double.isNaN(size) || size <= 0) {
@@ -692,27 +652,25 @@ public final class XfaPainter {
         return Math.min(size, Math.min(box.getWidth(), box.getHeight()));
     }
 
-    /** @return the field's {@code <ui><checkButton>} element (radio/checkbox widget), or null. */
+    /// @return the field's `<ui><checkButton>` element (radio/checkbox widget), or null.
     private static Element checkButtonUi(Element el) {
         Element ui = firstChildOf(el, "ui");
         return ui == null ? null : firstChildOf(ui, "checkButton");
     }
 
-    /** @return the field's {@code <ui><button>} element (push button), or null. */
+    /// @return the field's `<ui><button>` element (push button), or null.
     private static Element buttonUi(Element el) {
         Element ui = firstChildOf(el, "ui");
         return ui == null ? null : firstChildOf(ui, "button");
     }
 
-    /**
-     * Whether a field is an interactive push button (a {@code <ui><button>}) that is visible but
-     * {@code relevant="-print"} — i.e. the {@code +}/{@code -} row-add/remove controls and similar
-     * on-screen-only buttons. The print/flatten/render tracks omit these (Adobe's print does too), but
-     * the AcroForm converter realises them as clickable widgets, so the editable form keeps them.
-     *
-     * @param el the field element
-     * @return {@code true} for a visible {@code <ui><button>} field
-     */
+    /// Whether a field is an interactive push button (a `<ui><button>`) that is visible but
+    /// `relevant="-print"` — i.e. the `+`/`-` row-add/remove controls and similar
+    /// on-screen-only buttons. The print/flatten/render tracks omit these (Adobe's print does too), but
+    /// the AcroForm converter realises them as clickable widgets, so the editable form keeps them.
+    ///
+    /// @param el the field element
+    /// @return `true` for a visible `<ui><button>` field
     public static boolean isInteractiveButton(Element el) {
         if (el == null || buttonUi(el) == null) {
             return false;
@@ -721,14 +679,12 @@ public final class XfaPainter {
         return !"hidden".equals(presence) && !"invisible".equals(presence) && !"inactive".equals(presence);
     }
 
-    /**
-     * The JavaScript of a field's {@code click} event ({@code <event activity="click"><script>}), or
-     * {@code null}. Attached to the converted AcroForm button as a {@code /JavaScript} action so the
-     * control is wired (full dynamic add/remove still needs the XFA runtime).
-     *
-     * @param el the field element
-     * @return the click script source, or {@code null}
-     */
+    /// The JavaScript of a field's `click` event (`<event activity="click"><script>`), or
+    /// `null`. Attached to the converted AcroForm button as a `/JavaScript` action so the
+    /// control is wired (full dynamic add/remove still needs the XFA runtime).
+    ///
+    /// @param el the field element
+    /// @return the click script source, or `null`
     public static String clickScript(Element el) {
         if (el == null) {
             return null;
@@ -747,62 +703,52 @@ public final class XfaPainter {
         return null;
     }
 
-    /**
-     * Convert-mode sink: while set, {@link #paintText} records every positioned <em>field</em>'s value
-     * rect here (and skips painting the value) so the AcroForm converter can realise an editable widget
-     * over it. Used for master-page furniture fields, which are otherwise painted as static (the header /
-     * conditions fields like "Vendor Contact", "Measure/Install Start Date" were thus not editable).
-     */
+    /// Convert-mode sink: while set, [#paintText] records every positioned _field_'s value
+    /// rect here (and skips painting the value) so the AcroForm converter can realise an editable widget
+    /// over it. Used for master-page furniture fields, which are otherwise painted as static (the header /
+    /// conditions fields like "Vendor Contact", "Measure/Install Start Date" were thus not editable).
     private static final ThreadLocal<java.util.function.BiConsumer<Element, Rectangle>> FIELD_CAPTURE =
             new ThreadLocal<>();
 
-    /**
-     * Starts capturing positioned-field value rects into {@code sink} on this thread (see
-     * {@link #FIELD_CAPTURE}); the converter wraps its furniture paint with this. Field values are NOT
-     * painted while capturing — the editable widget carries them.
-     *
-     * @param sink receives each captured (field element, value rect)
-     */
+    /// Starts capturing positioned-field value rects into `sink` on this thread (see
+    /// [#FIELD\_CAPTURE]); the converter wraps its furniture paint with this. Field values are NOT
+    /// painted while capturing — the editable widget carries them.
+    ///
+    /// @param sink receives each captured (field element, value rect)
     public static void beginFieldCapture(java.util.function.BiConsumer<Element, Rectangle> sink) {
         FIELD_CAPTURE.set(sink);
     }
 
-    /** Stops field-rect capture on this thread. */
+    /// Stops field-rect capture on this thread.
     public static void endFieldCapture() {
         FIELD_CAPTURE.remove();
     }
 
-    /**
-     * The text of a field's {@code <caption>} (e.g. a button's {@code +}/{@code -} label), or
-     * {@code null}. Exposed so the converter can set the AcroForm button's {@code /CA} caption.
-     *
-     * @param el the field element
-     * @return the caption text, or {@code null}
-     */
+    /// The text of a field's `<caption>` (e.g. a button's `+`/`-` label), or
+    /// `null`. Exposed so the converter can set the AcroForm button's `/CA` caption.
+    ///
+    /// @param el the field element
+    /// @return the caption text, or `null`
     public static String captionTextOf(Element el) {
         return el == null ? null : captionString(firstChildOf(el, "caption"));
     }
 
-    /**
-     * Whether a field is mandatory — it has a {@code <validate nullTest="error">} (an empty value is a
-     * validation error). The AcroForm converter highlights such fields (red border) when empty, the way
-     * Adobe flags required fields in an interactive XFA form.
-     *
-     * @param el the field element
-     * @return {@code true} if the field is required
-     */
+    /// Whether a field is mandatory — it has a `<validate nullTest="error">` (an empty value is a
+    /// validation error). The AcroForm converter highlights such fields (red border) when empty, the way
+    /// Adobe flags required fields in an interactive XFA form.
+    ///
+    /// @param el the field element
+    /// @return `true` if the field is required
     public static boolean isMandatory(Element el) {
         Element validate = firstChildOf(el, "validate");
         return validate != null && "error".equals(attr(validate, "nullTest", ""));
     }
 
-    /**
-     * Paints an interactive push button's static chrome — its raised/edged box and centred caption
-     * ({@code +} / {@code -}) — into the page content, so the control is visible in any viewer. The
-     * clickable widget is layered over this rect by the converter.
-     *
-     * @return {@code true} if anything was drawn
-     */
+    /// Paints an interactive push button's static chrome — its raised/edged box and centred caption
+    /// (`+` / `-`) — into the page content, so the control is visible in any viewer. The
+    /// clickable widget is layered over this rect by the converter.
+    ///
+    /// @return `true` if anything was drawn
     public static boolean paintButton(Element el, Rectangle rect, ContentStreamBuilder b, Result r,
                                       XfaFontResolver resolver) {
         boolean any = false;
@@ -821,12 +767,10 @@ public final class XfaPainter {
         return any;
     }
 
-    /**
-     * Strokes a red rectangle around {@code rect} — the converter's highlight for a mandatory field
-     * that is empty (or otherwise invalid), painted into page content so it shows in any viewer.
-     *
-     * @return {@code true} (a mark was produced) when the rect is non-degenerate
-     */
+    /// Strokes a red rectangle around `rect` — the converter's highlight for a mandatory field
+    /// that is empty (or otherwise invalid), painted into page content so it shows in any viewer.
+    ///
+    /// @return `true` (a mark was produced) when the rect is non-degenerate
     public static boolean paintInvalidBorder(Rectangle rect, ContentStreamBuilder b, Result r) {
         if (rect.getWidth() <= 1 || rect.getHeight() <= 1) {
             return false;
@@ -842,62 +786,54 @@ public final class XfaPainter {
         return true;
     }
 
-    /** @return the field's {@code <ui><barcode>} element (2D/1D barcode widget), or null. */
+    /// @return the field's `<ui><barcode>` element (2D/1D barcode widget), or null.
     private static Element barcodeUi(Element el) {
         Element ui = firstChildOf(el, "ui");
         return ui == null ? null : firstChildOf(ui, "barcode");
     }
 
-    /**
-     * Whether a field's value is a <em>generated visual</em> (a {@code <ui><barcode>} symbol or an
-     * embedded {@code <value><image>} picture) rather than editable text. The AcroForm converter must
-     * paint such a field fully (via {@link #paintPlaced}) instead of placing an editable text widget,
-     * otherwise the QR symbol / logo is lost (a {@code TextBoxField} cannot render it). Exposed for the
-     * converter so its output matches the XFA render page-for-page.
-     *
-     * @param el the field element
-     * @return {@code true} for a barcode or embedded-image field
-     */
+    /// Whether a field's value is a _generated visual_ (a `<ui><barcode>` symbol or an
+    /// embedded `<value><image>` picture) rather than editable text. The AcroForm converter must
+    /// paint such a field fully (via [#paintPlaced]) instead of placing an editable text widget,
+    /// otherwise the QR symbol / logo is lost (a `TextBoxField` cannot render it). Exposed for the
+    /// converter so its output matches the XFA render page-for-page.
+    ///
+    /// @param el the field element
+    /// @return `true` for a barcode or embedded-image field
     public static boolean isGeneratedVisualField(Element el) {
         return el != null && (barcodeUi(el) != null || imageBytes(el) != null);
     }
 
-    /**
-     * The authored value font size (points) of a field — its {@code <font size>} (default 10pt) — i.e.
-     * the size the render track draws the value at. The AcroForm converter sets this on the editable
-     * widget's {@code /DA} so the widget renders the value at the SAME size as the rendered XFA (a
-     * {@code /Helv 0 Tf} auto-size otherwise fills the box and prints visibly larger).
-     *
-     * @param el the field element
-     * @return the value font size in points (always &gt; 0)
-     */
+    /// The authored value font size (points) of a field — its `<font size>` (default 10pt) — i.e.
+    /// the size the render track draws the value at. The AcroForm converter sets this on the editable
+    /// widget's `/DA` so the widget renders the value at the SAME size as the rendered XFA (a
+    /// `/Helv 0 Tf` auto-size otherwise fills the box and prints visibly larger).
+    ///
+    /// @param el the field element
+    /// @return the value font size in points (always > 0)
     public static double valueFontSize(Element el) {
         Element font = descend(el, "font");
         double size = font != null ? measure(attr(font, "size", "10pt")) : 10;
         return size <= 0 ? 10 : size;
     }
 
-    /**
-     * The authored value font colour of a field (its {@code <font><color>}), as RGB in [0,1], or black
-     * when unspecified — paired with {@link #valueFontSize} to build the widget {@code /DA}.
-     *
-     * @param el the field element
-     * @return a 3-element RGB array
-     */
+    /// The authored value font colour of a field (its `<font><color>`), as RGB in [0,1], or black
+    /// when unspecified — paired with [#valueFontSize] to build the widget `/DA`.
+    ///
+    /// @param el the field element
+    /// @return a 3-element RGB array
     public static float[] valueFontColor(Element el) {
         float[] c = fontColor(descend(el, "font"));
         return c != null ? c : new float[]{0f, 0f, 0f};
     }
 
-    /**
-     * The field's value horizontal alignment as an AcroForm quadding code ({@code /Q}: 0=left, 1=centre,
-     * 2=right), read from its {@code <para hAlign>}. The AcroForm converter sets this on the editable
-     * widget so a right-aligned numeric column ({@code hAlign="right"}) reads the same as the rendered
-     * XFA — the widget appearance otherwise left-aligns every value.
-     *
-     * @param el the field element
-     * @return the quadding code (0/1/2)
-     */
+    /// The field's value horizontal alignment as an AcroForm quadding code (`/Q`: 0=left, 1=centre,
+    /// 2=right), read from its `<para hAlign>`. The AcroForm converter sets this on the editable
+    /// widget so a right-aligned numeric column (`hAlign="right"`) reads the same as the rendered
+    /// XFA — the widget appearance otherwise left-aligns every value.
+    ///
+    /// @param el the field element
+    /// @return the quadding code (0/1/2)
     public static int valueQuadding(Element el) {
         Element para = descend(el, "para");
         String h = para != null ? attr(para, "hAlign", "left") : "left";
@@ -910,17 +846,15 @@ public final class XfaPainter {
         return 0; // left / justify / radix → left
     }
 
-    /**
-     * Renders a {@code <ui><barcode type="QRCode">} field's value as a real QR Code centred in
-     * {@code box}. The symbol is generated by {@link org.aspose.pdf.engine.barcode.QrEncoder} from the
-     * field's content (its computed/bound {@code rawValue}), rasterized to a 1-bit image and scaled to
-     * the largest square fitting the box (with the spec quiet zone). Only the QRCode type is rendered;
-     * other barcode symbologies (PDF417, DataMatrix, 1D) are not yet generated and leave the box empty.
-     *
-     * @param barcode the {@code <barcode>} widget element (for {@code type}/{@code errorCorrectionLevel})
-     * @param content the data to encode (already the field's effective value)
-     * @return {@code true} if a symbol was painted
-     */
+    /// Renders a `<ui><barcode type="QRCode">` field's value as a real QR Code centred in
+    /// `box`. The symbol is generated by [org.aspose.pdf.engine.barcode.QrEncoder] from the
+    /// field's content (its computed/bound `rawValue`), rasterized to a 1-bit image and scaled to
+    /// the largest square fitting the box (with the spec quiet zone). Only the QRCode type is rendered;
+    /// other barcode symbologies (PDF417, DataMatrix, 1D) are not yet generated and leave the box empty.
+    ///
+    /// @param barcode the `<barcode>` widget element (for `type`/`errorCorrectionLevel`)
+    /// @param content the data to encode (already the field's effective value)
+    /// @return `true` if a symbol was painted
     private static boolean paintBarcode(Element barcode, String content, Rectangle box,
                                         ContentStreamBuilder b, Result r) {
         if (content == null || content.isEmpty() || box.getWidth() <= 1 || box.getHeight() <= 1) {
@@ -966,11 +900,9 @@ public final class XfaPainter {
         return true;
     }
 
-    /**
-     * Maps an XFA {@code <barcode errorCorrectionLevel>} to a {@link QrEncoder.Ecc} level. The XFA
-     * attribute is a 0&ndash;8 index of increasing recovery; we bucket it into the four QR levels
-     * (L/M/Q/H), defaulting to M when unspecified.
-     */
+    /// Maps an XFA `<barcode errorCorrectionLevel>` to a [QrEncoder.Ecc] level. The XFA
+    /// attribute is a 0–8 index of increasing recovery; we bucket it into the four QR levels
+    /// (L/M/Q/H), defaulting to M when unspecified.
     private static org.aspose.pdf.engine.barcode.QrEncoder.Ecc qrEccLevel(Element barcode) {
         String v = attr(barcode, "errorCorrectionLevel", "");
         int lvl;
@@ -991,12 +923,10 @@ public final class XfaPainter {
         return org.aspose.pdf.engine.barcode.QrEncoder.Ecc.HIGH;
     }
 
-    /**
-     * Draws a checkButton widget in {@code box}: a circle ({@code shape="round"} = radio) or square
-     * ({@code shape="square"} = checkbox) outline at the button's size, plus a filled inner mark when
-     * this option is selected. The selected state is the field's own value, else the value of its
-     * enclosing {@code exclGroup} (radios bind {@code none} and share the group's single value).
-     */
+    /// Draws a checkButton widget in `box`: a circle (`shape="round"` = radio) or square
+    /// (`shape="square"` = checkbox) outline at the button's size, plus a filled inner mark when
+    /// this option is selected. The selected state is the field's own value, else the value of its
+    /// enclosing `exclGroup` (radios bind `none` and share the group's single value).
     private static boolean paintCheckButton(Element el, FormField ff, Map<Element, FormField> byElement,
                                             Element cb, Rectangle box, ContentStreamBuilder b, Result r) {
         boolean round = "round".equals(attr(cb, "shape", "square"));
@@ -1044,7 +974,7 @@ public final class XfaPainter {
         return true;
     }
 
-    /** Whether this checkButton option is selected (its on-value matches the field/exclGroup value). */
+    /// Whether this checkButton option is selected (its on-value matches the field/exclGroup value).
     private static boolean isChecked(Element el, FormField ff, Map<Element, FormField> byElement) {
         String onValue = firstItemText(el);
         if (onValue == null || onValue.isEmpty()) {
@@ -1057,8 +987,8 @@ public final class XfaPainter {
         return current != null && onValue.trim().equals(current.trim());
     }
 
-    /** The first {@code <items>} entry of a field — a checkButton's checked ("on") value.
-     *  Items may be typed {@code <text>}, {@code <integer>} or {@code <decimal>}. */
+    /// The first `<items>` entry of a field — a checkButton's checked ("on") value.
+    ///  Items may be typed `<text>`, `<integer>` or `<decimal>`.
     private static String firstItemText(Element el) {
         Element items = firstChildOf(el, "items");
         if (items == null) {
@@ -1073,17 +1003,15 @@ public final class XfaPainter {
         return null;
     }
 
-    /**
-     * True when {@code value} denotes the CHECKED state of the checkButton field {@code el}:
-     * it equals the field's authored ON value (first {@code <items>} entry). When the template
-     * declares no items the XFA default on-value is "1"; generic boolean spellings are accepted
-     * there too. Used by the AcroForm converter so a checkbox whose authored on-value is not
-     * literally "1" (e.g. "2", "03", "Y") still converts checked.
-     *
-     * @param el    the field element
-     * @param value the bound value
-     * @return whether the widget should be checked
-     */
+    /// True when `value` denotes the CHECKED state of the checkButton field `el`:
+    /// it equals the field's authored ON value (first `<items>` entry). When the template
+    /// declares no items the XFA default on-value is "1"; generic boolean spellings are accepted
+    /// there too. Used by the AcroForm converter so a checkbox whose authored on-value is not
+    /// literally "1" (e.g. "2", "03", "Y") still converts checked.
+    ///
+    /// @param el    the field element
+    /// @param value the bound value
+    /// @return whether the widget should be checked
     public static boolean isCheckedValue(Element el, String value) {
         if (value == null || value.trim().isEmpty()) {
             return false;
@@ -1097,7 +1025,7 @@ public final class XfaPainter {
                 || s.equalsIgnoreCase("yes") || s.equalsIgnoreCase("checked");
     }
 
-    /** The selected value of the nearest enclosing {@code exclGroup}, via its {@link FormField}. */
+    /// The selected value of the nearest enclosing `exclGroup`, via its [FormField].
     private static String exclGroupValue(Element el, Map<Element, FormField> byElement) {
         org.w3c.dom.Node p = el.getParentNode();
         while (p instanceof Element) {
@@ -1118,16 +1046,14 @@ public final class XfaPainter {
         return paintText(el, ff, java.util.Collections.emptyMap(), rect, b, r, resolver);
     }
 
-    /**
-     * The value sub-rectangle of a field box: the full rect minus the {@code <caption>} reserve, i.e.
-     * where the render track paints the field VALUE. The AcroForm converter places its editable widget
-     * here so the widget sits beside the caption (not over it, the "KSSTCAB" over "Soud" overlap).
-     *
-     * @param el       the field element
-     * @param rect     the field's full box rect
-     * @param resolver the font resolver (for auto caption-reserve measurement)
-     * @return the value sub-rectangle (equals {@code rect} when there is no visible caption)
-     */
+    /// The value sub-rectangle of a field box: the full rect minus the `<caption>` reserve, i.e.
+    /// where the render track paints the field VALUE. The AcroForm converter places its editable widget
+    /// here so the widget sits beside the caption (not over it, the "KSSTCAB" over "Soud" overlap).
+    ///
+    /// @param el       the field element
+    /// @param rect     the field's full box rect
+    /// @param resolver the font resolver (for auto caption-reserve measurement)
+    /// @return the value sub-rectangle (equals `rect` when there is no visible caption)
     public static Rectangle valueRect(Element el, Rectangle rect, XfaFontResolver resolver) {
         Element captionEl = firstChildOf(el, "caption");
         String caption = captionString(captionEl);
@@ -1146,15 +1072,13 @@ public final class XfaPainter {
         return splitForCaption(rect, placement, reserve, minValue)[1];
     }
 
-    /**
-     * The display string for a field's raw bound value: a dropdown/list save code mapped to its paired
-     * display item, then the numeric {@code <format><picture>} applied — the same value the render track
-     * paints. Used so the converter's widget shows "Krajský soud v Praze" / "0,00", not "KSSTCAB" / "0".
-     *
-     * @param el  the field element
-     * @param raw the raw bound (save) value
-     * @return the display value
-     */
+    /// The display string for a field's raw bound value: a dropdown/list save code mapped to its paired
+    /// display item, then the numeric `<format><picture>` applied — the same value the render track
+    /// paints. Used so the converter's widget shows "Krajský soud v Praze" / "0,00", not "KSSTCAB" / "0".
+    ///
+    /// @param el  the field element
+    /// @param raw the raw bound (save) value
+    /// @return the display value
     public static String displayValue(Element el, String raw) {
         return applyDisplayPicture(el, displayItem(el, raw));
     }
@@ -1296,14 +1220,12 @@ public final class XfaPainter {
         return any;
     }
 
-    /**
-     * Maps a list/dropdown field's bound <b>save</b> value to its <b>display</b> item. An XFA
-     * {@code <field>} can carry two {@code <items>} lists: one of display labels and one
-     * {@code save="1"} list of stored codes, paired by index. The bound value is the stored code, so
-     * we look it up in the save list and return the label at the same index. Returns {@code raw}
-     * unchanged when the field has no paired item lists or the code isn't found (already a label, a
-     * free-text field, etc.).
-     */
+    /// Maps a list/dropdown field's bound **save** value to its **display** item. An XFA
+    /// `<field>` can carry two `<items>` lists: one of display labels and one
+    /// `save="1"` list of stored codes, paired by index. The bound value is the stored code, so
+    /// we look it up in the save list and return the label at the same index. Returns `raw`
+    /// unchanged when the field has no paired item lists or the code isn't found (already a label, a
+    /// free-text field, etc.).
     private static String displayItem(Element fieldEl, String raw) {
         if (raw == null || raw.isEmpty()) {
             return raw;
@@ -1330,15 +1252,13 @@ public final class XfaPainter {
         return (idx >= 0 && idx < disps.size()) ? disps.get(idx) : raw;
     }
 
-    /**
-     * Applies a field's display {@code <format><picture>} to a bound value so it shows in the form's
-     * authored shape — currently the numeric pictures ({@code num{…}}, the bare {@code zz9.99} digit
-     * mask, or a {@code num.…{}} sub-clause) which the Czech insolvency forms use for every amount. The
-     * raw value carried by the data ("0", "0.00") has no formatting; Adobe paints the picture-applied
-     * display string ("0,00" under {@code num{…zz9.99}} in the {@code cs_CZ} locale). A non-numeric
-     * value, an absent/unsupported picture, or a non-parseable value all return {@code raw} unchanged,
-     * so dates / text / dropdown displays are never disturbed.
-     */
+    /// Applies a field's display `<format><picture>` to a bound value so it shows in the form's
+    /// authored shape — currently the numeric pictures (`num{…}`, the bare `zz9.99` digit
+    /// mask, or a `num.…{}` sub-clause) which the Czech insolvency forms use for every amount. The
+    /// raw value carried by the data ("0", "0.00") has no formatting; Adobe paints the picture-applied
+    /// display string ("0,00" under `num{…zz9.99}` in the `cs_CZ` locale). A non-numeric
+    /// value, an absent/unsupported picture, or a non-parseable value all return `raw` unchanged,
+    /// so dates / text / dropdown displays are never disturbed.
     private static String applyDisplayPicture(Element fieldEl, String raw) {
         if (raw == null || raw.isEmpty()) {
             return raw;
@@ -1417,12 +1337,12 @@ public final class XfaPainter {
         return prefix + new DecimalFormat(pat.toString(), sym).format(num) + suffix;
     }
 
-    /** Whether {@code c} is a numeric-picture mask character (digit placeholder, group/decimal, paren). */
+    /// Whether `c` is a numeric-picture mask character (digit placeholder, group/decimal, paren).
     private static boolean isMaskChar(char c) {
         return c == '9' || c == 'z' || c == 'Z' || c == ',' || c == '.' || c == '(' || c == ')';
     }
 
-    /** The text of a field's {@code <format><picture>} clause, or {@code null} if it declares none. */
+    /// The text of a field's `<format><picture>` clause, or `null` if it declares none.
     private static String formatPicture(Element fieldEl) {
         Element format = firstChildOf(fieldEl, "format");
         Element picture = format != null ? firstChildOf(format, "picture") : null;
@@ -1433,12 +1353,10 @@ public final class XfaPainter {
         return (t == null || t.trim().isEmpty()) ? null : t;
     }
 
-    /**
-     * The locale governing {@code el}'s formatting: the nearest {@code locale} attribute on {@code el}
-     * or an ancestor (XFA inherits {@code locale} down the template tree; the Czech forms set it on the
-     * root {@code <subform locale="cs_CZ">}). Defaults to {@link Locale#ROOT} (period decimal) when none
-     * is declared, matching the picture's literal symbols.
-     */
+    /// The locale governing `el`'s formatting: the nearest `locale` attribute on `el`
+    /// or an ancestor (XFA inherits `locale` down the template tree; the Czech forms set it on the
+    /// root `<subform locale="cs_CZ">`). Defaults to [Locale#ROOT] (period decimal) when none
+    /// is declared, matching the picture's literal symbols.
     private static Locale localeOf(Element el) {
         for (Node n = el; n instanceof Element; n = n.getParentNode()) {
             String loc = ((Element) n).getAttribute("locale");
@@ -1449,7 +1367,7 @@ public final class XfaPainter {
         return Locale.ROOT;
     }
 
-    /** The trimmed {@code <text>} children of an {@code <items>} element, in order. */
+    /// The trimmed `<text>` children of an `<items>` element, in order.
     private static List<String> itemTexts(Element items) {
         List<String> out = new ArrayList<>();
         for (Element c = firstEl(items); c != null; c = nextEl(c)) {
@@ -1461,21 +1379,17 @@ public final class XfaPainter {
         return out;
     }
 
-    /**
-     * Splits a field box into {@code [captionRect, valueRect]} for a caption of the given
-     * {@code placement} occupying {@code reserve} points along the relevant edge (left/right take a
-     * vertical strip of that width; top/bottom a horizontal strip of that height). The reserve is
-     * clamped so the value area never collapses below ~15% of the box.
-     */
+    /// Splits a field box into `[captionRect, valueRect]` for a caption of the given
+    /// `placement` occupying `reserve` points along the relevant edge (left/right take a
+    /// vertical strip of that width; top/bottom a horizontal strip of that height). The reserve is
+    /// clamped so the value area never collapses below \~15% of the box.
     private static Rectangle[] splitForCaption(Rectangle rect, String placement, double reserve) {
         return splitForCaption(rect, placement, reserve, 0);
     }
 
-    /**
-     * As {@link #splitForCaption(Rectangle, String, double)} but reserving at least {@code minValue}
-     * points for the value side (e.g. a checkButton's small fixed widget), letting the caption keep
-     * its full declared reserve instead of the 0.85 clamp. {@code minValue ≤ 0} keeps the 0.85 clamp.
-     */
+    /// As [#splitForCaption(Rectangle, String, double)] but reserving at least `minValue`
+    /// points for the value side (e.g. a checkButton's small fixed widget), letting the caption keep
+    /// its full declared reserve instead of the 0.85 clamp. `minValue ≤ 0` keeps the 0.85 clamp.
     private static Rectangle[] splitForCaption(Rectangle rect, String placement, double reserve,
                                                double minValue) {
         double llx = rect.getLLX(), lly = rect.getLLY(), urx = rect.getURX(), ury = rect.getURY();
@@ -1499,11 +1413,9 @@ public final class XfaPainter {
         }
     }
 
-    /**
-     * The reserve to allot a caption that did not declare one (auto-size): the measured text width
-     * (+ small pad) for a left/right caption, or about one line height for a top/bottom caption,
-     * using the caption's resolved font.
-     */
+    /// The reserve to allot a caption that did not declare one (auto-size): the measured text width
+    /// (+ small pad) for a left/right caption, or about one line height for a top/bottom caption,
+    /// using the caption's resolved font.
     private static double captionReserve(Element captionEl, Element fieldEl, String text,
                                          String placement, XfaFontResolver resolver) {
         Element font = descend(captionEl, "font");
@@ -1527,7 +1439,7 @@ public final class XfaPainter {
 
     /* ----------------------------- rich text (exData/HTML) ----------------------------- */
 
-    /** One styled inline run within a paragraph (an HTML text node or {@code <span>}). */
+    /// One styled inline run within a paragraph (an HTML text node or `<span>`).
     private static final class Run {
         final String text;
         final double size;       // points, NaN ⇒ inherit the paragraph/draw size
@@ -1541,14 +1453,14 @@ public final class XfaPainter {
         }
     }
 
-    /** One HTML paragraph of a rich-text value, with the style overrides parsed from its {@code <p>}. */
+    /// One HTML paragraph of a rich-text value, with the style overrides parsed from its `<p>`.
     private static final class Para {
         final String text;
         final double size;       // points, NaN ⇒ inherit the draw's <font>
         final boolean bold;
         final boolean italic;
         final String family;     // null ⇒ inherit
-        /** Inline runs when the paragraph mixes sizes / baseline shifts (superscripts); else null = use {@link #text}. */
+        /// Inline runs when the paragraph mixes sizes / baseline shifts (superscripts); else null = use [#text].
         final List<Run> runs;
         Para(String text, double size, boolean bold, boolean italic, String family) {
             this(text, size, bold, italic, family, null);
@@ -1559,12 +1471,10 @@ public final class XfaPainter {
         }
     }
 
-    /**
-     * Extracts the HTML paragraphs of {@code el}'s {@code <value><exData contentType="text/html">}.
-     * Each {@code <p>} becomes one {@link Para} carrying its own inline {@code style} font overrides
-     * (font-size / font-weight / font-style / font-family). A {@code text/plain} or untyped exData is
-     * returned as a single newline-split paragraph. Empty if the object has no exData value.
-     */
+    /// Extracts the HTML paragraphs of `el`'s `<value><exData contentType="text/html">`.
+    /// Each `<p>` becomes one [Para] carrying its own inline `style` font overrides
+    /// (font-size / font-weight / font-style / font-family). A `text/plain` or untyped exData is
+    /// returned as a single newline-split paragraph. Empty if the object has no exData value.
     private static List<Para> richParagraphs(Element el) {
         List<Para> out = new ArrayList<>();
         Element value = firstChildOf(el, "value");
@@ -1592,11 +1502,9 @@ public final class XfaPainter {
         return out;
     }
 
-    /**
-     * The caption's rich paragraphs <b>iff</b> it is HTML carrying an inline run (a superscript / a
-     * sized {@code <span>}); otherwise {@code null} so a plain caption keeps the simple single-run
-     * {@link #drawText} path (unchanged for the overwhelming majority of captions).
-     */
+    /// The caption's rich paragraphs **iff** it is HTML carrying an inline run (a superscript / a
+    /// sized `<span>`); otherwise `null` so a plain caption keeps the simple single-run
+    /// [#drawText] path (unchanged for the overwhelming majority of captions).
     private static List<Para> captionRuns(Element captionEl) {
         List<Para> paras = richParagraphs(captionEl);
         for (Para p : paras) {
@@ -1607,7 +1515,7 @@ public final class XfaPainter {
         return null;
     }
 
-    /** Walks {@code <p>} children of the HTML body, each → a styled paragraph (text content flattened). */
+    /// Walks `<p>` children of the HTML body, each → a styled paragraph (text content flattened).
     private static void collectParagraphs(Element scope, List<Para> out) {
         for (Element c = firstEl(scope); c != null; c = nextEl(c)) {
             if ("p".equals(local(c))) {
@@ -1632,11 +1540,9 @@ public final class XfaPainter {
         }
     }
 
-    /**
-     * Walks a {@code <p>}'s inline content depth-first, accumulating one {@link Run} per text node with
-     * the font size / weight / posture / family / baseline-shift inherited and overridden by each
-     * enclosing {@code <span style>}. {@code vertical-align:Npt} becomes the run's rise (superscript).
-     */
+    /// Walks a `<p>`'s inline content depth-first, accumulating one [Run] per text node with
+    /// the font size / weight / posture / family / baseline-shift inherited and overridden by each
+    /// enclosing `<span style>`. `vertical-align:Npt` becomes the run's rise (superscript).
     private static void collectRuns(org.w3c.dom.Node node, double size, boolean bold, boolean italic,
                                     String family, double rise, List<Run> out) {
         for (org.w3c.dom.Node n = node.getFirstChild(); n != null; n = n.getNextSibling()) {
@@ -1661,7 +1567,7 @@ public final class XfaPainter {
         }
     }
 
-    /** Whether the runs vary in size or carry a baseline shift — i.e. inline rendering is needed. */
+    /// Whether the runs vary in size or carry a baseline shift — i.e. inline rendering is needed.
     private static boolean needsRuns(List<Run> runs, double paraSize) {
         for (Run r : runs) {
             if (Math.abs(r.rise) > 0.01) {
@@ -1676,7 +1582,7 @@ public final class XfaPainter {
         return false;
     }
 
-    /** Drops empty/whitespace-only runs and merges adjacent runs that share size/style/rise. */
+    /// Drops empty/whitespace-only runs and merges adjacent runs that share size/style/rise.
     private static List<Run> coalesce(List<Run> runs) {
         List<Run> out = new ArrayList<>();
         for (Run r : runs) {
@@ -1707,7 +1613,7 @@ public final class XfaPainter {
         return (Double.isNaN(a) && Double.isNaN(b)) || Math.abs(a - b) < 0.01;
     }
 
-    /** A CSS {@code vertical-align:Npt} (baseline shift) from an inline style, or {@link Double#NaN}. */
+    /// A CSS `vertical-align:Npt` (baseline shift) from an inline style, or [Double#NaN].
     private static double styleRise(String style) {
         String v = styleValue(style, "vertical-align");
         if (v == null || v.toLowerCase().contains("baseline")) {
@@ -1717,12 +1623,10 @@ public final class XfaPainter {
         return pts == 0 ? Double.NaN : pts;
     }
 
-    /**
-     * Paints the rich-text paragraphs of a draw, wrapped to the box width and stacked top-down via the
-     * shared {@link org.aspose.pdf.engine.layout.TextLayoutHelper} word-wrapper (reused, not forked).
-     * Each paragraph uses its own font size/weight if the {@code <p>} declared one, else the draw's
-     * {@code <font>}. vAlign top/middle/bottom positions the whole block; hAlign aligns each line.
-     */
+    /// Paints the rich-text paragraphs of a draw, wrapped to the box width and stacked top-down via the
+    /// shared [org.aspose.pdf.engine.layout.TextLayoutHelper] word-wrapper (reused, not forked).
+    /// Each paragraph uses its own font size/weight if the `<p>` declared one, else the draw's
+    /// `<font>`. vAlign top/middle/bottom positions the whole block; hAlign aligns each line.
     private static boolean drawRichText(Element draw, List<Para> paras, Rectangle rect, ContentStreamBuilder b,
                                         XfaFontResolver resolver) {
         Element font = descend(draw, "font");
@@ -1837,11 +1741,9 @@ public final class XfaPainter {
         return true;
     }
 
-    /**
-     * Draws one line of styled inline {@link Run}s left-to-right at baseline {@code ty}: each run uses
-     * its own size and a baseline {@code rise} (vertical-align) so a small raised marker renders as a
-     * superscript. hAlign positions the whole line by its total advance.
-     */
+    /// Draws one line of styled inline [Run]s left-to-right at baseline `ty`: each run uses
+    /// its own size and a baseline `rise` (vertical-align) so a small raised marker renders as a
+    /// superscript. hAlign positions the whole line by its total advance.
     private static void drawRunLine(List<Run> runs, Element font, double baseSize, Rectangle rect,
                                     String hAlign, float[] color, double ty, ContentStreamBuilder b,
                                     XfaFontResolver resolver) {
@@ -1895,7 +1797,7 @@ public final class XfaPainter {
         }
     }
 
-    /** Maps a run's family/style (over the draw's {@code <font>}) to a base-14 font. */
+    /// Maps a run's family/style (over the draw's `<font>`) to a base-14 font.
     private static String mapRunFont(Element font, Run rn) {
         boolean bold = rn.bold || (font != null && "bold".equalsIgnoreCase(attr(font, "weight", "normal")));
         boolean italic = rn.italic || (font != null && "italic".equalsIgnoreCase(attr(font, "posture", "normal")));
@@ -1911,7 +1813,7 @@ public final class XfaPainter {
                 : italic ? "Helvetica-Oblique" : "Helvetica";
     }
 
-    /** Resolves the embedded font for a run (its family/style over the draw's font), or null. */
+    /// Resolves the embedded font for a run (its family/style over the draw's font), or null.
     private static XfaFontResolver.Embedded runEmbedded(Element font, Run rn, XfaFontResolver resolver) {
         if (resolver == null) {
             return null;
@@ -1922,7 +1824,7 @@ public final class XfaPainter {
         return resolver.resolve(family, bold, italic);
     }
 
-    /** The resolution family for a paragraph: its HTML {@code font-family} (first token), else the draw's typeface. */
+    /// The resolution family for a paragraph: its HTML `font-family` (first token), else the draw's typeface.
     private static String familyOf(String htmlFamily, Element font) {
         String fam = htmlFamily;
         if (fam == null || fam.trim().isEmpty()) {
@@ -1935,7 +1837,7 @@ public final class XfaPainter {
         return fam.replace("'", "").replace("\"", "").trim();
     }
 
-    /** String width in points using an embedded font's own advance metrics (so alignment matches the glyphs). */
+    /// String width in points using an embedded font's own advance metrics (so alignment matches the glyphs).
     private static double embeddedWidth(XfaFontResolver.Embedded emb, String text, double size) {
         org.aspose.pdf.engine.font.ttf.TrueTypeReader reader = emb.reader;
         int upm = reader.getUnitsPerEm();
@@ -1951,7 +1853,7 @@ public final class XfaPainter {
         return total * size / 1000.0;
     }
 
-    /** A named inset (points) of an element's {@code <margin>} child, or 0 when absent. */
+    /// A named inset (points) of an element's `<margin>` child, or 0 when absent.
     private static double insetOf(Element el, String which) {
         Element margin = el == null ? null : firstChildOf(el, "margin");
         if (margin == null) {
@@ -1961,7 +1863,7 @@ public final class XfaPainter {
         return Double.isNaN(v) ? 0 : v;
     }
 
-    /** Maps the draw's {@code <font>} merged with a paragraph's HTML style overrides to a base-14 font. */
+    /// Maps the draw's `<font>` merged with a paragraph's HTML style overrides to a base-14 font.
     private static String mapFontStyle(Element font, Para p) {
         boolean bold = p.bold || (font != null && "bold".equalsIgnoreCase(attr(font, "weight", "normal")));
         boolean italic = p.italic || (font != null && "italic".equalsIgnoreCase(attr(font, "posture", "normal")));
@@ -1981,7 +1883,7 @@ public final class XfaPainter {
         return s == null ? "" : s.replaceAll("\\s+", " ").trim();
     }
 
-    /** A CSS {@code font-size:Npt} (or px/in/mm) from an inline style, or {@link Double#NaN}. */
+    /// A CSS `font-size:Npt` (or px/in/mm) from an inline style, or [Double#NaN].
     private static double styleSize(String style) {
         String v = styleValue(style, "font-size");
         if (v == null) {
@@ -1996,7 +1898,7 @@ public final class XfaPainter {
         return v != null && v.toLowerCase().contains(want);
     }
 
-    /** Reads one {@code prop:value} from a {@code ;}-separated inline CSS style string. */
+    /// Reads one `prop:value` from a `;`-separated inline CSS style string.
     private static String styleValue(String style, String prop) {
         if (style == null || style.isEmpty()) {
             return null;
@@ -2026,7 +1928,7 @@ public final class XfaPainter {
         return null;
     }
 
-    /** Draws one text run inside {@code rect} using the object's font + para alignment. */
+    /// Draws one text run inside `rect` using the object's font + para alignment.
     private static boolean drawText(Element fieldEl, Element styleHost, String text, Rectangle rect,
                                     ContentStreamBuilder b, XfaFontResolver resolver) {
         Element font = descend(styleHost, "font");
@@ -2136,14 +2038,12 @@ public final class XfaPainter {
         return true;
     }
 
-    /**
-     * Word-wraps {@code text} to {@code maxWidth}, measuring with the SAME font used to draw it: an
-     * embedded font's own glyph advances when {@code emb != null} (so the wrap matches the rendered
-     * glyphs — and Adobe, which uses the real Times New Roman / Arial metrics), else the base-14
-     * approximation via {@link org.aspose.pdf.engine.layout.TextLayoutHelper}. Honours explicit
-     * newlines. Without this, base-14 "Times-Roman" runs slightly wider than the embedded Times New
-     * Roman it draws, so each line broke ~a word early and the last line overflowed a positioned widget.
-     */
+    /// Word-wraps `text` to `maxWidth`, measuring with the SAME font used to draw it: an
+    /// embedded font's own glyph advances when `emb != null` (so the wrap matches the rendered
+    /// glyphs — and Adobe, which uses the real Times New Roman / Arial metrics), else the base-14
+    /// approximation via [org.aspose.pdf.engine.layout.TextLayoutHelper]. Honours explicit
+    /// newlines. Without this, base-14 "Times-Roman" runs slightly wider than the embedded Times New
+    /// Roman it draws, so each line broke \~a word early and the last line overflowed a positioned widget.
     private static List<String> wrapToWidth(String text, XfaFontResolver.Embedded emb, String baseFont,
                                             double size, double maxWidth) {
         if (emb == null || maxWidth <= 0) {
@@ -2171,14 +2071,14 @@ public final class XfaPainter {
         return out;
     }
 
-    /** Whether a field's {@code <ui><textEdit multiLine="1">} marks it as a wrapping multi-line box. */
+    /// Whether a field's `<ui><textEdit multiLine="1">` marks it as a wrapping multi-line box.
     private static boolean isMultiLine(Element el) {
         Element ui = el == null ? null : firstChildOf(el, "ui");
         Element te = ui == null ? null : firstChildOf(ui, "textEdit");
         return te != null && truthyFlag(attr(te, "multiLine", "0"));
     }
 
-    /** Whether {@code text} contains an explicit line break (newline / line-separator). */
+    /// Whether `text` contains an explicit line break (newline / line-separator).
     private static boolean hasLineBreak(String text) {
         for (int i = 0; i < text.length(); i++) {
             char ch = text.charAt(i);
@@ -2189,12 +2089,10 @@ public final class XfaPainter {
         return false;
     }
 
-    /**
-     * Draws {@code text} wrapped to the box width as stacked lines: explicit line breaks split it into
-     * paragraphs, each wrapped to the available width via {@link org.aspose.pdf.engine.layout.TextLayoutHelper}.
-     * Top/middle/bottom {@code vAlign} positions the block; each line is h-aligned; the run is clipped
-     * to the box. Used for {@code multiLine} fields (the personnel/budget narratives).
-     */
+    /// Draws `text` wrapped to the box width as stacked lines: explicit line breaks split it into
+    /// paragraphs, each wrapped to the available width via [org.aspose.pdf.engine.layout.TextLayoutHelper].
+    /// Top/middle/bottom `vAlign` positions the block; each line is h-aligned; the run is clipped
+    /// to the box. Used for `multiLine` fields (the personnel/budget narratives).
     private static boolean drawMultiLineText(String text, String baseFont, XfaFontResolver.Embedded emb,
                                              double size, float[] c, String hAlign, String vAlign,
                                              Rectangle rect, Element styleHost, ContentStreamBuilder b) {
@@ -2265,14 +2163,12 @@ public final class XfaPainter {
         return layout != null && FLOWED.contains(layout);
     }
 
-    /**
-     * The XFA {@code relevant} rule evaluated for the PRINT context (the flatten/paint output is a
-     * static, print-like rendering). {@code relevant} is a whitespace-separated list of
-     * {@code ±token}s: {@code -print} excludes from print (interactive-only — buttons, on-screen
-     * hints; Adobe omits them when printing); {@code +print} includes; a list of only {@code +X}
-     * tokens (none {@code print}) means relevant ONLY elsewhere, so excluded from print. Absent /
-     * empty → relevant everywhere.
-     */
+    /// The XFA `relevant` rule evaluated for the PRINT context (the flatten/paint output is a
+    /// static, print-like rendering). `relevant` is a whitespace-separated list of
+    /// `±token`s: `-print` excludes from print (interactive-only — buttons, on-screen
+    /// hints; Adobe omits them when printing); `+print` includes; a list of only `+X`
+    /// tokens (none `print`) means relevant ONLY elsewhere, so excluded from print. Absent /
+    /// empty → relevant everywhere.
     public static boolean relevantForPrint(Element el) {
         String rel = el.getAttribute("relevant");
         if (rel == null || rel.trim().isEmpty()) {
@@ -2298,12 +2194,10 @@ public final class XfaPainter {
         return !("hidden".equals(p) || "invisible".equals(p));
     }
 
-    /**
-     * The glyph colour of an XFA {@code <font>}: its text colour lives in {@code <font><fill><color>}
-     * (the standard form), falling back to a {@code <font><color>} child, then black. Reading only the
-     * direct {@code <color>} child missed the {@code <fill>}-nested colour — e.g. the white title on the
-     * green banner ({@code <font><fill><color value="255,255,255"/>}) rendered black.
-     */
+    /// The glyph colour of an XFA `<font>`: its text colour lives in `<font><fill><color>`
+    /// (the standard form), falling back to a `<font><color>` child, then black. Reading only the
+    /// direct `<color>` child missed the `<fill>`-nested colour — e.g. the white title on the
+    /// green banner (`<font><fill><color value="255,255,255"/>`) rendered black.
     private static float[] fontColor(Element font) {
         if (font == null) {
             return new float[]{0, 0, 0};
@@ -2318,7 +2212,7 @@ public final class XfaPainter {
         return color(firstChildOf(font, "color"), new float[]{0, 0, 0});
     }
 
-    /** XFA {@code <color value="r,g,b">} (0-255) → normalized rgb; {@code def} if absent. */
+    /// XFA `<color value="r,g,b">` (0-255) → normalized rgb; `def` if absent.
     private static float[] color(Element colorEl, float[] def) {
         if (colorEl == null) {
             return def;
@@ -2341,7 +2235,7 @@ public final class XfaPainter {
         }
     }
 
-    /** Maps an XFA {@code <font>} to a standard-14 base font (typeface + weight + posture). */
+    /// Maps an XFA `<font>` to a standard-14 base font (typeface + weight + posture).
     private static String mapFont(Element font) {
         boolean bold = false, italic = false;
         if (font != null) {
@@ -2360,7 +2254,7 @@ public final class XfaPainter {
                 : italic ? "Helvetica-Oblique" : "Helvetica";
     }
 
-    /** String width in points via standard-font metrics (WinAnsi-coded). */
+    /// String width in points via standard-font metrics (WinAnsi-coded).
     private static double stringWidth(String baseFont, String text, double size) {
         int[] widths = StandardFonts.getWidths(baseFont);
         if (widths == null) {
@@ -2382,7 +2276,7 @@ public final class XfaPainter {
         return m == null ? 0 : XfaGeometry.toPoints(m);
     }
 
-    /** First contentArea origin (points, page top-left) of the template pageSet, or {0,0}. */
+    /// First contentArea origin (points, page top-left) of the template pageSet, or {0,0}.
     private static double[] contentAreaOrigin(Template tpl) {
         if (tpl == null) {
             return new double[]{0, 0};
@@ -2441,10 +2335,8 @@ public final class XfaPainter {
         }
     }
 
-    /**
-     * Attaches the painted Image XObjects to the page's {@code /Resources/XObject} under the resource
-     * names the content stream's {@code Do} operators reference (mirrors {@link #mergeFonts}).
-     */
+    /// Attaches the painted Image XObjects to the page's `/Resources/XObject` under the resource
+    /// names the content stream's `Do` operators reference (mirrors [#mergeFonts]).
     private static void mergeImages(Page page, ContentStreamBuilder b) throws Exception {
         Map<String, org.aspose.pdf.engine.pdfobjects.PdfStream> images = b.getImageXObjectDicts();
         if (images.isEmpty()) {
@@ -2479,7 +2371,7 @@ public final class XfaPainter {
         return v == null || v.isEmpty() ? def : v;
     }
 
-    /** An XFA on/off attribute (e.g. {@code underline}) is truthy unless absent / empty / "0". */
+    /// An XFA on/off attribute (e.g. `underline`) is truthy unless absent / empty / "0".
     private static boolean truthyFlag(String v) {
         return v != null && !v.isEmpty() && !"0".equals(v.trim());
     }
@@ -2550,14 +2442,12 @@ public final class XfaPainter {
         return null;
     }
 
-    /**
-     * A caption's label text, supporting both plain {@code <caption><value><text>} and rich
-     * {@code <caption><value><exData contentType="text/html">…<p>label</p>} forms (the latter is how
-     * this form authors most field captions — e.g. "Název/obch.firma:"). A caption is a single short
-     * label, so the HTML is flattened to its whitespace-normalised text (no per-paragraph wrapping,
-     * unlike a rich-text field value which keeps {@link #drawRichText}). Returns null/empty when the
-     * caption carries no text.
-     */
+    /// A caption's label text, supporting both plain `<caption><value><text>` and rich
+    /// `<caption><value><exData contentType="text/html">…<p>label</p>` forms (the latter is how
+    /// this form authors most field captions — e.g. "Název/obch.firma:"). A caption is a single short
+    /// label, so the HTML is flattened to its whitespace-normalised text (no per-paragraph wrapping,
+    /// unlike a rich-text field value which keeps [#drawRichText]). Returns null/empty when the
+    /// caption carries no text.
     private static String captionString(Element captionEl) {
         if (captionEl == null) {
             return null;

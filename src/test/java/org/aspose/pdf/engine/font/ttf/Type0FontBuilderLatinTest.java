@@ -13,11 +13,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * FE.1 — the synthetic-TTF fixture parses, and {@link Type0FontBuilder#buildLatin} emits a real
- * {@code /W} width array taken from the font's own {@code hmtx} (not the standard-14 table or the
- * {@code /DW} default), plus {@code /FontFile2} and a non-symbolic descriptor.
- */
+/// FE.1 — the synthetic-TTF fixture parses, and [Type0FontBuilder#buildLatin] emits a real
+/// `/W` width array taken from the font's own `hmtx` (not the standard-14 table or the
+/// `/DW` default), plus `/FontFile2` and a non-symbolic descriptor.
 public class Type0FontBuilderLatinTest {
 
     private static Map<Character, Integer> glyphs() {

@@ -9,9 +9,7 @@ import java.nio.ByteBuffer;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link TrueTypeReader}.
- */
+/// Tests for [TrueTypeReader].
 public class TrueTypeReaderTest {
 
     @Test
@@ -24,10 +22,8 @@ public class TrueTypeReaderTest {
         assertThrows(IOException.class, () -> new TrueTypeReader(null));
     }
 
-    /**
-     * Build a minimal valid sfnt structure for testing.
-     * Contains just a head table with unitsPerEm and maxp with numGlyphs.
-     */
+    /// Build a minimal valid sfnt structure for testing.
+    /// Contains just a head table with unitsPerEm and maxp with numGlyphs.
     @Test
     public void testMinimalSfnt() throws IOException {
         byte[] sfnt = buildMinimalSfnt(1000, 100);
@@ -44,13 +40,11 @@ public class TrueTypeReaderTest {
         assertEquals(0, reader.getGlyphId(65));
     }
 
-    /**
-     * A font with no cmap is exactly the case where {@code java.awt.Font}
-     * silently substitutes Arial (corpus APS/37100): the glyph outline must be
-     * recoverable straight from the {@code glyf}/{@code loca} tables instead.
-     * Builds a 2-glyph font whose glyph 1 is a rectangle in font units and
-     * asserts the returned outline is em-normalised and Y-up.
-     */
+    /// A font with no cmap is exactly the case where `java.awt.Font`
+    /// silently substitutes Arial (corpus APS/37100): the glyph outline must be
+    /// recoverable straight from the `glyf`/`loca` tables instead.
+    /// Builds a 2-glyph font whose glyph 1 is a rectangle in font units and
+    /// asserts the returned outline is em-normalised and Y-up.
     @Test
     public void testGlyphOutlineFromGlyfLoca() throws IOException {
         byte[] sfnt = buildSfntWithSquareGlyph(1000);
@@ -80,17 +74,15 @@ public class TrueTypeReaderTest {
         assertNull(reader.getGlyphPath(-1));
     }
 
-    /** No glyf/loca tables → outline lookup yields null (caller falls back). */
+    /// No glyf/loca tables → outline lookup yields null (caller falls back).
     @Test
     public void testGlyphOutlineAbsentTablesReturnsNull() throws IOException {
         TrueTypeReader reader = new TrueTypeReader(buildMinimalSfnt(1000, 10));
         assertNull(reader.getGlyphPath(1));
     }
 
-    /**
-     * Builds a valid sfnt with head, maxp, loca (short) and glyf tables. Glyph 0
-     * is empty; glyph 1 is a four-point rectangle (100,200)-(300,700).
-     */
+    /// Builds a valid sfnt with head, maxp, loca (short) and glyf tables. Glyph 0
+    /// is empty; glyph 1 is a four-point rectangle (100,200)-(300,700).
     private byte[] buildSfntWithSquareGlyph(int unitsPerEm) {
         // glyf for glyph 1 (34 bytes, even length for short loca).
         ByteBuffer gb = ByteBuffer.allocate(34);
@@ -150,11 +142,9 @@ public class TrueTypeReaderTest {
         return result;
     }
 
-    /**
-     * The simple-TrueType render chain (corpus 46679): a format-4 cmap maps the
-     * character code to a glyph id, then the glyf outline is drawn directly.
-     * Verifies cmap lookup feeds the right outline.
-     */
+    /// The simple-TrueType render chain (corpus 46679): a format-4 cmap maps the
+    /// character code to a glyph id, then the glyf outline is drawn directly.
+    /// Verifies cmap lookup feeds the right outline.
     @Test
     public void testCmapFormat4ToGlyphOutline() throws IOException {
         TrueTypeReader reader = new TrueTypeReader(buildSfntWithCmap(1000));
@@ -167,7 +157,7 @@ public class TrueTypeReaderTest {
         assertEquals(0.7, b.getMaxY(), 1e-6);
     }
 
-    /** Square-glyph font (glyph 1 = rect) plus a format-4 cmap mapping 'A' → glyph 1. */
+    /// Square-glyph font (glyph 1 = rect) plus a format-4 cmap mapping 'A' → glyph 1.
     private byte[] buildSfntWithCmap(int unitsPerEm) {
         byte[] glyf = squareGlyf();
         // cmap subtable, format 4, segCount 2: [0x41,0x41] + [0xFFFF,0xFFFF].
@@ -229,7 +219,7 @@ public class TrueTypeReaderTest {
         return result;
     }
 
-    /** A 4-point rectangle glyph (100,200)-(300,700), 34 bytes (even). */
+    /// A 4-point rectangle glyph (100,200)-(300,700), 34 bytes (even).
     private byte[] squareGlyf() {
         ByteBuffer gb = ByteBuffer.allocate(34);
         gb.putShort((short) 1);
@@ -243,9 +233,7 @@ public class TrueTypeReaderTest {
         return gb.array();
     }
 
-    /**
-     * Builds a minimal sfnt with head and maxp tables.
-     */
+    /// Builds a minimal sfnt with head and maxp tables.
     private byte[] buildMinimalSfnt(int unitsPerEm, int numGlyphs) {
         ByteBuffer buf = ByteBuffer.allocate(512);
 

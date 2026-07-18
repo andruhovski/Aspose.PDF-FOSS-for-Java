@@ -1,54 +1,48 @@
 package org.aspose.pdf.forms;
 
-import org.aspose.pdf.engine.pdfobjects.*;
-import java.util.*;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.PdfString;
 
-/**
- * Collection of options for choice fields (ComboBox/ListBox).
- * <p>
- * Wraps the /Opt {@link PdfArray}. Each element is either a simple string
- * (value = display name) or a two-element array [export-value, display-name]
- * per ISO 32000-1:2008, §12.7.4.4.
- * </p>
- */
+import java.util.Iterator;
+
+/// Collection of options for choice fields (ComboBox/ListBox).
+///
+/// Wraps the /Opt [PdfArray]. Each element is either a simple string
+/// (value = display name) or a two-element array [export-value, display-name]
+/// per ISO 32000-1:2008, §12.7.4.4.
+///
 public class OptionCollection implements Iterable<Option> {
 
-    /** The underlying /Opt array. */
+    /// The underlying /Opt array.
     private final PdfArray optArray;
 
-    /**
-     * Constructs an option collection from a /Opt PdfArray.
-     *
-     * @param optArray the /Opt array (must not be null)
-     */
+    /// Constructs an option collection from a /Opt PdfArray.
+    ///
+    /// @param optArray the /Opt array (must not be null)
     public OptionCollection(PdfArray optArray) {
         this.optArray = optArray;
     }
 
-    /**
-     * Returns the number of options.
-     *
-     * @return the count
-     */
+    /// Returns the number of options.
+    ///
+    /// @return the count
     public int getCount() {
         return optArray.size();
     }
 
-    /**
-     * Returns the number of options (alias for {@link #getCount()}).
-     *
-     * @return the count
-     */
+    /// Returns the number of options (alias for [#getCount()]).
+    ///
+    /// @return the count
     public int size() {
         return getCount();
     }
 
-    /**
-     * Returns the option at the given 0-based index.
-     *
-     * @param index the 0-based index
-     * @return the option
-     */
+    /// Returns the option at the given 0-based index.
+    ///
+    /// @param index the 0-based index
+    /// @return the option
     public Option get(int index) {
         PdfBase item = optArray.get(index);
         if (item instanceof PdfArray) {
@@ -61,11 +55,9 @@ public class OptionCollection implements Iterable<Option> {
         return new Option(s, s);
     }
 
-    /**
-     * Returns an iterator over the options.
-     *
-     * @return the iterator
-     */
+    /// Returns an iterator over the options.
+    ///
+    /// @return the iterator
     @Override
     public Iterator<Option> iterator() {
         return new Iterator<Option>() {
@@ -83,9 +75,7 @@ public class OptionCollection implements Iterable<Option> {
         };
     }
 
-    /**
-     * Extracts a string from a PDF value (PdfString or PdfName).
-     */
+    /// Extracts a string from a PDF value (PdfString or PdfName).
     private String getString(PdfBase val) {
         if (val instanceof PdfString) return ((PdfString) val).getString();
         if (val instanceof PdfName) return ((PdfName) val).getName();

@@ -6,40 +6,34 @@ import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
 
 import java.io.IOException;
 
-/**
- * Object reference — links a structure element to a PDF object such as an annotation
- * (ISO 32000-1:2008, §14.7.4.3).
- *
- * <p>Corresponds to a /Type /OBJR dictionary entry in the /K array.</p>
- */
+/// Object reference — links a structure element to a PDF object such as an annotation
+/// (ISO 32000-1:2008, §14.7.4.3).
+///
+/// Corresponds to a /Type /OBJR dictionary entry in the /K array.
 public class ObjectReference {
 
     private final PdfDictionary referencedObject;
     private final PdfDictionary page;
 
-    /**
-     * Creates an object reference.
-     *
-     * @param referencedObject the referenced object dictionary
-     * @param page             the page dictionary (may be null)
-     */
+    /// Creates an object reference.
+    ///
+    /// @param referencedObject the referenced object dictionary
+    /// @param page             the page dictionary (may be null)
     public ObjectReference(PdfDictionary referencedObject, PdfDictionary page) {
         this.referencedObject = referencedObject;
         this.page = page;
     }
 
-    /** Returns the referenced object dictionary. */
+    /// Returns the referenced object dictionary.
     public PdfDictionary getReferencedObject() { return referencedObject; }
 
-    /** Returns the page dictionary, or {@code null}. */
+    /// Returns the page dictionary, or `null`.
     public PdfDictionary getPage() { return page; }
 
-    /**
-     * Parses an OBJR from a PDF dictionary.
-     *
-     * @param dict the OBJR dictionary
-     * @return the object reference
-     */
+    /// Parses an OBJR from a PDF dictionary.
+    ///
+    /// @param dict the OBJR dictionary
+    /// @return the object reference
     public static ObjectReference fromDictionary(PdfDictionary dict) {
         PdfBase obj = resolve(dict.get("Obj"));
         PdfBase pg = resolve(dict.get("Pg"));

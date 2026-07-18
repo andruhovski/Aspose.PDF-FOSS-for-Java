@@ -1,14 +1,13 @@
 package org.aspose.pdf.engine.pdfa.rules;
 
 import org.aspose.pdf.PdfFormat;
+import org.aspose.pdf.engine.parser.PDFParser;
+import org.aspose.pdf.engine.pdfa.PdfARule;
+import org.aspose.pdf.engine.pdfa.PdfAValidationResult;
 import org.aspose.pdf.engine.pdfobjects.PdfArray;
 import org.aspose.pdf.engine.pdfobjects.PdfBase;
 import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
 import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
-import org.aspose.pdf.engine.pdfa.PdfARule;
-import org.aspose.pdf.engine.pdfa.PdfAValidationResult;
-import org.aspose.pdf.engine.parser.PDFParser;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -17,32 +16,27 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Validates action requirements for PDF/A compliance.
- *
- * <p>Checks the following ISO 19005 clauses:</p>
- * <ul>
- *   <li>6.6.1 &mdash; Forbidden action types in catalog, pages, and annotations</li>
- *   <li>6.6.2 &mdash; No /AA (additional actions) in catalog, pages, or widget annotations</li>
- * </ul>
- */
+/// Validates action requirements for PDF/A compliance.
+///
+/// Checks the following ISO 19005 clauses:
+///
+///   - 6.6.1 — Forbidden action types in catalog, pages, and annotations
+///   - 6.6.2 — No /AA (additional actions) in catalog, pages, or widget annotations
 public final class ActionRules implements PdfARule {
 
     private static final Logger LOG = Logger.getLogger(ActionRules.class.getName());
 
-    /** Action types forbidden in all PDF/A versions. */
+    /// Action types forbidden in all PDF/A versions.
     private static final Set<String> FORBIDDEN_ALL = new HashSet<>(Arrays.asList(
             "Launch", "Sound", "Movie", "ResetForm", "ImportData", "JavaScript"
     ));
 
-    /** Additional action types forbidden in PDF/A-2+. */
+    /// Additional action types forbidden in PDF/A-2+.
     private static final Set<String> FORBIDDEN_PDFA2_EXTRA = new HashSet<>(Arrays.asList(
             "Hide", "SetOCGState", "Rendition", "Trans", "GoTo3DView"
     ));
 
-    /**
-     * Creates a new action rules checker.
-     */
+    /// Creates a new action rules checker.
     public ActionRules() {
         // default constructor
     }
@@ -57,9 +51,7 @@ public final class ActionRules implements PdfARule {
         checkPages(parser, format, result);
     }
 
-    /**
-     * Checks the catalog for forbidden actions and /AA.
-     */
+    /// Checks the catalog for forbidden actions and /AA.
     private void checkCatalog(PDFParser parser, PdfFormat format, PdfAValidationResult result) {
         PdfDictionary catalog;
         try {
@@ -80,9 +72,7 @@ public final class ActionRules implements PdfARule {
         checkActionDict(catalog.get("OpenAction"), "catalog/OpenAction", format, result);
     }
 
-    /**
-     * Iterates pages and checks for forbidden actions and /AA.
-     */
+    /// Iterates pages and checks for forbidden actions and /AA.
     private void checkPages(PDFParser parser, PdfFormat format, PdfAValidationResult result) {
         PdfDictionary catalog;
         try {
@@ -122,9 +112,7 @@ public final class ActionRules implements PdfARule {
         }
     }
 
-    /**
-     * Checks annotation actions and /AA on widget annotations.
-     */
+    /// Checks annotation actions and /AA on widget annotations.
     private void checkAnnotationActions(PdfDictionary page, String pagePath,
                                          PdfFormat format, PdfAValidationResult result) {
         PdfArray annots = resolveArray(page.get("Annots"));
@@ -152,9 +140,7 @@ public final class ActionRules implements PdfARule {
         }
     }
 
-    /**
-     * Checks an action dictionary for forbidden action types.
-     */
+    /// Checks an action dictionary for forbidden action types.
     private void checkActionDict(PdfBase actionRef, String path,
                                   PdfFormat format, PdfAValidationResult result) {
         PdfDictionary action = resolveDict(actionRef);
@@ -182,9 +168,7 @@ public final class ActionRules implements PdfARule {
         checkActionDict(action.get("Next"), path + "/Next", format, result);
     }
 
-    /**
-     * Resolves a PdfBase to a PdfDictionary, dereferencing indirect references.
-     */
+    /// Resolves a PdfBase to a PdfDictionary, dereferencing indirect references.
     private static PdfDictionary resolveDict(PdfBase val) {
         if (val instanceof PdfObjectReference) {
             try {
@@ -196,9 +180,7 @@ public final class ActionRules implements PdfARule {
         return (val instanceof PdfDictionary) ? (PdfDictionary) val : null;
     }
 
-    /**
-     * Resolves a PdfBase to a PdfArray, dereferencing indirect references.
-     */
+    /// Resolves a PdfBase to a PdfArray, dereferencing indirect references.
     private static PdfArray resolveArray(PdfBase val) {
         if (val instanceof PdfObjectReference) {
             try {

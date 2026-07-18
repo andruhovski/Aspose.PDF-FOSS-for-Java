@@ -4,30 +4,24 @@ import org.aspose.pdf.Document;
 import org.aspose.pdf.Page;
 import org.aspose.pdf.engine.render.PdfPageRenderer;
 
-import javax.imageio.IIOImage;
-import javax.imageio.ImageIO;
-import javax.imageio.ImageTypeSpecifier;
-import javax.imageio.ImageWriteParam;
-import javax.imageio.ImageWriter;
+import javax.imageio.*;
 import javax.imageio.metadata.IIOMetadata;
 import javax.imageio.metadata.IIOMetadataNode;
 import javax.imageio.stream.ImageOutputStream;
-import java.awt.Graphics2D;
-import java.awt.image.WritableRaster;
+import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.awt.image.WritableRaster;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Iterator;
 import java.util.logging.Logger;
 
-/**
- * Renders PDF pages to multi-page TIFF format.
- * <p>
- * Supports rendering a single page, a range of pages, or an entire document.
- * Uses the JDK TIFF ImageIO writer (available in Java 9+; Java 11 is required
- * by this project).
- * </p>
- */
+/// Renders PDF pages to multi-page TIFF format.
+///
+/// Supports rendering a single page, a range of pages, or an entire document.
+/// Uses the JDK TIFF ImageIO writer (available in Java 9+; Java 11 is required
+/// by this project).
+///
 public class TiffDevice {
 
     private static final Logger LOG = Logger.getLogger(TiffDevice.class.getName());
@@ -37,60 +31,56 @@ public class TiffDevice {
     private final int explicitWidth;
     private final int explicitHeight;
 
-    /** Default 150 DPI resolution + default settings. */
+    /// Default 150 DPI resolution + default settings.
     public TiffDevice() {
         this(new Resolution(150), null, 0, 0);
     }
 
-    /** Explicit pixel dimensions + 150 DPI + default settings. */
+    /// Explicit pixel dimensions + 150 DPI + default settings.
     public TiffDevice(int width, int height) {
         this(new Resolution(150), null, width, height);
     }
 
-    /** Explicit dimensions + resolution. */
+    /// Explicit dimensions + resolution.
     public TiffDevice(int width, int height, Resolution resolution) {
         this(resolution, null, width, height);
     }
 
-    /** Explicit dimensions + resolution + settings. */
+    /// Explicit dimensions + resolution + settings.
     public TiffDevice(int width, int height, Resolution resolution, TiffSettings settings) {
         this(resolution, settings, width, height);
     }
 
-    /** Explicit dimensions + settings (default 150 DPI). */
+    /// Explicit dimensions + settings (default 150 DPI).
     public TiffDevice(int width, int height, TiffSettings settings) {
         this(new Resolution(150), settings, width, height);
     }
 
-    /** Settings only — default 150 DPI, no explicit dimensions. */
+    /// Settings only — default 150 DPI, no explicit dimensions.
     public TiffDevice(TiffSettings settings) {
         this(new Resolution(150), settings, 0, 0);
     }
 
-    /** PageSize + settings — width/height from page-size in points. */
+    /// PageSize + settings — width/height from page-size in points.
     public TiffDevice(org.aspose.pdf.PageSize pageSize, TiffSettings settings) {
         this(new Resolution(150), settings,
                 pageSize == null ? 0 : (int) Math.round(pageSize.getWidth()),
                 pageSize == null ? 0 : (int) Math.round(pageSize.getHeight()));
     }
 
-    /**
-     * Creates a TIFF device with the given resolution.
-     *
-     * @param resolution the rendering resolution
-     * @throws IllegalArgumentException if resolution is null
-     */
+    /// Creates a TIFF device with the given resolution.
+    ///
+    /// @param resolution the rendering resolution
+    /// @throws IllegalArgumentException if resolution is null
     public TiffDevice(Resolution resolution) {
         this(resolution, null, 0, 0);
     }
 
-    /**
-     * Creates a TIFF device with the given resolution and settings.
-     *
-     * @param resolution   the rendering resolution
-     * @param tiffSettings the TIFF output settings, or {@code null} for defaults
-     * @throws IllegalArgumentException if resolution is null
-     */
+    /// Creates a TIFF device with the given resolution and settings.
+    ///
+    /// @param resolution   the rendering resolution
+    /// @param tiffSettings the TIFF output settings, or `null` for defaults
+    /// @throws IllegalArgumentException if resolution is null
     public TiffDevice(Resolution resolution, TiffSettings tiffSettings) {
         this(resolution, tiffSettings, 0, 0);
     }
@@ -106,32 +96,28 @@ public class TiffDevice {
         this.explicitHeight = explicitHeight;
     }
 
-    /** Returns the explicit width set via a (width, height, ...) constructor, or 0 if not set. */
+    /// Returns the explicit width set via a (width, height, ...) constructor, or 0 if not set.
     public int getWidth() {
         return explicitWidth;
     }
 
-    /** Returns the explicit height set via a (width, height, ...) constructor, or 0 if not set. */
+    /// Returns the explicit height set via a (width, height, ...) constructor, or 0 if not set.
     public int getHeight() {
         return explicitHeight;
     }
 
-    /**
-     * Returns the TIFF settings used by this device.
-     *
-     * @return the settings, or {@code null} if using defaults
-     */
+    /// Returns the TIFF settings used by this device.
+    ///
+    /// @return the settings, or `null` if using defaults
     public TiffSettings getSettings() {
         return settings;
     }
 
-    /**
-     * Renders all pages of a document to a multi-page TIFF.
-     *
-     * @param document the PDF document
-     * @param output   the output stream
-     * @throws IOException if rendering or writing fails
-     */
+    /// Renders all pages of a document to a multi-page TIFF.
+    ///
+    /// @param document the PDF document
+    /// @param output   the output stream
+    /// @throws IOException if rendering or writing fails
     public void process(Document document, OutputStream output) throws IOException {
         if (document == null) {
             throw new IllegalArgumentException("Document must not be null");
@@ -139,15 +125,13 @@ public class TiffDevice {
         process(document, 1, document.getPages().getCount(), output);
     }
 
-    /**
-     * Renders a range of pages to a multi-page TIFF.
-     *
-     * @param document  the PDF document
-     * @param fromPage  the first page (1-based)
-     * @param toPage    the last page (1-based, inclusive)
-     * @param output    the output stream
-     * @throws IOException if rendering or writing fails
-     */
+    /// Renders a range of pages to a multi-page TIFF.
+    ///
+    /// @param document  the PDF document
+    /// @param fromPage  the first page (1-based)
+    /// @param toPage    the last page (1-based, inclusive)
+    /// @param output    the output stream
+    /// @throws IOException if rendering or writing fails
     public void process(Document document, int fromPage, int toPage, OutputStream output)
             throws IOException {
         if (document == null) {
@@ -206,13 +190,11 @@ public class TiffDevice {
         LOG.fine(() -> "TIFF written: pages " + logFrom + "-" + logTo);
     }
 
-    /**
-     * Renders a single page to TIFF.
-     *
-     * @param page   the PDF page
-     * @param output the output stream
-     * @throws IOException if rendering or writing fails
-     */
+    /// Renders a single page to TIFF.
+    ///
+    /// @param page   the PDF page
+    /// @param output the output stream
+    /// @throws IOException if rendering or writing fails
     public void process(Page page, OutputStream output) throws IOException {
         if (page == null) {
             throw new IllegalArgumentException("Page must not be null");
@@ -233,21 +215,17 @@ public class TiffDevice {
         }
     }
 
-    /**
-     * Returns the resolution used by this device.
-     *
-     * @return the resolution
-     */
+    /// Returns the resolution used by this device.
+    ///
+    /// @return the resolution
     public Resolution getResolution() {
         return resolution;
     }
 
-    /**
-     * Builds metadata that records the device's nominal DPI as TIFF
-     * XResolution / YResolution / ResolutionUnit (so viewers and the gold
-     * baselines agree on physical size). Falls back to the writer default if
-     * the platform's TIFF metadata format is not the JDK 9+ standard one.
-     */
+    /// Builds metadata that records the device's nominal DPI as TIFF
+    /// XResolution / YResolution / ResolutionUnit (so viewers and the gold
+    /// baselines agree on physical size). Falls back to the writer default if
+    /// the platform's TIFF metadata format is not the JDK 9+ standard one.
     private static IIOMetadata buildMetadata(ImageWriter writer, ImageWriteParam param,
                                              BufferedImage image, Resolution resolution) {
         try {
@@ -326,11 +304,9 @@ public class TiffDevice {
         }
     }
 
-    /**
-     * Scales the rendered page bitmap to {@code targetW × targetH}, used when a
-     * {@code TiffDevice(width, height, …)} constructor is in play (PDFNET-44785
-     * style explicit output sizing).
-     */
+    /// Scales the rendered page bitmap to `targetW × targetH`, used when a
+    /// `TiffDevice(width, height, …)` constructor is in play (PDFNET-44785
+    /// style explicit output sizing).
     private static BufferedImage resizeTo(BufferedImage src, int targetW, int targetH) {
         if (src == null || (src.getWidth() == targetW && src.getHeight() == targetH)) {
             return src;

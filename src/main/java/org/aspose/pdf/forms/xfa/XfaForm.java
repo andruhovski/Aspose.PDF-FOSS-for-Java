@@ -1,9 +1,12 @@
 package org.aspose.pdf.forms.xfa;
 
-import org.aspose.pdf.engine.pdfobjects.*;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
 import org.aspose.pdf.engine.xfa.packet.XfaPacketReader;
 import org.aspose.pdf.engine.xfa.packet.XfaPacketSet;
 import org.aspose.pdf.engine.xfa.packet.XfaPacketWriter;
+import org.aspose.pdf.forms.Form;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,22 +15,18 @@ import java.util.Base64;
 import java.util.List;
 import java.util.logging.Logger;
 
-/**
- * Represents an XFA (XML Forms Architecture) form embedded in a PDF document.
- * <p>
- * XFA forms store their field definitions and data as XML packets inside the
- * PDF's /AcroForm dictionary under the /XFA entry. This class provides access
- * to XFA field values, field names, template XML, datasets XML, and other
- * XFA packets.
- * </p>
- * <p>
- * Field names use a dotted SOM (Scripting Object Model) syntax, for example:
- * {@code "form1.Page1.TextField1"} or {@code "form1[0].Page1[0].TextField1[0]"}.
- * Both forms are supported interchangeably.
- * </p>
- *
- * @see Form#getXFA()
- */
+/// Represents an XFA (XML Forms Architecture) form embedded in a PDF document.
+///
+/// XFA forms store their field definitions and data as XML packets inside the
+/// PDF's /AcroForm dictionary under the /XFA entry. This class provides access
+/// to XFA field values, field names, template XML, datasets XML, and other
+/// XFA packets.
+///
+/// Field names use a dotted SOM (Scripting Object Model) syntax, for example:
+/// `"form1.Page1.TextField1"` or `"form1[0].Page1[0].TextField1[0]"`.
+/// Both forms are supported interchangeably.
+///
+/// @see Form#getXFA()
 public class XfaForm {
 
     private static final Logger LOG = Logger.getLogger(XfaForm.class.getName());
@@ -37,12 +36,10 @@ public class XfaForm {
     private final PdfBase xfaEntry;
     private final PdfDictionary acroFormDict;
 
-    /**
-     * Creates an XfaForm from the AcroForm dictionary.
-     *
-     * @param acroFormDict the AcroForm dictionary containing an /XFA entry
-     * @throws IOException if the XFA packets cannot be parsed
-     */
+    /// Creates an XfaForm from the AcroForm dictionary.
+    ///
+    /// @param acroFormDict the AcroForm dictionary containing an /XFA entry
+    /// @throws IOException if the XFA packets cannot be parsed
     public XfaForm(PdfDictionary acroFormDict) throws IOException {
         PdfBase xfa = resolveRef(acroFormDict.get("XFA"));
         if (xfa == null) {
@@ -59,29 +56,23 @@ public class XfaForm {
 
     // ── XML Document Access ──
 
-    /**
-     * Returns the XFA template packet as a DOM Document.
-     *
-     * @return the template document, or null if not present
-     */
+    /// Returns the XFA template packet as a DOM Document.
+    ///
+    /// @return the template document, or null if not present
     public org.w3c.dom.Document getTemplate() {
         return packetSet.getDocument("template");
     }
 
-    /**
-     * Returns the XFA datasets packet as a DOM Document.
-     *
-     * @return the datasets document, or null if not present
-     */
+    /// Returns the XFA datasets packet as a DOM Document.
+    ///
+    /// @return the datasets document, or null if not present
     public org.w3c.dom.Document getDatasets() {
         return packetSet.getDocument("datasets");
     }
 
-    /**
-     * @return {@code true} if any XFA packet has been mutated since load (e.g. via {@link #set}).
-     * The save path uses this to force a full rewrite over cross-reference-stream sources, where an
-     * incremental append of a modified stream is not reliably resolved on reload (BUG-TFA-REPLACE-001).
-     */
+    /// @return `true` if any XFA packet has been mutated since load (e.g. via [#set]).
+    /// The save path uses this to force a full rewrite over cross-reference-stream sources, where an
+    /// incremental append of a modified stream is not reliably resolved on reload (BUG-TFA-REPLACE-001).
     public boolean hasDirtyPackets() {
         for (org.aspose.pdf.engine.xfa.packet.XfaPacket p : packetSet.all()) {
             if (p.isDirty()) {
@@ -91,54 +82,43 @@ public class XfaForm {
         return false;
     }
 
-    /**
-     * Returns the XFA config packet as a DOM Document.
-     *
-     * @return the config document, or null if not present
-     */
+    /// Returns the XFA config packet as a DOM Document.
+    ///
+    /// @return the config document, or null if not present
     public org.w3c.dom.Document getConfig() {
         return packetSet.getDocument("config");
     }
 
-    /**
-     * Returns the assembled XDP document containing all packets.
-     *
-     * @return the full XDP document
-     */
+    /// Returns the assembled XDP document containing all packets.
+    ///
+    /// @return the full XDP document
     public org.w3c.dom.Document getXDP() {
         return packetSet.getXdp();
     }
 
-    /**
-     * Returns the XFA form packet as a DOM Document (runtime form DOM).
-     *
-     * @return the form document, or null if not present
-     */
+    /// Returns the XFA form packet as a DOM Document (runtime form DOM).
+    ///
+    /// @return the form document, or null if not present
     public org.w3c.dom.Document getForm() {
         return packetSet.getDocument("form");
     }
 
-    /**
-     * Returns the namespace context for XPath queries over XFA XML.
-     *
-     * @return the namespace context
-     */
+    /// Returns the namespace context for XPath queries over XFA XML.
+    ///
+    /// @return the namespace context
     public XfaNamespaceContext getNamespaceManager() {
         return nsContext;
     }
 
     // ── Field Value Access ──
 
-    /**
-     * Gets the value of an XFA field by its SOM-like dotted path.
-     * <p>
-     * Both indexed ({@code "form1[0].Page1[0].TextField1[0]"}) and
-     * unindexed ({@code "form1.Page1.TextField1"}) forms are supported.
-     * </p>
-     *
-     * @param fieldName the dotted field path
-     * @return the field value as a string, or null if not found
-     */
+    /// Gets the value of an XFA field by its SOM-like dotted path.
+    ///
+    /// Both indexed (`"form1[0].Page1[0].TextField1[0]"`) and
+    /// unindexed (`"form1.Page1.TextField1"`) forms are supported.
+    ///
+    /// @param fieldName the dotted field path
+    /// @return the field value as a string, or null if not found
     public String get(String fieldName) {
         if (fieldName == null || fieldName.isEmpty()) return null;
 
@@ -153,21 +133,19 @@ public class XfaForm {
         return node == null ? null : node.getTextContent();
     }
 
-    /**
-     * Locates the datasets element bound to the field named by {@code segments}, or null.
-     *
-     * <p>The SOM expression follows the TEMPLATE hierarchy, but XFA datasets are sparse:
-     * layout-only container subforms that bind no data produce no data node (ISO 32000 /
-     * XFA 3.0 §"Data Binding"). A field {@code us-request.Page1.sfHeader.docket} is therefore
-     * stored simply as {@code us-request/docket}. Navigate by matching each segment as a direct
-     * child when present, skipping intermediate containers that are absent from the data; the
-     * leaf segment must resolve (direct child, then {@code <bind ref>} name, then descendant) or
-     * there is no data node.</p>
-     *
-     * <p>Shared by {@link #get} and {@link #set} so both act on the SAME node the renderer
-     * binds to — a value written by {@code set} must land on the real (possibly pre-existing)
-     * data node, never a parallel branch that would stay invisible.</p>
-     */
+    /// Locates the datasets element bound to the field named by `segments`, or null.
+    ///
+    /// The SOM expression follows the TEMPLATE hierarchy, but XFA datasets are sparse:
+    /// layout-only container subforms that bind no data produce no data node (ISO 32000 /
+    /// XFA 3.0 §"Data Binding"). A field `us-request.Page1.sfHeader.docket` is therefore
+    /// stored simply as `us-request/docket`. Navigate by matching each segment as a direct
+    /// child when present, skipping intermediate containers that are absent from the data; the
+    /// leaf segment must resolve (direct child, then `<bind ref>` name, then descendant) or
+    /// there is no data node.
+    ///
+    /// Shared by [#get] and [#set] so both act on the SAME node the renderer
+    /// binds to — a value written by `set` must land on the real (possibly pre-existing)
+    /// data node, never a parallel branch that would stay invisible.
     private org.w3c.dom.Element resolveDataNode(org.w3c.dom.Element dataRoot, SomSegment[] segments) {
         int leafIdx = -1;
         for (int i = segments.length - 1; i >= 0; i--) {
@@ -211,15 +189,13 @@ public class XfaForm {
         return current;
     }
 
-    /**
-     * Resolves the data path the template node addressed by {@code segments[0..upTo]} binds
-     * to, by walking the XFA template and reading its {@code <bind ref="...">}. A SOM name
-     * can differ from the data it stores into at any level: a field "Naam" with
-     * {@code <bind ref="$.strNom">} reads/writes strNom; a repeated row subform "body" may
-     * bind {@code ref="$.IM_ITEMS.DATA[*]"} — renamed groups NESTED below the current data
-     * scope. Returns the bound path components (predicates and the leading {@code $} scope
-     * marker stripped), or null if it cannot be determined.
-     */
+    /// Resolves the data path the template node addressed by `segments[0..upTo]` binds
+    /// to, by walking the XFA template and reading its `<bind ref="...">`. A SOM name
+    /// can differ from the data it stores into at any level: a field "Naam" with
+    /// `<bind ref="$.strNom">` reads/writes strNom; a repeated row subform "body" may
+    /// bind `ref="$.IM_ITEMS.DATA[*]"` — renamed groups NESTED below the current data
+    /// scope. Returns the bound path components (predicates and the leading `$` scope
+    /// marker stripped), or null if it cannot be determined.
     private String[] templateBindDataPath(SomSegment[] segments, int upTo) {
         org.w3c.dom.Document template = getTemplate();
         if (template == null) return null;
@@ -258,11 +234,9 @@ public class XfaForm {
         return null;
     }
 
-    /**
-     * Navigates from {@code start} along the template-bound data path of
-     * {@code segments[upTo]} (all components; {@code index} selects the instance of the
-     * LAST component). Returns the resolved element or null.
-     */
+    /// Navigates from `start` along the template-bound data path of
+    /// `segments[upTo]` (all components; `index` selects the instance of the
+    /// LAST component). Returns the resolved element or null.
     private org.w3c.dom.Element resolveBoundChild(org.w3c.dom.Element start,
                                                   SomSegment[] segments, int upTo, int index) {
         String[] comps = templateBindDataPath(segments, upTo);
@@ -275,12 +249,10 @@ public class XfaForm {
         return findChildElement(cur, comps[comps.length - 1], index);
     }
 
-    /**
-     * Navigates/creates the bound data path {@code comps} below {@code start}: intermediate
-     * components are entered when present or created once, the LAST component is padded up to
-     * {@code index + 1} instances (see {@link #ensureInstance}). Returns the {@code index}-th
-     * instance of the last component.
-     */
+    /// Navigates/creates the bound data path `comps` below `start`: intermediate
+    /// components are entered when present or created once, the LAST component is padded up to
+    /// `index + 1` instances (see [#ensureInstance]). Returns the `index`-th
+    /// instance of the last component.
     private org.w3c.dom.Element ensureBoundChild(org.w3c.dom.Document datasets,
                                                  org.w3c.dom.Element start,
                                                  String[] comps, int index) {
@@ -292,12 +264,10 @@ public class XfaForm {
         return ensureInstance(datasets, cur, comps[comps.length - 1], index);
     }
 
-    /**
-     * Ensures {@code parent} has at least {@code index + 1} child elements named {@code name},
-     * creating the missing instances as empty siblings inserted right after the last existing
-     * one (so repeated data groups stay adjacent, the order data-driven binding consumes them
-     * in). Returns the {@code index}-th instance.
-     */
+    /// Ensures `parent` has at least `index + 1` child elements named `name`,
+    /// creating the missing instances as empty siblings inserted right after the last existing
+    /// one (so repeated data groups stay adjacent, the order data-driven binding consumes them
+    /// in). Returns the `index`-th instance.
     private org.w3c.dom.Element ensureInstance(org.w3c.dom.Document datasets,
                                                org.w3c.dom.Element parent,
                                                String name, int index) {
@@ -325,13 +295,11 @@ public class XfaForm {
         return findChildElement(parent, name, index);
     }
 
-    /**
-     * True when the template node addressed by {@code segments[0..i]} is authored as repeatable
-     * ({@code <occur>} with {@code max="-1"}, {@code max > 1}, {@code initial > 1} or
-     * {@code min > 1}) — the signal that an explicitly indexed data instance ("Zaznam[0]")
-     * should exist as a real repeated data group rather than collapse into sparse-skip
-     * semantics. Returns false when the template walk cannot resolve the node.
-     */
+    /// True when the template node addressed by `segments[0..i]` is authored as repeatable
+    /// (`<occur>` with `max="-1"`, `max > 1`, `initial > 1` or
+    /// `min > 1`) — the signal that an explicitly indexed data instance ("Zaznam[0]")
+    /// should exist as a real repeated data group rather than collapse into sparse-skip
+    /// semantics. Returns false when the template walk cannot resolve the node.
     private boolean templateAllowsRepeat(SomSegment[] segments, int upTo) {
         org.w3c.dom.Document template = getTemplate();
         if (template == null) return false;
@@ -358,7 +326,7 @@ public class XfaForm {
         return false;
     }
 
-    /** True when an {@code <occur>} attribute value denotes more than one instance ({@code -1} = unbounded). */
+    /// True when an `<occur>` attribute value denotes more than one instance (`-1` = unbounded).
     private static boolean occurAllowsRepeat(String v) {
         if (v == null || v.isEmpty()) return false;
         try {
@@ -369,8 +337,8 @@ public class XfaForm {
         }
     }
 
-    /** True if {@code el} has at least one child ELEMENT node (i.e. it is a dataGroup container,
-     *  not a leaf dataValue). Used to protect containers from being overwritten by {@link #set}. */
+    /// True if `el` has at least one child ELEMENT node (i.e. it is a dataGroup container,
+    ///  not a leaf dataValue). Used to protect containers from being overwritten by [#set].
     private static boolean hasElementChild(org.w3c.dom.Element el) {
         org.w3c.dom.NodeList kids = el.getChildNodes();
         for (int i = 0; i < kids.getLength(); i++) {
@@ -379,9 +347,9 @@ public class XfaForm {
         return false;
     }
 
-    /** Finds the first child element of {@code parent} whose {@code name} attribute
-     *  equals {@code name} (XFA template nodes are keyed by their name attribute,
-     *  not their element tag). */
+    /// Finds the first child element of `parent` whose `name` attribute
+    ///  equals `name` (XFA template nodes are keyed by their name attribute,
+    ///  not their element tag).
     private org.w3c.dom.Element findChildByNameAttr(org.w3c.dom.Element parent, String name) {
         org.w3c.dom.NodeList children = parent.getChildNodes();
         for (int i = 0; i < children.getLength(); i++) {
@@ -394,11 +362,9 @@ public class XfaForm {
         return null;
     }
 
-    /**
-     * Depth-first search for the {@code index}-th descendant element of
-     * {@code parent} whose name matches {@code localName}. Used to resolve an XFA
-     * field whose containing subforms were collapsed out of the sparse datasets.
-     */
+    /// Depth-first search for the `index`-th descendant element of
+    /// `parent` whose name matches `localName`. Used to resolve an XFA
+    /// field whose containing subforms were collapsed out of the sparse datasets.
     private org.w3c.dom.Element findDescendantElement(org.w3c.dom.Element parent,
                                                       String localName, int index) {
         int[] remaining = {index};
@@ -422,14 +388,12 @@ public class XfaForm {
         return null;
     }
 
-    /**
-     * Sets the value of an XFA field by its SOM-like dotted path.
-     * Creates intermediate elements as needed.
-     *
-     * @param fieldName the dotted field path
-     * @param value     the value to set
-     * @throws IOException if writing the modified datasets back to COS fails
-     */
+    /// Sets the value of an XFA field by its SOM-like dotted path.
+    /// Creates intermediate elements as needed.
+    ///
+    /// @param fieldName the dotted field path
+    /// @param value     the value to set
+    /// @throws IOException if writing the modified datasets back to COS fails
     public void set(String fieldName, String value) throws IOException {
         if (fieldName == null || fieldName.isEmpty()) return;
 
@@ -531,12 +495,10 @@ public class XfaForm {
 
     // ── Field Names ──
 
-    /**
-     * Returns all field names from the XFA template.
-     * Names are in the dotted form without indices (e.g., {@code "form1.Page1.TextField1"}).
-     *
-     * @return array of all field names, or empty array if template is not available
-     */
+    /// Returns all field names from the XFA template.
+    /// Names are in the dotted form without indices (e.g., `"form1.Page1.TextField1"`).
+    ///
+    /// @return array of all field names, or empty array if template is not available
     public String[] getFieldNames() {
         org.w3c.dom.Document template = getTemplate();
         if (template == null) return new String[0];
@@ -558,12 +520,10 @@ public class XfaForm {
 
     // ── Template Access ──
 
-    /**
-     * Returns the template node for a specific field.
-     *
-     * @param fieldName the dotted field path
-     * @return the template {@code <field>} element, or null if not found
-     */
+    /// Returns the template node for a specific field.
+    ///
+    /// @param fieldName the dotted field path
+    /// @return the template `<field>` element, or null if not found
     public org.w3c.dom.Node getFieldTemplate(String fieldName) {
         org.w3c.dom.Document template = getTemplate();
         if (template == null || fieldName == null) return null;
@@ -608,14 +568,12 @@ public class XfaForm {
 
     // ── Image Fields ──
 
-    /**
-     * Sets an image value for an XFA image field.
-     * The image data is Base64-encoded and stored in the datasets XML.
-     *
-     * @param fieldName   the dotted field path
-     * @param imageStream the image data stream
-     * @throws IOException if the image cannot be read
-     */
+    /// Sets an image value for an XFA image field.
+    /// The image data is Base64-encoded and stored in the datasets XML.
+    ///
+    /// @param fieldName   the dotted field path
+    /// @param imageStream the image data stream
+    /// @throws IOException if the image cannot be read
     public void setFieldImage(String fieldName, InputStream imageStream) throws IOException {
         if (fieldName == null || imageStream == null) return;
 
@@ -627,42 +585,38 @@ public class XfaForm {
 
     // ── Convert (XFA → editable AcroForm) ──
 
-    /**
-     * Converts this XFA form into ordinary, <b>editable</b> AcroForm fields on the given
-     * document so that generic PDF viewers (which cannot render XFA) display the form and
-     * its data. Runs the data binding (merge of template + datasets), maps every Form DOM
-     * field to the matching AcroForm field type at its statically-resolvable geometry, and
-     * removes the {@code /XFA} entry (pure AcroForm). This is the Aspose <em>conversion</em>
-     * operation — equivalent to {@code Form.setType(FormType.Standard)}.
-     *
-     * <p>This is <b>not</b> a flatten: the produced fields remain editable form fields; it
-     * does not burn appearances into the page content. For a true flatten (fields burned into
-     * the page and removed as fields) use {@code Form.flatten()}; to keep the fields but make
-     * them non-editable, set the field read-only flag.</p>
-     *
-     * <p>It produces structure + values, not XFA render fidelity: dynamic layout and static
-     * rendering are Stage C. Fields with flowed (non-positional) geometry are still created —
-     * carrying their value — at a flagged placeholder position.</p>
-     *
-     * @param doc the document to add AcroForm fields to
-     * @return the conversion result (counts, by-type, carried values, unmapped nodes)
-     * @throws Exception if binding or document access fails
-     */
+    /// Converts this XFA form into ordinary, **editable** AcroForm fields on the given
+    /// document so that generic PDF viewers (which cannot render XFA) display the form and
+    /// its data. Runs the data binding (merge of template + datasets), maps every Form DOM
+    /// field to the matching AcroForm field type at its statically-resolvable geometry, and
+    /// removes the `/XFA` entry (pure AcroForm). This is the Aspose _conversion_
+    /// operation — equivalent to `Form.setType(FormType.Standard)`.
+    ///
+    /// This is **not** a flatten: the produced fields remain editable form fields; it
+    /// does not burn appearances into the page content. For a true flatten (fields burned into
+    /// the page and removed as fields) use `Form.flatten()`; to keep the fields but make
+    /// them non-editable, set the field read-only flag.
+    ///
+    /// It produces structure + values, not XFA render fidelity: dynamic layout and static
+    /// rendering are Stage C. Fields with flowed (non-positional) geometry are still created —
+    /// carrying their value — at a flagged placeholder position.
+    ///
+    /// @param doc the document to add AcroForm fields to
+    /// @return the conversion result (counts, by-type, carried values, unmapped nodes)
+    /// @throws Exception if binding or document access fails
     public org.aspose.pdf.engine.xfa.flatten.XfaFlattener.Result convertToAcroForm(
             org.aspose.pdf.Document doc) throws Exception {
         return convertToAcroForm(doc, org.aspose.pdf.engine.xfa.flatten.XfaFlattener.XfaPolicy.DROP);
     }
 
-    /**
-     * Converts this XFA form into editable AcroForm fields, with explicit {@code /XFA} policy.
-     * A <em>conversion</em> (editable fields), not a flatten — see
-     * {@link #convertToAcroForm(org.aspose.pdf.Document)}.
-     *
-     * @param doc    the document to add AcroForm fields to
-     * @param policy {@code DROP} (pure AcroForm) or {@code KEEP} (hybrid)
-     * @return the conversion result
-     * @throws Exception if binding or document access fails
-     */
+    /// Converts this XFA form into editable AcroForm fields, with explicit `/XFA` policy.
+    /// A _conversion_ (editable fields), not a flatten — see
+    /// [#convertToAcroForm(org.aspose.pdf.Document)].
+    ///
+    /// @param doc    the document to add AcroForm fields to
+    /// @param policy`DROP` (pure AcroForm) or `KEEP` (hybrid)
+    /// @return the conversion result
+    /// @throws Exception if binding or document access fails
     public org.aspose.pdf.engine.xfa.flatten.XfaFlattener.Result convertToAcroForm(
             org.aspose.pdf.Document doc,
             org.aspose.pdf.engine.xfa.flatten.XfaFlattener.XfaPolicy policy) throws Exception {
@@ -692,17 +646,15 @@ public class XfaForm {
         return org.aspose.pdf.engine.xfa.flatten.XfaAcroFormConverter.convert(doc, dom, tpl, policy, acroFormDict);
     }
 
-    /**
-     * Paints the XFA form's POSITIONED content (Stage C, C2) onto page 1 of {@code doc}:
-     * box model (fill/border/corners), field and caption text, honouring {@code presence}
-     * (hidden/invisible not painted). Flowed content is deferred to C3 (not painted at
-     * placeholder coordinates). Complements {@link #convertToAcroForm(org.aspose.pdf.Document)}
-     * (interactive widgets) with a static painted visual layer.
-     *
-     * @param doc the document to paint onto
-     * @return the paint result
-     * @throws Exception if binding or document access fails
-     */
+    /// Paints the XFA form's POSITIONED content (Stage C, C2) onto page 1 of `doc`:
+    /// box model (fill/border/corners), field and caption text, honouring `presence`
+    /// (hidden/invisible not painted). Flowed content is deferred to C3 (not painted at
+    /// placeholder coordinates). Complements [#convertToAcroForm(org.aspose.pdf.Document)]
+    /// (interactive widgets) with a static painted visual layer.
+    ///
+    /// @param doc the document to paint onto
+    /// @return the paint result
+    /// @throws Exception if binding or document access fails
     public org.aspose.pdf.engine.xfa.flatten.paint.XfaPainter.Result paintPositionedContent(
             org.aspose.pdf.Document doc) throws Exception {
         org.aspose.pdf.engine.xfa.model.XfaModel model = org.aspose.pdf.engine.xfa.model.XfaModel.of(packetSet);
@@ -717,17 +669,15 @@ public class XfaForm {
         return org.aspose.pdf.engine.xfa.flatten.paint.XfaPainter.paint(doc, dom, tpl);
     }
 
-    /**
-     * Paginates and paints the XFA form across multiple pages (Stage C, L3): a flowed form is
-     * split into pages and emitted as an N-page PDF; a positioned form authored as page-sized
-     * subforms emits one page per subform; a genuine single-page positioned form is painted as
-     * one page (delegating to the C2 painter). Each page is painted by reusing the validated C2
-     * paint primitives.
-     *
-     * @param doc the document to paginate onto (pages are added as needed)
-     * @return the paginate-and-paint result (page count, mode, paint counters)
-     * @throws Exception if binding or document access fails
-     */
+    /// Paginates and paints the XFA form across multiple pages (Stage C, L3): a flowed form is
+    /// split into pages and emitted as an N-page PDF; a positioned form authored as page-sized
+    /// subforms emits one page per subform; a genuine single-page positioned form is painted as
+    /// one page (delegating to the C2 painter). Each page is painted by reusing the validated C2
+    /// paint primitives.
+    ///
+    /// @param doc the document to paginate onto (pages are added as needed)
+    /// @return the paginate-and-paint result (page count, mode, paint counters)
+    /// @throws Exception if binding or document access fails
     public org.aspose.pdf.engine.xfa.flatten.layout.XfaPaginator.Result paintPaginatedContent(
             org.aspose.pdf.Document doc) throws Exception {
         org.aspose.pdf.engine.xfa.model.XfaModel model = org.aspose.pdf.engine.xfa.model.XfaModel.of(packetSet);
@@ -741,18 +691,16 @@ public class XfaForm {
         return org.aspose.pdf.engine.xfa.flatten.layout.XfaPaginator.paint(doc, dom, tpl);
     }
 
-    /**
-     * Builds the merged Form DOM the visual tracks (render and AcroForm conversion) lay out, so both
-     * produce the SAME page geometry as Adobe: spec-correct {@code <occur initial>=min} (script-toggled
-     * variant subforms start absent; empty {@code occur min=0} detail subforms collapse instead of
-     * reserving blank space), the load-time scripts run (calculate/initialize/presence), saved
-     * {@code <form>}-packet values filled into otherwise-empty fields, and barcode fields seeded.
-     * Each step is independently kill-switchable via its system property.
-     *
-     * @param tpl  the XFA template
-     * @param data the datasets data ({@code null} for empty merge)
-     * @return the merged, scripted, value-enriched Form DOM
-     */
+    /// Builds the merged Form DOM the visual tracks (render and AcroForm conversion) lay out, so both
+    /// produce the SAME page geometry as Adobe: spec-correct `<occur initial>=min` (script-toggled
+    /// variant subforms start absent; empty `occur min=0` detail subforms collapse instead of
+    /// reserving blank space), the load-time scripts run (calculate/initialize/presence), saved
+    /// `<form>`-packet values filled into otherwise-empty fields, and barcode fields seeded.
+    /// Each step is independently kill-switchable via its system property.
+    ///
+    /// @param tpl  the XFA template
+    /// @param data the datasets data (`null` for empty merge)
+    /// @return the merged, scripted, value-enriched Form DOM
     private org.aspose.pdf.engine.xfa.binding.FormDom buildPaintDom(
             org.aspose.pdf.engine.xfa.model.template.Template tpl,
             org.aspose.pdf.engine.xfa.model.datasets.Data data) {
@@ -795,15 +743,13 @@ public class XfaForm {
         return dom;
     }
 
-    /**
-     * Fills empty merged-form fields from the saved XFA {@code <form>} packet (XFA 3.0 form packet).
-     *
-     * <p>Adobe persists the fully-merged form — including values it COMPUTED but never wrote back to
-     * {@code <datasets>} — in the form packet. We re-merge from datasets and run scripts, so a field
-     * that is absent from the data and has no {@code calculate} (e.g. 11902's {@code percentTime}, whose
-     * value Adobe reverse-derived to 50/85/75) stays blank. This copies each saved form-packet value
-     * into a field our merge left empty; it never overrides a value the data or a script produced.</p>
-     */
+    /// Fills empty merged-form fields from the saved XFA `<form>` packet (XFA 3.0 form packet).
+    ///
+    /// Adobe persists the fully-merged form — including values it COMPUTED but never wrote back to
+    /// `<datasets>` — in the form packet. We re-merge from datasets and run scripts, so a field
+    /// that is absent from the data and has no `calculate` (e.g. 11902's `percentTime`, whose
+    /// value Adobe reverse-derived to 50/85/75) stays blank. This copies each saved form-packet value
+    /// into a field our merge left empty; it never overrides a value the data or a script produced.
     private void applyFormPacketValues(org.aspose.pdf.engine.xfa.binding.FormDom dom) {
         if (dom == null || dom.getRoot() == null || dom.getRoot().getElement() == null) {
             return;
@@ -833,7 +779,7 @@ public class XfaForm {
         fillFromPacket(mergedRoot, packetRoot, byElement);
     }
 
-    /** Returns the {@code form} packet DOM (keyed name first, else any packet whose root is {@code <form>}). */
+    /// Returns the `form` packet DOM (keyed name first, else any packet whose root is `<form>`).
     private org.w3c.dom.Document getFormPacketDocument() {
         org.w3c.dom.Document f = getForm();
         if (f != null) {
@@ -849,7 +795,7 @@ public class XfaForm {
         return null;
     }
 
-    /** First child element of {@code parent} matching {@code ref} by local name and {@code name} attribute. */
+    /// First child element of `parent` matching `ref` by local name and `name` attribute.
     private static org.w3c.dom.Element matchingChild(org.w3c.dom.Element parent, org.w3c.dom.Element ref) {
         String ln = localName(ref);
         String nm = ref.getAttribute("name");
@@ -863,13 +809,11 @@ public class XfaForm {
         return null;
     }
 
-    /**
-     * Walks the merged form tree and the saved form-packet tree in lockstep, matching children by
-     * (local name, {@code name} attribute, occurrence index among same-keyed siblings). Where a merged
-     * field is empty and the packet holds a saved value, fills it through the {@link
-     * org.aspose.pdf.engine.xfa.binding.FormField} so the typed {@code <value>} content and
-     * {@code getValue()} both reflect it.
-     */
+    /// Walks the merged form tree and the saved form-packet tree in lockstep, matching children by
+    /// (local name, `name` attribute, occurrence index among same-keyed siblings). Where a merged
+    /// field is empty and the packet holds a saved value, fills it through the
+    /// [org.aspose.pdf.engine.xfa.binding.FormField] so the typed `<value>` content and
+    /// `getValue()` both reflect it.
     private static void fillFromPacket(org.w3c.dom.Element merged, org.w3c.dom.Element packet,
             java.util.Map<org.w3c.dom.Element, org.aspose.pdf.engine.xfa.binding.FormField> byElement) {
         if ("field".equals(localName(merged))) {
@@ -916,24 +860,22 @@ public class XfaForm {
         }
     }
 
-    /** Match key for a form-tree element: local name + {@code name} attribute. */
+    /// Match key for a form-tree element: local name + `name` attribute.
     private static String keyOf(org.w3c.dom.Element e) {
         return localName(e) + "\u0000" + e.getAttribute("name");
     }
 
-    /** Text content of a host element's {@code <value>} child (any typed content), or null. */
+    /// Text content of a host element's `<value>` child (any typed content), or null.
     private static String textContentOfValue(org.w3c.dom.Element host) {
         org.w3c.dom.Element value = firstChildElement(host, "value");
         return value == null ? null : value.getTextContent();
     }
 
-    /**
-     * Copies the saved field's {@code <items>} lists (display labels + the {@code save="1"} codes) from
-     * the form packet into a merged field that has none, so a bound dropdown value renders as its label
-     * via the painter's save→display lookup. A {@code bindItems} (data-driven) dropdown produces no
-     * static {@code <items>} on our merge, so without this the raw save code (e.g. "M01") would show.
-     * No-op if the merged field already carries items.
-     */
+    /// Copies the saved field's `<items>` lists (display labels + the `save="1"` codes) from
+    /// the form packet into a merged field that has none, so a bound dropdown value renders as its label
+    /// via the painter's save→display lookup. A `bindItems` (data-driven) dropdown produces no
+    /// static `<items>` on our merge, so without this the raw save code (e.g. "M01") would show.
+    /// No-op if the merged field already carries items.
     private static void adoptPacketItems(org.w3c.dom.Element merged, org.w3c.dom.Element packet) {
         for (org.w3c.dom.Node n = merged.getFirstChild(); n != null; n = n.getNextSibling()) {
             if (n.getNodeType() == org.w3c.dom.Node.ELEMENT_NODE && "items".equals(localName(n))) {
@@ -948,12 +890,10 @@ public class XfaForm {
         }
     }
 
-    /**
-     * Copies the saved field's conditional background — a {@code <border>} carrying a {@code <fill>}, or a
-     * direct {@code <fill>} — from the form packet onto a merged field that has none, so a colour a script
-     * applied at runtime (14758's green PO Status) is rendered. No-op when the merged field already
-     * declares its own border or fill (we never override the template's own chrome).
-     */
+    /// Copies the saved field's conditional background — a `<border>` carrying a `<fill>`, or a
+    /// direct `<fill>` — from the form packet onto a merged field that has none, so a colour a script
+    /// applied at runtime (14758's green PO Status) is rendered. No-op when the merged field already
+    /// declares its own border or fill (we never override the template's own chrome).
     private static void adoptPacketFill(org.w3c.dom.Element merged, org.w3c.dom.Element packet) {
         if (firstChildElement(merged, "border") != null || firstChildElement(merged, "fill") != null) {
             return; // merged field carries its own chrome — leave it
@@ -971,14 +911,12 @@ public class XfaForm {
         }
     }
 
-    /**
-     * Walks the merged form DOM under {@code formEl}, seeding each {@code <ui><barcode>} field that has
-     * no value with the XML of the data subtree its {@code name} implies (debtor / application /
-     * creditor, else the whole record), so the renderer can generate a QR from real form data. Operates
-     * on the DOM tree (not the {@link org.aspose.pdf.engine.xfa.binding.FormField} list) so it also
-     * reaches barcode fields in script-added instances, which carry no registered FormField. A field
-     * that already holds a value (a successful calculate) is left untouched.
-     */
+    /// Walks the merged form DOM under `formEl`, seeding each `<ui><barcode>` field that has
+    /// no value with the XML of the data subtree its `name` implies (debtor / application /
+    /// creditor, else the whole record), so the renderer can generate a QR from real form data. Operates
+    /// on the DOM tree (not the [org.aspose.pdf.engine.xfa.binding.FormField] list) so it also
+    /// reaches barcode fields in script-added instances, which carry no registered FormField. A field
+    /// that already holds a value (a successful calculate) is left untouched.
     private static void injectBarcodeFallback(org.w3c.dom.Element formEl, org.w3c.dom.Element dataRoot) {
         if ("field".equals(localName(formEl))) {
             org.w3c.dom.Element ui = firstChildElement(formEl, "ui");
@@ -1007,7 +945,7 @@ public class XfaForm {
         }
     }
 
-    /** The current {@code <value><text>} content of a field, or "" if absent/empty. */
+    /// The current `<value><text>` content of a field, or "" if absent/empty.
     private static String barcodeValueText(org.w3c.dom.Element field) {
         org.w3c.dom.Element value = firstChildElement(field, "value");
         org.w3c.dom.Element text = value == null ? null : firstChildElement(value, "text");
@@ -1015,7 +953,7 @@ public class XfaForm {
         return s == null ? "" : s.trim();
     }
 
-    /** Writes {@code xml} into the field's {@code <value><text>}, creating the nodes as needed. */
+    /// Writes `xml` into the field's `<value><text>`, creating the nodes as needed.
     private static void setBarcodeValueText(org.w3c.dom.Element field, String xml) {
         String ns = field.getNamespaceURI();
         org.w3c.dom.Element value = firstChildElement(field, "value");
@@ -1031,12 +969,12 @@ public class XfaForm {
         text.setTextContent(xml);
     }
 
-    /** The local name of {@code n}, falling back to the node name for non-namespaced DOM. */
+    /// The local name of `n`, falling back to the node name for non-namespaced DOM.
     private static String localName(org.w3c.dom.Node n) {
         return n.getLocalName() != null ? n.getLocalName() : n.getNodeName();
     }
 
-    /** First child {@link org.w3c.dom.Element} of {@code parent} with the given local name, or null. */
+    /// First child [org.w3c.dom.Element] of `parent` with the given local name, or null.
     private static org.w3c.dom.Element firstChildElement(org.w3c.dom.Element parent, String localName) {
         for (org.w3c.dom.Node n = parent.getFirstChild(); n != null; n = n.getNextSibling()) {
             if (n.getNodeType() == org.w3c.dom.Node.ELEMENT_NODE && localName.equals(localName(n))) {
@@ -1046,7 +984,7 @@ public class XfaForm {
         return null;
     }
 
-    /** The first descendant element with the given local name (depth-first), or null. */
+    /// The first descendant element with the given local name (depth-first), or null.
     private static org.w3c.dom.Element firstDescendant(org.w3c.dom.Element root, String localName) {
         for (org.w3c.dom.Node n = root.getFirstChild(); n != null; n = n.getNextSibling()) {
             if (n.getNodeType() != org.w3c.dom.Node.ELEMENT_NODE) {
@@ -1064,7 +1002,7 @@ public class XfaForm {
         return null;
     }
 
-    /** Serialises a DOM element to compact XML (no XML declaration, whitespace-normalised), or null. */
+    /// Serialises a DOM element to compact XML (no XML declaration, whitespace-normalised), or null.
     private static String serializeXml(org.w3c.dom.Element el) {
         try {
             javax.xml.transform.Transformer t =
@@ -1082,11 +1020,9 @@ public class XfaForm {
 
     // ── Internal Helpers ──
 
-    /**
-     * Finds the {@code <xfa:data>} element in the datasets document.
-     * Returns the {@code <xfa:data>} element itself (not its child), so that
-     * the first SOM segment can match the root data group by name.
-     */
+    /// Finds the `<xfa:data>` element in the datasets document.
+    /// Returns the `<xfa:data>` element itself (not its child), so that
+    /// the first SOM segment can match the root data group by name.
     private org.w3c.dom.Element findDataRoot(org.w3c.dom.Document datasets) {
         org.w3c.dom.Element root = datasets.getDocumentElement();
         if (root == null) return null;
@@ -1105,9 +1041,7 @@ public class XfaForm {
         return root;
     }
 
-    /**
-     * Finds the N-th child element with the given local name.
-     */
+    /// Finds the N-th child element with the given local name.
     private org.w3c.dom.Element findChildElement(org.w3c.dom.Element parent, String localName, int index) {
         int count = 0;
         org.w3c.dom.NodeList children = parent.getChildNodes();
@@ -1122,9 +1056,7 @@ public class XfaForm {
         return null;
     }
 
-    /**
-     * Checks if a node matches the given name by local name or node name.
-     */
+    /// Checks if a node matches the given name by local name or node name.
     private boolean matchesName(org.w3c.dom.Node node, String name) {
         String ln = node.getLocalName();
         if (ln != null && ln.equals(name)) return true;
@@ -1132,9 +1064,7 @@ public class XfaForm {
         return nn != null && nn.equals(name);
     }
 
-    /**
-     * Finds a template child element (field or subform) matching a SOM segment.
-     */
+    /// Finds a template child element (field or subform) matching a SOM segment.
     private org.w3c.dom.Element findTemplateChild(org.w3c.dom.Element parent,
                                                    String elementType, SomSegment seg) {
         int count = 0;
@@ -1164,9 +1094,7 @@ public class XfaForm {
         return null;
     }
 
-    /**
-     * Finds the first child element with a given local name.
-     */
+    /// Finds the first child element with a given local name.
     private org.w3c.dom.Element findFirstChildByLocalName(org.w3c.dom.Element parent, String localName) {
         org.w3c.dom.NodeList children = parent.getChildNodes();
         for (int i = 0; i < children.getLength(); i++) {
@@ -1179,9 +1107,7 @@ public class XfaForm {
         return null;
     }
 
-    /**
-     * Recursively collects field names from the template DOM.
-     */
+    /// Recursively collects field names from the template DOM.
     private void collectFieldNames(org.w3c.dom.Element node, String prefix, List<String> names) {
         org.w3c.dom.NodeList children = node.getChildNodes();
         for (int i = 0; i < children.getLength(); i++) {
@@ -1210,9 +1136,7 @@ public class XfaForm {
         }
     }
 
-    /**
-     * Parses a SOM expression like "form1[0].Page1[0].TextField1[0]" into segments.
-     */
+    /// Parses a SOM expression like "form1[0].Page1[0].TextField1[0]" into segments.
     static SomSegment[] parseSomExpression(String expression) {
         if (expression == null || expression.isEmpty()) return new SomSegment[0];
 
@@ -1224,13 +1148,11 @@ public class XfaForm {
         return segments;
     }
 
-    /**
-     * Represents a single segment of a SOM expression (e.g., "TextField1[0]").
-     */
+    /// Represents a single segment of a SOM expression (e.g., "TextField1[0]").
     static class SomSegment {
         final String name;
         final int index;
-        /** true when the caller wrote an explicit {@code [n]} instance index. */
+        /// true when the caller wrote an explicit `[n]` instance index.
         final boolean explicit;
 
         SomSegment(String name, int index) {

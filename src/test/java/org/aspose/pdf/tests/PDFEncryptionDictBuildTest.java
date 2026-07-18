@@ -12,11 +12,9 @@ import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link PDFEncryptionDict#build} static factory.
- * Validates all four CryptoAlgorithm variants and integration
- * with StandardSecurityHandler.authenticate().
- */
+/// Tests for [PDFEncryptionDict#build] static factory.
+/// Validates all four CryptoAlgorithm variants and integration
+/// with StandardSecurityHandler.authenticate().
 public class PDFEncryptionDictBuildTest {
 
     private static final SecureRandom RANDOM = new SecureRandom();

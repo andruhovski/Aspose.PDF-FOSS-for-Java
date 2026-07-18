@@ -14,13 +14,11 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Stage 12 / Bug K — {@link Document#getInfo()} must auto-create an empty
- * {@code /Info} dictionary on writable documents so that callers can do
- * {@code doc.getInfo().setTitle(...)} without an NPE.
- *
- * <p>References ISO 32000-1:2008 §14.3.3 (Document Information Dictionary).</p>
- */
+/// Stage 12 / Bug K — [Document#getInfo()] must auto-create an empty
+/// `/Info` dictionary on writable documents so that callers can do
+/// `doc.getInfo().setTitle(...)` without an NPE.
+///
+/// References ISO 32000-1:2008 §14.3.3 (Document Information Dictionary).
 class DocumentInfoAutoCreateTest {
 
     @Test

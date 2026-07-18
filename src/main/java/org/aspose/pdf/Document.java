@@ -1,72 +1,38 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfNull;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectKey;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
-import org.aspose.pdf.engine.pdfobjects.PdfStream;
-import org.aspose.pdf.engine.pdfobjects.PdfString;
 import org.aspose.pdf.engine.io.RandomAccessReader;
+import org.aspose.pdf.engine.layout.TextLayoutHelper;
+import org.aspose.pdf.engine.linearization.LinearizedPDFWriter;
 import org.aspose.pdf.engine.parser.PDFParser;
+import org.aspose.pdf.engine.pdfobjects.*;
 import org.aspose.pdf.engine.security.PDFDecryptor;
 import org.aspose.pdf.engine.security.PDFEncryptionDict;
 import org.aspose.pdf.engine.security.PDFEncryptor;
 import org.aspose.pdf.engine.security.PDFKeyDerivation;
 import org.aspose.pdf.engine.writer.PDFWriter;
-import org.aspose.pdf.engine.xmp.XmpWriter;
 import org.aspose.pdf.forms.Form;
 import org.aspose.pdf.html.HtmlToPdfConverter;
 import org.aspose.pdf.html.PdfToHtmlConverter;
+import org.aspose.pdf.logicalstructure.StructTreeRoot;
+import org.aspose.pdf.operators.*;
 import org.aspose.pdf.security.EncryptionParameters;
 import org.aspose.pdf.security.ICustomSecurityHandler;
+import org.aspose.pdf.tagged.TaggedContent;
 import org.aspose.pdf.text.TextFragment;
 import org.aspose.pdf.text.TextState;
 
-import org.aspose.pdf.engine.pdfobjects.PdfArray;
-import org.aspose.pdf.engine.pdfobjects.PdfInteger;
-import org.aspose.pdf.engine.linearization.LinearizedPDFWriter;
-import org.aspose.pdf.engine.layout.TextLayoutHelper;
-import org.aspose.pdf.logicalstructure.StructTreeRoot;
-import org.aspose.pdf.operators.BDC;
-import org.aspose.pdf.operators.Do;
-import org.aspose.pdf.operators.DP;
-import org.aspose.pdf.operators.GS;
-import org.aspose.pdf.operators.SelectFont;
-import org.aspose.pdf.operators.SetAdvancedColor;
-import org.aspose.pdf.operators.SetAdvancedColorStroke;
-import org.aspose.pdf.operators.SetColorSpace;
-import org.aspose.pdf.operators.SetColorSpaceStroke;
-import org.aspose.pdf.operators.ShFill;
-import org.aspose.pdf.tagged.TaggedContent;
-
-import java.io.ByteArrayOutputStream;
-import java.io.Closeable;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.nio.file.Path;
-import java.util.LinkedHashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Logger;
 
-/**
- * The central class for working with PDF documents (ISO 32000-1:2008).
- * <p>
- * Opens a PDF from a file path or input stream, parses its structure, and provides
- * access to pages, document information, catalog, and trailer.
- * Implements {@link Closeable} to release resources when done.
- * </p>
- */
+/// The central class for working with PDF documents (ISO 32000-1:2008).
+///
+/// Opens a PDF from a file path or input stream, parses its structure, and provides
+/// access to pages, document information, catalog, and trailer.
+/// Implements [Closeable] to release resources when done.
+///
 public class Document implements Closeable {
 
     static {
@@ -106,17 +72,15 @@ public class Document implements Closeable {
     private FontUtilities fontUtilities;
     private boolean embedStandardFonts;
     private boolean optimizeRequested;
-    /**
-     * Whether the pending optimize rewrite may pack objects into compressed
-     * object streams (/ObjStm). Set by {@link #optimizeResources} only when
-     * {@code OptimizationOptions.CompressObjects} is requested; Aspose keeps
-     * every object as a plain indirect object otherwise, which regressions rely
-     * on (PDFNET-39575 greps the output for "/Separation" and "N 0 obj").
-     */
+    /// Whether the pending optimize rewrite may pack objects into compressed
+    /// object streams (/ObjStm). Set by [#optimizeResources] only when
+    /// `OptimizationOptions.CompressObjects` is requested; Aspose keeps
+    /// every object as a plain indirect object otherwise, which regressions rely
+    /// on (PDFNET-39575 greps the output for "/Separation" and "N 0 obj").
     private boolean optimizeUseObjectStreams;
     private boolean optimizeSize;
     private boolean fullRewriteRequested;
-    /** Set by flushDirtyPages() when a page's /Contents was edited this save. */
+    /// Set by flushDirtyPages() when a page's /Contents was edited this save.
     private boolean editedPageContentsThisSave;
 
     // ── Write-side encryption state (set by encrypt(), consumed by save()) ──
@@ -124,46 +88,40 @@ public class Document implements Closeable {
     private PDFEncryptionDict pendingEncDict;
     private byte[] pendingDocumentId;
 
-    /** Lock for thread-safe access to parser-dependent lazy initialization. */
+    /// Lock for thread-safe access to parser-dependent lazy initialization.
     private final Object parserLock = new Object();
 
-    /**
-     * Document page mode — how the document should be displayed when opened.
-     */
+    /// Document page mode — how the document should be displayed when opened.
     public enum PageMode {
-        /** Neither outlines nor thumbnails visible. */
+        /// Neither outlines nor thumbnails visible.
         UseNone,
-        /** Outlines (bookmarks) panel visible. */
+        /// Outlines (bookmarks) panel visible.
         UseOutlines,
-        /** Thumbnail panel visible. */
+        /// Thumbnail panel visible.
         UseThumbs,
-        /** Full screen mode. */
+        /// Full screen mode.
         FullScreen,
-        /** Optional content group panel visible. */
+        /// Optional content group panel visible.
         UseOC,
-        /** Attachments panel visible. */
+        /// Attachments panel visible.
         UseAttachments
     }
 
-    /**
-     * Opens a PDF document from a file path.
-     *
-     * @param filePath the path to the PDF file
-     * @throws IOException              if the file cannot be read or is not a valid PDF
-     * @throws IllegalArgumentException if filePath is null
-     */
+    /// Opens a PDF document from a file path.
+    ///
+    /// @param filePath the path to the PDF file
+    /// @throws IOException              if the file cannot be read or is not a valid PDF
+    /// @throws IllegalArgumentException if filePath is null
     public Document(String filePath) throws IOException {
         this(filePath, (String) null);
     }
 
-    /**
-     * Opens a PDF document from a file path with a password.
-     *
-     * @param filePath the path to the PDF file
-     * @param password the password for encrypted PDFs (null or empty for no password)
-     * @throws IOException              if the file cannot be read, is not valid, or password is wrong
-     * @throws IllegalArgumentException if filePath is null
-     */
+    /// Opens a PDF document from a file path with a password.
+    ///
+    /// @param filePath the path to the PDF file
+    /// @param password the password for encrypted PDFs (null or empty for no password)
+    /// @throws IOException              if the file cannot be read, is not valid, or password is wrong
+    /// @throws IllegalArgumentException if filePath is null
     public Document(String filePath, String password) throws IOException {
         if (filePath == null) {
             throw new IllegalArgumentException("File path must not be null");
@@ -177,14 +135,12 @@ public class Document implements Closeable {
         initSecurity(password);
     }
 
-    /**
-     * Opens a PDF document from a file path using a custom security handler.
-     *
-     * @param filePath path to the PDF file
-     * @param password password for the encrypted PDF
-     * @param customHandler custom security handler
-     * @throws IOException if the file cannot be opened
-     */
+    /// Opens a PDF document from a file path using a custom security handler.
+    ///
+    /// @param filePath path to the PDF file
+    /// @param password password for the encrypted PDF
+    /// @param customHandler custom security handler
+    /// @throws IOException if the file cannot be opened
     public Document(String filePath, String password, ICustomSecurityHandler customHandler) throws IOException {
         if (filePath == null) {
             throw new IllegalArgumentException("File path must not be null");
@@ -197,25 +153,21 @@ public class Document implements Closeable {
         initSecurity(password, customHandler);
     }
 
-    /**
-     * Opens a PDF document from an input stream.
-     * The entire stream is read into memory.
-     *
-     * @param stream the input stream containing PDF data
-     * @throws IOException              if the stream cannot be read or is not a valid PDF
-     * @throws IllegalArgumentException if stream is null
-     */
+    /// Opens a PDF document from an input stream.
+    /// The entire stream is read into memory.
+    ///
+    /// @param stream the input stream containing PDF data
+    /// @throws IOException              if the stream cannot be read or is not a valid PDF
+    /// @throws IllegalArgumentException if stream is null
     public Document(InputStream stream) throws IOException {
         this(stream, (String) null);
     }
 
-    /**
-     * Opens a PDF document from an input stream with a password.
-     *
-     * @param stream   the input stream containing PDF data
-     * @param password the password for encrypted PDFs (null for no password)
-     * @throws IOException if the stream cannot be read, is not valid, or password is wrong
-     */
+    /// Opens a PDF document from an input stream with a password.
+    ///
+    /// @param stream   the input stream containing PDF data
+    /// @param password the password for encrypted PDFs (null for no password)
+    /// @throws IOException if the stream cannot be read, is not valid, or password is wrong
     public Document(InputStream stream, String password) throws IOException {
         if (stream == null) {
             throw new IllegalArgumentException("Input stream must not be null");
@@ -229,14 +181,12 @@ public class Document implements Closeable {
         initSecurity(password);
     }
 
-    /**
-     * Opens a PDF document from an input stream using a custom security handler.
-     *
-     * @param stream input stream containing PDF data
-     * @param password password for the encrypted PDF
-     * @param customHandler custom security handler
-     * @throws IOException if the stream cannot be opened
-     */
+    /// Opens a PDF document from an input stream using a custom security handler.
+    ///
+    /// @param stream input stream containing PDF data
+    /// @param password password for the encrypted PDF
+    /// @param customHandler custom security handler
+    /// @throws IOException if the stream cannot be opened
     public Document(InputStream stream, String password, ICustomSecurityHandler customHandler) throws IOException {
         if (stream == null) {
             throw new IllegalArgumentException("Input stream must not be null");
@@ -249,10 +199,8 @@ public class Document implements Closeable {
         initSecurity(password, customHandler);
     }
 
-    /**
-     * Creates a new empty PDF document.
-     * The document starts with a single-page structure that can be populated.
-     */
+    /// Creates a new empty PDF document.
+    /// The document starts with a single-page structure that can be populated.
     public Document() {
         LOG.fine("Creating new empty PDF document");
         // Create minimal PDF structure in memory
@@ -273,13 +221,11 @@ public class Document implements Closeable {
         this.pdfFormat = PdfFormat.v_1_7;
     }
 
-    /**
-     * Creates a PDF document from an HTML file.
-     *
-     * @param filePath the path to the HTML file
-     * @param options  HTML load options (may be null for defaults)
-     * @throws IOException if reading or parsing fails
-     */
+    /// Creates a PDF document from an HTML file.
+    ///
+    /// @param filePath the path to the HTML file
+    /// @param options  HTML load options (may be null for defaults)
+    /// @throws IOException if reading or parsing fails
     public Document(String filePath, HtmlLoadOptions options) throws IOException {
         this();
         if (options == null) options = new HtmlLoadOptions();
@@ -294,13 +240,11 @@ public class Document implements Closeable {
         }
     }
 
-    /**
-     * Creates a PDF document from an HTML input stream.
-     *
-     * @param stream  the HTML content stream
-     * @param options HTML load options (may be null for defaults)
-     * @throws IOException if reading or parsing fails
-     */
+    /// Creates a PDF document from an HTML input stream.
+    ///
+    /// @param stream  the HTML content stream
+    /// @param options HTML load options (may be null for defaults)
+    /// @throws IOException if reading or parsing fails
     public Document(InputStream stream, HtmlLoadOptions options) throws IOException {
         this();
         if (options == null) options = new HtmlLoadOptions();
@@ -358,12 +302,10 @@ public class Document implements Closeable {
         }
     }
 
-    /**
-     * Package-private constructor from a pre-configured parser.
-     * Used internally for testing and by other API classes.
-     *
-     * @param parser the already-parsed PDFParser
-     */
+    /// Package-private constructor from a pre-configured parser.
+    /// Used internally for testing and by other API classes.
+    ///
+    /// @param parser the already-parsed PDFParser
     Document(PDFParser parser) {
         if (parser == null) {
             throw new IllegalArgumentException("Parser must not be null");
@@ -371,30 +313,24 @@ public class Document implements Closeable {
         this.parser = parser;
     }
 
-    /**
-     * Returns the collection of pages in this document.
-     * The page collection is lazily built on first access.
-     *
-     * @return the PageCollection
-     * @throws IOException if the page tree cannot be read
-     */
-    /** Background colour applied via {@link #setBackground(Color)}. */
+    /// Returns the collection of pages in this document.
+    /// The page collection is lazily built on first access.
+    ///
+    /// @return the PageCollection
+    /// @throws IOException if the page tree cannot be read
+    /// Background colour applied via [#setBackground(Color)].
     private Color backgroundColor;
 
-    /**
-     * Returns the document-level background colour set via
-     * {@link #setBackground(Color)}, or {@code null} for none.
-     */
+    /// Returns the document-level background colour set via
+    /// [#setBackground(Color)], or `null` for none.
     public Color getBackground() {
         return this.backgroundColor;
     }
 
-    /**
-     * Applies a solid background colour to every page in the document
-     * (via {@link Page#setBackground(Color)}). Mirrors C# {@code Document.Background}.
-     *
-     * @param color the colour, or null/white to remove backgrounds
-     */
+    /// Applies a solid background colour to every page in the document
+    /// (via [Page#setBackground(Color)]). Mirrors C# `Document.Background`.
+    ///
+    /// @param color the colour, or null/white to remove backgrounds
     public void setBackground(Color color) {
         this.backgroundColor = color;
         try {
@@ -432,24 +368,22 @@ public class Document implements Closeable {
         return pages;
     }
 
-    /**
-     * Normalizes the page-tree root the catalog points at.
-     *
-     * <p>Some malformed PDFs set the catalog's {@code /Pages} to a leaf page (or
-     * an intermediate node) rather than the page-tree root — e.g. the catalog
-     * references a {@code /Type /Page} whose {@code /Parent} is the real
-     * {@code /Type /Pages} root. Readers tolerate this on read (the single page
-     * still resolves), but page-tree mutations ({@code add}/{@code insert})
-     * then operate on the wrong node and are silently lost on save. This climbs
-     * {@code /Parent} to the topmost {@code /Type /Pages} ancestor and, when it
-     * differs from what the catalog references, repoints {@code /Pages} at the
-     * true root so reads, edits, and the saved file all agree. ISO 32000-1
-     * §7.7.3 (the page tree is rooted at the catalog's {@code /Pages}).</p>
-     *
-     * @param catalog  the document catalog (repointed in place when needed)
-     * @param pagesObj the dictionary the catalog's {@code /Pages} currently resolves to
-     * @return the effective page-tree root to wrap in a {@link PageCollection}
-     */
+    /// Normalizes the page-tree root the catalog points at.
+    ///
+    /// Some malformed PDFs set the catalog's `/Pages` to a leaf page (or
+    /// an intermediate node) rather than the page-tree root — e.g. the catalog
+    /// references a `/Type /Page` whose `/Parent` is the real
+    /// `/Type /Pages` root. Readers tolerate this on read (the single page
+    /// still resolves), but page-tree mutations (`add`/`insert`)
+    /// then operate on the wrong node and are silently lost on save. This climbs
+    /// `/Parent` to the topmost `/Type /Pages` ancestor and, when it
+    /// differs from what the catalog references, repoints `/Pages` at the
+    /// true root so reads, edits, and the saved file all agree. ISO 32000-1
+    /// §7.7.3 (the page tree is rooted at the catalog's `/Pages`).
+    ///
+    /// @param catalog  the document catalog (repointed in place when needed)
+    /// @param pagesObj the dictionary the catalog's `/Pages` currently resolves to
+    /// @return the effective page-tree root to wrap in a [PageCollection]
     private PdfDictionary normalizePagesRoot(PdfDictionary catalog, PdfDictionary pagesObj) {
         PdfDictionary node = pagesObj;
         java.util.Set<PdfDictionary> seen =
@@ -480,20 +414,18 @@ public class Document implements Closeable {
         return pagesObj;
     }
 
-    /**
-     * Returns the document information dictionary (ISO 32000-1:2008, §14.3.3).
-     * Auto-creates an empty {@code /Info} dictionary if the document does not
-     * yet have one — for both freshly-constructed documents and reopened files
-     * whose trailer omits {@code /Info}. The result is therefore <strong>never
-     * null</strong>, and consecutive calls return the same instance.
-     *
-     * <p>The auto-created dict is only persisted to the saved file once at
-     * least one metadata entry (Title, Author, etc.) is set on it; an empty
-     * dict is dropped at save time to avoid emitting a useless object.</p>
-     *
-     * @return the DocumentInfo (never null)
-     * @throws IOException if the info dictionary cannot be read
-     */
+    /// Returns the document information dictionary (ISO 32000-1:2008, §14.3.3).
+    /// Auto-creates an empty `/Info` dictionary if the document does not
+    /// yet have one — for both freshly-constructed documents and reopened files
+    /// whose trailer omits `/Info`. The result is therefore **never
+    /// null**, and consecutive calls return the same instance.
+    ///
+    /// The auto-created dict is only persisted to the saved file once at
+    /// least one metadata entry (Title, Author, etc.) is set on it; an empty
+    /// dict is dropped at save time to avoid emitting a useless object.
+    ///
+    /// @return the DocumentInfo (never null)
+    /// @throws IOException if the info dictionary cannot be read
     public DocumentInfo getInfo() throws IOException {
         if (info != null) {
             return info;
@@ -518,28 +450,24 @@ public class Document implements Closeable {
         return info;
     }
 
-    /**
-     * Deprecated alias for {@link #getInfo()}. {@code getInfo()} itself now
-     * auto-creates a writable empty info dict when one is absent, so the two
-     * methods are equivalent. Retained for backwards compatibility.
-     *
-     * @return the DocumentInfo (never null)
-     * @throws IOException if the info dictionary cannot be read
-     * @deprecated use {@link #getInfo()} directly; it auto-creates as of Sprint 20.
-     */
+    /// Deprecated alias for [#getInfo()]. `getInfo()` itself now
+    /// auto-creates a writable empty info dict when one is absent, so the two
+    /// methods are equivalent. Retained for backwards compatibility.
+    ///
+    /// @return the DocumentInfo (never null)
+    /// @throws IOException if the info dictionary cannot be read
+    /// @deprecated use [#getInfo()] directly; it auto-creates as of Sprint 20.
     @Deprecated
     public DocumentInfo getOrCreateInfo() throws IOException {
         return getInfo();
     }
 
-    /**
-     * Returns the XMP metadata of this document.
-     * Creates empty metadata if none exists. The returned object is cached;
-     * modifications are written back when the document is saved.
-     *
-     * @return the XMP metadata
-     * @throws IOException if reading fails
-     */
+    /// Returns the XMP metadata of this document.
+    /// Creates empty metadata if none exists. The returned object is cached;
+    /// modifications are written back when the document is saved.
+    ///
+    /// @return the XMP metadata
+    /// @throws IOException if reading fails
     public XmpMetadata getMetadata() throws IOException {
         if (metadata == null) {
             if (parser != null) {
@@ -560,87 +488,71 @@ public class Document implements Closeable {
         return metadata;
     }
 
-    /**
-     * Sets the XMP metadata from raw XML bytes read from a stream.
-     *
-     * @param stream the input stream containing XMP XML
-     * @throws IOException if reading fails
-     */
+    /// Sets the XMP metadata from raw XML bytes read from a stream.
+    ///
+    /// @param stream the input stream containing XMP XML
+    /// @throws IOException if reading fails
     public void setXmpMetadata(InputStream stream) throws IOException {
         byte[] xmpBytes = readAllBytes(stream);
         metadata = new XmpMetadata(xmpBytes);
     }
 
-    /**
-     * Writes the XMP metadata XML bytes to the given output stream.
-     *
-     * @param stream the output stream
-     * @throws IOException if writing fails
-     */
+    /// Writes the XMP metadata XML bytes to the given output stream.
+    ///
+    /// @param stream the output stream
+    /// @throws IOException if writing fails
     public void getXmpMetadata(OutputStream stream) throws IOException {
         XmpMetadata meta = getMetadata();
         byte[] bytes = meta.getBytes();
         stream.write(bytes);
     }
 
-    /**
-     * Returns the PDF version string (e.g. "1.4", "1.7").
-     *
-     * @return the version string
-     */
+    /// Returns the PDF version string (e.g. "1.4", "1.7").
+    ///
+    /// @return the version string
     public String getVersion() {
         return String.valueOf(parser.getVersion());
     }
 
-    /**
-     * Returns the root catalog dictionary.
-     *
-     * @return the catalog dictionary
-     * @throws IOException if the catalog cannot be read
-     */
+    /// Returns the root catalog dictionary.
+    ///
+    /// @return the catalog dictionary
+    /// @throws IOException if the catalog cannot be read
     public PdfDictionary getCatalog() throws IOException {
         if (inMemoryCatalog != null) return inMemoryCatalog;
         return parser.getCatalog();
     }
 
-    /**
-     * Returns the document-level action triggers (ISO 32000-1:2008, §12.6.4.1):
-     * {@code /OpenAction} plus the {@code /AA} entries (will-close, will/did-save,
-     * will/did-print). The returned view is a live wrapper around the catalog;
-     * mutations through it write directly to the catalog dictionary.
-     *
-     * @return a non-null DocumentActions view
-     * @throws IOException if the catalog cannot be read
-     */
+    /// Returns the document-level action triggers (ISO 32000-1:2008, §12.6.4.1):
+    /// `/OpenAction` plus the `/AA` entries (will-close, will/did-save,
+    /// will/did-print). The returned view is a live wrapper around the catalog;
+    /// mutations through it write directly to the catalog dictionary.
+    ///
+    /// @return a non-null DocumentActions view
+    /// @throws IOException if the catalog cannot be read
     public DocumentActions getActions() throws IOException {
         return new DocumentActions(getCatalog(), this);
     }
 
-    /**
-     * Returns the trailer dictionary.
-     *
-     * @return the trailer dictionary
-     */
+    /// Returns the trailer dictionary.
+    ///
+    /// @return the trailer dictionary
     public PdfDictionary getTrailer() {
         return parser.getTrailer();
     }
 
-    /**
-     * Returns the underlying PDF parser (for internal use by engine components).
-     *
-     * @return the parser, or null for new documents
-     */
+    /// Returns the underlying PDF parser (for internal use by engine components).
+    ///
+    /// @return the parser, or null for new documents
     public PDFParser getParser() {
         return parser;
     }
 
-    /**
-     * Returns the document outline (bookmarks) collection.
-     * Creates an empty collection if the document has no outlines.
-     *
-     * @return the outline collection
-     * @throws IOException if reading the catalog fails
-     */
+    /// Returns the document outline (bookmarks) collection.
+    /// Creates an empty collection if the document has no outlines.
+    ///
+    /// @return the outline collection
+    /// @throws IOException if reading the catalog fails
     public OutlineCollection getOutlines() throws IOException {
         if (outlines == null) {
             if (parser != null) {
@@ -663,19 +575,15 @@ public class Document implements Closeable {
         return outlines;
     }
 
-    /**
-     * Returns the page mode — how the document should be displayed when opened.
-     *
-     * @return the page mode
-     * @throws IOException if reading the catalog fails
-     */
-    /**
-     * Returns the interactive form (AcroForm) of this document.
-     * Creates an empty form if the document has none.
-     *
-     * @return the form
-     * @throws IOException if reading the catalog fails
-     */
+    /// Returns the page mode — how the document should be displayed when opened.
+    ///
+    /// @return the page mode
+    /// @throws IOException if reading the catalog fails
+    /// Returns the interactive form (AcroForm) of this document.
+    /// Creates an empty form if the document has none.
+    ///
+    /// @return the form
+    /// @throws IOException if reading the catalog fails
     public Form getForm() throws IOException {
         if (form == null) {
             if (parser != null) {
@@ -705,11 +613,9 @@ public class Document implements Closeable {
         return form;
     }
 
-    /**
-     * Returns the collection of embedded files (attachments).
-     *
-     * @return the embedded file collection
-     */
+    /// Returns the collection of embedded files (attachments).
+    ///
+    /// @return the embedded file collection
     public EmbeddedFileCollection getEmbeddedFiles() {
         if (embeddedFiles == null) {
             embeddedFiles = new EmbeddedFileCollection(this, parser);
@@ -717,15 +623,13 @@ public class Document implements Closeable {
         return embeddedFiles;
     }
 
-    /** PDF portfolio (catalog /Collection); lazily backed by embedded files. */
+    /// PDF portfolio (catalog /Collection); lazily backed by embedded files.
     private Collection collection;
 
-    /**
-     * Returns the document's portfolio {@link Collection}, instantiating an
-     * empty one on first access. Mirrors the C# auto-create behaviour, so
-     * code such as {@code doc.getCollection().add(fs)} works without first
-     * calling {@link #setCollection(Collection)}.
-     */
+    /// Returns the document's portfolio [Collection], instantiating an
+    /// empty one on first access. Mirrors the C# auto-create behaviour, so
+    /// code such as `doc.getCollection().add(fs)` works without first
+    /// calling [#setCollection(Collection)].
     public Collection getCollection() {
         if (collection == null) {
             setCollection(new Collection());
@@ -733,11 +637,9 @@ public class Document implements Closeable {
         return collection;
     }
 
-    /**
-     * Replaces (or removes, when {@code value == null}) the document
-     * portfolio. Stamps {@code /Collection &lt;&lt; /View /D &gt;&gt;} on the
-     * catalog so viewers know to render in collection mode.
-     */
+    /// Replaces (or removes, when `value == null`) the document
+    /// portfolio. Stamps `/Collection &lt;&lt; /View /D &gt;&gt;` on the
+    /// catalog so viewers know to render in collection mode.
     public void setCollection(Collection value) {
         this.collection = value;
         try {
@@ -761,12 +663,10 @@ public class Document implements Closeable {
         }
     }
 
-    /**
-     * Returns the font utilities for this document.
-     * Provides access to all fonts used in the document and font subsetting.
-     *
-     * @return the font utilities instance
-     */
+    /// Returns the font utilities for this document.
+    /// Provides access to all fonts used in the document and font subsetting.
+    ///
+    /// @return the font utilities instance
     public FontUtilities getFontUtilities() {
         if (fontUtilities == null) {
             fontUtilities = new FontUtilities(this);
@@ -774,35 +674,28 @@ public class Document implements Closeable {
         return fontUtilities;
     }
 
-    /**
-     * Returns whether the standard 14 PDF fonts should be embedded when saving.
-     *
-     * @return true if standard fonts should be embedded
-     */
+    /// Returns whether the standard 14 PDF fonts should be embedded when saving.
+    ///
+    /// @return true if standard fonts should be embedded
     public boolean isEmbedStandardFonts() {
         return embedStandardFonts;
     }
 
-    /**
-     * Sets whether the standard 14 PDF fonts should be embedded when saving.
-     * <p>
-     * When set to {@code true}, the PDF writer will embed the standard fonts
-     * (Helvetica, Times-Roman, Courier, etc.) into the output file. This increases
-     * file size but ensures consistent rendering on all viewers.
-     * </p>
-     *
-     * @param embed true to embed standard fonts
-     */
+    /// Sets whether the standard 14 PDF fonts should be embedded when saving.
+    ///
+    /// When set to `true`, the PDF writer will embed the standard fonts
+    /// (Helvetica, Times-Roman, Courier, etc.) into the output file. This increases
+    /// file size but ensures consistent rendering on all viewers.
+    ///
+    /// @param embed true to embed standard fonts
     public void setEmbedStandardFonts(boolean embed) {
         this.embedStandardFonts = embed;
     }
 
-    /**
-     * Returns the list of Optional Content Groups (layers).
-     *
-     * @return the layers, or empty list
-     * @throws IOException if catalog reading fails
-     */
+    /// Returns the list of Optional Content Groups (layers).
+    ///
+    /// @return the layers, or empty list
+    /// @throws IOException if catalog reading fails
     public java.util.List<Layer> getLayers() throws IOException {
         java.util.List<Layer> layers = new java.util.ArrayList<>();
         if (parser == null) return layers;
@@ -819,12 +712,10 @@ public class Document implements Closeable {
         return layers;
     }
 
-    /**
-     * Returns the viewer preferences.
-     *
-     * @return the viewer preferences
-     * @throws IOException if catalog reading fails
-     */
+    /// Returns the viewer preferences.
+    ///
+    /// @return the viewer preferences
+    /// @throws IOException if catalog reading fails
     public ViewerPreferences getViewerPreferences() throws IOException {
         if (viewerPreferences == null) {
             if (parser != null) {
@@ -846,43 +737,43 @@ public class Document implements Closeable {
 
     // ── Viewer preference convenience methods ──
 
-    /** Hide toolbar preference. */
+    /// Hide toolbar preference.
     public boolean getHideToolbar() throws IOException { return getViewerPreferences().getHideToolbar(); }
-    /** Sets hide toolbar preference. */
+    /// Sets hide toolbar preference.
     public void setHideToolbar(boolean v) throws IOException { getViewerPreferences().setHideToolbar(v); }
 
-    /** Hide menubar preference. */
+    /// Hide menubar preference.
     public boolean getHideMenubar() throws IOException { return getViewerPreferences().getHideMenubar(); }
-    /** Sets hide menubar preference. */
+    /// Sets hide menubar preference.
     public void setHideMenubar(boolean v) throws IOException { getViewerPreferences().setHideMenubar(v); }
 
-    /** Hide window UI preference. */
+    /// Hide window UI preference.
     public boolean getHideWindowUI() throws IOException { return getViewerPreferences().getHideWindowUI(); }
-    /** Sets hide window UI preference. */
+    /// Sets hide window UI preference.
     public void setHideWindowUI(boolean v) throws IOException { getViewerPreferences().setHideWindowUI(v); }
 
-    /** Fit window preference. */
+    /// Fit window preference.
     public boolean getFitWindow() throws IOException { return getViewerPreferences().getFitWindow(); }
-    /** Sets fit window preference. */
+    /// Sets fit window preference.
     public void setFitWindow(boolean v) throws IOException { getViewerPreferences().setFitWindow(v); }
 
-    /** Center window preference. */
+    /// Center window preference.
     public boolean getCenterWindow() throws IOException { return getViewerPreferences().getCenterWindow(); }
-    /** Sets center window preference. */
+    /// Sets center window preference.
     public void setCenterWindow(boolean v) throws IOException { getViewerPreferences().setCenterWindow(v); }
 
-    /** Display document title preference. */
+    /// Display document title preference.
     public boolean getDisplayDocTitle() throws IOException { return getViewerPreferences().getDisplayDocTitle(); }
-    /** Sets display document title preference. */
+    /// Sets display document title preference.
     public void setDisplayDocTitle(boolean v) throws IOException { getViewerPreferences().setDisplayDocTitle(v); }
 
-    /** Page layout (SinglePage, OneColumn, TwoColumnLeft, etc.). */
+    /// Page layout (SinglePage, OneColumn, TwoColumnLeft, etc.).
     public String getPageLayout() throws IOException {
         if (parser == null) return "SinglePage";
         String layout = parser.getCatalog().getNameAsString("PageLayout");
         return layout != null ? layout : "SinglePage";
     }
-    /** Sets page layout. */
+    /// Sets page layout.
     public void setPageLayout(String layout) throws IOException {
         if (parser != null) {
             parser.getCatalog().set(PdfName.of("PageLayout"), PdfName.of(layout));
@@ -900,25 +791,20 @@ public class Document implements Closeable {
         }
     }
 
-    /**
-     * Sets the page mode.
-     *
-     * @param mode the page mode
-     * @throws IOException if writing to the catalog fails
-     */
+    /// Sets the page mode.
+    ///
+    /// @param mode the page mode
+    /// @throws IOException if writing to the catalog fails
     public void setPageMode(PageMode mode) throws IOException {
         if (parser != null) {
             parser.getCatalog().set(PdfName.of("PageMode"), PdfName.of(mode.name()));
         }
     }
 
-    /**
-     * Saves the document to a file.
-     *
-     * Returns a PageInfo object that describes default page properties for newly added pages.
-     *
-     * @return the default page info
-     */
+    /// Saves the document to a file.
+    /// Returns a PageInfo object that describes default page properties for newly added pages.
+    ///
+    /// @return the default page info
     public PageInfo getPageInfo() {
         if (pageInfo == null) {
             pageInfo = new PageInfo();
@@ -926,19 +812,15 @@ public class Document implements Closeable {
         return pageInfo;
     }
 
-    /**
-     * Processes paragraphs for all pages (layout pass).
-     * This is a no-op placeholder for API compatibility with Aspose.PDF.
-     */
+    /// Processes paragraphs for all pages (layout pass).
+    /// This is a no-op placeholder for API compatibility with Aspose.PDF.
     public void processParagraphs() {
         // Layout is performed during save; this method exists for API compatibility
     }
 
-    /**
-     * @param filePath the output file path
-     * @throws IOException              if writing fails
-     * @throws IllegalArgumentException if filePath is null
-     */
+    /// @param filePath the output file path
+    /// @throws IOException              if writing fails
+    /// @throws IllegalArgumentException if filePath is null
     public void save(String filePath) throws IOException {
         if (filePath == null) {
             throw new IllegalArgumentException("File path must not be null");
@@ -1009,10 +891,8 @@ public class Document implements Closeable {
         }
     }
 
-    /**
-     * Byte length of the untouched source this document was opened from, or
-     * {@code -1} for programmatically-created documents.
-     */
+    /// Byte length of the untouched source this document was opened from, or
+    /// `-1` for programmatically-created documents.
     private long sourceByteLength() {
         if (sourceBytes != null) {
             return sourceBytes.length;
@@ -1024,7 +904,7 @@ public class Document implements Closeable {
         return -1;
     }
 
-    /** Streams the untouched source bytes to {@code out}. */
+    /// Streams the untouched source bytes to `out`.
     private void writeSourceTo(OutputStream out) throws IOException {
         if (sourceBytes != null) {
             out.write(sourceBytes);
@@ -1035,15 +915,13 @@ public class Document implements Closeable {
         }
     }
 
-    /**
-     * Whether the document carries user modifications this API can track
-     * (edited page contents, imported pages, new outlines, XMP changes,
-     * pending encryption). Used to decide when an optimizeResources() save
-     * may fall back to the original bytes; in-place low-level COS edits are
-     * not observable here, so callers combining such edits with
-     * optimizeResources() always get the rewritten file (the fallback only
-     * replaces output that came out LARGER than the source).
-     */
+    /// Whether the document carries user modifications this API can track
+    /// (edited page contents, imported pages, new outlines, XMP changes,
+    /// pending encryption). Used to decide when an optimizeResources() save
+    /// may fall back to the original bytes; in-place low-level COS edits are
+    /// not observable here, so callers combining such edits with
+    /// optimizeResources() always get the rewritten file (the fallback only
+    /// replaces output that came out LARGER than the source).
     private boolean hasTrackedModifications() {
         if (!pendingImports.isEmpty() || pendingEncryptor != null || pendingEncDict != null
                 || metadata != null) {
@@ -1062,11 +940,9 @@ public class Document implements Closeable {
         return false;
     }
 
-    /**
-     * Saves the document back to its associated target path.
-     *
-     * @throws IOException if the document has no associated path or saving fails
-     */
+    /// Saves the document back to its associated target path.
+    ///
+    /// @throws IOException if the document has no associated path or saving fails
     public void save() throws IOException {
         if (sourcePath != null) {
             save(sourcePath);
@@ -1079,14 +955,12 @@ public class Document implements Closeable {
         throw new IOException("Cannot save document without a target path. Open from a file or set fileName first.");
     }
 
-    /**
-     * Saves the document to an output stream.
-     * Collects all objects from the parser and writes a complete PDF.
-     *
-     * @param outputStream the output stream to write to
-     * @throws IOException              if writing fails
-     * @throws IllegalArgumentException if outputStream is null
-     */
+    /// Saves the document to an output stream.
+    /// Collects all objects from the parser and writes a complete PDF.
+    ///
+    /// @param outputStream the output stream to write to
+    /// @throws IOException              if writing fails
+    /// @throws IllegalArgumentException if outputStream is null
     public void save(OutputStream outputStream) throws IOException {
         if (outputStream == null) {
             throw new IllegalArgumentException("Output stream must not be null");
@@ -1196,11 +1070,9 @@ public class Document implements Closeable {
         }
     }
 
-    /**
-     * Returns whether the current document contains incremental updates.
-     *
-     * @return true if the trailer contains a valid /Prev entry
-     */
+    /// Returns whether the current document contains incremental updates.
+    ///
+    /// @return true if the trailer contains a valid /Prev entry
     public boolean hasIncrementalUpdate() {
         if (sourcePath != null || sourceBytes != null) {
             try {
@@ -1228,32 +1100,26 @@ public class Document implements Closeable {
         return prev instanceof PdfInteger && ((PdfInteger) prev).longValue() > 0;
     }
 
-    /**
-     * Requests a full rewrite on the next save instead of an incremental append.
-     * This is a compatibility baseline for {@code Document.Optimize()}.
-     */
+    /// Requests a full rewrite on the next save instead of an incremental append.
+    /// This is a compatibility baseline for `Document.Optimize()`.
     public void optimize() {
         optimizeRequested = true;
     }
 
-    /**
-     * Gets whether the next save should favour a compact full rewrite
-     * (object streams, no orphaned objects) over an incremental append.
-     * API-compatible with Aspose's {@code Document.OptimizeSize}.
-     *
-     * @return {@code true} if compact-size saving has been requested
-     */
+    /// Gets whether the next save should favour a compact full rewrite
+    /// (object streams, no orphaned objects) over an incremental append.
+    /// API-compatible with Aspose's `Document.OptimizeSize`.
+    ///
+    /// @return `true` if compact-size saving has been requested
     public boolean isOptimizeSize() {
         return optimizeSize;
     }
 
-    /**
-     * Sets whether the next save should favour a compact full rewrite.
-     * API-compatible with Aspose's {@code Document.OptimizeSize}: enabling it
-     * requests the same compact rewrite as {@link #optimize()}.
-     *
-     * @param value {@code true} to request compact-size saving
-     */
+    /// Sets whether the next save should favour a compact full rewrite.
+    /// API-compatible with Aspose's `Document.OptimizeSize`: enabling it
+    /// requests the same compact rewrite as [#optimize()].
+    ///
+    /// @param value`true` to request compact-size saving
     public void setOptimizeSize(boolean value) {
         optimizeSize = value;
         if (value) {
@@ -1261,24 +1127,19 @@ public class Document implements Closeable {
         }
     }
 
-    /**
-     * Requests that the next save operation performs a full rewrite even if
-     * incremental save would otherwise be possible.
-     */
+    /// Requests that the next save operation performs a full rewrite even if
+    /// incremental save would otherwise be possible.
     public void requestFullRewrite() {
         fullRewriteRequested = true;
     }
 
-    /**
-     * Returns whether the current document is linearized for fast web view.
-     * <p>
-     * For documents opened from a file or byte array this inspects the source bytes
-     * using the linearization detector. New in-memory documents that have not been
-     * reopened from saved bytes return {@code false}.
-     * </p>
-     *
-     * @return {@code true} if the current source bytes represent a linearized PDF
-     */
+    /// Returns whether the current document is linearized for fast web view.
+    ///
+    /// For documents opened from a file or byte array this inspects the source bytes
+    /// using the linearization detector. New in-memory documents that have not been
+    /// reopened from saved bytes return `false`.
+    ///
+    /// @return `true` if the current source bytes represent a linearized PDF
     public boolean isLinearized() {
         if (sourcePath == null && sourceBytes == null) {
             return false;
@@ -1298,17 +1159,14 @@ public class Document implements Closeable {
         }
     }
 
-    /**
-     * Removes unused page-level resources before the next save.
-     * <p>
-     * This is a focused compatibility implementation of Aspose's
-     * {@code OptimizeResources()} for imported-page scenarios: it prunes
-     * unreferenced entries from page and form XObject resource dictionaries
-     * based on the actual operators present in content streams.
-     * </p>
-     *
-     * @throws IOException if page content streams cannot be parsed
-     */
+    /// Removes unused page-level resources before the next save.
+    ///
+    /// This is a focused compatibility implementation of Aspose's
+    /// `OptimizeResources()` for imported-page scenarios: it prunes
+    /// unreferenced entries from page and form XObject resource dictionaries
+    /// based on the actual operators present in content streams.
+    ///
+    /// @throws IOException if page content streams cannot be parsed
     public void optimizeResources() throws IOException {
         // Parameterless behaviour mirrors Aspose's default OptimizationOptions:
         // unused objects/streams removal plus duplicate-stream linking.
@@ -1320,23 +1178,20 @@ public class Document implements Closeable {
         optimizeResources(defaults);
     }
 
-    /**
-     * Optimises the document according to the supplied options before the next
-     * save. API-compatible with Aspose's
-     * {@code Document.OptimizeResources(OptimizationOptions)}.
-     * <p>
-     * The structural passes are applied immediately: enabling
-     * {@code removeUnusedObjects}/{@code removeUnusedStreams} requests a full
-     * rewrite on the next save (a full rewrite drops every object the catalog no
-     * longer references), and {@code allowReusePageContent} prunes unused
-     * per-page resources. The image- and font-rewriting passes are accepted for
-     * API compatibility; they are honoured where the engine already supports the
-     * operation and are otherwise a no-op (the document still saves correctly).
-     * </p>
-     *
-     * @param options the optimisation options; {@code null} applies nothing
-     * @throws IOException if page content streams cannot be parsed
-     */
+    /// Optimises the document according to the supplied options before the next
+    /// save. API-compatible with Aspose's
+    /// `Document.OptimizeResources(OptimizationOptions)`.
+    ///
+    /// The structural passes are applied immediately: enabling
+    /// `removeUnusedObjects`/`removeUnusedStreams` requests a full
+    /// rewrite on the next save (a full rewrite drops every object the catalog no
+    /// longer references), and `allowReusePageContent` prunes unused
+    /// per-page resources. The image- and font-rewriting passes are accepted for
+    /// API compatibility; they are honoured where the engine already supports the
+    /// operation and are otherwise a no-op (the document still saves correctly).
+    ///
+    /// @param options the optimisation options; `null` applies nothing
+    /// @throws IOException if page content streams cannot be parsed
     public void optimizeResources(org.aspose.pdf.optimization.OptimizationOptions options)
             throws IOException {
         if (options == null) {
@@ -1389,11 +1244,9 @@ public class Document implements Closeable {
                 + " subsetFonts=" + options.isSubsetFonts());
     }
 
-    /**
-     * Collects, per image XObject stream, the largest display footprint (in
-     * points) across all its placements in the document. Used by the
-     * optimizer to compute effective resolution for downsampling.
-     */
+    /// Collects, per image XObject stream, the largest display footprint (in
+    /// points) across all its placements in the document. Used by the
+    /// optimizer to compute effective resolution for downsampling.
     private Map<PdfStream, double[]> collectImageDisplaySizes() throws IOException {
         Map<PdfStream, double[]> sizes = new java.util.IdentityHashMap<>();
         for (int i = 1; i <= getPages().getCount(); i++) {
@@ -1418,13 +1271,11 @@ public class Document implements Closeable {
         return sizes;
     }
 
-    /**
-     * Saves the document in the specified format.
-     *
-     * @param filePath the output file path
-     * @param format   the desired output format
-     * @throws IOException if writing fails
-     */
+    /// Saves the document in the specified format.
+    ///
+    /// @param filePath the output file path
+    /// @param format   the desired output format
+    /// @throws IOException if writing fails
     public void save(String filePath, SaveFormat format) throws IOException {
         if (format == SaveFormat.Html) {
             save(filePath, new HtmlSaveOptions());
@@ -1433,15 +1284,13 @@ public class Document implements Closeable {
         }
     }
 
-    /**
-     * Saves the document with the specified PDF save options.
-     * When {@link PdfSaveOptions#isLinearize()} is true, produces a linearized
-     * (web-optimized) PDF per ISO 32000-1 Annex F.
-     *
-     * @param filePath the output file path
-     * @param options  PDF save options
-     * @throws IOException if writing fails
-     */
+    /// Saves the document with the specified PDF save options.
+    /// When [PdfSaveOptions#isLinearize()] is true, produces a linearized
+    /// (web-optimized) PDF per ISO 32000-1 Annex F.
+    ///
+    /// @param filePath the output file path
+    /// @param options  PDF save options
+    /// @throws IOException if writing fails
     public void save(String filePath, PdfSaveOptions options) throws IOException {
         if (filePath == null) {
             throw new IllegalArgumentException("File path must not be null");
@@ -1485,13 +1334,11 @@ public class Document implements Closeable {
         }
     }
 
-    /**
-     * Saves the document using object streams and/or xref streams (PDF 1.5+).
-     *
-     * @param outputStream the output stream
-     * @param options      save options controlling compression
-     * @throws IOException if writing fails
-     */
+    /// Saves the document using object streams and/or xref streams (PDF 1.5+).
+    ///
+    /// @param outputStream the output stream
+    /// @param options      save options controlling compression
+    /// @throws IOException if writing fails
     private void saveCompressed(OutputStream outputStream, PdfSaveOptions options) throws IOException {
         Map<PdfObjectKey, PdfBase> objects = new LinkedHashMap<>();
         int maxObjNum = 0;
@@ -1538,13 +1385,11 @@ public class Document implements Closeable {
         }
     }
 
-    /**
-     * Saves the document as HTML with the specified options.
-     *
-     * @param filePath the output HTML file path
-     * @param options  HTML save options
-     * @throws IOException if conversion or writing fails
-     */
+    /// Saves the document as HTML with the specified options.
+    ///
+    /// @param filePath the output HTML file path
+    /// @param options  HTML save options
+    /// @throws IOException if conversion or writing fails
     public void save(String filePath, HtmlSaveOptions options) throws IOException {
         if (filePath == null) {
             throw new IllegalArgumentException("File path must not be null");
@@ -1557,86 +1402,69 @@ public class Document implements Closeable {
             StandardCharsets.UTF_8);
     }
 
-    /**
-     * Returns the file path this document was loaded from, or {@code null} for new documents
-     * or documents loaded from streams.
-     *
-     * @return the source file path, or {@code null}
-     */
+    /// Returns the file path this document was loaded from, or `null` for new documents
+    /// or documents loaded from streams.
+    ///
+    /// @return the source file path, or `null`
     public String getSourcePath() {
         return sourcePath;
     }
 
-    /**
-     * Returns the file name (path) this document was opened from.
-     *
-     * @return the file name, or {@code null} for new or stream-based documents
-     */
+    /// Returns the file name (path) this document was opened from.
+    ///
+    /// @return the file name, or `null` for new or stream-based documents
     public String getFileName() {
         return fileName;
     }
 
-    /**
-     * Sets the file name associated with this document.
-     *
-     * @param fileName the file name to set
-     */
+    /// Sets the file name associated with this document.
+    ///
+    /// @param fileName the file name to set
     public void setFileName(String fileName) {
         this.fileName = fileName;
     }
 
-    /**
-     * Exports all annotations from this document to an XFDF file.
-     *
-     * @param filePath the output XFDF file path
-     * @throws IOException if writing fails
-     */
+    /// Exports all annotations from this document to an XFDF file.
+    ///
+    /// @param filePath the output XFDF file path
+    /// @throws IOException if writing fails
     public void exportAnnotationsToXfdf(String filePath) throws IOException {
         XfdfExporter.export(this, filePath);
     }
 
-    /**
-     * Exports all annotations from this document to an XFDF output stream.
-     *
-     * @param stream the output stream to write XFDF XML to
-     * @throws IOException if writing fails
-     */
+    /// Exports all annotations from this document to an XFDF output stream.
+    ///
+    /// @param stream the output stream to write XFDF XML to
+    /// @throws IOException if writing fails
     public void exportAnnotationsToXfdf(OutputStream stream) throws IOException {
         XfdfExporter.export(this, stream);
     }
 
-    /**
-     * Imports annotations from an XFDF file into this document.
-     *
-     * @param filePath the path to the XFDF file
-     * @throws IOException if reading fails
-     */
+    /// Imports annotations from an XFDF file into this document.
+    ///
+    /// @param filePath the path to the XFDF file
+    /// @throws IOException if reading fails
     public void importAnnotationsFromXfdf(String filePath) throws IOException {
         XfdfImporter.importXfdf(this, filePath);
     }
 
-    /**
-     * Imports annotations from an XFDF input stream into this document.
-     *
-     * @param stream the input stream containing XFDF XML
-     * @throws IOException if reading fails
-     */
+    /// Imports annotations from an XFDF input stream into this document.
+    ///
+    /// @param stream the input stream containing XFDF XML
+    /// @throws IOException if reading fails
     public void importAnnotationsFromXfdf(InputStream stream) throws IOException {
         XfdfImporter.importXfdf(this, stream);
     }
 
-    /**
-     * Flattens the entire document: bakes all annotation and form field appearances
-     * into page content streams, then removes annotations and form fields.
-     * <p>
-     * This iterates all pages calling {@link Page#flattenAnnotations()}, then
-     * calls {@link Form#flatten()} to remove form fields. After flattening,
-     * annotations and form fields are no longer interactive -- their visual
-     * appearance becomes part of the static page content.
-     * </p>
-     *
-     * @throws IOException if reading pages, annotations, or form data fails
-     */
+    /// Flattens the entire document: bakes all annotation and form field appearances
+    /// into page content streams, then removes annotations and form fields.
+    ///
+    /// This iterates all pages calling [Page#flattenAnnotations()], then
+    /// calls [Form#flatten()] to remove form fields. After flattening,
+    /// annotations and form fields are no longer interactive -- their visual
+    /// appearance becomes part of the static page content.
+    ///
+    /// @throws IOException if reading pages, annotations, or form data fails
     public void flatten() throws IOException {
         PageCollection pgs = getPages();
         for (int i = 1; i <= pgs.getCount(); i++) {
@@ -1645,16 +1473,13 @@ public class Document implements Closeable {
         getForm().flatten();
     }
 
-    /**
-     * Flattens the document using the specified form flatten settings.
-     * <p>
-     * Bakes all annotation appearances into page content streams and flattens
-     * form fields according to the provided {@link Form.FlattenSettings}.
-     * </p>
-     *
-     * @param settings the flatten settings controlling the flattening behavior
-     * @throws IOException if reading pages, annotations, or form data fails
-     */
+    /// Flattens the document using the specified form flatten settings.
+    ///
+    /// Bakes all annotation appearances into page content streams and flattens
+    /// form fields according to the provided [Form.FlattenSettings].
+    ///
+    /// @param settings the flatten settings controlling the flattening behavior
+    /// @throws IOException if reading pages, annotations, or form data fails
     public void flatten(Form.FlattenSettings settings) throws IOException {
         PageCollection pgs = getPages();
         for (int i = 1; i <= pgs.getCount(); i++) {
@@ -1663,13 +1488,11 @@ public class Document implements Closeable {
         getForm().flatten(settings);
     }
 
-    /**
-     * Returns the document's named destinations collection.
-     * Provides access to destinations stored in {@code /Dests} or {@code /Names→/Dests}.
-     *
-     * @return the named destinations, or {@code null} if no parser
-     * @throws IOException if the catalog cannot be read
-     */
+    /// Returns the document's named destinations collection.
+    /// Provides access to destinations stored in `/Dests` or `/Names→/Dests`.
+    ///
+    /// @return the named destinations, or `null` if no parser
+    /// @throws IOException if the catalog cannot be read
     public NamedDestinations getNamedDestinations() throws IOException {
         if (namedDestinations == null) {
             PdfDictionary catalog = getCatalog();
@@ -1680,24 +1503,20 @@ public class Document implements Closeable {
         return namedDestinations;
     }
 
-    /**
-     * Returns the page labels, or {@code null} if {@code /PageLabels} is not present.
-     *
-     * @return the page labels, or {@code null}
-     * @throws IOException if the catalog cannot be read
-     */
+    /// Returns the page labels, or `null` if `/PageLabels` is not present.
+    ///
+    /// @return the page labels, or `null`
+    /// @throws IOException if the catalog cannot be read
     public PageLabels getPageLabels() throws IOException {
         if (parser == null) return null;
         return PageLabels.parse(parser.getCatalog());
     }
 
-    /**
-     * Returns the document's tagged content, providing access to the logical structure tree.
-     * Creates the structure tree if it doesn't exist.
-     *
-     * @return the tagged content API
-     * @throws IOException if catalog access fails
-     */
+    /// Returns the document's tagged content, providing access to the logical structure tree.
+    /// Creates the structure tree if it doesn't exist.
+    ///
+    /// @return the tagged content API
+    /// @throws IOException if catalog access fails
     public TaggedContent getTaggedContent() throws IOException {
         if (taggedContent == null) {
             PdfDictionary catalog = getCatalog();
@@ -1708,13 +1527,11 @@ public class Document implements Closeable {
         return taggedContent;
     }
 
-    /**
-     * Returns the logical structure tree for reading.
-     * Returns {@code null} if the document has no structure tree.
-     *
-     * @return the structure tree root, or {@code null}
-     * @throws IOException if catalog access fails
-     */
+    /// Returns the logical structure tree for reading.
+    /// Returns `null` if the document has no structure tree.
+    ///
+    /// @return the structure tree root, or `null`
+    /// @throws IOException if catalog access fails
     public StructTreeRoot getLogicalStructure() throws IOException {
         PdfDictionary catalog = getCatalog();
         if (catalog == null) return null;
@@ -1728,12 +1545,10 @@ public class Document implements Closeable {
         return null;
     }
 
-    /**
-     * Allocates a new object number for a new indirect object.
-     * Starts from max existing object number + 1.
-     *
-     * @return the next available object number
-     */
+    /// Allocates a new object number for a new indirect object.
+    /// Starts from max existing object number + 1.
+    ///
+    /// @return the next available object number
     public int allocateObjectNumber() {
         if (nextNewObjectNumber < 0) {
             if (parser != null) {
@@ -1749,12 +1564,10 @@ public class Document implements Closeable {
         return nextNewObjectNumber++;
     }
 
-    /**
-     * Registers an object imported from another document under a freshly allocated
-     * key. Returns a {@link PdfObjectReference} whose resolver points into this
-     * document's pending-imports map; the object is merged into the output
-     * during save.
-     */
+    /// Registers an object imported from another document under a freshly allocated
+    /// key. Returns a [PdfObjectReference] whose resolver points into this
+    /// document's pending-imports map; the object is merged into the output
+    /// during save.
     public PdfObjectReference registerImportedObject(PdfBase body) {
         if (body == null) throw new IllegalArgumentException("body must not be null");
         PdfObjectKey key = new PdfObjectKey(allocateObjectNumber(), 0);
@@ -1765,17 +1578,15 @@ public class Document implements Closeable {
         return new PdfObjectReference(key, k -> pendingImports.get(k));
     }
 
-    /** Returns the pending-imports map (package-private for PageCollection/save paths). */
+    /// Returns the pending-imports map (package-private for PageCollection/save paths).
     Map<PdfObjectKey, PdfBase> getPendingImports() {
         return pendingImports;
     }
 
-    /**
-     * Collects all PDF objects that have been modified since loading.
-     *
-     * @return map of modified object keys to their PDF objects
-     * @throws IOException if objects cannot be loaded
-     */
+    /// Collects all PDF objects that have been modified since loading.
+    ///
+    /// @return map of modified object keys to their PDF objects
+    /// @throws IOException if objects cannot be loaded
     private Map<PdfObjectKey, PdfBase> collectModifiedObjects() throws IOException {
         Map<PdfObjectKey, PdfBase> modified = new LinkedHashMap<>();
         // Snapshot the key set first — parser.getObject can lazily load new
@@ -1796,25 +1607,21 @@ public class Document implements Closeable {
         return modified;
     }
 
-    /**
-     * Checks if an object or any of its direct children are dirty.
-     * Does not follow indirect references to avoid loading the entire object graph.
-     *
-     * @param obj the object to check
-     * @return {@code true} if the object or any direct child is dirty
-     */
+    /// Checks if an object or any of its direct children are dirty.
+    /// Does not follow indirect references to avoid loading the entire object graph.
+    ///
+    /// @param obj the object to check
+    /// @return `true` if the object or any direct child is dirty
     private boolean isDirtyDeep(PdfBase obj) {
         return isDirtyDeep(obj, 0);
     }
 
-    /**
-     * Recursively checks if an object or any of its direct children are dirty.
-     * Does not follow indirect references. Depth-limited to prevent infinite loops.
-     *
-     * @param obj   the object to check
-     * @param depth current recursion depth
-     * @return {@code true} if any nested direct object is dirty
-     */
+    /// Recursively checks if an object or any of its direct children are dirty.
+    /// Does not follow indirect references. Depth-limited to prevent infinite loops.
+    ///
+    /// @param obj   the object to check
+    /// @param depth current recursion depth
+    /// @return `true` if any nested direct object is dirty
     private boolean isDirtyDeep(PdfBase obj, int depth) {
         if (obj == null || depth > 5) return false;
         if (obj.isDirty()) return true;
@@ -1837,14 +1644,12 @@ public class Document implements Closeable {
         return false;
     }
 
-    /**
-     * Performs an incremental save: copies original file bytes + appends modified objects.
-     * ISO 32000-1:2008 §7.5.6.
-     *
-     * @param outputStream    the output stream
-     * @param modifiedObjects the objects that have been modified
-     * @throws IOException if writing fails
-     */
+    /// Performs an incremental save: copies original file bytes + appends modified objects.
+    /// ISO 32000-1:2008 §7.5.6.
+    ///
+    /// @param outputStream    the output stream
+    /// @param modifiedObjects the objects that have been modified
+    /// @throws IOException if writing fails
     private void saveIncremental(OutputStream outputStream,
                                   Map<PdfObjectKey, PdfBase> modifiedObjects) throws IOException {
         RandomAccessReader original = sourcePath != null
@@ -1859,20 +1664,16 @@ public class Document implements Closeable {
         }
     }
 
-    /**
-     * Performs a full rewrite of the PDF (collects all objects and writes a complete file).
-     *
-     * @param outputStream the output stream
-     * @throws IOException if writing fails
-     */
-    /**
-     * Whether an object is stale file-structure metadata that a full rewrite regenerates and must
-     * NOT emit as a body object: a cross-reference stream ({@code /Type /XRef}) or an object stream
-     * ({@code /Type /ObjStm}). The parser exposes these as ordinary objects (and decompresses ObjStm
-     * members into their own keys), so writing the containers too would leave an orphaned XRef-stream
-     * object — carrying the source's {@code /Prev} offset — which strict viewers (Acrobat/Chrome)
-     * report as "damaged, but can be repaired".
-     */
+    /// Performs a full rewrite of the PDF (collects all objects and writes a complete file).
+    ///
+    /// @param outputStream the output stream
+    /// @throws IOException if writing fails
+    /// Whether an object is stale file-structure metadata that a full rewrite regenerates and must
+    /// NOT emit as a body object: a cross-reference stream (`/Type /XRef`) or an object stream
+    /// (`/Type /ObjStm`). The parser exposes these as ordinary objects (and decompresses ObjStm
+    /// members into their own keys), so writing the containers too would leave an orphaned XRef-stream
+    /// object — carrying the source's `/Prev` offset — which strict viewers (Acrobat/Chrome)
+    /// report as "damaged, but can be repaired".
     private static boolean isStaleFileStructure(PdfBase obj) {
         if (obj instanceof PdfDictionary) {
             String type = ((PdfDictionary) obj).getNameAsString("Type");
@@ -1936,26 +1737,22 @@ public class Document implements Closeable {
         writer.write(trailer, objects);
     }
 
-    /**
-     * Saves to the same file the document was loaded from.
-     * Strategy: write to temp file, then rename.
-     * This is necessary because we need to read the original while writing.
-     *
-     * @param filePath the file path (same as sourcePath)
-     * @throws IOException if writing or renaming fails
-     */
+    /// Saves to the same file the document was loaded from.
+    /// Strategy: write to temp file, then rename.
+    /// This is necessary because we need to read the original while writing.
+    ///
+    /// @param filePath the file path (same as sourcePath)
+    /// @throws IOException if writing or renaming fails
     private void saveToSameFile(String filePath) throws IOException {
         saveToSameFileWith(filePath, this::save);
     }
 
-    /**
-     * Functional variant of {@link #saveToSameFile}: lets the caller supply an
-     * alternate writer (linearized, compressed, etc) while keeping the temp-file
-     * + close-parser + atomic-move dance in one place. The parser's reader is
-     * closed only after the writer finishes so writers that re-read from the
-     * source stream (linearizer's PageObjectCollector, encryption sync) still see
-     * the original bytes.
-     */
+    /// Functional variant of [#saveToSameFile]: lets the caller supply an
+    /// alternate writer (linearized, compressed, etc) while keeping the temp-file
+    /// + close-parser + atomic-move dance in one place. The parser's reader is
+    /// closed only after the writer finishes so writers that re-read from the
+    /// source stream (linearizer's PageObjectCollector, encryption sync) still see
+    /// the original bytes.
     @FunctionalInterface
     private interface IOConsumer {
         void accept(OutputStream out) throws IOException;
@@ -1992,9 +1789,7 @@ public class Document implements Closeable {
         }
     }
 
-    /**
-     * Checks whether two file paths refer to the same file.
-     */
+    /// Checks whether two file paths refer to the same file.
     private boolean isSameFile(String path1, String path2) {
         try {
             return Path.of(path1).toRealPath().equals(Path.of(path2).toRealPath());
@@ -2030,10 +1825,8 @@ public class Document implements Closeable {
         }
     }
 
-    /**
-     * Saves a new document (created with the default constructor) by building the
-     * object graph from the in-memory page tree.
-     */
+    /// Saves a new document (created with the default constructor) by building the
+    /// object graph from the in-memory page tree.
     private void saveNewDocument(OutputStream outputStream) throws IOException {
         // A PDF is required by the spec (ISO 32000-1 §7.7.3) to have at least
         // one page. If the user called `new Document()` + `save()` without
@@ -2331,20 +2124,18 @@ public class Document implements Closeable {
         writer.write(trailer, objects);
     }
 
-    /**
-     * Promotes a form field's inline {@code /Kids} entries to top-level
-     * indirect objects (ISO 32000-1:2008 §12.7.4.1 Table 220 requires
-     * {@code /Kids} to hold indirect references). Each promoted kid:
-     * <ul>
-     *   <li>is assigned a fresh object key and registered in {@code objects};</li>
-     *   <li>has its {@code /Parent} set to {@code parentRef};</li>
-     *   <li>is replaced in the {@code /Kids} array by an indirect reference;</li>
-     *   <li>is appended to its page's {@code /Annots} (the kid is the actual
-     *       widget annotation) if not already present.</li>
-     * </ul>
-     * Returns the updated max object number. No-op for fields without a
-     * {@code /Kids} array or whose kids are already indirect.
-     */
+    /// Promotes a form field's inline `/Kids` entries to top-level
+    /// indirect objects (ISO 32000-1:2008 §12.7.4.1 Table 220 requires
+    /// `/Kids` to hold indirect references). Each promoted kid:
+    ///
+    ///   - is assigned a fresh object key and registered in `objects`;
+    ///   - has its `/Parent` set to `parentRef`;
+    ///   - is replaced in the `/Kids` array by an indirect reference;
+    ///   - is appended to its page's `/Annots` (the kid is the actual
+    ///     widget annotation) if not already present.
+    ///
+    /// Returns the updated max object number. No-op for fields without a
+    /// `/Kids` array or whose kids are already indirect.
     private int promoteFieldKidsToIndirect(PdfDictionary fieldDict,
                                            PdfObjectReference parentRef,
                                            Page fieldPage,
@@ -2430,14 +2221,10 @@ public class Document implements Closeable {
         return objNum;
     }
 
-    /**
-     * Syncs XMP metadata to the catalog as a /Metadata PdfStream.
-     * Returns the updated max object number.
-     */
-    /**
-     * Recursively registers outline items as indirect objects in the objects map.
-     * Returns the updated max object number.
-     */
+    /// Syncs XMP metadata to the catalog as a /Metadata PdfStream.
+    /// Returns the updated max object number.
+    /// Recursively registers outline items as indirect objects in the objects map.
+    /// Returns the updated max object number.
     private static int registerOutlineItems(Iterable<OutlineItemCollection> items,
                                              Map<PdfObjectKey, PdfBase> objects, int maxObjNum) {
         for (OutlineItemCollection item : items) {
@@ -2477,18 +2264,14 @@ public class Document implements Closeable {
         return maxObjNum;
     }
 
-    /**
-     * Initializes security/decryption if the document is encrypted.
-     * Tries the provided password first, then empty password.
-     */
+    /// Initializes security/decryption if the document is encrypted.
+    /// Tries the provided password first, then empty password.
     private void initSecurity(String password) throws IOException {
         initSecurity(password, null);
     }
 
-    /**
-     * Initializes security/decryption if the document is encrypted.
-     * Tries the provided password first, then empty password.
-     */
+    /// Initializes security/decryption if the document is encrypted.
+    /// Tries the provided password first, then empty password.
     private void initSecurity(String password, ICustomSecurityHandler customHandler) throws IOException {
         if (parser == null || !parser.isEncrypted()) return;
         byte[] pwBytes = (password != null)
@@ -2497,30 +2280,25 @@ public class Document implements Closeable {
         parser.initSecurity(pwBytes, customHandler);
     }
 
-    /**
-     * Returns true if this document is encrypted.
-     *
-     * @return true if encrypted
-     */
+    /// Returns true if this document is encrypted.
+    ///
+    /// @return true if encrypted
     public boolean isEncrypted() {
         return (parser != null && parser.isEncrypted())
                 || pendingEncDict != null
                 || pendingEncryptor != null;
     }
 
-    /**
-     * Encrypts the document with user and owner passwords using the specified algorithm.
-     * <p>
-     * The encryption is applied when the document is saved. The permissions parameter
-     * is a bitmask per ISO 32000-1:2008 Table 22.
-     * </p>
-     *
-     * @param userPassword    the user password (empty string for no user password)
-     * @param ownerPassword   the owner password
-     * @param permissions     permission flags bitmask (ISO 32000 Table 22)
-     * @param cryptoAlgorithm the encryption algorithm to use
-     * @throws IOException if the document structure cannot be accessed
-     */
+    /// Encrypts the document with user and owner passwords using the specified algorithm.
+    ///
+    /// The encryption is applied when the document is saved. The permissions parameter
+    /// is a bitmask per ISO 32000-1:2008 Table 22.
+    ///
+    /// @param userPassword    the user password (empty string for no user password)
+    /// @param ownerPassword   the owner password
+    /// @param permissions     permission flags bitmask (ISO 32000 Table 22)
+    /// @param cryptoAlgorithm the encryption algorithm to use
+    /// @throws IOException if the document structure cannot be accessed
     public void encrypt(String userPassword, String ownerPassword,
                         int permissions, CryptoAlgorithm cryptoAlgorithm) throws IOException {
         if (cryptoAlgorithm == null) {
@@ -2648,15 +2426,13 @@ public class Document implements Closeable {
         LOG.fine(() -> "Document encryption prepared: " + cryptoAlgorithm + ", R=" + R);
     }
 
-    /**
-     * Encrypts the document with a custom security handler.
-     *
-     * @param userPassword user password
-     * @param ownerPassword owner password
-     * @param privilege privilege set
-     * @param customHandler custom security handler
-     * @throws IOException if document access fails
-     */
+    /// Encrypts the document with a custom security handler.
+    ///
+    /// @param userPassword user password
+    /// @param ownerPassword owner password
+    /// @param privilege privilege set
+    /// @param customHandler custom security handler
+    /// @throws IOException if document access fails
     public void encrypt(String userPassword, String ownerPassword,
                         org.aspose.pdf.facades.DocumentPrivilege privilege,
                         ICustomSecurityHandler customHandler) throws IOException {
@@ -2693,17 +2469,15 @@ public class Document implements Closeable {
         this.pendingDocumentId = getOrCreateDocumentId();
     }
 
-    /**
-     * Encrypts the document with user and owner passwords using the specified algorithm
-     * and privilege set. This is the Aspose-compatible 5-argument overload.
-     *
-     * @param userPassword    the user password (empty string for no user password)
-     * @param ownerPassword   the owner password
-     * @param privilege       the document privilege (permissions)
-     * @param cryptoAlgorithm the encryption algorithm to use
-     * @param usePdf20        reserved for future use (PDF 2.0 encryption)
-     * @throws IOException if the document structure cannot be accessed
-     */
+    /// Encrypts the document with user and owner passwords using the specified algorithm
+    /// and privilege set. This is the Aspose-compatible 5-argument overload.
+    ///
+    /// @param userPassword    the user password (empty string for no user password)
+    /// @param ownerPassword   the owner password
+    /// @param privilege       the document privilege (permissions)
+    /// @param cryptoAlgorithm the encryption algorithm to use
+    /// @param usePdf20        reserved for future use (PDF 2.0 encryption)
+    /// @throws IOException if the document structure cannot be accessed
     public void encrypt(String userPassword, String ownerPassword,
                         org.aspose.pdf.facades.DocumentPrivilege privilege,
                         CryptoAlgorithm cryptoAlgorithm, boolean usePdf20) throws IOException {
@@ -2712,10 +2486,8 @@ public class Document implements Closeable {
                 cryptoAlgorithm);
     }
 
-    /**
-     * Returns an existing document ID from the trailer /ID array,
-     * or generates a random 16-byte ID for new documents.
-     */
+    /// Returns an existing document ID from the trailer /ID array,
+    /// or generates a random 16-byte ID for new documents.
     private byte[] getOrCreateDocumentId() {
         if (pendingDocumentId != null) {
             return pendingDocumentId;
@@ -2740,16 +2512,14 @@ public class Document implements Closeable {
         return id;
     }
 
-    /**
-     * Configures the PDFWriter with encryption and adds /Encrypt and /ID to the trailer.
-     * Called by save paths when pending encryption is active.
-     *
-     * @param writer  the PDFWriter to configure
-     * @param trailer the trailer dictionary to update
-     * @param objects the object map (receives the /Encrypt dict)
-     * @param maxObjNum the current maximum object number
-     * @return the updated maximum object number
-     */
+    /// Configures the PDFWriter with encryption and adds /Encrypt and /ID to the trailer.
+    /// Called by save paths when pending encryption is active.
+    ///
+    /// @param writer  the PDFWriter to configure
+    /// @param trailer the trailer dictionary to update
+    /// @param objects the object map (receives the /Encrypt dict)
+    /// @param maxObjNum the current maximum object number
+    /// @return the updated maximum object number
     private int applyPendingEncryption(PDFWriter writer, PdfDictionary trailer,
                                         Map<PdfObjectKey, PdfBase> objects, int maxObjNum) {
         if (pendingEncryptor == null || pendingEncDict == null) {
@@ -2796,10 +2566,8 @@ public class Document implements Closeable {
         return maxObjNum;
     }
 
-    /**
-     * Reuses the original file encryption when saving an already encrypted document
-     * unless the caller explicitly requested new encryption or decryption.
-     */
+    /// Reuses the original file encryption when saving an already encrypted document
+    /// unless the caller explicitly requested new encryption or decryption.
     private void configureExistingEncryption(PDFWriter writer, PdfDictionary trailer) throws IOException {
         if (pendingEncryptor != null || pendingEncDict != null || parser == null || !parser.isEncrypted()) {
             return;
@@ -2833,16 +2601,13 @@ public class Document implements Closeable {
         }
     }
 
-    /**
-     * Decrypts the document, removing encryption.
-     * <p>
-     * After calling this method and saving, the output PDF will not be encrypted.
-     * The document must have been opened with the correct password.
-     * </p>
-     *
-     * @throws IOException if the document structure cannot be accessed
-     */
-public void decrypt() throws IOException {
+    /// Decrypts the document, removing encryption.
+    ///
+    /// After calling this method and saving, the output PDF will not be encrypted.
+    /// The document must have been opened with the correct password.
+    ///
+    /// @throws IOException if the document structure cannot be accessed
+    public void decrypt() throws IOException {
         LOG.fine("Decrypting document — removing encryption dictionary");
         if (parser != null) {
             for (PdfObjectKey key : parser.getAllObjectKeys()) {
@@ -2895,16 +2660,13 @@ public void decrypt() throws IOException {
         }
     }
 
-    /**
-     * Returns the JavaScript collection from the document's name tree.
-     * <p>
-     * Reads the {@code /Names -> /JavaScript} name tree from the catalog
-     * (ISO 32000-1:2008, Section 12.6.4.16).
-     * </p>
-     *
-     * @return the JavaScript collection, or null if no catalog is available
-     * @throws IOException if the catalog cannot be read
-     */
+    /// Returns the JavaScript collection from the document's name tree.
+    ///
+    /// Reads the `/Names -> /JavaScript` name tree from the catalog
+    /// (ISO 32000-1:2008, Section 12.6.4.16).
+    ///
+    /// @return the JavaScript collection, or null if no catalog is available
+    /// @throws IOException if the catalog cannot be read
     public JavaScriptCollection getJavaScript() throws IOException {
         PdfDictionary catalog = getCatalog();
         if (catalog == null) return null;
@@ -2916,14 +2678,12 @@ public void decrypt() throws IOException {
     private boolean pdfaCompliant = false;
     private PdfFormat pdfFormat;
 
-    /**
-     * Validates the document against the specified PDF format profile.
-     *
-     * @param outputLogPath path to write the validation log XML
-     * @param format        the target PDF format
-     * @return true if the document is compliant
-     * @throws IOException if validation or log writing fails
-     */
+    /// Validates the document against the specified PDF format profile.
+    ///
+    /// @param outputLogPath path to write the validation log XML
+    /// @param format        the target PDF format
+    /// @return true if the document is compliant
+    /// @throws IOException if validation or log writing fails
     public boolean validate(String outputLogPath, PdfFormat format) throws IOException {
         org.aspose.pdf.engine.pdfa.PdfAValidator validator =
                 new org.aspose.pdf.engine.pdfa.PdfAValidator();
@@ -2934,14 +2694,12 @@ public void decrypt() throws IOException {
         return pdfaCompliant;
     }
 
-    /**
-     * Validates the document against the specified PDF format profile.
-     *
-     * @param logStream stream to write the validation log XML
-     * @param format    the target PDF format
-     * @return true if the document is compliant
-     * @throws IOException if validation or log writing fails
-     */
+    /// Validates the document against the specified PDF format profile.
+    ///
+    /// @param logStream stream to write the validation log XML
+    /// @param format    the target PDF format
+    /// @return true if the document is compliant
+    /// @throws IOException if validation or log writing fails
     public boolean validate(OutputStream logStream, PdfFormat format) throws IOException {
         org.aspose.pdf.engine.pdfa.PdfAValidator validator =
                 new org.aspose.pdf.engine.pdfa.PdfAValidator();
@@ -2952,13 +2710,11 @@ public void decrypt() throws IOException {
         return pdfaCompliant;
     }
 
-    /**
-     * Validates the document using a PDF/A validation option object.
-     *
-     * @param options the validation options
-     * @return true if the document is compliant with the requested format
-     * @throws IOException if validation or log writing fails
-     */
+    /// Validates the document using a PDF/A validation option object.
+    ///
+    /// @param options the validation options
+    /// @return true if the document is compliant with the requested format
+    /// @throws IOException if validation or log writing fails
     public boolean validate(PdfFormatConversionOptions options) throws IOException {
         if (options == null) {
             throw new IllegalArgumentException("options must not be null");
@@ -2980,15 +2736,13 @@ public void decrypt() throws IOException {
         return pdfaCompliant;
     }
 
-    /**
-     * Converts the document to the specified PDF format.
-     *
-     * @param outputLogPath path to write the conversion log XML
-     * @param format        the target PDF format
-     * @param action        how to handle non-convertible elements
-     * @return true if conversion succeeded
-     * @throws IOException if conversion fails
-     */
+    /// Converts the document to the specified PDF format.
+    ///
+    /// @param outputLogPath path to write the conversion log XML
+    /// @param format        the target PDF format
+    /// @param action        how to handle non-convertible elements
+    /// @return true if conversion succeeded
+    /// @throws IOException if conversion fails
     public boolean convert(String outputLogPath, PdfFormat format,
                            ConvertErrorAction action) throws IOException {
         PdfFormatConversionOptions options =
@@ -2996,15 +2750,13 @@ public void decrypt() throws IOException {
         return convert(options);
     }
 
-    /**
-     * Converts the document to the specified PDF format.
-     *
-     * @param logStream stream to write the conversion log XML
-     * @param format    the target PDF format
-     * @param action    how to handle non-convertible elements
-     * @return true if conversion succeeded
-     * @throws IOException if conversion fails
-     */
+    /// Converts the document to the specified PDF format.
+    ///
+    /// @param logStream stream to write the conversion log XML
+    /// @param format    the target PDF format
+    /// @param action    how to handle non-convertible elements
+    /// @return true if conversion succeeded
+    /// @throws IOException if conversion fails
     public boolean convert(OutputStream logStream, PdfFormat format,
                            ConvertErrorAction action) throws IOException {
         PdfFormatConversionOptions options =
@@ -3012,16 +2764,14 @@ public void decrypt() throws IOException {
         return convert(options);
     }
 
-    /**
-     * Converts with explicit transparency handling.
-     *
-     * @param logStream          stream to write the conversion log XML
-     * @param format             the target PDF format
-     * @param action             how to handle non-convertible elements
-     * @param transparencyAction how to handle transparency
-     * @return true if conversion succeeded
-     * @throws IOException if conversion fails
-     */
+    /// Converts with explicit transparency handling.
+    ///
+    /// @param logStream          stream to write the conversion log XML
+    /// @param format             the target PDF format
+    /// @param action             how to handle non-convertible elements
+    /// @param transparencyAction how to handle transparency
+    /// @return true if conversion succeeded
+    /// @throws IOException if conversion fails
     public boolean convert(OutputStream logStream, PdfFormat format,
                            ConvertErrorAction action,
                            ConvertTransparencyAction transparencyAction) throws IOException {
@@ -3031,13 +2781,11 @@ public void decrypt() throws IOException {
         return convert(options);
     }
 
-    /**
-     * Converts using detailed conversion options.
-     *
-     * @param options the conversion options
-     * @return true if conversion succeeded
-     * @throws IOException if conversion fails
-     */
+    /// Converts using detailed conversion options.
+    ///
+    /// @param options the conversion options
+    /// @return true if conversion succeeded
+    /// @throws IOException if conversion fails
     public boolean convert(PdfFormatConversionOptions options) throws IOException {
         if (options == null) {
             throw new IllegalArgumentException("options must not be null");
@@ -3089,18 +2837,16 @@ public void decrypt() throws IOException {
         return pdfaCompliant;
     }
 
-    /**
-     * Wraps every page's content in a balanced {@code q}/{@code Q} (save/restore
-     * graphics state) pair as part of PDF/A conversion.
-     * <p>
-     * A page whose content stream opens with state-changing operators (e.g. a
-     * leading {@code cm}) without first saving the graphics state leaks that
-     * state; PDF/A processors expect each page's content to leave the graphics
-     * state as it found it. Prepending {@code q} and appending {@code Q} isolates
-     * the page content, adding exactly two operators per page. This mirrors
-     * Aspose's conversion behaviour (PDFNET-42549, PDFNET-42676).
-     * </p>
-     */
+    /// Wraps every page's content in a balanced `q`/`Q` (save/restore
+    /// graphics state) pair as part of PDF/A conversion.
+    ///
+    /// A page whose content stream opens with state-changing operators (e.g. a
+    /// leading `cm`) without first saving the graphics state leaks that
+    /// state; PDF/A processors expect each page's content to leave the graphics
+    /// state as it found it. Prepending `q` and appending `Q` isolates
+    /// the page content, adding exactly two operators per page. This mirrors
+    /// Aspose's conversion behaviour (PDFNET-42549, PDFNET-42676).
+    ///
     private void isolatePageGraphicsState() throws IOException {
         for (Page page : getPages()) {
             try {
@@ -3118,12 +2864,10 @@ public void decrypt() throws IOException {
         }
     }
 
-    /**
-     * Writes each page's EFFECTIVE (possibly tree-inherited, §7.7.3.4)
-     * {@code /Resources} directly into the page dictionary as part of PDF/A
-     * conversion, mirroring Aspose (PDFNET_49802: after conversion every page
-     * must carry its own /Resources entry).
-     */
+    /// Writes each page's EFFECTIVE (possibly tree-inherited, §7.7.3.4)
+    /// `/Resources` directly into the page dictionary as part of PDF/A
+    /// conversion, mirroring Aspose (PDFNET\_49802: after conversion every page
+    /// must carry its own /Resources entry).
     private void materializeInheritedPageResources() {
         try {
             for (Page page : getPages()) {
@@ -3140,14 +2884,12 @@ public void decrypt() throws IOException {
         }
     }
 
-    /**
-     * PDF/UA-1 (ISO 14289-1 §7.1) requires the logical structure to be rooted at a single
-     * top-level {@code Document} structure element. A tagged source may instead root its tree
-     * at a grouping element such as {@code Part} (a legal PDF structure type, but not the
-     * conventional PDF/UA document root). When converting to PDF/UA, retype a lone non-Document
-     * root grouping element to {@code Document}, mirroring Adobe/Aspose conversion. No-op when
-     * the root is already {@code Document} or there is no struct tree.
-     */
+    /// PDF/UA-1 (ISO 14289-1 §7.1) requires the logical structure to be rooted at a single
+    /// top-level `Document` structure element. A tagged source may instead root its tree
+    /// at a grouping element such as `Part` (a legal PDF structure type, but not the
+    /// conventional PDF/UA document root). When converting to PDF/UA, retype a lone non-Document
+    /// root grouping element to `Document`, mirroring Adobe/Aspose conversion. No-op when
+    /// the root is already `Document` or there is no struct tree.
     private void normalizeStructureRootToDocument() {
         try {
             PdfBase str = parser.resolveReference(parser.getCatalog().get(PdfName.of("StructTreeRoot")));
@@ -3198,13 +2940,11 @@ public void decrypt() throws IOException {
         }
     }
 
-    /**
-     * Walks a dictionary tree (used for embedded fonts), promoting every
-     * {@link PdfStream} value it encounters to an indirect object —
-     * required by §7.3.8 ("Stream objects ... are always indirect").
-     * Returns the new {@code objNum} after consuming as many object keys
-     * as nested streams were found.
-     */
+    /// Walks a dictionary tree (used for embedded fonts), promoting every
+    /// [PdfStream] value it encounters to an indirect object —
+    /// required by §7.3.8 ("Stream objects ... are always indirect").
+    /// Returns the new `objNum` after consuming as many object keys
+    /// as nested streams were found.
     private int liftStreamsToIndirect(PdfDictionary dict,
                                       Map<PdfObjectKey, PdfBase> objects,
                                       int objNum) {
@@ -3320,16 +3060,14 @@ public void decrypt() throws IOException {
         }
     }
 
-    /**
-     * Expands every multi-frame image paragraph (multi-page TIFF) into one
-     * {@link Image} per decodable frame, so pagination emits one page per
-     * frame — matching Aspose.PDF, which turns a 20-frame TIFF added as a
-     * single Image into a 20-page document (PDFNET-38363). Frames after the
-     * first are marked {@link BaseParagraph#setInNewPage(boolean) InNewPage}.
-     * Images with an explicit {@link Image#getSelectedFrame() selected frame}
-     * are left untouched. Returns the original collection when nothing
-     * needed expanding.
-     */
+    /// Expands every multi-frame image paragraph (multi-page TIFF) into one
+    /// [Image] per decodable frame, so pagination emits one page per
+    /// frame — matching Aspose.PDF, which turns a 20-frame TIFF added as a
+    /// single Image into a 20-page document (PDFNET-38363). Frames after the
+    /// first are marked [`InNewPage`][BaseParagraph#setInNewPage(boolean)].
+    /// Images with an explicit [`selected frame`][Image#getSelectedFrame()]
+    /// are left untouched. Returns the original collection when nothing
+    /// needed expanding.
     private Paragraphs expandMultiFrameImages(Paragraphs paragraphs) {
         Paragraphs expanded = null;
         int index = 0;
@@ -3365,7 +3103,7 @@ public void decrypt() throws IOException {
         return expanded != null ? expanded : paragraphs;
     }
 
-    /** Reads an Image paragraph's source bytes (file path or stream) without consuming the original stream twice. */
+    /// Reads an Image paragraph's source bytes (file path or stream) without consuming the original stream twice.
     private byte[] readImageParagraphBytes(Image image) {
         try {
             if (image.getFile() != null) {
@@ -3388,7 +3126,7 @@ public void decrypt() throws IOException {
         return null;
     }
 
-    /** Clones an Image paragraph for one frame of its multi-frame source. */
+    /// Clones an Image paragraph for one frame of its multi-frame source.
     private Image cloneImageForFrame(Image source, byte[] raw, int frame) {
         Image copy = new Image();
         if (source.getFile() != null) {
@@ -3800,42 +3538,34 @@ public void decrypt() throws IOException {
         }
     }
 
-    /**
-     * Converts this PDF to PDF/A-2B format.
-     *
-     * @param outputLogPath the path to write the validation log
-     * @return true if conversion succeeded and document is compliant
-     * @throws IOException if I/O error occurs
-     */
+    /// Converts this PDF to PDF/A-2B format.
+    ///
+    /// @param outputLogPath the path to write the validation log
+    /// @return true if conversion succeeded and document is compliant
+    /// @throws IOException if I/O error occurs
     public boolean convertToPdfA2B(String outputLogPath) throws IOException {
         return convert(outputLogPath, PdfFormat.PDF_A_2B, ConvertErrorAction.Delete);
     }
 
-    /**
-     * Converts this PDF to PDF/A-2B format.
-     *
-     * @param logStream the output stream to write the validation log
-     * @return true if conversion succeeded and document is compliant
-     * @throws IOException if I/O error occurs
-     */
+    /// Converts this PDF to PDF/A-2B format.
+    ///
+    /// @param logStream the output stream to write the validation log
+    /// @return true if conversion succeeded and document is compliant
+    /// @throws IOException if I/O error occurs
     public boolean convertToPdfA2B(OutputStream logStream) throws IOException {
         return convert(logStream, PdfFormat.PDF_A_2B, ConvertErrorAction.Delete);
     }
 
-    /**
-     * Attempts to repair minor structural issues before save, validation or
-     * conversion workflows. The current implementation is intentionally
-     * conservative and performs no destructive rewriting.
-     */
+    /// Attempts to repair minor structural issues before save, validation or
+    /// conversion workflows. The current implementation is intentionally
+    /// conservative and performs no destructive rewriting.
     public void repair() {
         LOG.fine("Document.repair() invoked; no-op repair pass completed");
     }
 
-    /**
-     * Returns true if this document is PDF/A compliant (set after convert() or validate()).
-     *
-     * @return true if compliant
-     */
+    /// Returns true if this document is PDF/A compliant (set after convert() or validate()).
+    ///
+    /// @return true if compliant
     public boolean isPdfaCompliant() {
         if (!pdfaCompliant && parser != null) {
             try {
@@ -3913,20 +3643,16 @@ public void decrypt() throws IOException {
         return recoveredPages;
     }
 
-    /**
-     * Returns the PDF format of this document after conversion.
-     *
-     * @return the PDF format, or null if not converted
-     */
+    /// Returns the PDF format of this document after conversion.
+    ///
+    /// @return the PDF format, or null if not converted
     public PdfFormat getPdfFormat() {
         return pdfFormat;
     }
 
-    /**
-     * Closes the document and releases underlying resources.
-     *
-     * @throws IOException if closing fails
-     */
+    /// Closes the document and releases underlying resources.
+    ///
+    /// @throws IOException if closing fails
     @Override
     public void close() throws IOException {
         if (pages != null) {
@@ -3940,13 +3666,11 @@ public void decrypt() throws IOException {
         LOG.fine("Document closed");
     }
 
-    /**
-     * Flushes each page's cached {@link OperatorCollection} back into the
-     * page's {@code /Contents} stream if it has been mutated. Invoked at the
-     * top of every {@code save(...)} variant so that mutations made through
-     * the cached operator view (e.g. via {@link org.aspose.pdf.text.TextFragment#setText(String)})
-     * are serialised before the document graph is written.
-     */
+    /// Flushes each page's cached [OperatorCollection] back into the
+    /// page's `/Contents` stream if it has been mutated. Invoked at the
+    /// top of every `save(...)` variant so that mutations made through
+    /// the cached operator view (e.g. via [org.aspose.pdf.text.TextFragment#setText(String)])
+    /// are serialised before the document graph is written.
     private void flushDirtyPages() throws IOException {
         editedPageContentsThisSave = false;
         if (pages == null) return;
@@ -3960,18 +3684,16 @@ public void decrypt() throws IOException {
         }
     }
 
-    /**
-     * Serialises layers the user added through {@link Page#getLayers()} /
-     * {@link Page#setLayers(java.util.List)} into the document
-     * (ISO 32000-1:2008, §8.11): registers the OCG dictionary as an indirect
-     * object, references it from the page's {@code /Resources /Properties}
-     * under the layer id, lists it in the catalog's
-     * {@code /OCProperties /OCGs} (+ {@code /D /Order}), and wraps the layer's
-     * operators into an {@code /OC /id BDC … EMC} block appended to the page
-     * content. Layers whose id already appears in {@code /Properties} (i.e.
-     * layers read from the file, or already persisted by a previous save)
-     * are left untouched, so the method is idempotent.
-     */
+    /// Serialises layers the user added through [Page#getLayers()] /
+    /// [Page#setLayers(java.util.List)] into the document
+    /// (ISO 32000-1:2008, §8.11): registers the OCG dictionary as an indirect
+    /// object, references it from the page's `/Resources /Properties`
+    /// under the layer id, lists it in the catalog's
+    /// `/OCProperties /OCGs` (+ `/D /Order`), and wraps the layer's
+    /// operators into an `/OC /id BDC … EMC` block appended to the page
+    /// content. Layers whose id already appears in `/Properties` (i.e.
+    /// layers read from the file, or already persisted by a previous save)
+    /// are left untouched, so the method is idempotent.
     private void persistNewLayers(Page p) {
         java.util.List<Layer> layers = p.peekLayers();
         if (layers == null || layers.isEmpty()) return;
@@ -4017,7 +3739,7 @@ public void decrypt() throws IOException {
         }
     }
 
-    /** Adds an OCG reference to the catalog's /OCProperties (§8.11.4.2). */
+    /// Adds an OCG reference to the catalog's /OCProperties (§8.11.4.2).
     private void registerLayerInOcProperties(PdfObjectReference ocgRef) throws IOException {
         PdfDictionary catalog = getCatalog();
         if (catalog == null) return;
@@ -4057,7 +3779,7 @@ public void decrypt() throws IOException {
         order.add(ocgRef);
     }
 
-    /** Dereferences an indirect reference, returning null on failure. */
+    /// Dereferences an indirect reference, returning null on failure.
     private static PdfBase deref(PdfBase value) {
         if (value instanceof PdfObjectReference) {
             try {
@@ -4069,12 +3791,10 @@ public void decrypt() throws IOException {
         return value;
     }
 
-    /**
-     * @return whether the source PDF used a cross-reference stream or a
-     * hybrid-reference layout ({@code /XRefStm}). Incremental appends over such
-     * files are not reliably resolved on reload, so a content-stream edit must
-     * be persisted via full rewrite instead (BUG-TFA-REPLACE-001).
-     */
+    /// @return whether the source PDF used a cross-reference stream or a
+    /// hybrid-reference layout (`/XRefStm`). Incremental appends over such
+    /// files are not reliably resolved on reload, so a content-stream edit must
+    /// be persisted via full rewrite instead (BUG-TFA-REPLACE-001).
     private boolean sourceUsesXRefStream() {
         if (parser == null) return false;
         PdfDictionary trailer = parser.getTrailer();
@@ -4084,25 +3804,22 @@ public void decrypt() throws IOException {
         return type instanceof PdfName && "XRef".equals(((PdfName) type).getName());
     }
 
-    /**
-     * Ensures the LIVE page-tree root (the dictionary {@link #getPages()} is
-     * actually backed by) is reachable from the catalog before a full rewrite.
-     * <p>
-     * When the source file's catalog {@code /Pages} reference is broken, the
-     * page tree is recovered by scanning
-     * ({@link #recoverPagesDictionaryFromObjects()}); that synthetic root
-     * exists only in memory while the catalog still holds the dangling
-     * reference. A compact rewrite that walks the trailer
-     * (optimizeResources' remove-unused-objects pass) would then reach no
-     * page tree at all and silently drop every page object. Registering the
-     * root as an indirect object and repointing the catalog makes the saved
-     * file self-consistent. No-op for healthy documents.
-     * </p>
-     *
-     * @param objects   the object map being assembled for the rewrite
-     * @param maxObjNum the current maximum object number
-     * @return the possibly-incremented maximum object number
-     */
+    /// Ensures the LIVE page-tree root (the dictionary [#getPages()] is
+    /// actually backed by) is reachable from the catalog before a full rewrite.
+    ///
+    /// When the source file's catalog `/Pages` reference is broken, the
+    /// page tree is recovered by scanning
+    /// ([#recoverPagesDictionaryFromObjects()]); that synthetic root
+    /// exists only in memory while the catalog still holds the dangling
+    /// reference. A compact rewrite that walks the trailer
+    /// (optimizeResources' remove-unused-objects pass) would then reach no
+    /// page tree at all and silently drop every page object. Registering the
+    /// root as an indirect object and repointing the catalog makes the saved
+    /// file self-consistent. No-op for healthy documents.
+    ///
+    /// @param objects   the object map being assembled for the rewrite
+    /// @param maxObjNum the current maximum object number
+    /// @return the possibly-incremented maximum object number
     private int registerLivePageTreeRoot(Map<PdfObjectKey, PdfBase> objects, int maxObjNum) {
         if (pages == null || parser == null) {
             return maxObjNum;
@@ -4127,16 +3844,14 @@ public void decrypt() throws IOException {
         return maxObjNum;
     }
 
-    /**
-     * Ensures the LIVE catalog (what {@link PDFParser#getCatalog()} actually
-     * resolves, possibly recovered by scanning when the trailer's
-     * {@code /Root} was corrupt) is present in the object map under a key the
-     * trailer references. Companion to {@link #registerLivePageTreeRoot}: a
-     * rewrite that copies the broken trailer verbatim produces a file whose
-     * {@code /Root} points at nothing even though the source document opened
-     * fine through recovery. Mutates the parser trailer so every subsequent
-     * copy inherits the repaired reference. No-op for healthy documents.
-     */
+    /// Ensures the LIVE catalog (what [PDFParser#getCatalog()] actually
+    /// resolves, possibly recovered by scanning when the trailer's
+    /// `/Root` was corrupt) is present in the object map under a key the
+    /// trailer references. Companion to [#registerLivePageTreeRoot]: a
+    /// rewrite that copies the broken trailer verbatim produces a file whose
+    /// `/Root` points at nothing even though the source document opened
+    /// fine through recovery. Mutates the parser trailer so every subsequent
+    /// copy inherits the repaired reference. No-op for healthy documents.
     private int registerLiveCatalog(Map<PdfObjectKey, PdfBase> objects, int maxObjNum) {
         if (parser == null) {
             return maxObjNum;
@@ -4222,19 +3937,17 @@ public void decrypt() throws IOException {
         }
     }
 
-    /**
-     * Prunes unused entries from page resource dictionaries.
-     * <p>
-     * Resource dictionaries may be SHARED between pages (§7.8.3) — commonly a
-     * single {@code /Resources} referenced by every page (LibreOffice/Writer
-     * output). A dictionary is therefore pruned exactly once, against the
-     * UNION of the usage of every page that references it; pruning with a
-     * single page's usage would drop entries that sibling pages still paint
-     * (that bug blanked every image in multi-page shared-resources files).
-     * A page whose content fails to parse marks its dictionary unprunable —
-     * without its usage the union would be incomplete.
-     * </p>
-     */
+    /// Prunes unused entries from page resource dictionaries.
+    ///
+    /// Resource dictionaries may be SHARED between pages (§7.8.3) — commonly a
+    /// single `/Resources` referenced by every page (LibreOffice/Writer
+    /// output). A dictionary is therefore pruned exactly once, against the
+    /// UNION of the usage of every page that references it; pruning with a
+    /// single page's usage would drop entries that sibling pages still paint
+    /// (that bug blanked every image in multi-page shared-resources files).
+    /// A page whose content fails to parse marks its dictionary unprunable —
+    /// without its usage the union would be incomplete.
+    ///
     private void pruneUnusedResourcesAcrossPages() throws IOException {
         // Aspose semantics, established by the C# regression tests:
         //  - Declared-but-unused NON-STREAM resource entries survive
@@ -4351,10 +4064,8 @@ public void decrypt() throws IOException {
         }
     }
 
-    /**
-     * Merges one consumer's usage into the per-sub-dictionary unions and
-     * enqueues the form XObjects that consumer actually paints.
-     */
+    /// Merges one consumer's usage into the per-sub-dictionary unions and
+    /// enqueues the form XObjects that consumer actually paints.
     private void accumulateSubDictUsage(PdfDictionary resourcesDict, ResourceUsage usage,
             java.util.Map<String, java.util.IdentityHashMap<PdfDictionary, Set<String>>> subUnions,
             java.util.Set<PdfDictionary> unprunable,
@@ -4504,7 +4215,7 @@ public void decrypt() throws IOException {
         private final Set<String> patterns = new LinkedHashSet<>();
         private final Set<String> shadings = new LinkedHashSet<>();
         private final Set<String> properties = new LinkedHashSet<>();
-        /** When true the owning dict must not be pruned (a user's content failed to parse). */
+        /// When true the owning dict must not be pruned (a user's content failed to parse).
         private boolean unsafe;
 
         void merge(ResourceUsage other) {
@@ -4519,13 +4230,11 @@ public void decrypt() throws IOException {
         }
     }
 
-    /**
-     * Reads all bytes from an input stream.
-     *
-     * @param stream the input stream
-     * @return the byte array
-     * @throws IOException if reading fails
-     */
+    /// Reads all bytes from an input stream.
+    ///
+    /// @param stream the input stream
+    /// @return the byte array
+    /// @throws IOException if reading fails
     private static byte[] readAllBytes(InputStream stream) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream(8192);
         byte[] buf = new byte[8192];

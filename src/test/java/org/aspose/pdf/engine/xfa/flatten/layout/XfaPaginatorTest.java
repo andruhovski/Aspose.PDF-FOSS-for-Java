@@ -16,13 +16,11 @@ import java.nio.charset.StandardCharsets;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * L3 — applies the split to a paginated Layout DOM and emits multi-page output. C oracle:
- * content conserved across pages (Σ = whole, nothing dropped/duplicated), page count ==
- * SplitPlan, rows rebased to the page top; pageArea selection (ordered + occur); positioned
- * page-subform forms (the 408975 pattern) emit one page per page-subform; per-page paint works
- * and reload is stable.
- */
+/// L3 — applies the split to a paginated Layout DOM and emits multi-page output. C oracle:
+/// content conserved across pages (Σ = whole, nothing dropped/duplicated), page count ==
+/// SplitPlan, rows rebased to the page top; pageArea selection (ordered + occur); positioned
+/// page-subform forms (the 408975 pattern) emit one page per page-subform; per-page paint works
+/// and reload is stable.
 public class XfaPaginatorTest {
 
     private static final String TPL = XfaNode.TEMPLATE_NS;

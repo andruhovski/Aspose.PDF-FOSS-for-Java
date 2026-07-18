@@ -14,14 +14,10 @@ import java.awt.image.BufferedImage;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link PdfPageRenderer}.
- */
+/// Tests for [PdfPageRenderer].
 public class PdfPageRendererTest {
 
-    /**
-     * Creates a minimal Page with a MediaBox but no content stream.
-     */
+    /// Creates a minimal Page with a MediaBox but no content stream.
     private Page createEmptyPage(double width, double height) {
         PdfDictionary pageDict = new PdfDictionary();
         pageDict.set(PdfName.of("Type"), PdfName.of("Page"));

@@ -1,11 +1,6 @@
 package org.aspose.pdf.engine.xfa.packet;
 
-import org.aspose.pdf.engine.pdfobjects.PdfArray;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
-import org.aspose.pdf.engine.pdfobjects.PdfStream;
-import org.aspose.pdf.engine.pdfobjects.PdfString;
+import org.aspose.pdf.engine.pdfobjects.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -19,15 +14,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Reads the AcroForm {@code /XFA} entry into a typed {@link XfaPacketSet}.
- *
- * <p>The {@code /XFA} value is either a single {@link PdfStream} holding a
- * complete XDP document, or a {@link PdfArray} of interleaved name/stream pairs
- * (ISO 32000-1 sec 12.7.8). This reader handles both, preserving each packet's
- * source bytes (array form) and assembling an XDP document. The packet-splitting
- * behaviour is identical to the former {@code forms.xfa.XfaPacketParser}.</p>
- */
+/// Reads the AcroForm `/XFA` entry into a typed [XfaPacketSet].
+///
+/// The `/XFA` value is either a single [PdfStream] holding a
+/// complete XDP document, or a [PdfArray] of interleaved name/stream pairs
+/// (ISO 32000-1 sec 12.7.8). This reader handles both, preserving each packet's
+/// source bytes (array form) and assembling an XDP document. The packet-splitting
+/// behaviour is identical to the former `forms.xfa.XfaPacketParser`.
 public final class XfaPacketReader {
 
     private static final Logger LOG = Logger.getLogger(XfaPacketReader.class.getName());
@@ -35,14 +28,12 @@ public final class XfaPacketReader {
 
     private XfaPacketReader() { }
 
-    /**
-     * Reads and splits the {@code /XFA} entry.
-     *
-     * @param xfaEntry the resolved {@code /XFA} value (PdfArray or PdfStream)
-     * @return the parsed packet set
-     * @throws IOException              if reading/parsing fails
-     * @throws IllegalArgumentException if {@code xfaEntry} is null or an unsupported type
-     */
+    /// Reads and splits the `/XFA` entry.
+    ///
+    /// @param xfaEntry the resolved `/XFA` value (PdfArray or PdfStream)
+    /// @return the parsed packet set
+    /// @throws IOException              if reading/parsing fails
+    /// @throws IllegalArgumentException if `xfaEntry` is null or an unsupported type
     public static XfaPacketSet read(PdfBase xfaEntry) throws IOException {
         if (xfaEntry == null) {
             throw new IllegalArgumentException("XFA entry must not be null");

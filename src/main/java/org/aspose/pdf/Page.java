@@ -1,24 +1,13 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.pdfobjects.PdfArray;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfFloat;
-import org.aspose.pdf.engine.pdfobjects.PdfInteger;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
-import org.aspose.pdf.engine.pdfobjects.PdfStream;
-import org.aspose.pdf.engine.pdfobjects.PdfString;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectCloner;
+import org.aspose.pdf.annotations.AnnotationCollection;
 import org.aspose.pdf.engine.layout.ContentStreamBuilder;
 import org.aspose.pdf.engine.parser.ContentStreamParser;
 import org.aspose.pdf.engine.parser.PDFParser;
-
+import org.aspose.pdf.engine.pdfobjects.*;
 import org.aspose.pdf.operators.BDC;
 import org.aspose.pdf.operators.BMC;
 import org.aspose.pdf.operators.EMC;
-import org.aspose.pdf.annotations.Annotation;
-import org.aspose.pdf.annotations.AnnotationCollection;
 import org.aspose.pdf.text.TextAbsorber;
 import org.aspose.pdf.text.TextFragment;
 import org.aspose.pdf.text.TextFragmentAbsorber;
@@ -31,15 +20,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
-/**
- * Represents a single PDF page (ISO 32000-1:2008, §7.7.3.3).
- * <p>
- * Wraps a page dictionary and provides access to page properties such as
- * media box, crop box, rotation, resources, and content streams.
- * Inheritable properties (/MediaBox, /CropBox, /Resources, /Rotate) are
- * resolved by walking up the /Parent chain as specified in §7.7.3.4.
- * </p>
- */
+/// Represents a single PDF page (ISO 32000-1:2008, §7.7.3.3).
+///
+/// Wraps a page dictionary and provides access to page properties such as
+/// media box, crop box, rotation, resources, and content streams.
+/// Inheritable properties (/MediaBox, /CropBox, /Resources, /Rotate) are
+/// resolved by walking up the /Parent chain as specified in §7.7.3.4.
+///
 public class Page {
 
     private static final Logger LOG = Logger.getLogger(Page.class.getName());
@@ -75,13 +62,11 @@ public class Page {
     private static final String OPENPDF_STAMP_BEGIN = "%OPENPDF_STAMP_BEGIN:";
     private static final String OPENPDF_STAMP_END = "%OPENPDF_STAMP_END:";
 
-    /**
-     * Creates a Page wrapper around the given page dictionary.
-     *
-     * @param pageDict the page dictionary (must have /Type /Page)
-     * @param parser   the PDF parser for resolving indirect references, may be null
-     * @throws IllegalArgumentException if pageDict is null
-     */
+    /// Creates a Page wrapper around the given page dictionary.
+    ///
+    /// @param pageDict the page dictionary (must have /Type /Page)
+    /// @param parser   the PDF parser for resolving indirect references, may be null
+    /// @throws IllegalArgumentException if pageDict is null
     public Page(PdfDictionary pageDict, PDFParser parser) {
         if (pageDict == null) {
             throw new IllegalArgumentException("Page dictionary must not be null");
@@ -91,32 +76,28 @@ public class Page {
         LOG.fine(() -> "Page created");
     }
 
-    /** Returns the document that owns this page, or null if not attached. */
+    /// Returns the document that owns this page, or null if not attached.
     public Document getOwningDocument() {
         return owningDocument;
     }
 
-    /** Sets the owning document. Called by {@link PageCollection} during add/insert. */
+    /// Sets the owning document. Called by [PageCollection] during add/insert.
     void setOwningDocument(Document owningDocument) {
         this.owningDocument = owningDocument;
     }
 
-    /**
-     * Returns the media box for this page (ISO 32000, §7.7.3.3, Table 30).
-     * This is a required inheritable property.
-     *
-     * @return the media box rectangle, or null if not found in the page tree
-     */
+    /// Returns the media box for this page (ISO 32000, §7.7.3.3, Table 30).
+    /// This is a required inheritable property.
+    ///
+    /// @return the media box rectangle, or null if not found in the page tree
     public Rectangle getMediaBox() {
         PdfBase value = getInheritable(PdfName.MEDIABOX);
         return toRectangle(value);
     }
 
-    /**
-     * Returns the crop box for this page. Defaults to the media box if absent (§14.11.2).
-     *
-     * @return the crop box rectangle
-     */
+    /// Returns the crop box for this page. Defaults to the media box if absent (§14.11.2).
+    ///
+    /// @return the crop box rectangle
     public Rectangle getCropBox() {
         PdfBase value = getInheritable(PdfName.CROPBOX);
         if (value != null) {
@@ -126,11 +107,9 @@ public class Page {
         return getMediaBox();
     }
 
-    /**
-     * Returns the art box. Defaults to the crop box if absent.
-     *
-     * @return the art box rectangle
-     */
+    /// Returns the art box. Defaults to the crop box if absent.
+    ///
+    /// @return the art box rectangle
     public Rectangle getArtBox() {
         PdfBase value = resolveRef(pageDict.get(PdfName.ARTBOX));
         if (value instanceof PdfArray) {
@@ -139,11 +118,9 @@ public class Page {
         return getCropBox();
     }
 
-    /**
-     * Returns the bleed box. Defaults to the crop box if absent.
-     *
-     * @return the bleed box rectangle
-     */
+    /// Returns the bleed box. Defaults to the crop box if absent.
+    ///
+    /// @return the bleed box rectangle
     public Rectangle getBleedBox() {
         PdfBase value = resolveRef(pageDict.get(PdfName.BLEEDBOX));
         if (value instanceof PdfArray) {
@@ -152,11 +129,9 @@ public class Page {
         return getCropBox();
     }
 
-    /**
-     * Returns the trim box. Defaults to the crop box if absent.
-     *
-     * @return the trim box rectangle
-     */
+    /// Returns the trim box. Defaults to the crop box if absent.
+    ///
+    /// @return the trim box rectangle
     public Rectangle getTrimBox() {
         PdfBase value = resolveRef(pageDict.get(PdfName.TRIMBOX));
         if (value instanceof PdfArray) {
@@ -165,34 +140,29 @@ public class Page {
         return getCropBox();
     }
 
-    /**
-     * Returns the effective rectangle for this page (same as getCropBox).
-     *
-     * @return the page rectangle
-     */
+    /// Returns the effective rectangle for this page (same as getCropBox).
+    ///
+    /// @return the page rectangle
     public Rectangle getRect() {
         return getCropBox();
     }
 
-    /**
-     * Returns the minimal bounding box of inked content on this page in user
-     * space, scanning the content stream for path operators ({@code re},
-     * {@code m}, {@code l}, {@code c}), text-positioning operators
-     * ({@code Tm}, {@code Td}, {@code T*}) and XObject invocations ({@code Do}).
-     * The bbox is built by transforming each emitted point through the current
-     * CTM (tracked across {@code q}/{@code Q}/{@code cm}) and the current text
-     * matrix (for text-show operators).
-     *
-     * <p>This is a heuristic — it counts the start of each text run and the
-     * placement origin of each XObject (rather than computing exact glyph
-     * extents or recursively expanding XForm contents) — but it is sufficient
-     * for cropping/fitting decisions where a tight-on-the-strokes bbox is not
-     * required. When the content stream contains no drawing operators (or
-     * cannot be parsed) the method falls back to the {@linkplain #getCropBox()
-     * crop box}.</p>
-     *
-     * @return the content bounding box; never null
-     */
+    /// Returns the minimal bounding box of inked content on this page in user
+    /// space, scanning the content stream for path operators (`re`,
+    /// `m`, `l`, `c`), text-positioning operators
+    /// (`Tm`, `Td`, `T*`) and XObject invocations (`Do`).
+    /// The bbox is built by transforming each emitted point through the current
+    /// CTM (tracked across `q`/`Q`/`cm`) and the current text
+    /// matrix (for text-show operators).
+    ///
+    /// This is a heuristic — it counts the start of each text run and the
+    /// placement origin of each XObject (rather than computing exact glyph
+    /// extents or recursively expanding XForm contents) — but it is sufficient
+    /// for cropping/fitting decisions where a tight-on-the-strokes bbox is not
+    /// required. When the content stream contains no drawing operators (or
+    /// cannot be parsed) the method falls back to the [crop box][#getCropBox()].
+    ///
+    /// @return the content bounding box; never null
     public Rectangle calculateContentBBox() {
         Rectangle fallback = getCropBox();
         try {
@@ -210,10 +180,8 @@ public class Page {
         return fallback;
     }
 
-    /**
-     * Stateful walker that maintains the CTM/text-matrix stacks and accumulates
-     * a bbox in user space. Package-private so unit tests can reach it.
-     */
+    /// Stateful walker that maintains the CTM/text-matrix stacks and accumulates
+    /// a bbox in user space. Package-private so unit tests can reach it.
     static final class ContentBBoxCalculator {
         // CTM stack — pushed on q, popped on Q. Top is the active CTM.
         private final java.util.ArrayDeque<Matrix> ctmStack = new java.util.ArrayDeque<>();
@@ -309,12 +277,10 @@ public class Page {
         }
     }
 
-    /**
-     * Returns the page rectangle, optionally considering rotation.
-     *
-     * @param considerRotation if {@code true}, the returned rectangle accounts for page rotation
-     * @return the page rectangle
-     */
+    /// Returns the page rectangle, optionally considering rotation.
+    ///
+    /// @param considerRotation if `true`, the returned rectangle accounts for page rotation
+    /// @return the page rectangle
     public Rectangle getPageRect(boolean considerRotation) {
         Rectangle rect = getCropBox();
         if (rect == null) {
@@ -329,12 +295,10 @@ public class Page {
         return rect;
     }
 
-    /**
-     * Returns the page rotation in degrees (0, 90, 180, or 270).
-     * This is an inheritable property, defaulting to 0.
-     *
-     * @return the rotation angle
-     */
+    /// Returns the page rotation in degrees (0, 90, 180, or 270).
+    /// This is an inheritable property, defaulting to 0.
+    ///
+    /// @return the rotation angle
     public int getRotate() {
         PdfBase value = getInheritable(PdfName.ROTATE);
         if (value instanceof org.aspose.pdf.engine.pdfobjects.PdfInteger) {
@@ -343,16 +307,13 @@ public class Page {
         return 0;
     }
 
-    /**
-     * Returns the page rotation matrix.
-     * <p>
-     * The matrix maps default page coordinates into the rotated page space.
-     * It is primarily used by legacy text/annotation workflows that need to
-     * convert fragment rectangles back to page-related coordinates.
-     * </p>
-     *
-     * @return the rotation matrix
-     */
+    /// Returns the page rotation matrix.
+    ///
+    /// The matrix maps default page coordinates into the rotated page space.
+    /// It is primarily used by legacy text/annotation workflows that need to
+    /// convert fragment rectangles back to page-related coordinates.
+    ///
+    /// @return the rotation matrix
     public Matrix getRotationMatrix() {
         Rectangle rect = getRect();
         double width = rect != null ? rect.getWidth() : 0;
@@ -370,11 +331,9 @@ public class Page {
         }
     }
 
-    /**
-     * Returns the page resources. This is an inheritable property.
-     *
-     * @return the Resources object, or null if not found
-     */
+    /// Returns the page resources. This is an inheritable property.
+    ///
+    /// @return the Resources object, or null if not found
     public Resources getResources() {
         PdfBase value = getInheritable(PdfName.RESOURCES);
         if (value instanceof PdfDictionary) {
@@ -386,16 +345,13 @@ public class Page {
         return new Resources(resDict);
     }
 
-    /**
-     * Returns the raw page content stream PDF object, or null if absent.
-     * <p>
-     * If the cached operator collection has been mutated since the last flush,
-     * serialises it back into {@code /Contents} first so the returned COS
-     * reflects the current in-memory state.
-     * </p>
-     *
-     * @return the raw content stream (PdfStream or PdfArray), or null
-     */
+    /// Returns the raw page content stream PDF object, or null if absent.
+    ///
+    /// If the cached operator collection has been mutated since the last flush,
+    /// serialises it back into `/Contents` first so the returned COS
+    /// reflects the current in-memory state.
+    ///
+    /// @return the raw content stream (PdfStream or PdfArray), or null
     public PdfBase getRawContents() {
         if (contentsDirty) {
             try {
@@ -407,19 +363,16 @@ public class Page {
         return resolveRef(pageDict.get(PdfName.CONTENTS));
     }
 
-    /**
-     * Returns the parsed content stream operators (like Aspose's page.Contents).
-     * <p>
-     * The first call parses {@code /Contents} and caches the resulting
-     * {@link OperatorCollection}. Subsequent calls return the same cached
-     * instance so callers observe each other's mutations, and so changes made
-     * via {@link TextFragment#setText(String)} (or any direct mutation through
-     * the returned collection) persist until the cache is flushed by a save.
-     * </p>
-     *
-     * @return the OperatorCollection, empty if no content stream
-     * @throws IOException if parsing the content stream fails
-     */
+    /// Returns the parsed content stream operators (like Aspose's page.Contents).
+    ///
+    /// The first call parses `/Contents` and caches the resulting
+    /// [OperatorCollection]. Subsequent calls return the same cached
+    /// instance so callers observe each other's mutations, and so changes made
+    /// via [TextFragment#setText(String)] (or any direct mutation through
+    /// the returned collection) persist until the cache is flushed by a save.
+    ///
+    /// @return the OperatorCollection, empty if no content stream
+    /// @throws IOException if parsing the content stream fails
     public OperatorCollection getContents() throws IOException {
         if (contentsCache != null) {
             return contentsCache;
@@ -468,39 +421,28 @@ public class Page {
         return contentsCache;
     }
 
-    /**
-     * Marks the cached operator collection as dirty, so that the next
-     * {@link #flushContentsIfDirty()} (invoked by {@code Document.save}) will
-     * serialise the current cache back into {@code /Contents}.
-     */
+    /// Marks the cached operator collection as dirty, so that the next
+    /// [#flushContentsIfDirty()] (invoked by `Document.save`) will
+    /// serialise the current cache back into `/Contents`.
     public void markContentsDirty() {
         this.contentsDirty = true;
     }
 
-    /** @return whether this page's cached content operators have unsaved edits. */
+    /// @return whether this page's cached content operators have unsaved edits.
     public boolean isContentsDirty() {
         return contentsDirty && contentsCache != null;
     }
 
-    /**
-     * If the cache is dirty, serialises it into the page's {@code /Contents}
-     * stream. Preserves the indirect reference of any existing content stream
-     * so incremental save can detect the change via object identity.
-     *
-     * @throws IOException if serialisation fails
-     */
-    /**
-     * Propagates the page-level {@link PageInfo} dimensions back to the
-     * page's {@code /MediaBox} if the user has changed them through
-     * {@link #getPageInfo()}{@code .setWidth(...)} / {@code setHeight(...)} /
-     * {@code setIsLandscape(...)}.
-     * <p>
-     * Without this sync the in-memory PageInfo object is updated but the saved
-     * page MediaBox keeps the original dimensions — so callers that build a
-     * page with {@code page.getPageInfo().setWidth(600)} would see no effect
-     * after save+reload (PDFNEWNET-37215, PDFNEWNET-37323).
-     * </p>
-     */
+    /// Propagates the page-level [PageInfo] dimensions back to the
+    /// page's `/MediaBox` if the user has changed them through
+    /// [#getPageInfo()]`.setWidth(...)` / `setHeight(...)` /
+    /// `setIsLandscape(...)`.
+    ///
+    /// Without this sync the in-memory PageInfo object is updated but the saved
+    /// page MediaBox keeps the original dimensions — so callers that build a
+    /// page with `page.getPageInfo().setWidth(600)` would see no effect
+    /// after save+reload (PDFNEWNET-37215, PDFNEWNET-37323).
+    ///
     public void flushPageInfoIfNeeded() {
         if (pageInfo == null) {
             return;
@@ -520,6 +462,11 @@ public class Page {
         }
     }
 
+    /// If the cache is dirty, serialises it into the page's `/Contents`
+    /// stream. Preserves the indirect reference of any existing content stream
+    /// so incremental save can detect the change via object identity.
+    ///
+    /// @throws IOException if serialisation fails
     public void flushContentsIfDirty() throws IOException {
         if (!contentsDirty || contentsCache == null) return;
         // Safety net (Sprint 63 B.6): never serialise a degraded cache back over
@@ -587,24 +534,20 @@ public class Page {
         contentsDirty = false;
     }
 
-    /**
-     * Clears the cached operator collection, forcing the next
-     * {@link #getContents()} call to re-parse from {@code /Contents}.
-     * Intended for {@link Document#close()} to release memory.
-     */
+    /// Clears the cached operator collection, forcing the next
+    /// [#getContents()] call to re-parse from `/Contents`.
+    /// Intended for [Document#close()] to release memory.
     public void clearContentsCache() {
         this.contentsCache = null;
         this.contentsDirty = false;
         this.contentsDegraded = false;
     }
 
-    /**
-     * Registers synthetic in-memory text fragments associated with this page.
-     * These fragments are visible to extractors on the current page instance
-     * without requiring a reparse of persisted page content.
-     *
-     * @param fragments the fragments to add
-     */
+    /// Registers synthetic in-memory text fragments associated with this page.
+    /// These fragments are visible to extractors on the current page instance
+    /// without requiring a reparse of persisted page content.
+    ///
+    /// @param fragments the fragments to add
     public void addSyntheticTextFragments(List<TextFragment> fragments) {
         if (fragments == null || fragments.isEmpty()) {
             return;
@@ -612,21 +555,17 @@ public class Page {
         syntheticTextFragments.addAll(fragments);
     }
 
-    /**
-     * Returns synthetic in-memory text fragments associated with this page.
-     *
-     * @return an immutable view of synthetic text fragments
-     */
+    /// Returns synthetic in-memory text fragments associated with this page.
+    ///
+    /// @return an immutable view of synthetic text fragments
     public List<TextFragment> getSyntheticTextFragments() {
         return Collections.unmodifiableList(syntheticTextFragments);
     }
 
-    /**
-     * Returns the typed annotation collection for this page.
-     * Creates an empty collection if no /Annots array exists.
-     *
-     * @return the annotation collection
-     */
+    /// Returns the typed annotation collection for this page.
+    /// Creates an empty collection if no /Annots array exists.
+    ///
+    /// @return the annotation collection
     public AnnotationCollection getAnnotations() {
         PdfBase value = resolveRef(pageDict.get(PdfName.ANNOTS));
         PdfArray annotsArray;
@@ -639,33 +578,27 @@ public class Page {
         return new AnnotationCollection(annotsArray, this, parser);
     }
 
-    /**
-     * Returns the underlying PDF dictionary for this page.
-     *
-     * @return the raw page dictionary
-     */
+    /// Returns the underlying PDF dictionary for this page.
+    ///
+    /// @return the raw page dictionary
     public PdfDictionary getPdfDictionary() {
         return pageDict;
     }
 
-    /**
-     * Returns the page background colour as set by {@link #setBackground(Color)},
-     * or {@code null} if no explicit background has been applied.
-     */
+    /// Returns the page background colour as set by [#setBackground(Color)],
+    /// or `null` if no explicit background has been applied.
     public Color getBackground() {
         return this.backgroundColor;
     }
 
-    /**
-     * Sets a solid background colour for this page. The implementation
-     * prepends a marked-content section ({@code /Background BMC q rg <bbox> re f Q EMC})
-     * to the page's content stream so PDF viewers paint the rectangle behind
-     * all other content. Setting the background to {@link Color#WHITE} (or
-     * {@code null}) removes any previously-set background.
-     * Mirrors C# {@code Page.Background}.
-     *
-     * @param color the background colour, or null/white to remove
-     */
+    /// Sets a solid background colour for this page. The implementation
+    /// prepends a marked-content section (`/Background BMC q rg <bbox> re f Q EMC`)
+    /// to the page's content stream so PDF viewers paint the rectangle behind
+    /// all other content. Setting the background to [Color#WHITE] (or
+    /// `null`) removes any previously-set background.
+    /// Mirrors C# `Page.Background`.
+    ///
+    /// @param color the background colour, or null/white to remove
     public void setBackground(Color color) {
         try {
             removeBackgroundContent();
@@ -682,7 +615,7 @@ public class Page {
         }
     }
 
-    /** Stored background colour applied via {@link #setBackground(Color)}. */
+    /// Stored background colour applied via [#setBackground(Color)].
     private Color backgroundColor;
 
     private static boolean colorIsWhite(Color c) {
@@ -691,11 +624,9 @@ public class Page {
         return d.length > 0;
     }
 
-    /**
-     * Walks the page's existing content stream and removes any prior
-     * marked-content {@code /Background BMC ... EMC} block this method
-     * inserted previously. Idempotent.
-     */
+    /// Walks the page's existing content stream and removes any prior
+    /// marked-content `/Background BMC ... EMC` block this method
+    /// inserted previously. Idempotent.
     private void removeBackgroundContent() throws java.io.IOException {
         org.aspose.pdf.engine.pdfobjects.PdfBase contents = pageDict.get("Contents");
         if (contents instanceof org.aspose.pdf.engine.pdfobjects.PdfObjectReference) {
@@ -736,10 +667,8 @@ public class Page {
         stream.setDecodedData(trimmed.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1));
     }
 
-    /**
-     * Inserts a marked-content background section at the START of the page's
-     * content stream (so it paints behind every other content operator).
-     */
+    /// Inserts a marked-content background section at the START of the page's
+    /// content stream (so it paints behind every other content operator).
     private void prependBackgroundContent(Color color) throws java.io.IOException {
         Rectangle box = getRect();
         if (box == null) return;
@@ -809,11 +738,9 @@ public class Page {
         return s;
     }
 
-    /**
-     * Returns the 1-based page number (set by PageCollection).
-     *
-     * @return the page number
-     */
+    /// Returns the 1-based page number (set by PageCollection).
+    ///
+    /// @return the page number
     public int getNumber() {
         // Page index is recorded by PageCollection during ensureFlattened();
         // mutations like insert/delete/clear invalidate that cache without
@@ -831,21 +758,17 @@ public class Page {
         return number;
     }
 
-    /**
-     * Sets the 1-based page number. Called by PageCollection during flattening.
-     *
-     * @param number the page number (1-based)
-     */
+    /// Sets the 1-based page number. Called by PageCollection during flattening.
+    ///
+    /// @param number the page number (1-based)
     public void setNumber(int number) {
         this.number = number;
     }
 
-    /**
-     * Sets the media box for this page (ISO 32000, §7.7.3.3, Table 30).
-     *
-     * @param rect the media box rectangle
-     * @throws IllegalArgumentException if rect is null
-     */
+    /// Sets the media box for this page (ISO 32000, §7.7.3.3, Table 30).
+    ///
+    /// @param rect the media box rectangle
+    /// @throws IllegalArgumentException if rect is null
     public void setMediaBox(Rectangle rect) {
         if (rect == null) {
             throw new IllegalArgumentException("Rectangle must not be null");
@@ -853,12 +776,10 @@ public class Page {
         pageDict.set(PdfName.MEDIABOX, rect.toPdfArray());
     }
 
-    /**
-     * Sets the crop box for this page (ISO 32000, §14.11.2).
-     *
-     * @param rect the crop box rectangle
-     * @throws IllegalArgumentException if rect is null
-     */
+    /// Sets the crop box for this page (ISO 32000, §14.11.2).
+    ///
+    /// @param rect the crop box rectangle
+    /// @throws IllegalArgumentException if rect is null
     public void setCropBox(Rectangle rect) {
         if (rect == null) {
             throw new IllegalArgumentException("Rectangle must not be null");
@@ -866,12 +787,10 @@ public class Page {
         pageDict.set(PdfName.CROPBOX, rect.toPdfArray());
     }
 
-    /**
-     * Sets the art box for this page.
-     *
-     * @param rect the art box rectangle
-     * @throws IllegalArgumentException if rect is null
-     */
+    /// Sets the art box for this page.
+    ///
+    /// @param rect the art box rectangle
+    /// @throws IllegalArgumentException if rect is null
     public void setArtBox(Rectangle rect) {
         if (rect == null) {
             throw new IllegalArgumentException("Rectangle must not be null");
@@ -879,12 +798,10 @@ public class Page {
         pageDict.set(PdfName.ARTBOX, rect.toPdfArray());
     }
 
-    /**
-     * Sets the bleed box for this page.
-     *
-     * @param rect the bleed box rectangle
-     * @throws IllegalArgumentException if rect is null
-     */
+    /// Sets the bleed box for this page.
+    ///
+    /// @param rect the bleed box rectangle
+    /// @throws IllegalArgumentException if rect is null
     public void setBleedBox(Rectangle rect) {
         if (rect == null) {
             throw new IllegalArgumentException("Rectangle must not be null");
@@ -892,12 +809,10 @@ public class Page {
         pageDict.set(PdfName.BLEEDBOX, rect.toPdfArray());
     }
 
-    /**
-     * Sets the trim box for this page.
-     *
-     * @param rect the trim box rectangle
-     * @throws IllegalArgumentException if rect is null
-     */
+    /// Sets the trim box for this page.
+    ///
+    /// @param rect the trim box rectangle
+    /// @throws IllegalArgumentException if rect is null
     public void setTrimBox(Rectangle rect) {
         if (rect == null) {
             throw new IllegalArgumentException("Rectangle must not be null");
@@ -905,13 +820,11 @@ public class Page {
         pageDict.set(PdfName.TRIMBOX, rect.toPdfArray());
     }
 
-    /**
-     * Sets the page rotation in degrees.
-     * Must be a multiple of 90 (ISO 32000-1:2008, §7.7.3.3, Table 30).
-     *
-     * @param degrees the rotation angle (0, 90, 180, or 270)
-     * @throws IllegalArgumentException if degrees is not 0, 90, 180, or 270
-     */
+    /// Sets the page rotation in degrees.
+    /// Must be a multiple of 90 (ISO 32000-1:2008, §7.7.3.3, Table 30).
+    ///
+    /// @param degrees the rotation angle (0, 90, 180, or 270)
+    /// @throws IllegalArgumentException if degrees is not 0, 90, 180, or 270
     public void setRotation(int degrees) {
         if (degrees != 0 && degrees != 90 && degrees != 180 && degrees != 270) {
             throw new IllegalArgumentException("Rotation must be 0, 90, 180, or 270, got: " + degrees);
@@ -919,27 +832,22 @@ public class Page {
         pageDict.set(PdfName.ROTATE, org.aspose.pdf.engine.pdfobjects.PdfInteger.valueOf(degrees));
     }
 
-    /**
-     * Sets the page rotation using the {@link Rotation} enum.
-     * Updates the /Rotate entry in the page dictionary (ISO 32000-1:2008, §7.7.3.3, Table 30).
-     *
-     * @param rotation the rotation enum value; {@code null} is treated as {@link Rotation#None}
-     */
+    /// Sets the page rotation using the [Rotation] enum.
+    /// Updates the /Rotate entry in the page dictionary (ISO 32000-1:2008, §7.7.3.3, Table 30).
+    ///
+    /// @param rotation the rotation enum value; `null` is treated as [Rotation#None]
     public void setRotate(Rotation rotation) {
         if (rotation == null) rotation = Rotation.None;
         setRotation(rotation.getDegrees());
     }
 
-    /**
-     * Accepts a text absorber to extract text from this page.
-     * <p>
-     * Works with both {@link TextAbsorber} and its subclass
-     * {@link org.aspose.pdf.text.TextFragmentAbsorber} via polymorphism.
-     * </p>
-     *
-     * @param absorber the text absorber
-     * @throws IOException if text extraction fails
-     */
+    /// Accepts a text absorber to extract text from this page.
+    ///
+    /// Works with both [TextAbsorber] and its subclass
+    /// [org.aspose.pdf.text.TextFragmentAbsorber] via polymorphism.
+    ///
+    /// @param absorber the text absorber
+    /// @throws IOException if text extraction fails
     public void accept(TextAbsorber absorber) throws IOException {
         if (absorber == null) {
             throw new IllegalArgumentException("Absorber must not be null");
@@ -947,12 +855,10 @@ public class Page {
         absorber.visit(this);
     }
 
-    /**
-     * Accepts an image placement absorber to find images on this page.
-     *
-     * @param absorber the image placement absorber
-     * @throws IOException if content stream processing fails
-     */
+    /// Accepts an image placement absorber to find images on this page.
+    ///
+    /// @param absorber the image placement absorber
+    /// @throws IOException if content stream processing fails
     public void accept(ImagePlacementAbsorber absorber) throws IOException {
         if (absorber == null) {
             throw new IllegalArgumentException("Absorber must not be null");
@@ -960,27 +866,24 @@ public class Page {
         absorber.visit(this);
     }
 
-    /**
-     * Returns the list of layers (Optional Content Groups) on this page
-     * (ISO 32000-1:2008, §8.11).
-     * <p>
-     * On first access the layers are read from the page itself:
-     * </p>
-     * <ul>
-     *   <li>every {@code /Resources /Properties} entry whose value is an
-     *       {@code OCG} (or {@code OCMD}) dictionary becomes one layer whose
-     *       id is the property name (e.g. {@code oc1}) and whose contents are
-     *       the operators wrapped in the corresponding
-     *       {@code /OC /name BDC … EMC} sequence of the content stream;</li>
-     *   <li>every {@code /Resources /XObject} entry carrying an {@code /OC}
-     *       membership becomes one layer per XObject (matching Aspose, which
-     *       does not deduplicate XObjects sharing one OCG).</li>
-     * </ul>
-     * <p>The returned list is live: layers added to it are serialised into
-     * the document on the next {@code Document.save(...)}.</p>
-     *
-     * @return the layers list (never {@code null}; may be empty)
-     */
+    /// Returns the list of layers (Optional Content Groups) on this page
+    /// (ISO 32000-1:2008, §8.11).
+    ///
+    /// On first access the layers are read from the page itself:
+    ///
+    ///   - every `/Resources /Properties` entry whose value is an
+    ///     `OCG` (or `OCMD`) dictionary becomes one layer whose
+    ///     id is the property name (e.g. `oc1`) and whose contents are
+    ///     the operators wrapped in the corresponding
+    ///     `/OC /name BDC … EMC` sequence of the content stream;
+    ///   - every `/Resources /XObject` entry carrying an `/OC`
+    ///     membership becomes one layer per XObject (matching Aspose, which
+    ///     does not deduplicate XObjects sharing one OCG).
+    ///
+    /// The returned list is live: layers added to it are serialised into
+    /// the document on the next `Document.save(...)`.
+    ///
+    /// @return the layers list (never `null`; may be empty)
     public java.util.List<Layer> getLayers() {
         if (_layers == null) {
             _layers = readLayersFromPage();
@@ -988,15 +891,13 @@ public class Page {
         return _layers;
     }
 
-    /**
-     * @return the cached layers list, or {@code null} if {@link #getLayers()}
-     * has not been called (used by the save path to avoid forcing a read)
-     */
+    /// @return the cached layers list, or `null` if [#getLayers()]
+    /// has not been called (used by the save path to avoid forcing a read)
     java.util.List<Layer> peekLayers() {
         return _layers;
     }
 
-    /** Reads the page's Optional Content Groups (see {@link #getLayers()}). */
+    /// Reads the page's Optional Content Groups (see [#getLayers()]).
     private java.util.List<Layer> readLayersFromPage() {
         java.util.List<Layer> result = new java.util.ArrayList<>();
         try {
@@ -1054,11 +955,9 @@ public class Page {
         return result;
     }
 
-    /**
-     * Resolves the first OCG of an {@code /OCMD} membership dictionary
-     * (ISO 32000-1:2008, §8.11.2.2): {@code /OCGs} may hold a single OCG
-     * dictionary or an array of them.
-     */
+    /// Resolves the first OCG of an `/OCMD` membership dictionary
+    /// (ISO 32000-1:2008, §8.11.2.2): `/OCGs` may hold a single OCG
+    /// dictionary or an array of them.
     private PdfDictionary firstOcgOfMembership(PdfDictionary ocmd) {
         PdfBase ocgs = resolveRef(ocmd.get("OCGs"));
         if (ocgs instanceof PdfDictionary) {
@@ -1073,12 +972,10 @@ public class Page {
         return null;
     }
 
-    /**
-     * Walks the page content stream and attaches to each layer the operators
-     * wrapped in its {@code /OC /id BDC … EMC} block (BDC/EMC excluded,
-     * nesting-aware). A layer referenced by several blocks accumulates all of
-     * them in stream order.
-     */
+    /// Walks the page content stream and attaches to each layer the operators
+    /// wrapped in its `/OC /id BDC … EMC` block (BDC/EMC excluded,
+    /// nesting-aware). A layer referenced by several blocks accumulates all of
+    /// them in stream order.
     private void collectLayerContents(java.util.Map<String, Layer> byId) {
         try {
             OperatorCollection ops = getContents();
@@ -1117,49 +1014,41 @@ public class Page {
         }
     }
 
-    /**
-     * Sets the layers for this page.
-     *
-     * @param layers the layers list
-     */
+    /// Sets the layers for this page.
+    ///
+    /// @param layers the layers list
     public void setLayers(java.util.List<Layer> layers) {
         this._layers = layers;
     }
 
-    /**
-     * Classifies the dominant colour content of this page —
-     * {@link ColorType#Rgb} if the content has any chromatic colour,
-     * {@link ColorType#Grayscale} if it uses only gray midtones,
-     * {@link ColorType#BlackAndWhite} if every observed colour is solid
-     * black or solid white, or {@link ColorType#Undefined} for an empty /
-     * unreadable content stream.
-     *
-     * <p>Inspection walks every paint-style operator
-     * ({@code rg/RG/g/G/k/K/sc/SC/scn/SCN}) plus the {@code /ColorSpace} of
-     * each {@code Do} image XObject and tracks the worst-case colour family
-     * seen. Vector and image content are weighted equally — a single RGB
-     * image promotes the whole page to {@link ColorType#Rgb}.</p>
-     *
-     * @return the page colour classification
-     */
+    /// Classifies the dominant colour content of this page —
+    /// [ColorType#Rgb] if the content has any chromatic colour,
+    /// [ColorType#Grayscale] if it uses only gray midtones,
+    /// [ColorType#BlackAndWhite] if every observed colour is solid
+    /// black or solid white, or [ColorType#Undefined] for an empty /
+    /// unreadable content stream.
+    ///
+    /// Inspection walks every paint-style operator
+    /// (`rg/RG/g/G/k/K/sc/SC/scn/SCN`) plus the `/ColorSpace` of
+    /// each `Do` image XObject and tracks the worst-case colour family
+    /// seen. Vector and image content are weighted equally — a single RGB
+    /// image promotes the whole page to [ColorType#Rgb].
+    ///
+    /// @return the page colour classification
     public ColorType getColorType() {
         return PageColorClassifier.classify(this);
     }
 
-    /**
-     * Returns the collection of artifacts found on this page.
-     * <p>
-     * Parses the page's content stream operators and identifies artifact sequences
-     * marked by {@code BMC}/{@code BDC}...{@code EMC} operator pairs with the
-     * {@code /Artifact} tag (ISO 32000-1:2008, §14.8.2.2).
-     * </p>
-     * <p>
-     * For {@code BDC} operators, the properties dictionary is parsed to extract
-     * the artifact type, subtype, and bounding box.
-     * </p>
-     *
-     * @return the artifact collection (never {@code null}; may be empty)
-     */
+    /// Returns the collection of artifacts found on this page.
+    ///
+    /// Parses the page's content stream operators and identifies artifact sequences
+    /// marked by `BMC`/`BDC`...`EMC` operator pairs with the
+    /// `/Artifact` tag (ISO 32000-1:2008, §14.8.2.2).
+    ///
+    /// For `BDC` operators, the properties dictionary is parsed to extract
+    /// the artifact type, subtype, and bounding box.
+    ///
+    /// @return the artifact collection (never `null`; may be empty)
     public ArtifactCollection getArtifacts() {
         if (artifactsCache != null) {
             return artifactsCache;
@@ -1230,20 +1119,18 @@ public class Page {
         return artifactsCache;
     }
 
-    /**
-     * Persists an artifact added via {@code page.getArtifacts().add(...)} by
-     * appending a {@code /Artifact BMC ... EMC} marked-content sequence to the
-     * page's content stream. Without this, the artifact would only exist in the
-     * in-memory cache and the next save+reopen would not see it (PDFNEWNET-37126,
-     * PDFNEWNET-41031).
-     * <p>
-     * The current implementation emits a minimal BMC/EMC pair — full appearance
-     * generation (drawing the background image, watermark text, etc) belongs to
-     * the renderer and is out of scope here. {@link #getArtifacts} re-discovers
-     * the BMC on reopen via the {@code Artifact} tag, so size-based assertions
-     * round-trip correctly.
-     * </p>
-     */
+    /// Persists an artifact added via `page.getArtifacts().add(...)` by
+    /// appending a `/Artifact BMC ... EMC` marked-content sequence to the
+    /// page's content stream. Without this, the artifact would only exist in the
+    /// in-memory cache and the next save+reopen would not see it (PDFNEWNET-37126,
+    /// PDFNEWNET-41031).
+    ///
+    /// The current implementation emits a minimal BMC/EMC pair — full appearance
+    /// generation (drawing the background image, watermark text, etc) belongs to
+    /// the renderer and is out of scope here. [#getArtifacts] re-discovers
+    /// the BMC on reopen via the `Artifact` tag, so size-based assertions
+    /// round-trip correctly.
+    ///
     private void appendArtifactToContents(Artifact artifact) {
         if (artifact == null) {
             return;
@@ -1319,14 +1206,12 @@ public class Page {
         return result;
     }
 
-    /**
-     * Convenience method to set the page size by setting the media box.
-     * Creates a media box from (0, 0) to (width, height).
-     *
-     * @param width  the page width in points
-     * @param height the page height in points
-     * @throws IllegalArgumentException if width or height is not positive
-     */
+    /// Convenience method to set the page size by setting the media box.
+    /// Creates a media box from (0, 0) to (width, height).
+    ///
+    /// @param width  the page width in points
+    /// @param height the page height in points
+    /// @throws IllegalArgumentException if width or height is not positive
     public void setPageSize(double width, double height) {
         if (width <= 0 || height <= 0) {
             throw new IllegalArgumentException("Width and height must be positive");
@@ -1334,11 +1219,9 @@ public class Page {
         setMediaBox(new Rectangle(0, 0, width, height));
     }
 
-    /**
-     * Returns the paragraph collection for this page. Creates an empty collection on first access.
-     *
-     * @return the paragraphs
-     */
+    /// Returns the paragraph collection for this page. Creates an empty collection on first access.
+    ///
+    /// @return the paragraphs
     public Paragraphs getParagraphs() {
         if (paragraphs == null) {
             paragraphs = new Paragraphs();
@@ -1346,20 +1229,16 @@ public class Page {
         return paragraphs;
     }
 
-    /**
-     * Sets the paragraph collection for this page.
-     *
-     * @param paragraphs the paragraphs
-     */
+    /// Sets the paragraph collection for this page.
+    ///
+    /// @param paragraphs the paragraphs
     public void setParagraphs(Paragraphs paragraphs) {
         this.paragraphs = paragraphs;
     }
 
-    /**
-     * Returns the page info (dimensions and margins) for this page.
-     *
-     * @return the page info
-     */
+    /// Returns the page info (dimensions and margins) for this page.
+    ///
+    /// @return the page info
     public PageInfo getPageInfo() {
         if (pageInfo == null) {
             Rectangle mb = getMediaBox();
@@ -1372,76 +1251,62 @@ public class Page {
         return pageInfo;
     }
 
-    /**
-     * Sets the page info.
-     *
-     * @param pageInfo the page info
-     */
+    /// Sets the page info.
+    ///
+    /// @param pageInfo the page info
     public void setPageInfo(PageInfo pageInfo) {
         this.pageInfo = pageInfo;
     }
 
-    /**
-     * Returns the header for this page, or null if none.
-     *
-     * @return the header, or null
-     */
+    /// Returns the header for this page, or null if none.
+    ///
+    /// @return the header, or null
     public HeaderFooter getHeader() {
         return header;
     }
 
-    /**
-     * Sets the header for this page.
-     *
-     * @param header the header
-     */
+    /// Sets the header for this page.
+    ///
+    /// @param header the header
     public void setHeader(HeaderFooter header) {
         this.header = header;
         this.headerFooterOverlayApplied = false;
     }
 
-    /**
-     * Returns the footer for this page, or null if none.
-     *
-     * @return the footer, or null
-     */
+    /// Returns the footer for this page, or null if none.
+    ///
+    /// @return the footer, or null
     public HeaderFooter getFooter() {
         return footer;
     }
 
-    /**
-     * Sets the footer for this page.
-     *
-     * @param footer the footer
-     */
+    /// Sets the footer for this page.
+    ///
+    /// @param footer the footer
     public void setFooter(HeaderFooter footer) {
         this.footer = footer;
         this.headerFooterOverlayApplied = false;
     }
 
-    /**
-     * Renders this page's header and/or footer (set via {@link #setHeader}/
-     * {@link #setFooter}) as a Form XObject overlay appended to the page's
-     * existing content stream.
-     * <p>
-     * PDFNET-38279: when a header/footer is applied to the pages of a document
-     * loaded from disk, the layout engine's full page-rebuild path does not run
-     * (it would discard the original page content). This method instead renders
-     * only the header/footer into a standalone Form XObject — which carries its
-     * own {@code /Resources}, so there is no name collision with the page's
-     * existing resources — and invokes it with a {@code Do} after the original
-     * content. The overlay's text is therefore both visible and extractable
-     * (text extraction recurses into Form XObjects).
-     * </p>
-     * <p>
-     * No-op when the page has neither a header nor a footer, or when the overlay
-     * was already applied (idempotent across repeated saves).
-     * </p>
-     *
-     * @param pageNumber 1-based page number, for {@code $p}/{@code $P} substitution
-     * @param totalPages total page count, for {@code $P} substitution
-     * @throws IOException if content-stream generation fails
-     */
+    /// Renders this page's header and/or footer (set via [#setHeader]/
+    /// [#setFooter]) as a Form XObject overlay appended to the page's
+    /// existing content stream.
+    ///
+    /// PDFNET-38279: when a header/footer is applied to the pages of a document
+    /// loaded from disk, the layout engine's full page-rebuild path does not run
+    /// (it would discard the original page content). This method instead renders
+    /// only the header/footer into a standalone Form XObject — which carries its
+    /// own `/Resources`, so there is no name collision with the page's
+    /// existing resources — and invokes it with a `Do` after the original
+    /// content. The overlay's text is therefore both visible and extractable
+    /// (text extraction recurses into Form XObjects).
+    ///
+    /// No-op when the page has neither a header nor a footer, or when the overlay
+    /// was already applied (idempotent across repeated saves).
+    ///
+    /// @param pageNumber 1-based page number, for `$p`/`$P` substitution
+    /// @param totalPages total page count, for `$P` substitution
+    /// @throws IOException if content-stream generation fails
     public void applyHeaderFooterOverlay(int pageNumber, int totalPages) throws java.io.IOException {
         if (headerFooterOverlayApplied || (header == null && footer == null)) {
             return;
@@ -1489,30 +1354,27 @@ public class Page {
         headerFooterOverlayApplied = true;
     }
 
-    /** Returns the TOC info for this page, or null. */
+    /// Returns the TOC info for this page, or null.
     public TocInfo getTocInfo() {
         return tocInfo;
     }
 
-    /** Sets the TOC info, making this page a table-of-contents page. */
+    /// Sets the TOC info, making this page a table-of-contents page.
     public void setTocInfo(TocInfo tocInfo) {
         this.tocInfo = tocInfo;
     }
 
-    /**
-     * Flattens all annotations on this page by baking their normal appearance
-     * streams into the page content stream, then removing the /Annots entry
-     * (ISO 32000-1:2008, §12.5.5).
-     * <p>
-     * For each annotation that is not hidden and has a normal appearance stream
-     * (/AP /N), a CTM is computed to map the appearance's BBox to the annotation's
-     * Rect. The appearance content is wrapped in a {@code q ... cm ... Q} block
-     * and appended to the page content stream.
-     * Annotations without a normal appearance are silently skipped.
-     * </p>
-     *
-     * @throws IOException if reading appearance streams or appending content fails
-     */
+    /// Flattens all annotations on this page by baking their normal appearance
+    /// streams into the page content stream, then removing the /Annots entry
+    /// (ISO 32000-1:2008, §12.5.5).
+    ///
+    /// For each annotation that is not hidden and has a normal appearance stream
+    /// (/AP /N), a CTM is computed to map the appearance's BBox to the annotation's
+    /// Rect. The appearance content is wrapped in a `q ... cm ... Q` block
+    /// and appended to the page content stream.
+    /// Annotations without a normal appearance are silently skipped.
+    ///
+    /// @throws IOException if reading appearance streams or appending content fails
     public void flattenAnnotations() throws IOException {
         PdfBase annotsVal = resolveRef(pageDict.get(PdfName.ANNOTS));
         if (!(annotsVal instanceof PdfArray)) return;
@@ -1600,13 +1462,11 @@ public class Page {
         pageDict.remove(PdfName.ANNOTS);
     }
 
-    /**
-     * Merges resources from an appearance stream into the page resources.
-     * Ensures fonts, XObjects, etc. referenced by the appearance are available
-     * in the page's resource dictionary.
-     *
-     * @param apStream the appearance stream whose resources should be merged
-     */
+    /// Merges resources from an appearance stream into the page resources.
+    /// Ensures fonts, XObjects, etc. referenced by the appearance are available
+    /// in the page's resource dictionary.
+    ///
+    /// @param apStream the appearance stream whose resources should be merged
     private void mergeAppearanceResources(PdfStream apStream) {
         PdfBase apResVal = resolveRef(apStream.get("Resources"));
         if (!(apResVal instanceof PdfDictionary)) return;
@@ -1646,10 +1506,8 @@ public class Page {
         }
     }
 
-    /**
-     * Formats a double value for use in PDF content streams,
-     * outputting integers without a decimal point.
-     */
+    /// Formats a double value for use in PDF content streams,
+    /// outputting integers without a decimal point.
     private static String formatDouble(double val) {
         if (val == (long) val) return String.valueOf((long) val);
         return String.valueOf(val);
@@ -1657,32 +1515,26 @@ public class Page {
 
     // ======================== Stamp Support ========================
 
-    /**
-     * Adds a stamp to this page by delegating to the stamp's {@link Stamp#put(Page)} method.
-     * <p>
-     * This is the generic entry point for applying any stamp type. The stamp
-     * determines how it renders itself onto the page.
-     * </p>
-     *
-     * @param stamp the stamp to add; must not be {@code null}
-     * @throws IOException if content stream generation or merging fails
-     */
+    /// Adds a stamp to this page by delegating to the stamp's [Stamp#put(Page)] method.
+    ///
+    /// This is the generic entry point for applying any stamp type. The stamp
+    /// determines how it renders itself onto the page.
+    ///
+    /// @param stamp the stamp to add; must not be `null`
+    /// @throws IOException if content stream generation or merging fails
     public void addStamp(Stamp stamp) throws IOException {
         if (stamp == null) throw new IllegalArgumentException("Stamp must not be null");
         stamp.put(this);
     }
 
-    /**
-     * Adds a text stamp to this page by generating content stream operators.
-     * <p>
-     * The stamp text is rendered at the position determined by the stamp's
-     * alignment and indent settings. If {@code isBackground()} is true, the
-     * stamp is prepended before existing content; otherwise it is appended.
-     * </p>
-     *
-     * @param stamp the text stamp to add
-     * @throws IOException if content stream generation fails
-     */
+    /// Adds a text stamp to this page by generating content stream operators.
+    ///
+    /// The stamp text is rendered at the position determined by the stamp's
+    /// alignment and indent settings. If `isBackground()` is true, the
+    /// stamp is prepended before existing content; otherwise it is appended.
+    ///
+    /// @param stamp the text stamp to add
+    /// @throws IOException if content stream generation fails
     public void addStamp(TextStamp stamp) throws IOException {
         if (stamp == null) throw new IllegalArgumentException("Stamp must not be null");
         Rectangle box = getMediaBox();
@@ -1737,16 +1589,13 @@ public class Page {
                 recordedWidth, recordedHeight, resourceName);
     }
 
-    /**
-     * Adds an image stamp to this page by generating content stream operators.
-     * <p>
-     * The image is added as an XObject resource and rendered at the position
-     * determined by the stamp's alignment and indent settings.
-     * </p>
-     *
-     * @param stamp the image stamp to add
-     * @throws IOException if image loading or content stream generation fails
-     */
+    /// Adds an image stamp to this page by generating content stream operators.
+    ///
+    /// The image is added as an XObject resource and rendered at the position
+    /// determined by the stamp's alignment and indent settings.
+    ///
+    /// @param stamp the image stamp to add
+    /// @throws IOException if image loading or content stream generation fails
     public void addStamp(ImageStamp stamp) throws IOException {
         if (stamp == null) throw new IllegalArgumentException("Stamp must not be null");
 
@@ -1827,12 +1676,10 @@ public class Page {
         return baos.toByteArray();
     }
 
-    /**
-     * Adds a page stamp to this page by overlaying the source page content.
-     *
-     * @param stamp the page stamp to add
-     * @throws IOException if content stream processing fails
-     */
+    /// Adds a page stamp to this page by overlaying the source page content.
+    ///
+    /// @param stamp the page stamp to add
+    /// @throws IOException if content stream processing fails
     public void addStamp(PdfPageStamp stamp) throws IOException {
         if (stamp == null) throw new IllegalArgumentException("Stamp must not be null");
 
@@ -1879,11 +1726,9 @@ public class Page {
                 rect != null ? rect.getWidth() : 0, rect != null ? rect.getHeight() : 0, resourceName);
     }
 
-    /**
-     * Returns stamp metadata records stored on this page.
-     *
-     * @return a mutable array of metadata dictionaries
-     */
+    /// Returns stamp metadata records stored on this page.
+    ///
+    /// @return a mutable array of metadata dictionaries
     public PdfArray getStampInfoRecords() {
         PdfBase existing = resolveRef(pageDict.get(OPENPDF_STAMP_INFO));
         if (existing instanceof PdfArray) {
@@ -1997,9 +1842,7 @@ public class Page {
         return formStream;
     }
 
-    /**
-     * Resolves the X position based on horizontal alignment.
-     */
+    /// Resolves the X position based on horizontal alignment.
     private double resolveStampX(HorizontalAlignment align, double indent, double width, Rectangle box) {
         if (align == null) align = HorizontalAlignment.None;
         switch (align) {
@@ -2009,9 +1852,7 @@ public class Page {
         }
     }
 
-    /**
-     * Resolves the Y position based on vertical alignment.
-     */
+    /// Resolves the Y position based on vertical alignment.
     private double resolveStampY(VerticalAlignment align, double indent, double height, Rectangle box) {
         if (align == null) align = VerticalAlignment.None;
         switch (align) {
@@ -2021,16 +1862,14 @@ public class Page {
         }
     }
 
-    /**
-     * Wraps text into lines that fit within the given width.
-     * Uses an approximate character width based on the font size.
-     *
-     * @param text       the text to wrap
-     * @param fontName   the font name (used for width estimation)
-     * @param fontSize   the font size in points
-     * @param availWidth the available width in points
-     * @return list of text lines
-     */
+    /// Wraps text into lines that fit within the given width.
+    /// Uses an approximate character width based on the font size.
+    ///
+    /// @param text       the text to wrap
+    /// @param fontName   the font name (used for width estimation)
+    /// @param fontSize   the font size in points
+    /// @param availWidth the available width in points
+    /// @return list of text lines
     private java.util.List<String> wrapText(String text, String fontName, double fontSize, double availWidth) {
         java.util.List<String> lines = new java.util.ArrayList<>();
         if (text == null || text.isEmpty()) {
@@ -2061,9 +1900,7 @@ public class Page {
         return lines;
     }
 
-    /**
-     * Merges font resources from a ContentStreamBuilder into this page's resources.
-     */
+    /// Merges font resources from a ContentStreamBuilder into this page's resources.
     private void mergeFontResources(ContentStreamBuilder builder) {
         Resources res = ensureResources();
         mergeFontResources(res.getPdfDictionary(), builder);
@@ -2092,15 +1929,12 @@ public class Page {
         }
     }
 
-    /**
-     * Prepends raw content stream data before this page's existing /Contents.
-     * <p>
-     * If /Contents is absent, creates a new PdfStream. If /Contents exists,
-     * inserts the new stream before the existing content.
-     * </p>
-     *
-     * @param data the content stream bytes to prepend
-     */
+    /// Prepends raw content stream data before this page's existing /Contents.
+    ///
+    /// If /Contents is absent, creates a new PdfStream. If /Contents exists,
+    /// inserts the new stream before the existing content.
+    ///
+    /// @param data the content stream bytes to prepend
     public void prependToContentStream(byte[] data) {
         if (data == null) throw new IllegalArgumentException("Data must not be null");
         // Flush any pending cache mutations into /Contents before prepending,
@@ -2131,17 +1965,14 @@ public class Page {
         }
     }
 
-    /**
-     * Appends raw content stream data to this page's /Contents.
-     * <p>
-     * If /Contents is absent, creates a new PdfStream. If /Contents is a PdfStream,
-     * wraps the existing stream and the new stream in a PdfArray. If /Contents is
-     * already a PdfArray, appends a new PdfStream to it.
-     * </p>
-     *
-     * @param data the content stream bytes to append
-     * @throws IllegalArgumentException if data is null
-     */
+    /// Appends raw content stream data to this page's /Contents.
+    ///
+    /// If /Contents is absent, creates a new PdfStream. If /Contents is a PdfStream,
+    /// wraps the existing stream and the new stream in a PdfArray. If /Contents is
+    /// already a PdfArray, appends a new PdfStream to it.
+    ///
+    /// @param data the content stream bytes to append
+    /// @throws IllegalArgumentException if data is null
     public void appendToContentStream(byte[] data) {
         if (data == null) {
             throw new IllegalArgumentException("Data must not be null");
@@ -2316,11 +2147,9 @@ public class Page {
         return null;
     }
 
-    /**
-     * Ensures this page has a /Resources dictionary, creating one if absent.
-     *
-     * @return the Resources object for this page (never null)
-     */
+    /// Ensures this page has a /Resources dictionary, creating one if absent.
+    ///
+    /// @return the Resources object for this page (never null)
     public Resources ensureResources() {
         Resources res = getResources();
         if (res == null) {
@@ -2331,16 +2160,13 @@ public class Page {
         return res;
     }
 
-    /**
-     * Replaces the page content stream with the given operator collection.
-     * <p>
-     * Serializes the operators to content stream syntax and stores them
-     * as a new PdfStream in the page dictionary's /Contents entry.
-     * </p>
-     *
-     * @param operators the operator collection to set as the page content
-     * @throws IOException if serialization fails
-     */
+    /// Replaces the page content stream with the given operator collection.
+    ///
+    /// Serializes the operators to content stream syntax and stores them
+    /// as a new PdfStream in the page dictionary's /Contents entry.
+    ///
+    /// @param operators the operator collection to set as the page content
+    /// @throws IOException if serialization fails
     public void setContents(OperatorCollection operators) throws IOException {
         if (operators == null) {
             throw new IllegalArgumentException("Operators must not be null");
@@ -2362,13 +2188,11 @@ public class Page {
         this.contentsDegraded = false;
     }
 
-    /**
-     * Looks up an inheritable property by walking up the /Parent chain
-     * (ISO 32000-1:2008, §7.7.3.4).
-     *
-     * @param key the property name
-     * @return the resolved value, or null if not found in the tree
-     */
+    /// Looks up an inheritable property by walking up the /Parent chain
+    /// (ISO 32000-1:2008, §7.7.3.4).
+    ///
+    /// @param key the property name
+    /// @return the resolved value, or null if not found in the tree
     private PdfBase getInheritable(PdfName key) {
         PdfDictionary current = pageDict;
         while (current != null) {
@@ -2383,13 +2207,11 @@ public class Page {
         return null;
     }
 
-    /**
-     * Resolves an indirect object reference. If the value is a PdfObjectReference,
-     * dereferences it. Otherwise returns the value as-is.
-     *
-     * @param value the PDF value to resolve
-     * @return the resolved value, or null
-     */
+    /// Resolves an indirect object reference. If the value is a PdfObjectReference,
+    /// dereferences it. Otherwise returns the value as-is.
+    ///
+    /// @param value the PDF value to resolve
+    /// @return the resolved value, or null
     private PdfBase resolveRef(PdfBase value) {
         if (value == null) {
             return null;
@@ -2405,12 +2227,10 @@ public class Page {
         return value;
     }
 
-    /**
-     * Converts a PDF value to a Rectangle if it is a PdfArray of 4 elements.
-     *
-     * @param value the PDF value
-     * @return the Rectangle, or null
-     */
+    /// Converts a PDF value to a Rectangle if it is a PdfArray of 4 elements.
+    ///
+    /// @param value the PDF value
+    /// @return the Rectangle, or null
     private Rectangle toRectangle(PdfBase value) {
         if (value instanceof PdfArray) {
             PdfArray array = (PdfArray) value;
@@ -2421,16 +2241,13 @@ public class Page {
         return null;
     }
 
-    /**
-     * Returns {@code true} if the page has no visible content (empty or absent content stream).
-     * <p>
-     * Examines the content stream operators and returns {@code false} if any
-     * text-showing, image-drawing, or path-painting operator is found.
-     * </p>
-     *
-     * @return {@code true} if the page appears blank
-     * @throws IOException if content stream parsing fails
-     */
+    /// Returns `true` if the page has no visible content (empty or absent content stream).
+    ///
+    /// Examines the content stream operators and returns `false` if any
+    /// text-showing, image-drawing, or path-painting operator is found.
+    ///
+    /// @return `true` if the page appears blank
+    /// @throws IOException if content stream parsing fails
     public boolean isBlank() throws IOException {
         PdfBase contents = pageDict.get(PdfName.CONTENTS);
         if (contents == null) return true;
@@ -2447,15 +2264,13 @@ public class Page {
         return true;
     }
 
-    /**
-     * Replaces all occurrences of {@code searchText} with {@code replaceText}
-     * in this page's content stream.
-     *
-     * @param searchText  the text to find
-     * @param replaceText the replacement text
-     * @return the number of replacements made
-     * @throws IOException if content stream processing fails
-     */
+    /// Replaces all occurrences of `searchText` with `replaceText`
+    /// in this page's content stream.
+    ///
+    /// @param searchText  the text to find
+    /// @param replaceText the replacement text
+    /// @return the number of replacements made
+    /// @throws IOException if content stream processing fails
     public int replaceText(String searchText, String replaceText) throws IOException {
         if (searchText == null || searchText.isEmpty()) return 0;
 

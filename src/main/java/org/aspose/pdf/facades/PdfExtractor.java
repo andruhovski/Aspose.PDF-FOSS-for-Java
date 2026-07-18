@@ -7,8 +7,6 @@ import org.aspose.pdf.devices.Resolution;
 import org.aspose.pdf.engine.pdfobjects.PdfBase;
 import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
 import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
-import org.aspose.pdf.Operator;
-import org.aspose.pdf.OperatorCollection;
 import org.aspose.pdf.operators.Do;
 import org.aspose.pdf.text.TextAbsorber;
 import org.aspose.pdf.text.TextExtractionOptions;
@@ -19,28 +17,20 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Facade for extracting text and images from PDF documents.
- * <p>
- * Usage pattern:
- * <pre>
- * PdfExtractor extractor = new PdfExtractor();
- * extractor.bindPdf("input.pdf");
- * extractor.extractText();
- * extractor.getText("output.txt");
- * </pre>
- * </p>
- */
+/// Facade for extracting text and images from PDF documents.
+///
+/// Usage pattern:
+///
+/// <pre>
+/// PdfExtractor extractor = new PdfExtractor();
+/// extractor.bindPdf("input.pdf");
+/// extractor.extractText();
+/// extractor.getText("output.txt");
+/// </pre>
 public class PdfExtractor implements Closeable {
 
     static {
@@ -70,40 +60,32 @@ public class PdfExtractor implements Closeable {
     private TextSearchOptions textSearchOptions;
     private Resolution resolution = new Resolution(72);
     private ExtractImageMode extractImageMode = ExtractImageMode.ResourcesDefined;
-    /** Password used to open encrypted PDFs in subsequent {@code bindPdf} calls. */
+    /// Password used to open encrypted PDFs in subsequent `bindPdf` calls.
     private String password;
 
-    /**
-     * Creates a new PdfExtractor instance.
-     */
+    /// Creates a new PdfExtractor instance.
     public PdfExtractor() {
     }
 
-    /**
-     * Creates a new PdfExtractor bound to an existing document.
-     *
-     * @param document the document to bind
-     */
+    /// Creates a new PdfExtractor bound to an existing document.
+    ///
+    /// @param document the document to bind
     public PdfExtractor(Document document) {
         this.document = document;
     }
 
-    /**
-     * Creates a new PdfExtractor bound to a PDF stream.
-     *
-     * @param stream the input stream containing PDF data
-     * @throws IOException if the stream cannot be read
-     */
+    /// Creates a new PdfExtractor bound to a PDF stream.
+    ///
+    /// @param stream the input stream containing PDF data
+    /// @throws IOException if the stream cannot be read
     public PdfExtractor(InputStream stream) throws IOException {
         this.document = new Document(stream);
     }
 
-    /**
-     * Binds a PDF file to this extractor.
-     *
-     * @param inputFile path to the PDF file
-     * @throws IOException if the file cannot be opened
-     */
+    /// Binds a PDF file to this extractor.
+    ///
+    /// @param inputFile path to the PDF file
+    /// @throws IOException if the file cannot be opened
     public void bindPdf(String inputFile) throws IOException {
         this.document = password != null
                 ? new Document(inputFile, password)
@@ -111,12 +93,10 @@ public class PdfExtractor implements Closeable {
         resetDocumentBoundState();
     }
 
-    /**
-     * Binds a PDF from an input stream.
-     *
-     * @param stream the input stream containing PDF data
-     * @throws IOException if the stream cannot be read
-     */
+    /// Binds a PDF from an input stream.
+    ///
+    /// @param stream the input stream containing PDF data
+    /// @throws IOException if the stream cannot be read
     public void bindPdf(InputStream stream) throws IOException {
         this.document = password != null
                 ? new Document(stream, password)
@@ -124,150 +104,119 @@ public class PdfExtractor implements Closeable {
         resetDocumentBoundState();
     }
 
-    /**
-     * Returns the password applied when opening encrypted PDFs in subsequent
-     * {@link #bindPdf(String)} or {@link #bindPdf(InputStream)} calls.
-     *
-     * @return the password, or {@code null} for none
-     */
+    /// Returns the password applied when opening encrypted PDFs in subsequent
+    /// [#bindPdf(String)] or [#bindPdf(InputStream)] calls.
+    ///
+    /// @return the password, or `null` for none
     public String getPassword() {
         return password;
     }
 
-    /**
-     * Sets the password used by subsequent {@code bindPdf} calls to open
-     * encrypted PDFs. Mirrors C# {@code PdfExtractor.Password}.
-     *
-     * @param password the open password, or {@code null} for none
-     */
+    /// Sets the password used by subsequent `bindPdf` calls to open
+    /// encrypted PDFs. Mirrors C# `PdfExtractor.Password`.
+    ///
+    /// @param password the open password, or `null` for none
     public void setPassword(String password) {
         this.password = password;
     }
 
-    /**
-     * Binds an existing Document to this extractor.
-     *
-     * @param document the document
-     */
+    /// Binds an existing Document to this extractor.
+    ///
+    /// @param document the document
     public void bindPdf(Document document) {
         this.document = document;
         resetDocumentBoundState();
     }
 
-    /**
-     * Sets the start page for extraction (1-based).
-     *
-     * @param page the start page number
-     */
+    /// Sets the start page for extraction (1-based).
+    ///
+    /// @param page the start page number
     public void setStartPage(int page) {
         this.startPage = page;
     }
 
-    /**
-     * Returns the start page.
-     *
-     * @return the start page number
-     */
+    /// Returns the start page.
+    ///
+    /// @return the start page number
     public int getStartPage() {
         return startPage;
     }
 
-    /**
-     * Sets the end page for extraction (1-based).
-     *
-     * @param page the end page number
-     */
+    /// Sets the end page for extraction (1-based).
+    ///
+    /// @param page the end page number
     public void setEndPage(int page) {
         this.endPage = page;
     }
 
-    /**
-     * Returns the end page.
-     *
-     * @return the end page number
-     */
+    /// Returns the end page.
+    ///
+    /// @return the end page number
     public int getEndPage() {
         return endPage;
     }
 
-    /**
-     * Sets the text extraction mode.
-     * <p>
-     * Mode {@code 0} follows the Aspose-compatible visual text path and uses
-     * layout-oriented extraction. Other values currently fall back to the
-     * default content-stream order extraction.
-     * </p>
-     *
-     * @param mode extraction mode identifier
-     */
+    /// Sets the text extraction mode.
+    ///
+    /// Mode `0` follows the Aspose-compatible visual text path and uses
+    /// layout-oriented extraction. Other values currently fall back to the
+    /// default content-stream order extraction.
+    ///
+    /// @param mode extraction mode identifier
     public void setExtractTextMode(int mode) {
         this.extractTextMode = mode;
     }
 
-    /**
-     * Returns the current text extraction mode.
-     *
-     * @return extraction mode identifier
-     */
+    /// Returns the current text extraction mode.
+    ///
+    /// @return extraction mode identifier
     public int getExtractTextMode() {
         return extractTextMode;
     }
 
-    /**
-     * Sets image extraction resolution for API parity.
-     *
-     * @param resolution extraction resolution
-     */
+    /// Sets image extraction resolution for API parity.
+    ///
+    /// @param resolution extraction resolution
     public void setResolution(Resolution resolution) {
         if (resolution != null) {
             this.resolution = resolution;
         }
     }
 
-    /**
-     * Returns the configured extraction resolution.
-     *
-     * @return extraction resolution
-     */
+    /// Returns the configured extraction resolution.
+    ///
+    /// @return extraction resolution
     public Resolution getResolution() {
         return resolution;
     }
 
-    /**
-     * Sets the image extraction mode.
-     *
-     * @param extractImageMode extraction mode
-     */
+    /// Sets the image extraction mode.
+    ///
+    /// @param extractImageMode extraction mode
     public void setExtractImageMode(ExtractImageMode extractImageMode) {
         if (extractImageMode != null) {
             this.extractImageMode = extractImageMode;
         }
     }
 
-    /**
-     * Returns the image extraction mode.
-     *
-     * @return extraction mode
-     */
+    /// Returns the image extraction mode.
+    ///
+    /// @return extraction mode
     public ExtractImageMode getExtractImageMode() {
         return extractImageMode;
     }
 
-    /**
-     * Extracts text from the page range.
-     *
-     * @throws IOException if text extraction fails
-     */
+    /// Extracts text from the page range.
+    ///
+    /// @throws IOException if text extraction fails
     public void extractText() throws IOException {
         extractText(outputEncoding);
     }
 
-    /**
-     * Extracts text from the page range using the requested output encoding.
-     *
-     * @param encoding the output encoding used by {@code getText(...)}
-     * @throws IOException if text extraction fails
-     */
+    /// Extracts text from the page range using the requested output encoding.
+    ///
+    /// @param encoding the output encoding used by `getText(...)`
+    /// @throws IOException if text extraction fails
     public void extractText(Charset encoding) throws IOException {
         if (document == null) throw new IllegalStateException("No document bound");
         this.outputEncoding = encoding != null ? encoding : StandardCharsets.UTF_16LE;
@@ -311,40 +260,32 @@ public class PdfExtractor implements Closeable {
         return text.replaceAll("(?m)^([ \\t]*)(?:[?\\uFFFD]|\\p{Co})\\s{2,}", "$1.  ");
     }
 
-    /**
-     * Writes extracted text to a file.
-     *
-     * @param outputPath the output file path
-     * @throws IOException if writing fails
-     */
+    /// Writes extracted text to a file.
+    ///
+    /// @param outputPath the output file path
+    /// @throws IOException if writing fails
     public void getText(String outputPath) throws IOException {
         Files.write(Paths.get(outputPath), getTextBytes(extractedText));
     }
 
-    /**
-     * Writes extracted text to an output stream.
-     *
-     * @param stream the output stream
-     * @throws IOException if writing fails
-     */
+    /// Writes extracted text to an output stream.
+    ///
+    /// @param stream the output stream
+    /// @throws IOException if writing fails
     public void getText(OutputStream stream) throws IOException {
         stream.write(getTextBytes(extractedText));
     }
 
-    /**
-     * Returns the extracted text as a string.
-     *
-     * @return the extracted text, or empty string if not yet extracted
-     */
+    /// Returns the extracted text as a string.
+    ///
+    /// @return the extracted text, or empty string if not yet extracted
     public String getTextAsString() {
         return extractedText != null ? extractedText : "";
     }
 
-    /**
-     * Returns text search options associated with the extractor.
-     *
-     * @return mutable text search options
-     */
+    /// Returns text search options associated with the extractor.
+    ///
+    /// @return mutable text search options
     public TextSearchOptions getTextSearchOptions() {
         if (textSearchOptions == null) {
             textSearchOptions = new TextSearchOptions();
@@ -352,66 +293,52 @@ public class PdfExtractor implements Closeable {
         return textSearchOptions;
     }
 
-    /**
-     * Sets text search options used by subsequent extraction calls.
-     *
-     * @param textSearchOptions options to use, or {@code null}
-     */
+    /// Sets text search options used by subsequent extraction calls.
+    ///
+    /// @param textSearchOptions options to use, or `null`
     public void setTextSearchOptions(TextSearchOptions textSearchOptions) {
         this.textSearchOptions = textSearchOptions;
     }
 
-    /**
-     * Returns whether page-by-page extracted text remains available.
-     *
-     * @return true if another page text chunk can be retrieved
-     */
+    /// Returns whether page-by-page extracted text remains available.
+    ///
+    /// @return true if another page text chunk can be retrieved
     public boolean hasNextPageText() {
         return pageTextIndex + 1 < extractedPageTexts.size();
     }
 
-    /**
-     * Writes the next page text to a file.
-     *
-     * @param outputPath target file path
-     * @throws IOException if writing fails
-     */
+    /// Writes the next page text to a file.
+    ///
+    /// @param outputPath target file path
+    /// @throws IOException if writing fails
     public void getNextPageText(String outputPath) throws IOException {
         Files.write(Paths.get(outputPath), getNextPageTextBytes());
     }
 
-    /**
-     * Writes the next page text to a stream.
-     *
-     * @param stream target stream
-     * @throws IOException if writing fails
-     */
+    /// Writes the next page text to a stream.
+    ///
+    /// @param stream target stream
+    /// @throws IOException if writing fails
     public void getNextPageText(OutputStream stream) throws IOException {
         stream.write(getNextPageTextBytes());
     }
 
-    /**
-     * Returns whether the current extraction contains bidi text.
-     *
-     * @return true if extracted text contains RTL scripts
-     */
+    /// Returns whether the current extraction contains bidi text.
+    ///
+    /// @return true if extracted text contains RTL scripts
     public boolean isBidi() {
         return bidi;
     }
 
-    /**
-     * Prepares attachment extraction for all embedded files.
-     */
+    /// Prepares attachment extraction for all embedded files.
     public void extractAttachment() {
         ensureAttachmentsLoaded();
         attachmentIndex = -1;
     }
 
-    /**
-     * Prepares extraction for a specific attachment key or file name.
-     *
-     * @param name attachment key or file name
-     */
+    /// Prepares extraction for a specific attachment key or file name.
+    ///
+    /// @param name attachment key or file name
     public void extractAttachment(String name) {
         ensureAttachmentsLoaded();
         attachmentIndex = -1;
@@ -425,11 +352,9 @@ public class PdfExtractor implements Closeable {
                         && !name.equals(buildAttachmentKey(fs)));
     }
 
-    /**
-     * Returns the currently prepared attachment names.
-     *
-     * @return attachment names
-     */
+    /// Returns the currently prepared attachment names.
+    ///
+    /// @return attachment names
     public List<String> getAttachNames() {
         ensureAttachmentsLoaded();
         List<String> names = new ArrayList<>(extractedAttachments.size());
@@ -439,12 +364,10 @@ public class PdfExtractor implements Closeable {
         return Collections.unmodifiableList(names);
     }
 
-    /**
-     * Writes the prepared attachment(s) to the given file or directory.
-     *
-     * @param outputPath file path or directory path
-     * @throws IOException if writing fails
-     */
+    /// Writes the prepared attachment(s) to the given file or directory.
+    ///
+    /// @param outputPath file path or directory path
+    /// @throws IOException if writing fails
     public void getAttachment(String outputPath) throws IOException {
         ensureAttachmentsLoaded();
         if (extractedAttachments.isEmpty()) {
@@ -467,11 +390,9 @@ public class PdfExtractor implements Closeable {
         Files.write(Paths.get(safePath), safeAttachmentData(selected));
     }
 
-    /**
-     * Extracts images from the page range.
-     *
-     * @throws IOException if image extraction fails
-     */
+    /// Extracts images from the page range.
+    ///
+    /// @throws IOException if image extraction fails
     public void extractImage() throws IOException {
         if (document == null) throw new IllegalStateException("No document bound");
         extractedImages.clear();
@@ -507,21 +428,17 @@ public class PdfExtractor implements Closeable {
         }
     }
 
-    /**
-     * Returns whether there are more extracted images to retrieve.
-     *
-     * @return true if more images are available
-     */
+    /// Returns whether there are more extracted images to retrieve.
+    ///
+    /// @return true if more images are available
     public boolean hasNextImage() {
         return imageIndex + 1 < extractedImages.size();
     }
 
-    /**
-     * Saves the next extracted image to a file.
-     *
-     * @param outputPath the output file path
-     * @throws IOException if writing fails
-     */
+    /// Saves the next extracted image to a file.
+    ///
+    /// @param outputPath the output file path
+    /// @throws IOException if writing fails
     public void getNextImage(String outputPath) throws IOException {
         imageIndex++;
         if (imageIndex >= extractedImages.size()) {
@@ -530,25 +447,21 @@ public class PdfExtractor implements Closeable {
         Files.write(Paths.get(outputPath), extractedImages.get(imageIndex));
     }
 
-    /**
-     * Saves the next extracted image to a file using the requested output format.
-     * Current implementation preserves the extracted image payload and accepts the
-     * format for source compatibility with Aspose facade tests.
-     *
-     * @param outputPath the output file path
-     * @param format the requested image format
-     * @throws IOException if writing fails
-     */
+    /// Saves the next extracted image to a file using the requested output format.
+    /// Current implementation preserves the extracted image payload and accepts the
+    /// format for source compatibility with Aspose facade tests.
+    ///
+    /// @param outputPath the output file path
+    /// @param format the requested image format
+    /// @throws IOException if writing fails
     public void getNextImage(String outputPath, ImageFormat format) throws IOException {
         getNextImage(outputPath);
     }
 
-    /**
-     * Saves the next extracted image to an output stream.
-     *
-     * @param stream the output stream
-     * @throws IOException if writing fails
-     */
+    /// Saves the next extracted image to an output stream.
+    ///
+    /// @param stream the output stream
+    /// @throws IOException if writing fails
     public void getNextImage(OutputStream stream) throws IOException {
         imageIndex++;
         if (imageIndex >= extractedImages.size()) {
@@ -557,33 +470,27 @@ public class PdfExtractor implements Closeable {
         stream.write(extractedImages.get(imageIndex));
     }
 
-    /**
-     * Saves the next extracted image to a stream using the requested output format.
-     * Current implementation preserves the extracted image payload and accepts the
-     * format for source compatibility with Aspose facade tests.
-     *
-     * @param stream the output stream
-     * @param format the requested image format
-     * @throws IOException if writing fails
-     */
+    /// Saves the next extracted image to a stream using the requested output format.
+    /// Current implementation preserves the extracted image payload and accepts the
+    /// format for source compatibility with Aspose facade tests.
+    ///
+    /// @param stream the output stream
+    /// @param format the requested image format
+    /// @throws IOException if writing fails
     public void getNextImage(OutputStream stream, ImageFormat format) throws IOException {
         getNextImage(stream);
     }
 
-    /**
-     * Returns the number of extracted images.
-     *
-     * @return the image count
-     */
+    /// Returns the number of extracted images.
+    ///
+    /// @return the image count
     public int getImageCount() {
         return extractedImages.size();
     }
 
-    /**
-     * Closes this extractor and releases the bound document.
-     *
-     * @throws IOException if closing fails
-     */
+    /// Closes this extractor and releases the bound document.
+    ///
+    /// @throws IOException if closing fails
     public void close() throws IOException {
         if (document != null) {
             document.close();

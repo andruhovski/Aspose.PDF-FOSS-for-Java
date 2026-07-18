@@ -1,24 +1,13 @@
 package org.aspose.pdf.engine.script.js.builtins;
 
 import org.aspose.pdf.engine.script.js.interp.Interpreter;
-import org.aspose.pdf.engine.script.js.runtime.JSArray;
-import org.aspose.pdf.engine.script.js.runtime.JSFunction;
-import org.aspose.pdf.engine.script.js.runtime.JSNull;
-import org.aspose.pdf.engine.script.js.runtime.JSNumber;
-import org.aspose.pdf.engine.script.js.runtime.JSObject;
-import org.aspose.pdf.engine.script.js.runtime.JSRegExp;
-import org.aspose.pdf.engine.script.js.runtime.NativeFunction;
-import org.aspose.pdf.engine.script.js.runtime.Undefined;
+import org.aspose.pdf.engine.script.js.runtime.*;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Installs String and String.prototype (ECMA-262 3rd ed., sec 15.5) with the
- * ES3 method set (no {@code trim}/{@code includes} which are later editions).
- */
+/// Installs String and String.prototype (ECMA-262 3rd ed., sec 15.5) with the
+/// ES3 method set (no `trim`/`includes` which are later editions).
 final class StringBuiltins {
 
     private static final Object UNDEF = Undefined.INSTANCE;

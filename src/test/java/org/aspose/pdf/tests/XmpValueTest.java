@@ -7,9 +7,7 @@ import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for XmpValue typed wrapper.
- */
+/// Tests for XmpValue typed wrapper.
 public class XmpValueTest {
 
     @Test

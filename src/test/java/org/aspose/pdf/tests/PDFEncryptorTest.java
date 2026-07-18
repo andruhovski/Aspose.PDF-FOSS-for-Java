@@ -13,10 +13,8 @@ import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for PDFEncryptor: encrypt → PDFDecryptor.decrypt round-trip,
- * per-object key isolation, edge cases.
- */
+/// Tests for PDFEncryptor: encrypt → PDFDecryptor.decrypt round-trip,
+/// per-object key isolation, edge cases.
 public class PDFEncryptorTest {
 
     // ── RC4 round-trip tests ──
@@ -236,7 +234,7 @@ public class PDFEncryptorTest {
 
     // ── Helpers ──
 
-    /** V=2, R=3 → RC4-128 */
+    /// V=2, R=3 → RC4-128
     private PDFEncryptionDict buildRC4Dict() {
         PdfDictionary dict = new PdfDictionary();
         dict.set(PdfName.of("V"), PdfInteger.valueOf(2));
@@ -245,7 +243,7 @@ public class PDFEncryptorTest {
         return new PDFEncryptionDict(dict);
     }
 
-    /** V=4, R=4 → AES-128 with StdCF/AESV2 */
+    /// V=4, R=4 → AES-128 with StdCF/AESV2
     private PDFEncryptionDict buildAES128Dict() {
         PdfDictionary dict = new PdfDictionary();
         dict.set(PdfName.of("V"), PdfInteger.valueOf(4));

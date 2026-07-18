@@ -2,50 +2,46 @@ package org.aspose.pdf.engine.filter;
 
 import java.util.logging.Logger;
 
-/**
- * PNG and TIFF predictor support for Flate/LZW filters (§7.4.4.4, ISO 32000-1:2008).
- * <p>
- * Predictors improve compression ratios by encoding pixel differences instead of
- * absolute values. PNG predictors (10–15) prepend a filter-type byte to each row.
- * TIFF predictor (2) uses horizontal differencing without a per-row type byte.
- * </p>
- */
+/// PNG and TIFF predictor support for Flate/LZW filters (§7.4.4.4, ISO 32000-1:2008).
+///
+/// Predictors improve compression ratios by encoding pixel differences instead of
+/// absolute values. PNG predictors (10–15) prepend a filter-type byte to each row.
+/// TIFF predictor (2) uses horizontal differencing without a per-row type byte.
+///
 public final class PredictorDecoder {
 
     private static final Logger LOG = Logger.getLogger(PredictorDecoder.class.getName());
 
-    /** No prediction. */
+    /// No prediction.
     public static final int PREDICTOR_NONE = 1;
-    /** TIFF Predictor 2: horizontal differencing. */
+    /// TIFF Predictor 2: horizontal differencing.
     public static final int PREDICTOR_TIFF = 2;
-    /** PNG None predictor (per-row filter byte present, but filter is 0). */
+    /// PNG None predictor (per-row filter byte present, but filter is 0).
     public static final int PREDICTOR_PNG_NONE = 10;
-    /** PNG Sub predictor. */
+    /// PNG Sub predictor.
     public static final int PREDICTOR_PNG_SUB = 11;
-    /** PNG Up predictor. */
+    /// PNG Up predictor.
     public static final int PREDICTOR_PNG_UP = 12;
-    /** PNG Average predictor. */
+    /// PNG Average predictor.
     public static final int PREDICTOR_PNG_AVERAGE = 13;
-    /** PNG Paeth predictor. */
+    /// PNG Paeth predictor.
     public static final int PREDICTOR_PNG_PAETH = 14;
-    /** PNG Optimum — each row may use a different filter. */
+    /// PNG Optimum — each row may use a different filter.
     public static final int PREDICTOR_PNG_OPTIMUM = 15;
 
     private PredictorDecoder() {
         // Utility class
     }
 
-    /**
-     * Decodes predictor-filtered data.
-     *
-     * @param data             the raw data after inflate/LZW decode
-     * @param predictor        the predictor value (1, 2, or 10–15)
-     * @param columns          number of sample values per row
-     * @param colors           number of color components per sample
-     * @param bitsPerComponent bits per component (typically 8)
-     * @return decoded data with predictors reversed
-     * @throws IllegalArgumentException if parameters are invalid
-     */
+    /// Decodes predictor-filtered data.
+    ///
+    /// @param data             the raw data after inflate/LZW decode
+    /// @param predictor        the predictor value (1, 2, or 10–15)
+    /// @param columns          number of sample values per row
+    /// @param colors           number of color components per sample
+    /// @param bitsPerComponent bits per component (typically 8)
+    /// @return decoded data with predictors reversed
+    /// @throws IllegalArgumentException if parameters are invalid
     public static byte[] decode(byte[] data, int predictor, int columns, int colors, int bitsPerComponent) {
         if (data == null || data.length == 0) {
             return data == null ? new byte[0] : data;
@@ -63,17 +59,15 @@ public final class PredictorDecoder {
         return data;
     }
 
-    /**
-     * Encodes data with the specified predictor.
-     *
-     * @param data             the raw data to encode
-     * @param predictor        the predictor value (1, 2, or 10–15)
-     * @param columns          number of sample values per row
-     * @param colors           number of color components per sample
-     * @param bitsPerComponent bits per component (typically 8)
-     * @return predictor-encoded data
-     * @throws IllegalArgumentException if parameters are invalid
-     */
+    /// Encodes data with the specified predictor.
+    ///
+    /// @param data             the raw data to encode
+    /// @param predictor        the predictor value (1, 2, or 10–15)
+    /// @param columns          number of sample values per row
+    /// @param colors           number of color components per sample
+    /// @param bitsPerComponent bits per component (typically 8)
+    /// @return predictor-encoded data
+    /// @throws IllegalArgumentException if parameters are invalid
     public static byte[] encode(byte[] data, int predictor, int columns, int colors, int bitsPerComponent) {
         if (data == null || data.length == 0) {
             return data == null ? new byte[0] : data;
@@ -283,14 +277,12 @@ public final class PredictorDecoder {
         return result;
     }
 
-    /**
-     * Paeth predictor function (PNG specification, RFC 2083).
-     *
-     * @param a the byte to the left
-     * @param b the byte above
-     * @param c the byte to the upper-left
-     * @return the predicted value
-     */
+    /// Paeth predictor function (PNG specification, RFC 2083).
+    ///
+    /// @param a the byte to the left
+    /// @param b the byte above
+    /// @param c the byte to the upper-left
+    /// @return the predicted value
     public static int paethPredictor(int a, int b, int c) {
         int p = a + b - c;
         int pa = Math.abs(p - a);

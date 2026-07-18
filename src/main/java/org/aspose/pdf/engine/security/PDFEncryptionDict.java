@@ -1,47 +1,39 @@
 package org.aspose.pdf.engine.security;
 
 import org.aspose.pdf.CryptoAlgorithm;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfInteger;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfString;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.util.logging.Logger;
 
-/**
- * Wraps the /Encrypt dictionary from the PDF trailer
- * (ISO 32000-1:2008, §7.6.1, Tables 20-21).
- * <p>
- * Use the constructor for read-side (parsing existing PDFs) and
- * {@link #build} for write-side (creating new encrypted PDFs).
- * </p>
- */
+/// Wraps the /Encrypt dictionary from the PDF trailer
+/// (ISO 32000-1:2008, §7.6.1, Tables 20-21).
+///
+/// Use the constructor for read-side (parsing existing PDFs) and
+/// [#build] for write-side (creating new encrypted PDFs).
+///
 public class PDFEncryptionDict {
 
     private static final Logger LOG = Logger.getLogger(PDFEncryptionDict.class.getName());
 
     private final PdfDictionary dict;
 
-    /**
-     * Creates an encryption dictionary wrapper.
-     *
-     * @param dict the /Encrypt PDF dictionary
-     */
+    /// Creates an encryption dictionary wrapper.
+    ///
+    /// @param dict the /Encrypt PDF dictionary
     public PDFEncryptionDict(PdfDictionary dict) {
         this.dict = dict;
     }
 
-    /** Filter name — must be "Standard" for standard handler. */
+    /// Filter name — must be "Standard" for standard handler.
     public String getFilter() { return dict.getNameAsString("Filter"); }
 
-    /** V: algorithm version (0-5). */
+    /// V: algorithm version (0-5).
     public int getV() { return dict.getInt("V", 0); }
 
-    /** R: security handler revision (2-6). */
+    /// R: security handler revision (2-6).
     public int getR() { return dict.getInt("R", 0); }
 
-    /** Key length in bits (40-256). */
+    /// Key length in bits (40-256).
     public int getLength() {
         int v = getV();
         if (v == 1) return 40;
@@ -49,79 +41,75 @@ public class PDFEncryptionDict {
         return dict.getInt("Length", 40);
     }
 
-    /** Key length in bytes. */
+    /// Key length in bytes.
     public int getKeyLength() { return getLength() / 8; }
 
-    /** O: owner password hash. */
+    /// O: owner password hash.
     public byte[] getO() {
         PdfBase o = dict.get("O");
         return (o instanceof PdfString) ? ((PdfString) o).getBytes() : new byte[0];
     }
 
-    /** U: user password hash. */
+    /// U: user password hash.
     public byte[] getU() {
         PdfBase u = dict.get("U");
         return (u instanceof PdfString) ? ((PdfString) u).getBytes() : new byte[0];
     }
 
-    /** OE: owner encryption key (R=6, 32 bytes). */
+    /// OE: owner encryption key (R=6, 32 bytes).
     public byte[] getOE() {
         PdfBase oe = dict.get("OE");
         return (oe instanceof PdfString) ? ((PdfString) oe).getBytes() : null;
     }
 
-    /** UE: user encryption key (R=6, 32 bytes). */
+    /// UE: user encryption key (R=6, 32 bytes).
     public byte[] getUE() {
         PdfBase ue = dict.get("UE");
         return (ue instanceof PdfString) ? ((PdfString) ue).getBytes() : null;
     }
 
-    /** Perms: encrypted permissions (R=6, 16 bytes). */
+    /// Perms: encrypted permissions (R=6, 16 bytes).
     public byte[] getPerms() {
         PdfBase p = dict.get("Perms");
         return (p instanceof PdfString) ? ((PdfString) p).getBytes() : null;
     }
 
-    /**
-     * P: permission flags as a signed 32-bit integer.
-     * <p>
-     * Real-world PDFs often serialize {@code /P} as an unsigned decimal value
-     * (for example {@code 4294963392}) even though the security algorithm
-     * expects the low 32 bits interpreted as a signed integer. Reading via
-     * {@code int} directly would overflow and break password authentication.
-     * </p>
-     */
+    /// P: permission flags as a signed 32-bit integer.
+    ///
+    /// Real-world PDFs often serialize `/P` as an unsigned decimal value
+    /// (for example `4294963392`) even though the security algorithm
+    /// expects the low 32 bits interpreted as a signed integer. Reading via
+    /// `int` directly would overflow and break password authentication.
+    ///
     public int getP() {
         long raw = dict.getLong("P", 0L);
         return (int) raw;
     }
 
-    /** EncryptMetadata: default true. */
+    /// EncryptMetadata: default true.
     public boolean getEncryptMetadata() { return dict.getBoolean("EncryptMetadata", true); }
 
-    /** StmF: crypt filter for streams (V=4+). */
+    /// StmF: crypt filter for streams (V=4+).
     public String getStmF() {
         String stmF = dict.getNameAsString("StmF");
         return stmF != null ? stmF : "Identity";
     }
 
-    /** StrF: crypt filter for strings (V=4+). */
+    /// StrF: crypt filter for strings (V=4+).
     public String getStrF() {
         String strF = dict.getNameAsString("StrF");
         return strF != null ? strF : "Identity";
     }
 
-    /** CF: crypt filter dictionary (V=4+). */
+    /// CF: crypt filter dictionary (V=4+).
     public PdfDictionary getCF() {
         PdfBase cf = dict.get("CF");
         return (cf instanceof PdfDictionary) ? (PdfDictionary) cf : null;
     }
 
-    /**
-     * Determines the cipher type based on V and crypt filters.
-     *
-     * @return the cipher type to use
-     */
+    /// Determines the cipher type based on V and crypt filters.
+    ///
+    /// @return the cipher type to use
     public CipherType getCipherType() {
         int v = getV();
         if (v <= 3) return CipherType.RC4;
@@ -150,27 +138,24 @@ public class PDFEncryptionDict {
         return CipherType.AES_256;
     }
 
-    /** Supported cipher types ({@code IDENTITY} = no encryption applied). */
+    /// Supported cipher types (`IDENTITY` = no encryption applied).
     public enum CipherType { RC4, AES_128, AES_256, IDENTITY }
 
     // ── Write-side: static factory ──────────────────────────────────
 
-    /**
-     * Builds a new /Encrypt dictionary for the given algorithm and parameters.
-     * <p>
-     * Maps {@link CryptoAlgorithm} to the V/R/Length values defined in
-     * ISO 32000-1:2008, Table 21 and §7.6.3.2.
-     * </p>
-     *
-     * @param algorithm   the encryption algorithm
-     * @param permissions the P flags (32-bit signed integer)
-     * @param O           owner password hash (32 bytes for R2-R4, 48 bytes for R6)
-     * @param U           user password hash (32 bytes for R2-R4, 48 bytes for R6)
-     * @param OE          owner encryption key (32 bytes, R6 only — null for R2-R4)
-     * @param UE          user encryption key (32 bytes, R6 only — null for R2-R4)
-     * @param Perms       encrypted permissions (16 bytes, R6 only — null for R2-R4)
-     * @return a fully populated PDFEncryptionDict
-     */
+    /// Builds a new /Encrypt dictionary for the given algorithm and parameters.
+    ///
+    /// Maps [CryptoAlgorithm] to the V/R/Length values defined in
+    /// ISO 32000-1:2008, Table 21 and §7.6.3.2.
+    ///
+    /// @param algorithm   the encryption algorithm
+    /// @param permissions the P flags (32-bit signed integer)
+    /// @param O           owner password hash (32 bytes for R2-R4, 48 bytes for R6)
+    /// @param U           user password hash (32 bytes for R2-R4, 48 bytes for R6)
+    /// @param OE          owner encryption key (32 bytes, R6 only — null for R2-R4)
+    /// @param UE          user encryption key (32 bytes, R6 only — null for R2-R4)
+    /// @param Perms       encrypted permissions (16 bytes, R6 only — null for R2-R4)
+    /// @return a fully populated PDFEncryptionDict
     public static PDFEncryptionDict build(CryptoAlgorithm algorithm, int permissions,
                                            byte[] O, byte[] U,
                                            byte[] OE, byte[] UE, byte[] Perms) {
@@ -242,6 +227,6 @@ public class PDFEncryptionDict {
         return new PDFEncryptionDict(d);
     }
 
-    /** Returns the underlying dictionary. */
+    /// Returns the underlying dictionary.
     public PdfDictionary getPdfDictionary() { return dict; }
 }

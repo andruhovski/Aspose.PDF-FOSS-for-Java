@@ -2,56 +2,46 @@ package org.aspose.pdf.engine.pdfa.fixes;
 
 import org.aspose.pdf.ConvertErrorAction;
 import org.aspose.pdf.PdfFormat;
+import org.aspose.pdf.engine.parser.PDFParser;
+import org.aspose.pdf.engine.pdfa.PdfAValidationResult;
 import org.aspose.pdf.engine.pdfobjects.PdfArray;
 import org.aspose.pdf.engine.pdfobjects.PdfBase;
 import org.aspose.pdf.engine.pdfobjects.PdfBoolean;
 import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfa.PdfAValidationResult;
-import org.aspose.pdf.engine.parser.PDFParser;
 
 import java.io.IOException;
 import java.util.logging.Logger;
 
-/**
- * AcroForm-related fixes for PDF/A compliance.
- * <p>
- * Addresses the following requirements:
- * </p>
- * <ul>
- *   <li>{@code /NeedAppearances} must be {@code false} or absent
- *       (ISO 19005-1:2005, 6.9)</li>
- *   <li>Field-level {@code /AA} (additional-actions) dictionaries must be removed
- *       (ISO 19005-1:2005, 6.6.1)</li>
- *   <li>{@code /XFA} must be removed for PDF/A-2 and later
- *       (ISO 19005-2:2011, 6.9)</li>
- * </ul>
- */
+/// AcroForm-related fixes for PDF/A compliance.
+///
+/// Addresses the following requirements:
+///
+///   - `/NeedAppearances` must be `false` or absent
+///     (ISO 19005-1:2005, 6.9)
+///   - Field-level `/AA` (additional-actions) dictionaries must be removed
+///     (ISO 19005-1:2005, 6.6.1)
+///   - `/XFA` must be removed for PDF/A-2 and later
+///     (ISO 19005-2:2011, 6.9)
 public final class FormFixes {
 
     private static final Logger LOG = Logger.getLogger(FormFixes.class.getName());
 
-    /**
-     * Creates a new FormFixes instance.
-     */
+    /// Creates a new FormFixes instance.
     public FormFixes() {
         // default
     }
 
-    /**
-     * Sets {@code /NeedAppearances} to {@code false} or removes it from the
-     * AcroForm dictionary.
-     * <p>
-     * PDF/A requires that form fields already have appearance streams, so the
-     * viewer must not need to generate them on the fly (ISO 19005-1:2005, 6.9).
-     * </p>
-     *
-     * @param parser      the parsed PDF
-     * @param format      the target format
-     * @param errorAction the error action strategy
-     * @param result      the validation result
-     * @throws IOException if an I/O error occurs
-     */
+    /// Sets `/NeedAppearances` to `false` or removes it from the
+    /// AcroForm dictionary.
+    ///
+    /// PDF/A requires that form fields already have appearance streams, so the
+    /// viewer must not need to generate them on the fly (ISO 19005-1:2005, 6.9).
+    ///
+    /// @param parser      the parsed PDF
+    /// @param format      the target format
+    /// @param errorAction the error action strategy
+    /// @param result      the validation result
+    /// @throws IOException if an I/O error occurs
     public void fixNeedAppearances(PDFParser parser, PdfFormat format,
                                    ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
         PdfDictionary acroForm = getAcroForm(parser);
@@ -68,16 +58,14 @@ public final class FormFixes {
         }
     }
 
-    /**
-     * Removes {@code /AA} dictionaries from all field dictionaries in the
-     * AcroForm field tree.
-     *
-     * @param parser      the parsed PDF
-     * @param format      the target format
-     * @param errorAction the error action strategy
-     * @param result      the validation result
-     * @throws IOException if an I/O error occurs
-     */
+    /// Removes `/AA` dictionaries from all field dictionaries in the
+    /// AcroForm field tree.
+    ///
+    /// @param parser      the parsed PDF
+    /// @param format      the target format
+    /// @param errorAction the error action strategy
+    /// @param result      the validation result
+    /// @throws IOException if an I/O error occurs
     public void removeFieldAA(PDFParser parser, PdfFormat format,
                               ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
         PdfDictionary acroForm = getAcroForm(parser);
@@ -97,19 +85,16 @@ public final class FormFixes {
         removeAAFromFieldTree(parser, (PdfArray) fieldsObj, result);
     }
 
-    /**
-     * Removes the {@code /XFA} entry from the AcroForm dictionary.
-     * <p>
-     * XFA forms are not allowed in PDF/A-2 and later (ISO 19005-2:2011, 6.9).
-     * This method should only be called for PDF/A-2+ targets.
-     * </p>
-     *
-     * @param parser      the parsed PDF
-     * @param format      the target format
-     * @param errorAction the error action strategy
-     * @param result      the validation result
-     * @throws IOException if an I/O error occurs
-     */
+    /// Removes the `/XFA` entry from the AcroForm dictionary.
+    ///
+    /// XFA forms are not allowed in PDF/A-2 and later (ISO 19005-2:2011, 6.9).
+    /// This method should only be called for PDF/A-2+ targets.
+    ///
+    /// @param parser      the parsed PDF
+    /// @param format      the target format
+    /// @param errorAction the error action strategy
+    /// @param result      the validation result
+    /// @throws IOException if an I/O error occurs
     public void removeXFA(PDFParser parser, PdfFormat format,
                           ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
         PdfDictionary acroForm = getAcroForm(parser);
@@ -129,11 +114,9 @@ public final class FormFixes {
     // Internal helpers
     // -------------------------------------------------------------------------
 
-    /**
-     * Retrieves the AcroForm dictionary from the catalog, resolving references.
-     *
-     * @return the AcroForm dictionary, or null if absent
-     */
+    /// Retrieves the AcroForm dictionary from the catalog, resolving references.
+    ///
+    /// @return the AcroForm dictionary, or null if absent
     private PdfDictionary getAcroForm(PDFParser parser) throws IOException {
         PdfDictionary catalog = parser.getCatalog();
         PdfBase acroRef = catalog.get("AcroForm");
@@ -147,9 +130,7 @@ public final class FormFixes {
         return null;
     }
 
-    /**
-     * Recursively walks the field tree removing /AA from field dictionaries.
-     */
+    /// Recursively walks the field tree removing /AA from field dictionaries.
     private void removeAAFromFieldTree(PDFParser parser, PdfArray fields,
                                        PdfAValidationResult result) throws IOException {
         for (int i = 0; i < fields.size(); i++) {

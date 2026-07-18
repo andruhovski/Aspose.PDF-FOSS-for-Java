@@ -8,9 +8,7 @@ import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for OutlineCollection and OutlineItemCollection.
- */
+/// Tests for OutlineCollection and OutlineItemCollection.
 public class OutlineTest {
 
     @Test

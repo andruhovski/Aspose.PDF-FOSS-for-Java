@@ -8,9 +8,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for Layer (Optional Content Group).
- */
+/// Tests for Layer (Optional Content Group).
 public class LayerTest {
 
     @Test

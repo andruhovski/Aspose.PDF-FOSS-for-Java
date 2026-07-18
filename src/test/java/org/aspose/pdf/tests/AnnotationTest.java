@@ -9,9 +9,7 @@ import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for annotation classes.
- */
+/// Tests for annotation classes.
 public class AnnotationTest {
 
     private Page createPage() {

@@ -11,14 +11,10 @@ import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for annotation and form flattening.
- */
+/// Tests for annotation and form flattening.
 public class FlattenTest {
 
-    /**
-     * Creates a minimal page dictionary with a MediaBox.
-     */
+    /// Creates a minimal page dictionary with a MediaBox.
     private Page createPage() {
         PdfDictionary pageDict = new PdfDictionary();
         pageDict.set(PdfName.TYPE, PdfName.PAGE);
@@ -26,14 +22,12 @@ public class FlattenTest {
         return new Page(pageDict, null);
     }
 
-    /**
-     * Creates an annotation dictionary with a normal appearance stream (/AP /N).
-     *
-     * @param rect       the annotation rectangle
-     * @param apContent  the appearance stream content bytes
-     * @param bbox       the appearance BBox
-     * @return the annotation PDF dictionary
-     */
+    /// Creates an annotation dictionary with a normal appearance stream (/AP /N).
+    ///
+    /// @param rect       the annotation rectangle
+    /// @param apContent  the appearance stream content bytes
+    /// @param bbox       the appearance BBox
+    /// @return the annotation PDF dictionary
     private PdfDictionary createAnnotWithAppearance(Rectangle rect, String apContent, Rectangle bbox) {
         PdfDictionary annotDict = new PdfDictionary();
         annotDict.set(PdfName.of("Type"), PdfName.of("Annot"));
@@ -281,9 +275,7 @@ public class FlattenTest {
         assertSame(apStream, annot.getNormalAppearanceStream());
     }
 
-    /**
-     * Helper: extracts text from a content stream PDF object (PdfStream or PdfArray).
-     */
+    /// Helper: extracts text from a content stream PDF object (PdfStream or PdfArray).
     private String getContentString(PdfBase contents) throws IOException {
         if (contents instanceof PdfStream) {
             return new String(((PdfStream) contents).getDecodedData(), StandardCharsets.US_ASCII);

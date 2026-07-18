@@ -3,7 +3,7 @@ package org.aspose.pdf;
 import org.aspose.pdf.engine.pdfobjects.PdfArray;
 import org.aspose.pdf.engine.pdfobjects.PdfName;
 
-/** FitBH explicit destination — fit bounding box width, position at top. */
+/// FitBH explicit destination — fit bounding box width, position at top.
 public class FitBHExplicitDestination extends ExplicitDestination {
     private final double top;
     public FitBHExplicitDestination(Page page, double top) { super(page); this.top = top; }

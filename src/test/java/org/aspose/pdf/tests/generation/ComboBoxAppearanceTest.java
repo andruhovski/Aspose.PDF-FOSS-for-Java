@@ -16,11 +16,9 @@ import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Sprint 22 Part 3 — F-10 sibling for {@link ComboBoxField}. A combo box must
- * generate a real {@code /AP/N} appearance stream (not a {@code PdfNull}
- * placeholder, not a missing entry) so strict viewers render the selected text.
- */
+/// Sprint 22 Part 3 — F-10 sibling for [ComboBoxField]. A combo box must
+/// generate a real `/AP/N` appearance stream (not a `PdfNull`
+/// placeholder, not a missing entry) so strict viewers render the selected text.
 class ComboBoxAppearanceTest {
 
     private static PdfStream normalAppearance(ComboBoxField cb) {

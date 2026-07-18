@@ -2,15 +2,13 @@ package org.aspose.pdf.drawing;
 
 import java.util.logging.Logger;
 
-/**
- * Represents an arc drawing shape.
- * <p>
- * The arc is defined by its center ({@code posX}, {@code posY}), {@code radius},
- * and the angular range from {@code startAngle} to {@code endAngle} (in degrees).
- * The bounding box is computed from the actual arc extent to support accurate
- * bounds checking.
- * </p>
- */
+/// Represents an arc drawing shape.
+///
+/// The arc is defined by its center (`posX`, `posY`), `radius`,
+/// and the angular range from `startAngle` to `endAngle` (in degrees).
+/// The bounding box is computed from the actual arc extent to support accurate
+/// bounds checking.
+///
 public class Arc extends Shape {
 
     private static final Logger LOG = Logger.getLogger(Arc.class.getName());
@@ -21,15 +19,13 @@ public class Arc extends Shape {
     private float startAngle;
     private float endAngle;
 
-    /**
-     * Creates a new arc with the specified center, radius, and angular range.
-     *
-     * @param posX       the x-coordinate of the center
-     * @param posY       the y-coordinate of the center
-     * @param radius     the radius of the arc
-     * @param startAngle the start angle in degrees
-     * @param endAngle   the end angle in degrees
-     */
+    /// Creates a new arc with the specified center, radius, and angular range.
+    ///
+    /// @param posX       the x-coordinate of the center
+    /// @param posY       the y-coordinate of the center
+    /// @param radius     the radius of the arc
+    /// @param startAngle the start angle in degrees
+    /// @param endAngle   the end angle in degrees
     public Arc(float posX, float posY, float radius, float startAngle, float endAngle) {
         this.posX = posX;
         this.posY = posY;
@@ -38,103 +34,81 @@ public class Arc extends Shape {
         this.endAngle = endAngle;
     }
 
-    /**
-     * Gets the x-coordinate of the center.
-     *
-     * @return the center x-coordinate
-     */
+    /// Gets the x-coordinate of the center.
+    ///
+    /// @return the center x-coordinate
     public float getPosX() {
         return posX;
     }
 
-    /**
-     * Sets the x-coordinate of the center.
-     *
-     * @param posX the center x-coordinate
-     */
+    /// Sets the x-coordinate of the center.
+    ///
+    /// @param posX the center x-coordinate
     public void setPosX(float posX) {
         this.posX = posX;
     }
 
-    /**
-     * Gets the y-coordinate of the center.
-     *
-     * @return the center y-coordinate
-     */
+    /// Gets the y-coordinate of the center.
+    ///
+    /// @return the center y-coordinate
     public float getPosY() {
         return posY;
     }
 
-    /**
-     * Sets the y-coordinate of the center.
-     *
-     * @param posY the center y-coordinate
-     */
+    /// Sets the y-coordinate of the center.
+    ///
+    /// @param posY the center y-coordinate
     public void setPosY(float posY) {
         this.posY = posY;
     }
 
-    /**
-     * Gets the radius.
-     *
-     * @return the radius
-     */
+    /// Gets the radius.
+    ///
+    /// @return the radius
     public float getRadius() {
         return radius;
     }
 
-    /**
-     * Sets the radius.
-     *
-     * @param radius the radius
-     */
+    /// Sets the radius.
+    ///
+    /// @param radius the radius
     public void setRadius(float radius) {
         this.radius = radius;
     }
 
-    /**
-     * Gets the start angle in degrees.
-     *
-     * @return the start angle
-     */
+    /// Gets the start angle in degrees.
+    ///
+    /// @return the start angle
     public float getStartAngle() {
         return startAngle;
     }
 
-    /**
-     * Sets the start angle in degrees.
-     *
-     * @param startAngle the start angle
-     */
+    /// Sets the start angle in degrees.
+    ///
+    /// @param startAngle the start angle
     public void setStartAngle(float startAngle) {
         this.startAngle = startAngle;
     }
 
-    /**
-     * Gets the end angle in degrees.
-     *
-     * @return the end angle
-     */
+    /// Gets the end angle in degrees.
+    ///
+    /// @return the end angle
     public float getEndAngle() {
         return endAngle;
     }
 
-    /**
-     * Sets the end angle in degrees.
-     *
-     * @param endAngle the end angle
-     */
+    /// Sets the end angle in degrees.
+    ///
+    /// @param endAngle the end angle
     public void setEndAngle(float endAngle) {
         this.endAngle = endAngle;
     }
 
-    /**
-     * {@inheritDoc}
-     * <p>
-     * Computes the actual bounding box of the arc by evaluating the endpoints
-     * and any axis-aligned extrema that fall within the angular range.
-     * </p>
-     */
+    /// {@inheritDoc}
+    ///
+    /// Computes the actual bounding box of the arc by evaluating the endpoints
+    /// and any axis-aligned extrema that fall within the angular range.
+    ///
     @Override
     public void checkBounds(double width, double height) {
         // startAngle and endAngle are absolute angles in degrees.

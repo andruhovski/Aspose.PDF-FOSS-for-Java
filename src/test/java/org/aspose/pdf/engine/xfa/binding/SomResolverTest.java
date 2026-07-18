@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** A4.1: SOM resolver — spec-example notations over the typed model. */
+/// A4.1: SOM resolver — spec-example notations over the typed model.
 public class SomResolverTest {
 
     private static final String TPL_NS = XfaNode.TEMPLATE_NS;

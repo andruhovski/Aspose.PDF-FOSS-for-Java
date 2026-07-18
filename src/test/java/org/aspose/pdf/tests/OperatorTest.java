@@ -14,9 +14,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link Operator}.
- */
+/// Tests for [Operator].
 public class OperatorTest {
 
     @Test

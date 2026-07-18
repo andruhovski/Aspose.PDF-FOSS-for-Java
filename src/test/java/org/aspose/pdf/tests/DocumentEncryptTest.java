@@ -15,9 +15,7 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for Document.encrypt() end-to-end (Step 7 of BUG-011).
- */
+/// Tests for Document.encrypt() end-to-end (Step 7 of BUG-011).
 public class DocumentEncryptTest {
 
     @TempDir

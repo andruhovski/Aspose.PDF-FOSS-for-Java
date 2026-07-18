@@ -1,24 +1,20 @@
 package org.aspose.pdf.engine.pdfobjects;
 
-/**
- * Key identifying an indirect PDF object by its object number and generation number.
- * <p>
- * In PDF, every indirect object is uniquely identified by a pair (objectNumber, generationNumber).
- * See ISO 32000-1:2008, §7.3.10.
- * </p>
- */
+/// Key identifying an indirect PDF object by its object number and generation number.
+///
+/// In PDF, every indirect object is uniquely identified by a pair (objectNumber, generationNumber).
+/// See ISO 32000-1:2008, §7.3.10.
+///
 public final class PdfObjectKey implements Comparable<PdfObjectKey> {
 
     private final int objectNumber;
     private final int generationNumber;
 
-    /**
-     * Creates a new indirect object key.
-     *
-     * @param objectNumber     the object number (must be &ge; 1 for valid indirect objects)
-     * @param generationNumber the generation number (0..65535)
-     * @throws IllegalArgumentException if objectNumber &lt; 0 or generationNumber &lt; 0 or &gt; 65535
-     */
+    /// Creates a new indirect object key.
+    ///
+    /// @param objectNumber     the object number (must be ≥ 1 for valid indirect objects)
+    /// @param generationNumber the generation number (0..65535)
+    /// @throws IllegalArgumentException if objectNumber < 0 or generationNumber < 0 or > 65535
     public PdfObjectKey(int objectNumber, int generationNumber) {
         if (objectNumber < 0) {
             throw new IllegalArgumentException("Object number must be non-negative: " + objectNumber);
@@ -31,20 +27,16 @@ public final class PdfObjectKey implements Comparable<PdfObjectKey> {
         this.generationNumber = generationNumber;
     }
 
-    /**
-     * Returns the object number.
-     *
-     * @return the object number
-     */
+    /// Returns the object number.
+    ///
+    /// @return the object number
     public int getObjectNumber() {
         return objectNumber;
     }
 
-    /**
-     * Returns the generation number.
-     *
-     * @return the generation number
-     */
+    /// Returns the generation number.
+    ///
+    /// @return the generation number
     public int getGenerationNumber() {
         return generationNumber;
     }

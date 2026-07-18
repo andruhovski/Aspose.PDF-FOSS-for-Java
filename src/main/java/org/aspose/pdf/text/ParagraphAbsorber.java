@@ -10,37 +10,33 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.logging.Logger;
 
-/**
- * Extracts paragraph structures from PDF pages by analyzing
- * text fragment positions and line spacing.
- * <p>
- * Groups text fragments into paragraphs based on vertical proximity
- * and reading order (left-to-right, top-to-bottom). Lines with small
- * vertical gaps are grouped into the same paragraph; larger gaps indicate
- * paragraph breaks, and even larger gaps indicate section breaks.
- * </p>
- */
+/// Extracts paragraph structures from PDF pages by analyzing
+/// text fragment positions and line spacing.
+///
+/// Groups text fragments into paragraphs based on vertical proximity
+/// and reading order (left-to-right, top-to-bottom). Lines with small
+/// vertical gaps are grouped into the same paragraph; larger gaps indicate
+/// paragraph breaks, and even larger gaps indicate section breaks.
+///
 public class ParagraphAbsorber {
 
     private static final Logger LOG = Logger.getLogger(ParagraphAbsorber.class.getName());
 
-    /** Tolerance for grouping fragments into the same line (points). */
+    /// Tolerance for grouping fragments into the same line (points).
     private static final double LINE_TOLERANCE = 2.0;
 
-    /** Gap threshold for paragraph break — lines separated by more than this are in different paragraphs. */
+    /// Gap threshold for paragraph break — lines separated by more than this are in different paragraphs.
     private static final double PARAGRAPH_GAP = 14.0;
 
-    /** Gap threshold for section break — gaps larger than this separate sections. */
+    /// Gap threshold for section break — gaps larger than this separate sections.
     private static final double SECTION_GAP = 28.0;
 
     private final List<PageMarkup> pageMarkups = new ArrayList<>();
 
-    /**
-     * Visits a single page and extracts paragraph structures.
-     *
-     * @param page the page to analyze
-     * @throws IOException if text extraction fails
-     */
+    /// Visits a single page and extracts paragraph structures.
+    ///
+    /// @param page the page to analyze
+    /// @throws IOException if text extraction fails
     public void visit(Page page) throws IOException {
         // 1. Extract all text fragments
         TextFragmentAbsorber tfa = new TextFragmentAbsorber();
@@ -127,30 +123,24 @@ public class ParagraphAbsorber {
         LOG.fine(() -> "ParagraphAbsorber: page analyzed, " + markup.getSections().size() + " section(s)");
     }
 
-    /**
-     * Visits all pages of a document and extracts paragraph structures.
-     *
-     * @param document the document to analyze
-     * @throws IOException if text extraction fails
-     */
+    /// Visits all pages of a document and extracts paragraph structures.
+    ///
+    /// @param document the document to analyze
+    /// @throws IOException if text extraction fails
     public void visit(Document document) throws IOException {
         for (int i = 1; i <= document.getPages().getCount(); i++) {
             visit(document.getPages().get(i));
         }
     }
 
-    /**
-     * Returns the page markup results for all visited pages.
-     *
-     * @return unmodifiable list of page markups
-     */
+    /// Returns the page markup results for all visited pages.
+    ///
+    /// @return unmodifiable list of page markups
     public List<PageMarkup> getPageMarkups() {
         return Collections.unmodifiableList(pageMarkups);
     }
 
-    /**
-     * Groups text fragments into lines by Y-coordinate proximity.
-     */
+    /// Groups text fragments into lines by Y-coordinate proximity.
     private List<List<TextFragment>> groupByY(List<TextFragment> fragments) {
         List<List<TextFragment>> lines = new ArrayList<>();
         List<TextFragment> currentLine = new ArrayList<>();
@@ -182,9 +172,7 @@ public class ParagraphAbsorber {
         return lines;
     }
 
-    /**
-     * Returns the average Y coordinate of fragments in a line.
-     */
+    /// Returns the average Y coordinate of fragments in a line.
     private double averageY(List<TextFragment> line) {
         double sum = 0;
         for (TextFragment f : line) {

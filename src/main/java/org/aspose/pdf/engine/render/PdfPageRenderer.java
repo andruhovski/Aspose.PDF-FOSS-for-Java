@@ -1,29 +1,12 @@
 package org.aspose.pdf.engine.render;
 
-import org.aspose.pdf.ExtGState;
-import org.aspose.pdf.Matrix;
-import org.aspose.pdf.Operator;
-import org.aspose.pdf.OperatorCollection;
-import org.aspose.pdf.Page;
+import org.aspose.pdf.*;
 import org.aspose.pdf.Rectangle;
-import org.aspose.pdf.Resources;
-import org.aspose.pdf.XForm;
-import org.aspose.pdf.XImage;
-import org.aspose.pdf.engine.pdfobjects.PdfArray;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
-import org.aspose.pdf.engine.pdfobjects.PdfStream;
-import org.aspose.pdf.engine.pdfobjects.PdfString;
 import org.aspose.pdf.engine.parser.PDFParser;
+import org.aspose.pdf.engine.pdfobjects.*;
 import org.aspose.pdf.operators.*;
 
-import java.awt.AlphaComposite;
-import java.awt.BasicStroke;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.Shape;
+import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
 import java.awt.geom.GeneralPath;
@@ -35,29 +18,24 @@ import java.util.Deque;
 import java.util.List;
 import java.util.logging.Logger;
 
-/**
- * Core PDF page rendering engine (ISO 32000-1:2008, §8 &amp; §9).
- * <p>
- * Processes content stream operators and renders graphics, text, and images
- * onto a {@link java.awt.Graphics2D} context backed by a {@link BufferedImage}.
- * </p>
- * <p>
- * The renderer handles:
- * <ul>
- *   <li>Graphics state (q/Q, cm, w, J, j, M, d, gs)</li>
- *   <li>Color operators (rg, RG, g, G, k, K, cs, sc, scn, CS, SC, SCN)</li>
- *   <li>Path construction (m, l, c, v, y, re, h) and painting (S, s, f, F, f*, B, B*, b, b*, n)</li>
- *   <li>Clipping (W, W*)</li>
- *   <li>Text (BT, ET, Tf, Td, TD, Tm, T*, Tc, Tw, Tz, TL, Tr, Ts, Tj, TJ, ', ")</li>
- *   <li>XObjects — images (Do with /Image) and forms (Do with /Form)</li>
- * </ul>
- * </p>
- */
+/// Core PDF page rendering engine (ISO 32000-1:2008, §8 & §9).
+///
+/// Processes content stream operators and renders graphics, text, and images
+/// onto a [java.awt.Graphics2D] context backed by a [BufferedImage].
+///
+/// The renderer handles:
+///
+///   - Graphics state (q/Q, cm, w, J, j, M, d, gs)
+///   - Color operators (rg, RG, g, G, k, K, cs, sc, scn, CS, SC, SCN)
+///   - Path construction (m, l, c, v, y, re, h) and painting (S, s, f, F, f\*, B, B\*, b, b\*, n)
+///   - Clipping (W, W\*)
+///   - Text (BT, ET, Tf, Td, TD, Tm, T\*, Tc, Tw, Tz, TL, Tr, Ts, Tj, TJ, ', ")
+///   - XObjects — images (Do with /Image) and forms (Do with /Form)
 public class PdfPageRenderer {
 
     private static final Logger LOG = Logger.getLogger(PdfPageRenderer.class.getName());
 
-    /** Maximum recursion depth for Form XObjects to prevent infinite loops. */
+    /// Maximum recursion depth for Form XObjects to prevent infinite loops.
     private static final int MAX_FORM_DEPTH = 10;
 
     private final TextRenderer textRenderer = new TextRenderer();
@@ -67,15 +45,13 @@ public class PdfPageRenderer {
         textRenderer.setType3Executor(this::executeType3GlyphStream);
     }
 
-    /**
-     * Renders a PDF page to a BufferedImage at the specified DPI.
-     *
-     * @param page the PDF page to render
-     * @param dpiX horizontal resolution in DPI
-     * @param dpiY vertical resolution in DPI
-     * @return the rendered image
-     * @throws IOException if reading the content stream fails
-     */
+    /// Renders a PDF page to a BufferedImage at the specified DPI.
+    ///
+    /// @param page the PDF page to render
+    /// @param dpiX horizontal resolution in DPI
+    /// @param dpiY vertical resolution in DPI
+    /// @return the rendered image
+    /// @throws IOException if reading the content stream fails
     public BufferedImage renderPage(Page page, double dpiX, double dpiY) throws IOException {
         Rectangle mediaBox = page.getMediaBox();
         if (mediaBox == null) {
@@ -161,7 +137,7 @@ public class PdfPageRenderer {
         return image;
     }
 
-    /** Iterates page annotations and draws each one's Normal Appearance stream. */
+    /// Iterates page annotations and draws each one's Normal Appearance stream.
     private void renderAnnotations(Page page, Graphics2D g2d) {
         org.aspose.pdf.engine.pdfobjects.PdfDictionary pageDict = page.getPdfDictionary();
         if (pageDict == null) return;
@@ -262,9 +238,7 @@ public class PdfPageRenderer {
         return b;
     }
 
-    /**
-     * Processes a sequence of content stream operators.
-     */
+    /// Processes a sequence of content stream operators.
     private void processOperators(OperatorCollection ops, Resources resources,
                                   Graphics2D g2d, PDFParser parser, int formDepth) {
         Deque<GraphicsState> stateStack = new ArrayDeque<>();
@@ -287,10 +261,8 @@ public class PdfPageRenderer {
         }
     }
 
-    /**
-     * Dispatches a single operator. Returns the (potentially replaced) state —
-     * callers must use the returned value to handle Q (restore) correctly.
-     */
+    /// Dispatches a single operator. Returns the (potentially replaced) state —
+    /// callers must use the returned value to handle Q (restore) correctly.
     private GraphicsState processOperator(Operator op, GraphicsState state,
                                  Deque<GraphicsState> stateStack, Resources resources,
                                  Graphics2D g2d, PDFParser parser, int formDepth)
@@ -690,15 +662,13 @@ public class PdfPageRenderer {
         fillPath(g2d, state, windingRule, null, null, null);
     }
 
-    /**
-     * @param resources    page (or form/pattern) resources — needed to resolve
-     *                     a fill Pattern by name. May be null when the
-     *                     caller knows there's no pattern fill in flight.
-     * @param formDepthBox single-element int[] holding the current form
-     *                     recursion depth so pattern content streams can
-     *                     guard against infinite recursion. May be null →
-     *                     defaults to depth 0.
-     */
+    /// @param resources    page (or form/pattern) resources — needed to resolve
+    ///                     a fill Pattern by name. May be null when the
+    ///                     caller knows there's no pattern fill in flight.
+    /// @param formDepthBox single-element int[] holding the current form
+    ///                     recursion depth so pattern content streams can
+    ///                     guard against infinite recursion. May be null →
+    ///                     defaults to depth 0.
     private void fillPath(Graphics2D g2d, GraphicsState state, int windingRule,
                            Resources resources, int[] formDepthBox, PDFParser parser) {
         GeneralPath path = state.getCurrentPath();
@@ -733,14 +703,13 @@ public class PdfPageRenderer {
         }
     }
 
-    /**
-     * Fills {@code path} with a shading Pattern (PatternType 2, §8.7.4.3): the
-     * pattern's /Shading is painted, clipped to the path, with the pattern
-     * /Matrix mapping shading space into the current coordinate system. Returns
-     * {@code true} on success, {@code false} so the caller can fall back.
-     * <p>Without this, shading-pattern fills dropped to a solid fill colour —
-     * black for the gradient-built emoji of corpus 59149.</p>
-     */
+    /// Fills `path` with a shading Pattern (PatternType 2, §8.7.4.3): the
+    /// pattern's /Shading is painted, clipped to the path, with the pattern
+    /// /Matrix mapping shading space into the current coordinate system. Returns
+    /// `true` on success, `false` so the caller can fall back.
+    ///
+    /// Without this, shading-pattern fills dropped to a solid fill colour —
+    /// black for the gradient-built emoji of corpus 59149.
     private boolean renderShadingPatternFill(Graphics2D g2d, GraphicsState state,
                                              GeneralPath path, Resources resources,
                                              String patternName, PDFParser parser) {
@@ -787,17 +756,15 @@ public class PdfPageRenderer {
         }
     }
 
-    /**
-     * Paints {@code path} (in user space) with the named Tiling Pattern from
-     * the current resources. Returns {@code true} on success.
-     *
-     * <p>The pattern's content stream is rendered inside the user-space clip
-     * defined by {@code path}, with the pattern's /Matrix prepended to the
-     * current transform. {@code XStep}/{@code YStep} are honoured by tiling
-     * the content across the path's bounding box. Tiling beyond the clip is
-     * cut off naturally by Java2D's clip; for the common single-tile case
-     * (XStep ≥ BBox.W and YStep ≥ BBox.H) only one iteration runs.</p>
-     */
+    /// Paints `path` (in user space) with the named Tiling Pattern from
+    /// the current resources. Returns `true` on success.
+    ///
+    /// The pattern's content stream is rendered inside the user-space clip
+    /// defined by `path`, with the pattern's /Matrix prepended to the
+    /// current transform. `XStep`/`YStep` are honoured by tiling
+    /// the content across the path's bounding box. Tiling beyond the clip is
+    /// cut off naturally by Java2D's clip; for the common single-tile case
+    /// (XStep ≥ BBox.W and YStep ≥ BBox.H) only one iteration runs.
     private boolean renderTilingPatternFill(Graphics2D g2d, GraphicsState state,
                                              GeneralPath path, Resources resources,
                                              String patternName, int formDepth) {
@@ -972,23 +939,20 @@ public class PdfPageRenderer {
         }
     }
 
-    /**
-     * Clamps a stroke so it never rasterises thinner than one device pixel.
-     * <p>
-     * ISO 32000 §8.4.3.2: a line width of 0 denotes the thinnest line the
-     * device can render — NOT an invisible line. Java2D does not honour that
-     * convention (a 0-width stroke under the anti-aliased pipeline draws
-     * nothing), and a small positive width under a down-scaling CTM (e.g.
-     * 0.05 in corpus 29903.pdf) anti-aliases to invisibility. Reference
-     * renderers clamp the effective device width instead; we use the same
-     * 0.25-device-pixel floor as Adobe Reader and PDFBox, so a hairline
-     * anti-aliases to the same ~25% coverage grey as the reference engine.
-     * </p>
-     *
-     * @param stroke    the stroke built from the graphics state (user-space width)
-     * @param transform the full current transform (CTM + device scale)
-     * @return the original stroke, or a copy with the width raised to 0.25 device px
-     */
+    /// Clamps a stroke so it never rasterises thinner than one device pixel.
+    ///
+    /// ISO 32000 §8.4.3.2: a line width of 0 denotes the thinnest line the
+    /// device can render — NOT an invisible line. Java2D does not honour that
+    /// convention (a 0-width stroke under the anti-aliased pipeline draws
+    /// nothing), and a small positive width under a down-scaling CTM (e.g.
+    /// 0.05 in corpus 29903.pdf) anti-aliases to invisibility. Reference
+    /// renderers clamp the effective device width instead; we use the same
+    /// 0.25-device-pixel floor as Adobe Reader and PDFBox, so a hairline
+    /// anti-aliases to the same \~25% coverage grey as the reference engine.
+    ///
+    /// @param stroke    the stroke built from the graphics state (user-space width)
+    /// @param transform the full current transform (CTM + device scale)
+    /// @return the original stroke, or a copy with the width raised to 0.25 device px
     private static BasicStroke deviceClampedStroke(BasicStroke stroke, AffineTransform transform) {
         double scale = Math.sqrt(Math.abs(transform.getDeterminant()));
         if (scale <= 0 || !Double.isFinite(scale)) return stroke;
@@ -998,9 +962,7 @@ public class PdfPageRenderer {
                 stroke.getMiterLimit(), stroke.getDashArray(), stroke.getDashPhase());
     }
 
-    /**
-     * Finishes a path operation: apply pending clip, then clear the path.
-     */
+    /// Finishes a path operation: apply pending clip, then clear the path.
     private void finishPathOp(Graphics2D g2d, GraphicsState state) {
         if (state.hasPendingClip()) {
             GeneralPath path = (GeneralPath) state.getCurrentPath().clone();
@@ -1053,15 +1015,13 @@ public class PdfPageRenderer {
         }
     }
 
-    /**
-     * Renders an inline image (BI..ID..EI, §8.9.7). The content stream parser
-     * delivers it as a single BI operator whose operands are the image
-     * dictionary and the raw (still encoded) data. Abbreviated keys/values
-     * (Table 93/94) are expanded to their canonical names and the result is
-     * wrapped in a synthetic {@link PdfStream} so the regular
-     * {@link #renderImage} path (incl. stencil-mask handling for Type 3
-     * bitmap glyphs) applies unchanged.
-     */
+    /// Renders an inline image (BI..ID..EI, §8.9.7). The content stream parser
+    /// delivers it as a single BI operator whose operands are the image
+    /// dictionary and the raw (still encoded) data. Abbreviated keys/values
+    /// (Table 93/94) are expanded to their canonical names and the result is
+    /// wrapped in a synthetic [PdfStream] so the regular
+    /// [#renderImage] path (incl. stencil-mask handling for Type 3
+    /// bitmap glyphs) applies unchanged.
     private void renderInlineImage(Graphics2D g2d, GraphicsState state,
                                    Operator op, PDFParser parser) {
         try {
@@ -1082,9 +1042,9 @@ public class PdfPageRenderer {
         }
     }
 
-    /** Abbreviated → full inline-image dictionary keys (§8.9.7, Table 93). */
+    /// Abbreviated → full inline-image dictionary keys (§8.9.7, Table 93).
     private static final java.util.Map<String, String> INLINE_KEYS = new java.util.HashMap<>();
-    /** Abbreviated → full filter and colour-space names (Table 94 + §8.9.5.2). */
+    /// Abbreviated → full filter and colour-space names (Table 94 + §8.9.5.2).
     private static final java.util.Map<String, String> INLINE_NAMES = new java.util.HashMap<>();
     static {
         INLINE_KEYS.put("W", "Width");
@@ -1110,7 +1070,7 @@ public class PdfPageRenderer {
         INLINE_NAMES.put("DCT", "DCTDecode");
     }
 
-    /** Expands abbreviated inline-image keys and name values to canonical form. */
+    /// Expands abbreviated inline-image keys and name values to canonical form.
     private static PdfDictionary expandInlineImageDict(PdfDictionary src) {
         PdfDictionary out = new PdfDictionary();
         out.set(org.aspose.pdf.engine.pdfobjects.PdfName.of("Subtype"),
@@ -1127,7 +1087,7 @@ public class PdfPageRenderer {
         return out;
     }
 
-    /** Expands a name or an array of names via {@link #INLINE_NAMES}. */
+    /// Expands a name or an array of names via [#INLINE\_NAMES].
     private static PdfBase expandInlineName(PdfBase val) {
         if (val instanceof org.aspose.pdf.engine.pdfobjects.PdfName) {
             String n = ((org.aspose.pdf.engine.pdfobjects.PdfName) val).getName();
@@ -1229,11 +1189,9 @@ public class PdfPageRenderer {
         }
     }
 
-    /**
-     * Repeatedly halves an image until its area is within 4× of the target
-     * device area (so the final drawImage scales by at most ~2× per axis).
-     * Interruptible between passes.
-     */
+    /// Repeatedly halves an image until its area is within 4× of the target
+    /// device area (so the final drawImage scales by at most \~2× per axis).
+    /// Interruptible between passes.
     private static BufferedImage halveToFit(BufferedImage img, double devArea) {
         BufferedImage cur = img;
         while ((long) cur.getWidth() * cur.getHeight() > 4L * devArea
@@ -1257,14 +1215,12 @@ public class PdfPageRenderer {
         return cur;
     }
 
-    /**
-     * Builds a stencil-mask BufferedImage: every "paint" sample (source bit 0)
-     * gets the supplied fill colour with full opacity; every "transparent"
-     * sample (source bit 1) gets alpha=0 so the page colour shows through.
-     *
-     * <p>Reads the raw decoded mask bytes directly to avoid the
-     * preview-oriented {@link XImage#toBufferedImage} mapping.</p>
-     */
+    /// Builds a stencil-mask BufferedImage: every "paint" sample (source bit 0)
+    /// gets the supplied fill colour with full opacity; every "transparent"
+    /// sample (source bit 1) gets alpha=0 so the page colour shows through.
+    ///
+    /// Reads the raw decoded mask bytes directly to avoid the
+    /// preview-oriented [XImage#toBufferedImage] mapping.
     private static BufferedImage buildStencilMaskImage(XImage ximg, java.awt.Color fill) throws IOException {
         int w = ximg.getWidth();
         int h = ximg.getHeight();
@@ -1345,13 +1301,11 @@ public class PdfPageRenderer {
         }
     }
 
-    /**
-     * Executes a Type 3 glyph-description content stream (§9.6.5). The glyph
-     * state's CTM was pre-multiplied with the font matrix by the caller, so
-     * the glyph's path/image operators land at the right spot on the page.
-     * Mirrors {@link #renderForm}: per-operator tolerance, state carried
-     * through Q, and the caller's device clip restored afterwards.
-     */
+    /// Executes a Type 3 glyph-description content stream (§9.6.5). The glyph
+    /// state's CTM was pre-multiplied with the font matrix by the caller, so
+    /// the glyph's path/image operators land at the right spot on the page.
+    /// Mirrors [#renderForm]: per-operator tolerance, state carried
+    /// through Q, and the caller's device clip restored afterwards.
     private void executeType3GlyphStream(Graphics2D g2d, GraphicsState glyphState,
                                          OperatorCollection ops, Resources resources,
                                          PDFParser parser) {
@@ -1403,11 +1357,9 @@ public class PdfPageRenderer {
 
     // ======== Advanced color ========
 
-    /**
-     * Resolves the cs/CS operand (a color-space name — either a device space
-     * or a key into the resources /ColorSpace dictionary) to a ColorSpaceBase.
-     * Returns null on failure so sc/scn falls back to by-count mapping.
-     */
+    /// Resolves the cs/CS operand (a color-space name — either a device space
+    /// or a key into the resources /ColorSpace dictionary) to a ColorSpaceBase.
+    /// Returns null on failure so sc/scn falls back to by-count mapping.
     private org.aspose.pdf.engine.colorspace.ColorSpaceBase resolveColorSpaceOperand(
             Operator op, Resources resources, PDFParser parser) {
         List<PdfBase> operands = op.getOperands();

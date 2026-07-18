@@ -15,13 +15,11 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * F-10 regression tests — {@link CheckboxField} must NOT leave
- * {@link PdfNull} placeholders in {@code /AP/N} after construction.
- * Previously {@code new CheckboxField(page, rect)} stored
- * {@code apN.set("Yes", PdfNull.INSTANCE)} so {@code getAppearance().get("Yes")}
- * returned null and PDF viewers depended on {@code /NeedAppearances true}.
- */
+/// F-10 regression tests — [CheckboxField] must NOT leave
+/// [PdfNull] placeholders in `/AP/N` after construction.
+/// Previously `new CheckboxField(page, rect)` stored
+/// `apN.set("Yes", PdfNull.INSTANCE)` so `getAppearance().get("Yes")`
+/// returned null and PDF viewers depended on `/NeedAppearances true`.
 class CheckboxFieldAppearanceTest {
 
     @Test

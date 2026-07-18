@@ -7,31 +7,27 @@ import org.w3c.dom.Node;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Applies XFA <b>simplex/duplex page qualification</b> to a paginated layout (Stage C, sprint L4.3):
- * honours a {@code <pageArea oddOrEven="odd|even">} restriction when the governing
- * {@code <pageSet relation="duplexPaginated">} forces content onto a physical odd/even side.
- *
- * <p>When a content page's assigned pageArea is qualified to a parity its natural physical index
- * does not satisfy, a <b>blank page</b> is inserted before it so it lands on the correct side — the
- * standard duplex imposition behaviour. {@code simplexPaginated} (or no relation) imposes no
- * constraint and the layout is returned unchanged, so non-duplex forms (e.g. 408975) are a no-op.</p>
- */
+/// Applies XFA **simplex/duplex page qualification** to a paginated layout (Stage C, sprint L4.3):
+/// honours a `<pageArea oddOrEven="odd|even">` restriction when the governing
+/// `<pageSet relation="duplexPaginated">` forces content onto a physical odd/even side.
+///
+/// When a content page's assigned pageArea is qualified to a parity its natural physical index
+/// does not satisfy, a **blank page** is inserted before it so it lands on the correct side — the
+/// standard duplex imposition behaviour. `simplexPaginated` (or no relation) imposes no
+/// constraint and the layout is returned unchanged, so non-duplex forms (e.g. 408975) are a no-op.
 public final class XfaDuplex {
 
     private XfaDuplex() {
     }
 
-    /**
-     * Inserts blank pages as needed so every oddOrEven-qualified pageArea lands on its required
-     * physical side, when {@code tpl}'s pageSet is {@code duplexPaginated}.
-     *
-     * @param pages   the paginated pages (in order)
-     * @param tpl     the template (pageSet relation + pageArea qualification), or {@code null}
-     * @param mediumW blank-page width in points
-     * @param mediumH blank-page height in points
-     * @return the pages with any required blanks inserted (the same list when no qualification applies)
-     */
+    /// Inserts blank pages as needed so every oddOrEven-qualified pageArea lands on its required
+    /// physical side, when `tpl`'s pageSet is `duplexPaginated`.
+    ///
+    /// @param pages   the paginated pages (in order)
+    /// @param tpl     the template (pageSet relation + pageArea qualification), or `null`
+    /// @param mediumW blank-page width in points
+    /// @param mediumH blank-page height in points
+    /// @return the pages with any required blanks inserted (the same list when no qualification applies)
     static List<XfaPaginator.PageLayout> qualify(List<XfaPaginator.PageLayout> pages, Template tpl,
                                                  double mediumW, double mediumH) {
         if (tpl == null || pages.isEmpty() || !isDuplex(tpl.getElement())) {
@@ -55,7 +51,7 @@ public final class XfaDuplex {
         return out;
     }
 
-    /** @return the {@code oddOrEven} qualification of a pageArea ({@code "odd"}/{@code "even"}), or null. */
+    /// @return the `oddOrEven` qualification of a pageArea (`"odd"`/`"even"`), or null.
     private static String oddOrEven(Element pageArea) {
         if (pageArea == null) {
             return null;
@@ -64,7 +60,7 @@ public final class XfaDuplex {
         return "odd".equals(v) || "even".equals(v) ? v : null;
     }
 
-    /** Whether the first {@code <pageSet>} declares {@code relation="duplexPaginated"}. */
+    /// Whether the first `<pageSet>` declares `relation="duplexPaginated"`.
     private static boolean isDuplex(Element root) {
         Element pageSet = findFirst(root, "pageSet");
         return pageSet != null && "duplexPaginated".equals(pageSet.getAttribute("relation"));

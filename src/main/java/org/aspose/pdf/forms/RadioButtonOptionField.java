@@ -1,62 +1,56 @@
 package org.aspose.pdf.forms;
 
-import org.aspose.pdf.*;
+import org.aspose.pdf.Page;
+import org.aspose.pdf.Rectangle;
 import org.aspose.pdf.engine.pdfobjects.*;
 
-/**
- * A single option in a radio button group.
- * <p>
- * Each radio button option is a widget annotation dictionary that is a child
- * (/Kids entry) of a {@link RadioButtonField}. The option's value is determined
- * by the non-"Off" key in its /AP/N appearance sub-dictionary.
- * </p>
- */
+/// A single option in a radio button group.
+///
+/// Each radio button option is a widget annotation dictionary that is a child
+/// (/Kids entry) of a [RadioButtonField]. The option's value is determined
+/// by the non-"Off" key in its /AP/N appearance sub-dictionary.
+///
 public class RadioButtonOptionField {
 
-    /** The underlying PDF dictionary for this option. */
+    /// The underlying PDF dictionary for this option.
     private final PdfDictionary dict;
 
-    /** The page this option belongs to (may be null). */
+    /// The page this option belongs to (may be null).
     private final Page page;
 
-    /** Per-option appearance style (defaults to Circle for radios). */
+    /// Per-option appearance style (defaults to Circle for radios).
     private BoxStyle style = BoxStyle.Circle;
 
-    /** Cached typed accessor over the kid widget's /MK entry. */
+    /// Cached typed accessor over the kid widget's /MK entry.
     private AppearanceCharacteristics cachedCharacteristics;
 
-    /**
-     * Constructs a radio button option from a PDF dictionary.
-     *
-     * @param dict the PDF dictionary
-     * @param page the page (may be null)
-     */
+    /// Constructs a radio button option from a PDF dictionary.
+    ///
+    /// @param dict the PDF dictionary
+    /// @param page the page (may be null)
     public RadioButtonOptionField(PdfDictionary dict, Page page) {
         this.dict = dict;
         this.page = page;
     }
 
-    /**
-     * Creates a fresh, unattached radio-button option widget. The new
-     * dictionary is populated with the minimum entries every widget needs:
-     * {@code /Type /Annot}, {@code /Subtype /Widget}, {@code /FT /Btn}.
-     * <p>Use this when constructing radio button groups programmatically;
-     * the option should be attached to a {@link RadioButtonField} via
-     * {@code radio.add(option)} before saving.</p>
-     */
+    /// Creates a fresh, unattached radio-button option widget. The new
+    /// dictionary is populated with the minimum entries every widget needs:
+    /// `/Type /Annot`, `/Subtype /Widget`, `/FT /Btn`.
+    ///
+    /// Use this when constructing radio button groups programmatically;
+    /// the option should be attached to a [RadioButtonField] via
+    /// `radio.add(option)` before saving.
     public RadioButtonOptionField() {
         this(buildDefaultWidgetDict(), null);
     }
 
-    /**
-     * Creates a fresh radio-button option widget attached to {@code page} with
-     * the given rectangle. Convenience overload — equivalent to
-     * {@link #RadioButtonOptionField()} followed by setting the page-link and
-     * {@code /Rect}.
-     *
-     * @param page the page this widget sits on (may be null)
-     * @param rect the widget rectangle in page coordinates (may be null)
-     */
+    /// Creates a fresh radio-button option widget attached to `page` with
+    /// the given rectangle. Convenience overload — equivalent to
+    /// [#RadioButtonOptionField()] followed by setting the page-link and
+    /// `/Rect`.
+    ///
+    /// @param page the page this widget sits on (may be null)
+    /// @param rect the widget rectangle in page coordinates (may be null)
     public RadioButtonOptionField(Page page, Rectangle rect) {
         this(buildDefaultWidgetDict(), page);
         if (rect != null) {
@@ -75,14 +69,11 @@ public class RadioButtonOptionField {
         return d;
     }
 
-    /**
-     * Returns the value this option represents.
-     * <p>
-     * Determined by finding the non-"Off" key in the /AP/N sub-dictionary.
-     * </p>
-     *
-     * @return the option value, or null if undetermined
-     */
+    /// Returns the value this option represents.
+    ///
+    /// Determined by finding the non-"Off" key in the /AP/N sub-dictionary.
+    ///
+    /// @return the option value, or null if undetermined
     public String getOptionValue() {
         PdfBase ap = dict.get("AP");
         if (ap instanceof PdfDictionary) {
@@ -96,52 +87,42 @@ public class RadioButtonOptionField {
         return null;
     }
 
-    /**
-     * Returns the rectangle of this option widget.
-     *
-     * @return the rectangle, or null if /Rect is not present
-     */
+    /// Returns the rectangle of this option widget.
+    ///
+    /// @return the rectangle, or null if /Rect is not present
     public Rectangle getRect() {
         PdfBase r = dict.get("Rect");
         return (r instanceof PdfArray) ? Rectangle.fromPdfArray((PdfArray) r) : null;
     }
 
-    /**
-     * Returns the underlying PDF dictionary.
-     *
-     * @return the PDF dictionary
-     */
+    /// Returns the underlying PDF dictionary.
+    ///
+    /// @return the PDF dictionary
     public PdfDictionary getPdfDictionary() {
         return dict;
     }
 
-    /**
-     * Returns the per-option box style. Defaults to {@link BoxStyle#Circle}
-     * for radio buttons (mirrors Aspose semantics).
-     *
-     * @return the box style
-     */
+    /// Returns the per-option box style. Defaults to [BoxStyle#Circle]
+    /// for radio buttons (mirrors Aspose semantics).
+    ///
+    /// @return the box style
     public BoxStyle getStyle() {
         return style;
     }
 
-    /**
-     * Sets the per-option box style.
-     *
-     * @param style the new style (must not be null)
-     */
+    /// Sets the per-option box style.
+    ///
+    /// @param style the new style (must not be null)
     public void setStyle(BoxStyle style) {
         if (style == null) throw new IllegalArgumentException("style must not be null");
         this.style = style;
     }
 
-    /**
-     * Returns typed access to this option's appearance characteristics
-     * ({@code /MK} sub-dictionary on the kid widget). The wrapper creates
-     * the entry lazily.
-     *
-     * @return the characteristics wrapper (never null)
-     */
+    /// Returns typed access to this option's appearance characteristics
+    /// (`/MK` sub-dictionary on the kid widget). The wrapper creates
+    /// the entry lazily.
+    ///
+    /// @return the characteristics wrapper (never null)
     public AppearanceCharacteristics getCharacteristics() {
         if (cachedCharacteristics == null) {
             cachedCharacteristics = new AppearanceCharacteristics(dict);
@@ -149,15 +130,13 @@ public class RadioButtonOptionField {
         return cachedCharacteristics;
     }
 
-    /**
-     * Returns the export value (option name) of this option. Resolves first
-     * through {@link #getOptionValue()} (the non-"Off" key in {@code /AP/N});
-     * falls back to {@code /AS} when /AP isn't populated yet (typical for
-     * freshly-constructed options where the user has only called
-     * {@link #setOptionName(String)}).
-     *
-     * @return the option name, or null if neither /AP/N nor /AS contains one
-     */
+    /// Returns the export value (option name) of this option. Resolves first
+    /// through [#getOptionValue()] (the non-"Off" key in `/AP/N`);
+    /// falls back to `/AS` when /AP isn't populated yet (typical for
+    /// freshly-constructed options where the user has only called
+    /// [#setOptionName(String)]).
+    ///
+    /// @return the option name, or null if neither /AP/N nor /AS contains one
     public String getOptionName() {
         String fromAp = getOptionValue();
         if (fromAp != null) return fromAp;
@@ -166,17 +145,15 @@ public class RadioButtonOptionField {
         return null;
     }
 
-    /**
-     * Sets the export value (option name) of this option. The given name
-     * becomes the active appearance state ({@code /AS}) and is registered as
-     * a key in {@code /AP/N} alongside {@code /Off} so that subsequent reads
-     * via {@link #getOptionValue()} round-trip.
-     *
-     * <p>Passing {@code null} removes {@code /AS} and the named entry; the
-     * "Off" placeholder remains so the widget stays toggleable.</p>
-     *
-     * @param name the option name (export value)
-     */
+    /// Sets the export value (option name) of this option. The given name
+    /// becomes the active appearance state (`/AS`) and is registered as
+    /// a key in `/AP/N` alongside `/Off` so that subsequent reads
+    /// via [#getOptionValue()] round-trip.
+    ///
+    /// Passing `null` removes `/AS` and the named entry; the
+    /// "Off" placeholder remains so the widget stays toggleable.
+    ///
+    /// @param name the option name (export value)
     public void setOptionName(String name) {
         // Ensure /AP/N substructure exists
         PdfDictionary ap = (PdfDictionary) dict.get(PdfName.of("AP"));
@@ -209,12 +186,10 @@ public class RadioButtonOptionField {
         dict.set(PdfName.of("AS"), PdfName.of(name));
     }
 
-    /**
-     * Sets the widget width by adjusting the right edge of {@code /Rect}.
-     * If no rectangle is set, creates a 0,0,width,0 rectangle.
-     *
-     * @param width new width in page units
-     */
+    /// Sets the widget width by adjusting the right edge of `/Rect`.
+    /// If no rectangle is set, creates a 0,0,width,0 rectangle.
+    ///
+    /// @param width new width in page units
     public void setWidth(double width) {
         Rectangle r = getRect();
         Rectangle next = r != null
@@ -223,12 +198,10 @@ public class RadioButtonOptionField {
         dict.set(PdfName.of("Rect"), next.toPdfArray());
     }
 
-    /**
-     * Sets the widget height by adjusting the top edge of {@code /Rect}.
-     * If no rectangle is set, creates a 0,0,0,height rectangle.
-     *
-     * @param height new height in page units
-     */
+    /// Sets the widget height by adjusting the top edge of `/Rect`.
+    /// If no rectangle is set, creates a 0,0,0,height rectangle.
+    ///
+    /// @param height new height in page units
     public void setHeight(double height) {
         Rectangle r = getRect();
         Rectangle next = r != null
@@ -245,21 +218,17 @@ public class RadioButtonOptionField {
         return s;
     }
 
-    /**
-     * Returns the page this option's widget belongs to.
-     *
-     * @return the page, or null
-     */
+    /// Returns the page this option's widget belongs to.
+    ///
+    /// @return the page, or null
     public Page getPage() {
         return page;
     }
 
-    /**
-     * Sets the widget rectangle ({@code /Rect}) by directly writing into the
-     * underlying dictionary. Convenience to mirror Aspose's C# property setter.
-     *
-     * @param rect the rectangle, or null to clear the entry
-     */
+    /// Sets the widget rectangle (`/Rect`) by directly writing into the
+    /// underlying dictionary. Convenience to mirror Aspose's C# property setter.
+    ///
+    /// @param rect the rectangle, or null to clear the entry
     public void setRect(Rectangle rect) {
         if (rect == null) {
             dict.remove(PdfName.of("Rect"));
@@ -268,12 +237,10 @@ public class RadioButtonOptionField {
         }
     }
 
-    /**
-     * Returns the border ({@code /BS} dictionary) attached to this option's
-     * widget, or {@code null} if absent.
-     *
-     * @return the border wrapper, or null
-     */
+    /// Returns the border (`/BS` dictionary) attached to this option's
+    /// widget, or `null` if absent.
+    ///
+    /// @return the border wrapper, or null
     public org.aspose.pdf.annotations.Border getBorder() {
         PdfBase v = dict.get("BS");
         if (v instanceof PdfDictionary) {
@@ -291,12 +258,10 @@ public class RadioButtonOptionField {
         return null;
     }
 
-    /**
-     * Sets the border ({@code /BS} sub-dictionary) on this option's widget.
-     * Passing {@code null} removes the entry.
-     *
-     * @param border the border wrapper, or null
-     */
+    /// Sets the border (`/BS` sub-dictionary) on this option's widget.
+    /// Passing `null` removes the entry.
+    ///
+    /// @param border the border wrapper, or null
     public void setBorder(org.aspose.pdf.annotations.Border border) {
         if (border == null) {
             dict.remove(PdfName.of("BS"));
@@ -311,45 +276,35 @@ public class RadioButtonOptionField {
         dict.set(PdfName.of("BS"), bs);
     }
 
-    /**
-     * Returns the visible caption shown alongside this option ({@code /MK/CA}).
-     */
+    /// Returns the visible caption shown alongside this option (`/MK/CA`).
     public String getCaption() {
         return getCharacteristics().getCaption();
     }
 
-    /**
-     * Sets the visible caption shown alongside this option ({@code /MK/CA}).
-     *
-     * @param caption the caption text; null clears the entry
-     */
+    /// Sets the visible caption shown alongside this option (`/MK/CA`).
+    ///
+    /// @param caption the caption text; null clears the entry
     public void setCaption(String caption) {
         getCharacteristics().setCaption(caption);
     }
 
-    /**
-     * Returns the border colour ({@code /MK/BC}) used for this option.
-     */
+    /// Returns the border colour (`/MK/BC`) used for this option.
     public org.aspose.pdf.Color getColor() {
         return getCharacteristics().getBorder();
     }
 
-    /**
-     * Sets the border colour ({@code /MK/BC}) used for this option's check
-     * glyph and outline.
-     *
-     * @param color the colour; null clears the entry
-     */
+    /// Sets the border colour (`/MK/BC`) used for this option's check
+    /// glyph and outline.
+    ///
+    /// @param color the colour; null clears the entry
     public void setColor(org.aspose.pdf.Color color) {
         getCharacteristics().setBorder(color);
     }
 
-    /**
-     * Returns the {@code /DA} default-appearance string for this option, or
-     * null if not set.
-     *
-     * @return the DA string, or null
-     */
+    /// Returns the `/DA` default-appearance string for this option, or
+    /// null if not set.
+    ///
+    /// @return the DA string, or null
     public String getDefaultAppearance() {
         PdfBase v = dict.get("DA");
         if (v instanceof org.aspose.pdf.engine.pdfobjects.PdfString) {
@@ -358,12 +313,10 @@ public class RadioButtonOptionField {
         return null;
     }
 
-    /**
-     * Sets the {@code /DA} default-appearance string raw. Pass {@code null}
-     * to clear.
-     *
-     * @param da the DA string, or null
-     */
+    /// Sets the `/DA` default-appearance string raw. Pass `null`
+    /// to clear.
+    ///
+    /// @param da the DA string, or null
     public void setDefaultAppearance(String da) {
         if (da == null) {
             dict.remove(PdfName.of("DA"));
@@ -372,12 +325,10 @@ public class RadioButtonOptionField {
         }
     }
 
-    /**
-     * Convenience overload — accepts a typed {@link org.aspose.pdf.annotations.DefaultAppearance}
-     * and serialises it via its {@code toString()}.
-     *
-     * @param da the typed default appearance, or null
-     */
+    /// Convenience overload — accepts a typed [org.aspose.pdf.annotations.DefaultAppearance]
+    /// and serialises it via its `toString()`.
+    ///
+    /// @param da the typed default appearance, or null
     public void setDefaultAppearance(org.aspose.pdf.annotations.DefaultAppearance da) {
         if (da == null) {
             dict.remove(PdfName.of("DA"));
@@ -386,13 +337,11 @@ public class RadioButtonOptionField {
         }
     }
 
-    /**
-     * Returns the typed appearance view over this option's {@code /AP}
-     * sub-dictionary. Mirrors {@link Field#getAppearance()} for radio options
-     * (which do not extend {@link Field}).
-     *
-     * @return the appearance dictionary (never null; /AP created lazily)
-     */
+    /// Returns the typed appearance view over this option's `/AP`
+    /// sub-dictionary. Mirrors [Field#getAppearance()] for radio options
+    /// (which do not extend [Field]).
+    ///
+    /// @return the appearance dictionary (never null; /AP created lazily)
     public AppearanceDictionary getAppearance() {
         PdfBase ap = dict.get(PdfName.of("AP"));
         PdfDictionary apDict;
@@ -405,13 +354,11 @@ public class RadioButtonOptionField {
         return new AppearanceDictionary(apDict);
     }
 
-    /**
-     * Rebuilds the {@code /AP/N} appearance streams for this option from its
-     * current {@code /Rect}, {@code style} and {@link #getOptionName()}.
-     *
-     * <p>Closes F-10 for radio-option widgets. Idempotent; no-op when the
-     * widget has no rectangle yet.</p>
-     */
+    /// Rebuilds the `/AP/N` appearance streams for this option from its
+    /// current `/Rect`, `style` and [#getOptionName()].
+    ///
+    /// Closes F-10 for radio-option widgets. Idempotent; no-op when the
+    /// widget has no rectangle yet.
     public void regenerateAppearance() {
         Rectangle r = getRect();
         if (r == null) return;

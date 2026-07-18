@@ -6,29 +6,24 @@ import org.aspose.pdf.engine.pdfobjects.PdfName;
 import java.io.IOException;
 import java.util.logging.Logger;
 
-/**
- * No-op filter: returns data unchanged.
- * Placeholder for image filters (DCTDecode, JBIG2Decode, JPXDecode, CCITTFaxDecode)
- * that require specialized decoders not yet implemented (Stage 3).
- *
- * <p>Per ISO 32000-1:2008:</p>
- * <ul>
- *   <li>§7.4.8 DCTDecode — JPEG baseline/progressive</li>
- *   <li>§7.4.9 JPXDecode — JPEG2000</li>
- *   <li>§7.4.7 JBIG2Decode — monochrome images</li>
- *   <li>§7.4.6 CCITTFaxDecode — CCITT Group 3/4 fax</li>
- * </ul>
- */
+/// No-op filter: returns data unchanged.
+/// Placeholder for image filters (DCTDecode, JBIG2Decode, JPXDecode, CCITTFaxDecode)
+/// that require specialized decoders not yet implemented (Stage 3).
+///
+/// Per ISO 32000-1:2008:
+///
+///   - §7.4.8 DCTDecode — JPEG baseline/progressive
+///   - §7.4.9 JPXDecode — JPEG2000
+///   - §7.4.7 JBIG2Decode — monochrome images
+///   - §7.4.6 CCITTFaxDecode — CCITT Group 3/4 fax
 public class PassthroughFilter implements PdfFilter {
 
     private static final Logger LOG = Logger.getLogger(PassthroughFilter.class.getName());
     private final String filterName;
 
-    /**
-     * Creates a passthrough filter with the given canonical name.
-     *
-     * @param filterName the PDF filter name (e.g. "DCTDecode")
-     */
+    /// Creates a passthrough filter with the given canonical name.
+    ///
+    /// @param filterName the PDF filter name (e.g. "DCTDecode")
     public PassthroughFilter(String filterName) {
         this.filterName = filterName;
     }

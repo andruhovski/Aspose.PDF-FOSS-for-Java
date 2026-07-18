@@ -6,15 +6,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * B3.0 — locks in JS-0 correctness for the <b>actual</b> regex / Date / eval constructs the XFA
- * corpus scripts use (extracted by {@code XfaJsConstructProbeTest}). The B3.0.0 demand probe found
- * the three "critical-path gaps" (regex 42 / Date 28 / eval 8 forms) are <b>not exercised</b> by the
- * corpus: every one of 172 distinct regex patterns compiles, there is no JS-layer Date-string
- * parsing, and every eval is global-scope dynamic dispatch. These fixtures exercise the real
- * <em>semantics</em> (not just compilation) so B3.1 builds on a verified base and a future regression
- * is caught. They pass on the current engine — no hardening was required.
- */
+/// B3.0 — locks in JS-0 correctness for the **actual** regex / Date / eval constructs the XFA
+/// corpus scripts use (extracted by `XfaJsConstructProbeTest`). The B3.0.0 demand probe found
+/// the three "critical-path gaps" (regex 42 / Date 28 / eval 8 forms) are **not exercised** by the
+/// corpus: every one of 172 distinct regex patterns compiles, there is no JS-layer Date-string
+/// parsing, and every eval is global-scope dynamic dispatch. These fixtures exercise the real
+/// _semantics_ (not just compilation) so B3.1 builds on a verified base and a future regression
+/// is caught. They pass on the current engine — no hardening was required.
 public class Js0CorpusConstructTest {
 
     private static Object run(String s) {

@@ -1,26 +1,20 @@
 package org.aspose.pdf.engine.font;
 
-import org.aspose.pdf.engine.pdfobjects.PdfArray;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfInteger;
-import org.aspose.pdf.engine.pdfobjects.PdfStream;
 import org.aspose.pdf.engine.font.ttf.TrueTypeReader;
 import org.aspose.pdf.engine.parser.PDFParser;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
-/**
- * CID font (ISO 32000-1:2008, §9.7.4).
- * <p>
- * Handles /Subtype /CIDFontType0 (CFF-based) and /CIDFontType2 (TrueType-based).
- * CID fonts are always used as descendant fonts of Type 0 (composite) fonts.
- * Parses the /W (width) array and /DW (default width) entries.
- * </p>
- */
+/// CID font (ISO 32000-1:2008, §9.7.4).
+///
+/// Handles /Subtype /CIDFontType0 (CFF-based) and /CIDFontType2 (TrueType-based).
+/// CID fonts are always used as descendant fonts of Type 0 (composite) fonts.
+/// Parses the /W (width) array and /DW (default width) entries.
+///
 public class CIDFont extends PdfFont {
 
     private static final Logger LOG = Logger.getLogger(CIDFont.class.getName());
@@ -28,21 +22,17 @@ public class CIDFont extends PdfFont {
     private double defaultWidth = 1000;
     private final Map<Integer, Double> cidWidths = new HashMap<>();
 
-    /** Embedded TrueType program (/FontFile2), used to recover Unicode for extraction. */
+    /// Embedded TrueType program (/FontFile2), used to recover Unicode for extraction.
     private TrueTypeReader ttReader;
-    /**
-     * /CIDToGIDMap when it is an explicit stream (two big-endian bytes per CID).
-     * {@code null} means the default {@code Identity} mapping (CID == GID).
-     */
+    /// /CIDToGIDMap when it is an explicit stream (two big-endian bytes per CID).
+    /// `null` means the default `Identity` mapping (CID == GID).
     private byte[] cidToGidMap;
 
-    /**
-     * Creates a CIDFont from a font dictionary.
-     *
-     * @param fontDict the CIDFont dictionary
-     * @param parser   the PDF parser (may be null)
-     * @throws IOException if reading font data fails
-     */
+    /// Creates a CIDFont from a font dictionary.
+    ///
+    /// @param fontDict the CIDFont dictionary
+    /// @param parser   the PDF parser (may be null)
+    /// @throws IOException if reading font data fails
     public CIDFont(PdfDictionary fontDict, PDFParser parser) throws IOException {
         super(fontDict, parser);
 
@@ -63,17 +53,15 @@ public class CIDFont extends PdfFont {
         LOG.fine(() -> "CIDFont created: " + baseFont + ", " + cidWidths.size() + " width entries");
     }
 
-    /**
-     * Recovers the Unicode code point for a CID using the embedded font program,
-     * for the common case of a CIDFontType2 (TrueType) descendant that ships
-     * neither a {@code /ToUnicode} CMap on its parent Type0 font. Maps
-     * {@code CID → GID} (via {@code /CIDToGIDMap}, default Identity), then
-     * {@code GID → Unicode} through the embedded {@code post} glyph names and the
-     * true-Unicode cmap subtables.
-     *
-     * @param cid the character identifier (for Identity-H this is the 2-byte code)
-     * @return the Unicode code point, or 0 if it cannot be recovered
-     */
+    /// Recovers the Unicode code point for a CID using the embedded font program,
+    /// for the common case of a CIDFontType2 (TrueType) descendant that ships
+    /// neither a `/ToUnicode` CMap on its parent Type0 font. Maps
+    /// `CID → GID` (via `/CIDToGIDMap`, default Identity), then
+    /// `GID → Unicode` through the embedded `post` glyph names and the
+    /// true-Unicode cmap subtables.
+    ///
+    /// @param cid the character identifier (for Identity-H this is the 2-byte code)
+    /// @return the Unicode code point, or 0 if it cannot be recovered
     public int cidToUnicode(int cid) {
         if (ttReader == null) {
             return 0;
@@ -110,42 +98,36 @@ public class CIDFont extends PdfFont {
         return cid;
     }
 
-    /**
-     * Maps a CID to the embedded font program's glyph id via /CIDToGIDMap
-     * (explicit stream or the default Identity). Public for glyph-level
-     * rendering: a CIDFontType2 content stream addresses GLYPHS, so drawing
-     * by glyph id preserves exactly what the producer laid out (e.g.
-     * pre-shaped Arabic presentation forms — corpus 29111), where a decode
-     * to Unicode + re-draw loses the shaping.
-     *
-     * @param cid the character id from the content stream
-     * @return the glyph id (0 = .notdef / out of range)
-     */
+    /// Maps a CID to the embedded font program's glyph id via /CIDToGIDMap
+    /// (explicit stream or the default Identity). Public for glyph-level
+    /// rendering: a CIDFontType2 content stream addresses GLYPHS, so drawing
+    /// by glyph id preserves exactly what the producer laid out (e.g.
+    /// pre-shaped Arabic presentation forms — corpus 29111), where a decode
+    /// to Unicode + re-draw loses the shaping.
+    ///
+    /// @param cid the character id from the content stream
+    /// @return the glyph id (0 = .notdef / out of range)
     public int toGlyphId(int cid) {
         return cidToGid(cid);
     }
 
-    /**
-     * Returns the em-normalised, Y-up outline of the given glyph id from the
-     * embedded TrueType program, or {@code null} when no embedded program is
-     * available or the glyph cannot be parsed. Drawing this outline directly
-     * avoids {@code java.awt.Font}, which substitutes the default physical font
-     * for cmap-less subset programs (corpus APS/37100: every glyph rendered as
-     * the wrong Arial shape).
-     *
-     * @param gid the glyph id (see {@link #toGlyphId(int)})
-     * @return the glyph outline, or {@code null}
-     */
+    /// Returns the em-normalised, Y-up outline of the given glyph id from the
+    /// embedded TrueType program, or `null` when no embedded program is
+    /// available or the glyph cannot be parsed. Drawing this outline directly
+    /// avoids `java.awt.Font`, which substitutes the default physical font
+    /// for cmap-less subset programs (corpus APS/37100: every glyph rendered as
+    /// the wrong Arial shape).
+    ///
+    /// @param gid the glyph id (see [#toGlyphId(int)])
+    /// @return the glyph outline, or `null`
     public java.awt.geom.GeneralPath glyphOutline(int gid) {
         return ttReader != null ? ttReader.getGlyphPath(gid) : null;
     }
 
-    /**
-     * Returns true if the descendant subtype is CIDFontType2 (TrueType-housed,
-     * glyph ids resolvable via /CIDToGIDMap).
-     *
-     * @return true for CIDFontType2
-     */
+    /// Returns true if the descendant subtype is CIDFontType2 (TrueType-housed,
+    /// glyph ids resolvable via /CIDToGIDMap).
+    ///
+    /// @return true for CIDFontType2
     public boolean isType2() {
         return "CIDFontType2".equals(fontDict.getNameAsString("Subtype"));
     }
@@ -183,11 +165,9 @@ public class CIDFont extends PdfFont {
         }
     }
 
-    /**
-     * Resolves a PostScript glyph name to a Unicode code point via the Adobe
-     * Glyph List, with the standard {@code uniXXXX} / {@code uXXXXX} fallbacks.
-     * Mirrors the logic in {@code TrueTypeFont}; returns 0 if unrecognised.
-     */
+    /// Resolves a PostScript glyph name to a Unicode code point via the Adobe
+    /// Glyph List, with the standard `uniXXXX` / `uXXXXX` fallbacks.
+    /// Mirrors the logic in `TrueTypeFont`; returns 0 if unrecognised.
     private static int unicodeFromGlyphName(String name) {
         if (name == null || name.isEmpty() || ".notdef".equals(name)) {
             return 0;
@@ -209,7 +189,7 @@ public class CIDFont extends PdfFont {
         return 0;
     }
 
-    /** Filters out non-positive values and C0/C1 control codes. */
+    /// Filters out non-positive values and C0/C1 control codes.
     private static boolean isReadable(int unicode) {
         if (unicode <= 0) {
             return false;
@@ -226,21 +206,17 @@ public class CIDFont extends PdfFont {
         return w != null ? w : defaultWidth;
     }
 
-    /**
-     * Returns the default width (/DW).
-     *
-     * @return the default width
-     */
+    /// Returns the default width (/DW).
+    ///
+    /// @return the default width
     public double getDefaultWidth() {
         return defaultWidth;
     }
 
-    /**
-     * Parses the /W (widths) array.
-     * <p>
-     * Format: [cidFirst [w1 w2 ...]] or [cidFirst cidLast w]
-     * </p>
-     */
+    /// Parses the /W (widths) array.
+    ///
+    /// Format: [cidFirst [w1 w2 ...]] or [cidFirst cidLast w]
+    ///
     private void parseWidthArray() {
         PdfBase wVal = resolve(fontDict.get("W"));
         if (!(wVal instanceof PdfArray)) return;

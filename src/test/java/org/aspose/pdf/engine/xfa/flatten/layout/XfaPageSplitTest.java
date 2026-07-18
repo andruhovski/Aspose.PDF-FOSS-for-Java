@@ -19,12 +19,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * L2 PART B — overflow + split-point C oracle. The splitter FINDS page boundaries (it never
- * splits): N fixed rows in region H split after floor(H/rowH) rows; a keep-together group that
- * straddles the boundary moves wholly past it; a forced break sets the boundary regardless of
- * remaining height; the split partitions the units with no loss (content conservation).
- */
+/// L2 PART B — overflow + split-point C oracle. The splitter FINDS page boundaries (it never
+/// splits): N fixed rows in region H split after floor(H/rowH) rows; a keep-together group that
+/// straddles the boundary moves wholly past it; a forced break sets the boundary regardless of
+/// remaining height; the split partitions the units with no loss (content conservation).
 public class XfaPageSplitTest {
 
     private static final String TPL = XfaNode.TEMPLATE_NS;

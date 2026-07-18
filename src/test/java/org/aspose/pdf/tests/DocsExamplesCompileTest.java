@@ -57,37 +57,33 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Compile-time guard for all Java examples embedded in pdf/docs/*.md and
- * pdf/README.md.
- *
- * <p>Every Java snippet from the public documentation is reproduced here
- * as a separate {@code @Test} method. If the API surface drifts away from
- * what the documentation claims, this class fails to compile and the
- * build breaks — catching the drift before any user encounters it. Having
- * one test method per snippet means surefire reports each example by
- * name, making it easy to spot which snippet has the issue.
- *
- * <p>The snippet bodies are never executed at runtime: every test starts
- * with {@code if (COMPILE_ONLY) return;}. The snippets would otherwise
- * try to open "input.pdf" and similar non-existent files. The Java
- * compiler does NOT mark statements after an {@code if (constant) return;}
- * as unreachable, so the snippet body is still fully type-checked.
- *
- * <p>When updating a snippet in a .md file, update the corresponding
- * method here. When changing an API, fix the snippet AND the
- * corresponding method here.
- */
+/// Compile-time guard for all Java examples embedded in pdf/docs/\*.md and
+/// pdf/README.md.
+///
+/// Every Java snippet from the public documentation is reproduced here
+/// as a separate `@Test` method. If the API surface drifts away from
+/// what the documentation claims, this class fails to compile and the
+/// build breaks — catching the drift before any user encounters it. Having
+/// one test method per snippet means surefire reports each example by
+/// name, making it easy to spot which snippet has the issue.
+///
+/// The snippet bodies are never executed at runtime: every test starts
+/// with `if (COMPILE_ONLY) return;`. The snippets would otherwise
+/// try to open "input.pdf" and similar non-existent files. The Java
+/// compiler does NOT mark statements after an `if (constant) return;`
+/// as unreachable, so the snippet body is still fully type-checked.
+///
+/// When updating a snippet in a .md file, update the corresponding
+/// method here. When changing an API, fix the snippet AND the
+/// corresponding method here.
 @SuppressWarnings({"unused", "EmptyTryBlock", "UnnecessaryLocalVariable",
         "TryFinallyCanBeTryWithResources", "CommentedOutCode", "RedundantThrows",
         "ConstantConditions"})
 public class DocsExamplesCompileTest {
 
-    /**
-     * Set at class load time. Each {@code @Test} starts with
-     * {@code if (COMPILE_ONLY) return;} so snippet bodies are
-     * type-checked by the compiler but never executed at runtime.
-     */
+    /// Set at class load time. Each `@Test` starts with
+    /// `if (COMPILE_ONLY) return;` so snippet bodies are
+    /// type-checked by the compiler but never executed at runtime.
     private static final boolean COMPILE_ONLY = true;
 
     // ──────────────────────────────────────────────────────────────────
@@ -152,7 +148,7 @@ public class DocsExamplesCompileTest {
     // pdf/docs/getting-started.md  — 4 snippets
     // ──────────────────────────────────────────────────────────────────
 
-    /** Snippet 1 was originally written as a public class with main(). */
+    /// Snippet 1 was originally written as a public class with main().
     public static class HelloPdf {
         public static void main(String[] args) throws Exception {
             try (Document doc = new Document()) {
@@ -170,7 +166,7 @@ public class DocsExamplesCompileTest {
         HelloPdf.main(new String[]{});
     }
 
-    /** Snippet 2 was originally written as a public class with main(). */
+    /// Snippet 2 was originally written as a public class with main().
     public static class ReadPdf {
         public static void main(String[] args) throws Exception {
             try (Document doc = new Document("hello.pdf")) {
@@ -441,7 +437,7 @@ public class DocsExamplesCompileTest {
         }
     }
 
-    /** Helper used by snippet 10 below — declared as in the .md sample. */
+    /// Helper used by snippet 10 below — declared as in the .md sample.
     void fillFrom(Document doc, Map<String, String> values) throws IOException {
         Form form = doc.getForm();
         for (Map.Entry<String, String> entry : values.entrySet()) {
@@ -719,7 +715,7 @@ public class DocsExamplesCompileTest {
         }
     }
 
-    /** Helper used by snippet 10 below — declared as in the .md sample. */
+    /// Helper used by snippet 10 below — declared as in the .md sample.
     void renderAll(Path inputPdf, Path outputDir) throws Exception {
         Files.createDirectories(outputDir);
         try (Document doc = new Document(inputPdf.toString())) {

@@ -1,42 +1,31 @@
 package org.aspose.pdf.engine.pdfa.rules;
 
 import org.aspose.pdf.PdfFormat;
-import org.aspose.pdf.engine.pdfobjects.PdfArray;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfFloat;
-import org.aspose.pdf.engine.pdfobjects.PdfInteger;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.parser.PDFParser;
 import org.aspose.pdf.engine.pdfa.PdfARule;
 import org.aspose.pdf.engine.pdfa.PdfAValidationResult;
-import org.aspose.pdf.engine.parser.PDFParser;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Validates transparency requirements for PDF/A compliance.
- *
- * <p>Checks ISO 19005 clause 6.4 (PDF/A-1 only):</p>
- * <ul>
- *   <li>/SMask must be None</li>
- *   <li>/BM must be Normal or Compatible</li>
- *   <li>/CA must be 1.0</li>
- *   <li>/ca must be 1.0</li>
- *   <li>No Group dict with /S=/Transparency in Form XObjects</li>
- * </ul>
- *
- * <p>PDF/A-2 and later allow transparency, so all checks are skipped for those formats.</p>
- */
+/// Validates transparency requirements for PDF/A compliance.
+///
+/// Checks ISO 19005 clause 6.4 (PDF/A-1 only):
+///
+///   - /SMask must be None
+///   - /BM must be Normal or Compatible
+///   - /CA must be 1.0
+///   - /ca must be 1.0
+///   - No Group dict with /S=/Transparency in Form XObjects
+///
+/// PDF/A-2 and later allow transparency, so all checks are skipped for those formats.
 public final class TransparencyRules implements PdfARule {
 
     private static final Logger LOG = Logger.getLogger(TransparencyRules.class.getName());
 
-    /**
-     * Creates a new transparency rules checker.
-     */
+    /// Creates a new transparency rules checker.
     public TransparencyRules() {
         // default constructor
     }
@@ -50,9 +39,7 @@ public final class TransparencyRules implements PdfARule {
         checkPages(parser, format, result);
     }
 
-    /**
-     * Iterates all pages and checks ExtGState and XObject resources.
-     */
+    /// Iterates all pages and checks ExtGState and XObject resources.
     private void checkPages(PDFParser parser, PdfFormat format, PdfAValidationResult result) {
         PdfDictionary catalog;
         try {
@@ -86,9 +73,7 @@ public final class TransparencyRules implements PdfARule {
         }
     }
 
-    /**
-     * Checks ExtGState entries for forbidden transparency parameters.
-     */
+    /// Checks ExtGState entries for forbidden transparency parameters.
     private void checkExtGState(PdfDictionary resources, String pagePath,
                                  PdfAValidationResult result) {
         PdfDictionary extGStates = resolveDict(resources.get("ExtGState"));
@@ -135,9 +120,7 @@ public final class TransparencyRules implements PdfARule {
         }
     }
 
-    /**
-     * Checks that an alpha value (/CA or /ca) is 1.0 if present.
-     */
+    /// Checks that an alpha value (/CA or /ca) is 1.0 if present.
     private void checkAlpha(PdfDictionary gs, String alphaKey, String gsPath,
                              PdfAValidationResult result) {
         PdfBase val = resolve(gs.get(alphaKey));
@@ -159,10 +142,8 @@ public final class TransparencyRules implements PdfARule {
         }
     }
 
-    /**
-     * Checks Form XObjects for transparency group dictionaries
-     * and Image XObjects for /SMask.
-     */
+    /// Checks Form XObjects for transparency group dictionaries
+    /// and Image XObjects for /SMask.
     private void checkFormXObjects(PdfDictionary resources, String pagePath,
                                     PdfAValidationResult result) {
         PdfDictionary xObjects = resolveDict(resources.get("XObject"));
@@ -205,9 +186,7 @@ public final class TransparencyRules implements PdfARule {
         }
     }
 
-    /**
-     * Resolves a PdfBase value, dereferencing indirect references.
-     */
+    /// Resolves a PdfBase value, dereferencing indirect references.
     private static PdfBase resolve(PdfBase val) {
         if (val instanceof PdfObjectReference) {
             try {
@@ -219,9 +198,7 @@ public final class TransparencyRules implements PdfARule {
         return val;
     }
 
-    /**
-     * Resolves a PdfBase to a PdfDictionary, dereferencing indirect references.
-     */
+    /// Resolves a PdfBase to a PdfDictionary, dereferencing indirect references.
     private static PdfDictionary resolveDict(PdfBase val) {
         PdfBase resolved = resolve(val);
         return (resolved instanceof PdfDictionary) ? (PdfDictionary) resolved : null;

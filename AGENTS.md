@@ -4,7 +4,7 @@ Instructions for AI coding agents (Claude Code, Cursor, Aider, etc.) working on 
 
 ## Project at a glance
 
-- **Language**: Java 17
+- **Language**: Java 25
 - **Build**: Maven 3
 - **Module layout**: single-module on GitHub (root `pom.xml` builds the library)
 - **Java package root**: `org.aspose.pdf`
@@ -39,7 +39,7 @@ Tests should always be green on `main`. If a test is intentionally not yet passi
 
 ## Project structure
 
-```
+```text
 .
 ├── pom.xml
 ├── LICENSE
@@ -131,7 +131,7 @@ When fixing a bug or adding a feature, change only what is needed. Drive-by refo
 - **Logging**: use `java.util.logging.Logger`, named after the enclosing class. Do not add SLF4J or Log4j.
 - **JavaDoc**: required on all public classes and public methods.
 - **`@Override`**: always present when overriding.
-- **`final`**: prefer `final` for fields and method parameters that are not reassigned, but do not retrofit existing code.
+- **`final`**: use `final` for fields and parameters that are not reassigned in all newly written code. Do not add or remove `final` in pre-existing methods you are not otherwise modifying.
 
 ## Test conventions
 
@@ -164,7 +164,7 @@ void saveAndReload_roundtripsCorrectly() throws Exception {
 
 Free-form is fine, but keep the subject line under 72 characters and use the imperative mood:
 
-```
+```text
 Fix infinite recursion in PdfDictionary.writeTo for indirect references
 
 The writeTo() method was not checking isIndirect() before recursing,
@@ -196,3 +196,5 @@ Group related changes into a single commit. Avoid commits that mix functional ch
 ## When in doubt
 
 If a requested change conflicts with these rules, stop and ask. It is always better to surface a conflict than to produce code that has to be reverted.
+
+If you cannot interactively ask (e.g., running in a non-interactive pipeline), leave the conflicting portion unimplemented, add a clearly marked comment `// AGENT: blocked — conflicts with AGENTS.md rule <N>`, and document the conflict in the PR description.

@@ -7,9 +7,7 @@ import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link LZWFilter}.
- */
+/// Tests for [LZWFilter].
 public class LZWFilterTest {
 
     private final LZWFilter filter = new LZWFilter();

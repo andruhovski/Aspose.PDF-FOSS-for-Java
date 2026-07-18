@@ -14,11 +14,9 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Smoke tests for {@link Page#getColorType()} — exercises the classifier on
- * hand-crafted content streams whose colour content is unambiguous, so the
- * tests don't depend on any particular renderer or input PDF corpus file.
- */
+/// Smoke tests for [Page#getColorType()] — exercises the classifier on
+/// hand-crafted content streams whose colour content is unambiguous, so the
+/// tests don't depend on any particular renderer or input PDF corpus file.
 public class PageColorTypeTest {
 
     @Test

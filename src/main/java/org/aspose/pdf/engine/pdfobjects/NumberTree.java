@@ -1,30 +1,24 @@
 package org.aspose.pdf.engine.pdfobjects;
 
 import java.io.IOException;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Read/write view over a PDF number tree (ISO 32000-1:2008, §7.9.7).
- *
- * <p>A number tree mirrors a name tree (see {@link NameTree}) but uses
- * integer keys and stores leaf pairs in a {@code /Nums} array instead of
- * {@code /Names}. Examples in the spec: {@code /PageLabels} on the
- * catalog (§12.4.2) and {@code /ParentTree} on a structure tree root
- * (§14.7.4.4).</p>
- *
- * <p>Read paths tolerate missing {@code /Limits} and unsorted
- * {@code /Nums} by falling back to a linear scan. Write paths keep
- * {@code /Nums} sorted by key and resync {@code /Limits} bottom-up after
- * every mutation. No node splitting/merging — inserts grow the leaf
- * whose range covers the key (or the closest leaf if the key is out of
- * range).</p>
- */
+/// Read/write view over a PDF number tree (ISO 32000-1:2008, §7.9.7).
+///
+/// A number tree mirrors a name tree (see [NameTree]) but uses
+/// integer keys and stores leaf pairs in a `/Nums` array instead of
+/// `/Names`. Examples in the spec: `/PageLabels` on the
+/// catalog (§12.4.2) and `/ParentTree` on a structure tree root
+/// (§14.7.4.4).
+///
+/// Read paths tolerate missing `/Limits` and unsorted
+/// `/Nums` by falling back to a linear scan. Write paths keep
+/// `/Nums` sorted by key and resync `/Limits` bottom-up after
+/// every mutation. No node splitting/merging — inserts grow the leaf
+/// whose range covers the key (or the closest leaf if the key is out of
+/// range).
 public final class NumberTree {
 
     private static final Logger LOG = Logger.getLogger(NumberTree.class.getName());
@@ -35,83 +29,67 @@ public final class NumberTree {
 
     private final PdfDictionary root;
 
-    /**
-     * Wraps the given root dictionary. The dictionary is the number-tree
-     * root itself (e.g. the {@code /PageLabels} sub-dictionary in the
-     * catalog) — <em>not</em> the catalog.
-     *
-     * @param root the number-tree root, or {@code null} for an empty view
-     */
+    /// Wraps the given root dictionary. The dictionary is the number-tree
+    /// root itself (e.g. the `/PageLabels` sub-dictionary in the
+    /// catalog) — _not_ the catalog.
+    ///
+    /// @param root the number-tree root, or `null` for an empty view
     public NumberTree(PdfDictionary root) {
         this.root = root;
     }
 
-    /**
-     * Returns the underlying root dictionary, or {@code null} if this view
-     * was constructed over a {@code null} root.
-     *
-     * @return the root dictionary
-     */
+    /// Returns the underlying root dictionary, or `null` if this view
+    /// was constructed over a `null` root.
+    ///
+    /// @return the root dictionary
     public PdfDictionary getRoot() {
         return root;
     }
 
-    /**
-     * Returns whether the tree has no entries.
-     *
-     * @return {@code true} when no key maps to any value
-     */
+    /// Returns whether the tree has no entries.
+    ///
+    /// @return `true` when no key maps to any value
     public boolean isEmpty() {
         return root == null || countEntries(root) == 0;
     }
 
-    /**
-     * Returns the number of (key, value) pairs in the tree.
-     *
-     * @return the entry count
-     */
+    /// Returns the number of (key, value) pairs in the tree.
+    ///
+    /// @return the entry count
     public int size() {
         return root == null ? 0 : countEntries(root);
     }
 
-    /**
-     * Looks up a key. Uses {@code /Limits} pruning when present.
-     *
-     * @param key the integer key
-     * @return the associated value, or {@code null} if not found
-     */
+    /// Looks up a key. Uses `/Limits` pruning when present.
+    ///
+    /// @param key the integer key
+    /// @return the associated value, or `null` if not found
     public PdfBase get(int key) {
         if (root == null) return null;
         return findInNode(root, key);
     }
 
-    /**
-     * Returns whether the tree contains the given key.
-     *
-     * @param key the integer key
-     * @return {@code true} if a value is associated with {@code key}
-     */
+    /// Returns whether the tree contains the given key.
+    ///
+    /// @param key the integer key
+    /// @return `true` if a value is associated with `key`
     public boolean containsKey(int key) {
         return get(key) != null;
     }
 
-    /**
-     * Returns all entries in tree order (which, for a conformant tree, is
-     * key-sorted order).
-     *
-     * @return the list of {@code (key, value)} entries
-     */
+    /// Returns all entries in tree order (which, for a conformant tree, is
+    /// key-sorted order).
+    ///
+    /// @return the list of `(key, value)` entries
     public List<Map.Entry<Integer, PdfBase>> entries() {
         List<Map.Entry<Integer, PdfBase>> out = new ArrayList<>();
         if (root != null) collectEntries(root, out);
         return out;
     }
 
-    /**
-     * Returns all keys in tree order.
-     *
-     * @return the list of integer keys
-     */
+    /// Returns all keys in tree order.
+    ///
+    /// @return the list of integer keys
     public List<Integer> keys() {
         List<Map.Entry<Integer, PdfBase>> es = entries();
         List<Integer> out = new ArrayList<>(es.size());
@@ -119,15 +97,13 @@ public final class NumberTree {
         return out;
     }
 
-    /**
-     * Inserts or replaces a value. The host {@code /Nums} array stays
-     * sorted and {@code /Limits} are re-synced along the insertion path.
-     *
-     * @param key   the integer key
-     * @param value the value to associate
-     * @return the previous value bound to {@code key}, or {@code null}
-     * @throws IllegalStateException if this view wraps a {@code null} root
-     */
+    /// Inserts or replaces a value. The host `/Nums` array stays
+    /// sorted and `/Limits` are re-synced along the insertion path.
+    ///
+    /// @param key   the integer key
+    /// @param value the value to associate
+    /// @return the previous value bound to `key`, or `null`
+    /// @throws IllegalStateException if this view wraps a `null` root
     public PdfBase put(int key, PdfBase value) {
         requireRoot();
         if (value == null) return remove(key);
@@ -138,13 +114,11 @@ public final class NumberTree {
         return previous;
     }
 
-    /**
-     * Removes a key. Empty leaves keep their (now empty) {@code /Nums}
-     * array — rebalancing is left to an external pass.
-     *
-     * @param key the integer key to remove
-     * @return the removed value, or {@code null} if the key was absent
-     */
+    /// Removes a key. Empty leaves keep their (now empty) `/Nums`
+    /// array — rebalancing is left to an external pass.
+    ///
+    /// @param key the integer key to remove
+    /// @return the removed value, or `null` if the key was absent
     public PdfBase remove(int key) {
         if (root == null) return null;
         List<PdfDictionary> path = new ArrayList<>();
@@ -155,9 +129,7 @@ public final class NumberTree {
         return removed;
     }
 
-    /**
-     * Empties the tree.
-     */
+    /// Empties the tree.
     public void clear() {
         requireRoot();
         root.remove(KIDS);
@@ -165,11 +137,9 @@ public final class NumberTree {
         root.set(NUMS, new PdfArray());
     }
 
-    /**
-     * Returns an unmodifiable view of {@link #entries()}.
-     *
-     * @return unmodifiable entry list
-     */
+    /// Returns an unmodifiable view of [#entries()].
+    ///
+    /// @return unmodifiable entry list
     public List<Map.Entry<Integer, PdfBase>> entriesUnmodifiable() {
         return Collections.unmodifiableList(entries());
     }

@@ -9,34 +9,32 @@ import org.w3c.dom.Node;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Resolves an XFA layout box (a Form DOM field/draw node) to an absolute PDF
- * {@link Rectangle} on a page, for <b>positioned</b> layout (Stage C, sprint C1).
- *
- * <p>XFA geometry (XFA 3.0 §"Coordinate Spaces"; coordinate appendix
- * {@code CCx = Cx + Mx}) is measured from the container <b>top-left</b>: a node's
- * {@code x}/{@code y} give the offset of its {@code anchorType} point within the
- * parent container's <em>content</em> region, {@code w}/{@code h} its size. The
- * absolute page position is the accumulation, along the container chain
- * (contentArea → subform(s) → field), of each container's own position
- * ({@code Cx}, anchor-resolved), its content margin inset ({@code Mx} =
- * {@code leftInset}/{@code topInset}), and the object's anchor origin
- * ({@code Ox}). PDF user space is the opposite — {@link Rectangle} is
- * {@code llx/lly/urx/ury} from the page <b>bottom-left</b> — so the accumulated
- * top-left coordinate is flipped against the page height.</p>
- *
- * <p>Only positioned containers are resolved. A container whose {@code layout} is
- * flowed ({@code tb}/{@code lr-tb}/{@code rl-tb}/{@code row}/{@code table}) puts
- * its descendants in a flowed region; such a node yields {@code null} and is
- * recorded by the caller as a Stage-C (C3) gap — it is not faked. A leaf without
- * its own {@code x}/{@code y} is likewise unresolved.</p>
- */
+/// Resolves an XFA layout box (a Form DOM field/draw node) to an absolute PDF
+/// [Rectangle] on a page, for **positioned** layout (Stage C, sprint C1).
+///
+/// XFA geometry (XFA 3.0 §"Coordinate Spaces"; coordinate appendix
+/// `CCx = Cx + Mx`) is measured from the container **top-left**: a node's
+/// `x`/`y` give the offset of its `anchorType` point within the
+/// parent container's _content_ region, `w`/`h` its size. The
+/// absolute page position is the accumulation, along the container chain
+/// (contentArea → subform(s) → field), of each container's own position
+/// (`Cx`, anchor-resolved), its content margin inset (`Mx` =
+/// `leftInset`/`topInset`), and the object's anchor origin
+/// (`Ox`). PDF user space is the opposite — [Rectangle] is
+/// `llx/lly/urx/ury` from the page **bottom-left** — so the accumulated
+/// top-left coordinate is flipped against the page height.
+///
+/// Only positioned containers are resolved. A container whose `layout` is
+/// flowed (`tb`/`lr-tb`/`rl-tb`/`row`/`table`) puts
+/// its descendants in a flowed region; such a node yields `null` and is
+/// recorded by the caller as a Stage-C (C3) gap — it is not faked. A leaf without
+/// its own `x`/`y` is likewise unresolved.
 public final class XfaGeometry {
 
     private XfaGeometry() {
     }
 
-    /** Points per unit (PDF user-space unit = 1/72 inch). em/% are layout-relative → unresolved. */
+    /// Points per unit (PDF user-space unit = 1/72 inch). em/% are layout-relative → unresolved.
     private static double unitToPoints(String unit) {
         switch (unit == null ? "" : unit) {
             case "":
@@ -62,12 +60,10 @@ public final class XfaGeometry {
         return Double.isNaN(v) ? 0.0 : v;
     }
 
-    /**
-     * Converts an XFA measurement to PDF points.
-     *
-     * @param m the measurement, or {@code null}
-     * @return the value in points, or {@code 0} if {@code m} is null or layout-relative (em/%)
-     */
+    /// Converts an XFA measurement to PDF points.
+    ///
+    /// @param m the measurement, or `null`
+    /// @return the value in points, or `0` if `m` is null or layout-relative (em/%)
     public static double toPoints(XfaMeasurement m) {
         if (m == null) {
             return 0.0;
@@ -76,30 +72,26 @@ public final class XfaGeometry {
         return Double.isNaN(f) ? 0.0 : m.getValue() * f;
     }
 
-    /**
-     * Resolves the absolute PDF rectangle for a Form DOM field/draw node, with the
-     * page (contentArea) origin at {@code (0,0)}.
-     *
-     * @param node       the Form DOM node (its backing element is attached to the form tree)
-     * @param pageHeight the target page height in points (for the Y-flip)
-     * @return the absolute PDF rectangle, or {@code null} if the node has no static
-     *         position (leaf {@code x}/{@code y} absent, or a flowed ancestor)
-     */
+    /// Resolves the absolute PDF rectangle for a Form DOM field/draw node, with the
+    /// page (contentArea) origin at `(0,0)`.
+    ///
+    /// @param node       the Form DOM node (its backing element is attached to the form tree)
+    /// @param pageHeight the target page height in points (for the Y-flip)
+    /// @return the absolute PDF rectangle, or `null` if the node has no static
+    ///         position (leaf `x`/`y` absent, or a flowed ancestor)
     public static Rectangle resolve(XfaNode node, double pageHeight) {
         return resolve(node, pageHeight, 0.0, 0.0);
     }
 
-    /**
-     * Resolves the absolute PDF rectangle for a Form DOM field/draw node, offsetting
-     * the whole container chain by the contentArea origin {@code (baseX, baseY)}
-     * (measured from the page top-left).
-     *
-     * @param node       the Form DOM node
-     * @param pageHeight the target page height in points (for the Y-flip)
-     * @param baseX      the contentArea X origin within the page (points, from left)
-     * @param baseY      the contentArea Y origin within the page (points, from top)
-     * @return the absolute PDF rectangle, or {@code null} if unresolved (flowed/leaf-no-xy)
-     */
+    /// Resolves the absolute PDF rectangle for a Form DOM field/draw node, offsetting
+    /// the whole container chain by the contentArea origin `(baseX, baseY)`
+    /// (measured from the page top-left).
+    ///
+    /// @param node       the Form DOM node
+    /// @param pageHeight the target page height in points (for the Y-flip)
+    /// @param baseX      the contentArea X origin within the page (points, from left)
+    /// @param baseY      the contentArea Y origin within the page (points, from top)
+    /// @return the absolute PDF rectangle, or `null` if unresolved (flowed/leaf-no-xy)
     public static Rectangle resolve(XfaNode node, double pageHeight, double baseX, double baseY) {
         if (node == null) {
             return null;
@@ -167,11 +159,9 @@ public final class XfaGeometry {
         return new Rectangle(llx, lly, urx, ury);
     }
 
-    /**
-     * Folds a positioned container into the running transform: translate to its anchor,
-     * rotate its frame ({@code rotate}, 0 if absent), then translate to its content
-     * origin (anchor→top-left offset + the {@code <margin>} left/top inset).
-     */
+    /// Folds a positioned container into the running transform: translate to its anchor,
+    /// rotate its frame (`rotate`, 0 if absent), then translate to its content
+    /// origin (anchor→top-left offset + the `<margin>` left/top inset).
     private static void applyContainer(Aff t, Element c) {
         double cx = orZero(measurePoints(c.getAttribute("x")));
         double cy = orZero(measurePoints(c.getAttribute("y")));
@@ -184,7 +174,7 @@ public final class XfaGeometry {
         t.translate(tl[0] - cx + ins[0], tl[1] - cy + ins[1]);
     }
 
-    /** The {@code rotate} attribute in degrees counterclockwise (XFA), 0 if absent/invalid. */
+    /// The `rotate` attribute in degrees counterclockwise (XFA), 0 if absent/invalid.
     private static double rotateDegrees(Element c) {
         String raw = c.getAttribute("rotate");
         if (raw == null || raw.isEmpty()) {
@@ -197,7 +187,7 @@ public final class XfaGeometry {
         }
     }
 
-    /** Whether a container's {@code layout} marks a flowed region (descendants not positioned). */
+    /// Whether a container's `layout` marks a flowed region (descendants not positioned).
     private static boolean isFlowed(Element c) {
         String layout = c.getAttribute("layout");
         if (layout == null || layout.isEmpty()) {
@@ -215,7 +205,7 @@ public final class XfaGeometry {
         }
     }
 
-    /** The container's {@code <margin>} left/top insets in points (0 if absent). */
+    /// The container's `<margin>` left/top insets in points (0 if absent).
     private static double[] margin(Element c) {
         Element m = firstChild(c, "margin");
         if (m == null) {
@@ -227,18 +217,16 @@ public final class XfaGeometry {
         };
     }
 
-    /**
-     * Resolves an anchor point {@code (x,y)} of a {@code w×h} box to the box top-left, in the
-     * container's content space. Exposed for the L1 flow layout, which places a positioned
-     * subtree inside a flowed parent by the same anchor rule this resolver uses internally.
-     *
-     * @param x      the anchor X
-     * @param y      the anchor Y
-     * @param w      the box width
-     * @param h      the box height
-     * @param anchor the {@code anchorType} (topLeft / topCenter / … / bottomRight)
-     * @return {@code {topLeftX, topLeftY}}
-     */
+    /// Resolves an anchor point `(x,y)` of a `w×h` box to the box top-left, in the
+    /// container's content space. Exposed for the L1 flow layout, which places a positioned
+    /// subtree inside a flowed parent by the same anchor rule this resolver uses internally.
+    ///
+    /// @param x      the anchor X
+    /// @param y      the anchor Y
+    /// @param w      the box width
+    /// @param h      the box height
+    /// @param anchor the `anchorType` (topLeft / topCenter / … / bottomRight)
+    /// @return `{topLeftX, topLeftY}`
     public static double[] anchorTopLeft(double x, double y, double w, double h, String anchor) {
         double tlx = x;
         double tly = y;
@@ -270,26 +258,22 @@ public final class XfaGeometry {
         return null;
     }
 
-    /**
-     * A 2×3 affine in XFA top-left space: {@code (x,y) → (a·x + c·y + e, b·x + d·y + f)}.
-     * Right-multiplication ({@link #translate}) composes a child transform under the
-     * current one, so accumulating root→leaf maps a leaf-local point to page space.
-     * Rotation (C1.2) plugs in as another right-multiplied factor.
-     */
+    /// A 2×3 affine in XFA top-left space: `(x,y) → (a·x + c·y + e, b·x + d·y + f)`.
+    /// Right-multiplication ([#translate]) composes a child transform under the
+    /// current one, so accumulating root→leaf maps a leaf-local point to page space.
+    /// Rotation (C1.2) plugs in as another right-multiplied factor.
     private static final class Aff {
         private double a = 1, b = 0, c = 0, d = 1, e = 0, f = 0;
 
-        /** {@code this = this · translate(tx,ty)}. */
+        /// `this = this · translate(tx,ty)`.
         void translate(double tx, double ty) {
             e += a * tx + c * ty;
             f += b * tx + d * ty;
         }
 
-        /**
-         * {@code this = this · rotate(deg)}, where {@code deg} is XFA counterclockwise
-         * degrees. In top-left (Y-down) space a visually counterclockwise rotation maps
-         * a local {@code (x,y)} to {@code (x·cosθ + y·sinθ, −x·sinθ + y·cosθ)}.
-         */
+        /// `this = this · rotate(deg)`, where `deg` is XFA counterclockwise
+        /// degrees. In top-left (Y-down) space a visually counterclockwise rotation maps
+        /// a local `(x,y)` to `(x·cosθ + y·sinθ, −x·sinθ + y·cosθ)`.
         void rotateDeg(double deg) {
             if (deg == 0) {
                 return;

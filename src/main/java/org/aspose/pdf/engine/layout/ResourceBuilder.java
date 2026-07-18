@@ -8,85 +8,55 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
-/**
- * Builds the /Resources dictionary for a PDF page during layout.
- * <p>
- * Tracks registered fonts and image XObjects, assigning resource names
- * (e.g. "F1", "Im1") and creating the corresponding PDF dictionary entries.
- * Each font is registered as a Type 1 standard font with WinAnsiEncoding
- * (ISO 32000-1:2008, Section 9.6.2.2).
- * </p>
- */
+/// Builds the /Resources dictionary for a PDF page during layout.
+///
+/// Tracks registered fonts and image XObjects, assigning resource names
+/// (e.g. "F1", "Im1") and creating the corresponding PDF dictionary entries.
+/// Each font is registered as a Type 1 standard font with WinAnsiEncoding
+/// (ISO 32000-1:2008, Section 9.6.2.2).
+///
 public class ResourceBuilder {
 
     private static final Logger LOG = Logger.getLogger(ResourceBuilder.class.getName());
 
-    /**
-     * Maps resource name (e.g. "F1") to its font PDF dictionary.
-     */
+    /// Maps resource name (e.g. "F1") to its font PDF dictionary.
     private final Map<String, PdfDictionary> fonts = new LinkedHashMap<>();
 
-    /**
-     * Maps resource name (e.g. "Im1") to its image PDF stream.
-     */
+    /// Maps resource name (e.g. "Im1") to its image PDF stream.
     private final Map<String, PdfStream> images = new LinkedHashMap<>();
 
-    /**
-     * Maps base font name to resource name for deduplication.
-     */
+    /// Maps base font name to resource name for deduplication.
     private final Map<String, String> fontNameToResource = new LinkedHashMap<>();
 
     private int fontCounter = 0;
     private int imageCounter = 0;
 
-    /**
-     * Resource-name → TrueTypeReader for fonts registered via
-     * {@link #addEmbeddedFont}. Layout code retrieves the reader so the
-     * content-stream builder can encode text as 2-byte CIDs that the
-     * embedded Type0 dictionary understands.
-     */
+    /// Resource-name → TrueTypeReader for fonts registered via
+    /// [#addEmbeddedFont]. Layout code retrieves the reader so the
+    /// content-stream builder can encode text as 2-byte CIDs that the
+    /// embedded Type0 dictionary understands.
     private final Map<String, org.aspose.pdf.engine.font.ttf.TrueTypeReader> type0Readers
             = new LinkedHashMap<>();
 
-    /**
-     * Creates an empty ResourceBuilder.
-     */
+    /// Creates an empty ResourceBuilder.
     public ResourceBuilder() {
         LOG.fine("ResourceBuilder created");
     }
 
-    /**
-     * Registers a standard PDF font and returns its resource name.
-     * <p>
-     * Creates a font dictionary with:
-     * <ul>
-     *   <li>/Type /Font</li>
-     *   <li>/Subtype /Type1</li>
-     *   <li>/BaseFont /fontName</li>
-     *   <li>/Encoding /WinAnsiEncoding</li>
-     * </ul>
-     * If the same base font is registered again, the existing resource name is returned.
-     * </p>
-     *
-     * @param baseFont the standard font name (e.g. "Helvetica", "Courier-Bold")
-     * @return the resource name (e.g. "F1")
-     */
-    /**
-     * Registers a TrueType font as a {@code /Type0}/{@code /Identity-H}
-     * embedded font and returns its resource name. The font's raw bytes
-     * (from {@link org.aspose.pdf.text.Font#getFontData()}) are
-     * embedded into a {@code /FontFile2} stream and wired through a
-     * {@code CIDFontType2} descendant plus a {@code /ToUnicode} CMap.
-     *
-     * <p>Returns {@code null} (and registers nothing) when {@code font} has
-     * no font data — callers should fall back to {@link #addFont(String)}
-     * in that case.</p>
-     *
-     * @param font the {@link org.aspose.pdf.text.Font} carrying TTF
-     *             bytes; the {@link org.aspose.pdf.text.Font#isEmbedded()}
-     *             flag is assumed already checked by the caller
-     * @return the resource name (e.g. {@code "F2"}), or {@code null}
-     */
+    /// Registers a TrueType font as a `/Type0`/`/Identity-H`
+    /// embedded font and returns its resource name. The font's raw bytes
+    /// (from [org.aspose.pdf.text.Font#getFontData()]) are
+    /// embedded into a `/FontFile2` stream and wired through a
+    /// `CIDFontType2` descendant plus a `/ToUnicode` CMap.
+    ///
+    /// Returns `null` (and registers nothing) when `font` has
+    /// no font data — callers should fall back to [#addFont(String)]
+    /// in that case.
+    ///
+    /// @param font the [org.aspose.pdf.text.Font] carrying TTF
+    ///             bytes; the [org.aspose.pdf.text.Font#isEmbedded()]
+    ///             flag is assumed already checked by the caller
+    /// @return the resource name (e.g. `"F2"`), or `null`
     public String addEmbeddedFont(org.aspose.pdf.text.Font font) {
         if (font == null || font.getFontData() == null || font.getFontData().length == 0) {
             return null;
@@ -122,18 +92,29 @@ public class ResourceBuilder {
         }
     }
 
-    /**
-     * Returns the {@link org.aspose.pdf.engine.font.ttf.TrueTypeReader}
-     * paired with an embedded font resource, or {@code null} if the
-     * resource is a standard Type1 font (or not registered).
-     *
-     * @param resourceName the {@code /Fn} name returned by {@link #addEmbeddedFont}
-     * @return the reader, or {@code null}
-     */
+    /// Returns the [org.aspose.pdf.engine.font.ttf.TrueTypeReader]
+    /// paired with an embedded font resource, or `null` if the
+    /// resource is a standard Type1 font (or not registered).
+    ///
+    /// @param resourceName the `/Fn` name returned by [#addEmbeddedFont]
+    /// @return the reader, or `null`
     public org.aspose.pdf.engine.font.ttf.TrueTypeReader getType0Reader(String resourceName) {
         return type0Readers.get(resourceName);
     }
 
+    /// Registers a standard PDF font and returns its resource name.
+    ///
+    /// Creates a font dictionary with:
+    ///
+    ///   - /Type /Font
+    ///   - /Subtype /Type1
+    ///   - /BaseFont /fontName
+    ///   - /Encoding /WinAnsiEncoding
+    ///
+    /// If the same base font is registered again, the existing resource name is returned.
+    ///
+    /// @param baseFont the standard font name (e.g. "Helvetica", "Courier-Bold")
+    /// @return the resource name (e.g. "F1")
     public String addFont(String baseFont) {
         String effectiveFont = baseFont != null ? baseFont : "Helvetica";
 
@@ -159,17 +140,14 @@ public class ResourceBuilder {
         return resourceName;
     }
 
-    /**
-     * Registers an image XObject and returns its resource name.
-     * <p>
-     * The caller provides the image PdfStream which must already contain
-     * the appropriate /Subtype /Image, /Width, /Height, etc. entries.
-     * </p>
-     *
-     * @param key         a unique key for deduplication
-     * @param imageStream the image XObject stream
-     * @return the resource name (e.g. "Im1")
-     */
+    /// Registers an image XObject and returns its resource name.
+    ///
+    /// The caller provides the image PdfStream which must already contain
+    /// the appropriate /Subtype /Image, /Width, /Height, etc. entries.
+    ///
+    /// @param key         a unique key for deduplication
+    /// @param imageStream the image XObject stream
+    /// @return the resource name (e.g. "Im1")
     public String addImage(String key, PdfStream imageStream) {
         if (key == null) {
             throw new IllegalArgumentException("Image key must not be null");
@@ -193,15 +171,12 @@ public class ResourceBuilder {
         return resourceName;
     }
 
-    /**
-     * Builds and returns the complete /Resources PDF dictionary.
-     * <p>
-     * The dictionary contains /Font and /XObject sub-dictionaries mapping
-     * resource names to their objects.
-     * </p>
-     *
-     * @return the /Resources PdfDictionary
-     */
+    /// Builds and returns the complete /Resources PDF dictionary.
+    ///
+    /// The dictionary contains /Font and /XObject sub-dictionaries mapping
+    /// resource names to their objects.
+    ///
+    /// @return the /Resources PdfDictionary
     public PdfDictionary buildResourcesDictionary() {
         PdfDictionary resources = new PdfDictionary();
 
@@ -228,12 +203,10 @@ public class ResourceBuilder {
         return resources;
     }
 
-    /**
-     * Returns the resource name for a previously registered font, or null.
-     *
-     * @param baseFont the base font name
-     * @return the resource name, or null if not registered
-     */
+    /// Returns the resource name for a previously registered font, or null.
+    ///
+    /// @param baseFont the base font name
+    /// @return the resource name, or null if not registered
     public String getFontResourceName(String baseFont) {
         return fontNameToResource.get(baseFont);
     }

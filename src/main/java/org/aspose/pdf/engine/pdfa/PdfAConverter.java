@@ -3,71 +3,54 @@ package org.aspose.pdf.engine.pdfa;
 import org.aspose.pdf.ConvertErrorAction;
 import org.aspose.pdf.PdfFormat;
 import org.aspose.pdf.PdfFormatConversionOptions;
-import org.aspose.pdf.engine.pdfa.fixes.ActionFixes;
-import org.aspose.pdf.engine.pdfa.fixes.AnnotationFixes;
-import org.aspose.pdf.engine.pdfa.fixes.FileStructureFixes;
-import org.aspose.pdf.engine.pdfa.fixes.FontFixes;
-import org.aspose.pdf.engine.pdfa.fixes.FormFixes;
-import org.aspose.pdf.engine.pdfa.fixes.GraphicsFixes;
-import org.aspose.pdf.engine.pdfa.fixes.MetadataFixes;
-import org.aspose.pdf.engine.pdfa.fixes.PdfXFixes;
-import org.aspose.pdf.engine.pdfa.fixes.TransparencyFixes;
 import org.aspose.pdf.engine.parser.PDFParser;
+import org.aspose.pdf.engine.pdfa.fixes.*;
 
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Orchestrator for PDF/A and PDF/X conversion.
- * <p>
- * Applies a series of fix passes to the object-level objects of a parsed PDF document
- * so that it becomes compliant with the requested profile (PDF/A-1a, PDF/A-2b, PDF/X-1a, etc.).
- * After all fixes have been applied the document is re-validated and a
- * {@link PdfAValidationResult} is returned.
- * </p>
- *
- * <p>Fix order (metadata first, then structure, then content):</p>
- * <ol>
- *   <li>Metadata fixes (XMP, DocInfo synchronisation)</li>
- *   <li>File-structure fixes (encryption, LZW, external refs, trailer ID)</li>
- *   <li>Graphics / output-intent fixes</li>
- *   <li>Font fixes</li>
- *   <li>Transparency fixes (PDF/A-1 only)</li>
- *   <li>Annotation fixes</li>
- *   <li>Action fixes</li>
- *   <li>Form fixes</li>
- *   <li>PDF/X fixes (when target is PDF/X)</li>
- * </ol>
- */
+/// Orchestrator for PDF/A and PDF/X conversion.
+///
+/// Applies a series of fix passes to the object-level objects of a parsed PDF document
+/// so that it becomes compliant with the requested profile (PDF/A-1a, PDF/A-2b, PDF/X-1a, etc.).
+/// After all fixes have been applied the document is re-validated and a
+/// [PdfAValidationResult] is returned.
+///
+/// Fix order (metadata first, then structure, then content):
+///
+///   1. Metadata fixes (XMP, DocInfo synchronisation)
+///   2. File-structure fixes (encryption, LZW, external refs, trailer ID)
+///   3. Graphics / output-intent fixes
+///   4. Font fixes
+///   5. Transparency fixes (PDF/A-1 only)
+///   6. Annotation fixes
+///   7. Action fixes
+///   8. Form fixes
+///   9. PDF/X fixes (when target is PDF/X)
 public final class PdfAConverter {
 
     private static final Logger LOG = Logger.getLogger(PdfAConverter.class.getName());
 
-    /**
-     * Creates a new converter instance.
-     */
+    /// Creates a new converter instance.
     public PdfAConverter() {
         // default
     }
 
-    /**
-     * Converts the parsed PDF so that it conforms to the standard described by
-     * {@code options.getFormat()}.
-     * <p>
-     * Each fix class is invoked in the correct order.  After all fixes have been
-     * applied the document is re-validated and a {@link PdfAValidationResult} is
-     * returned.  The caller should inspect
-     * {@link PdfAValidationResult#isCompliant()} to determine whether the
-     * conversion was fully successful.
-     * </p>
-     *
-     * @param parser  the parsed PDF document (must already have been parsed)
-     * @param options conversion options (target format, error action, etc.)
-     * @return the validation result after conversion
-     * @throws IOException              if an I/O error occurs while accessing PDF objects
-     * @throws IllegalArgumentException if parser or options is {@code null}
-     */
+    /// Converts the parsed PDF so that it conforms to the standard described by
+    /// `options.getFormat()`.
+    ///
+    /// Each fix class is invoked in the correct order.  After all fixes have been
+    /// applied the document is re-validated and a [PdfAValidationResult] is
+    /// returned.  The caller should inspect
+    /// [PdfAValidationResult#isCompliant()] to determine whether the
+    /// conversion was fully successful.
+    ///
+    /// @param parser  the parsed PDF document (must already have been parsed)
+    /// @param options conversion options (target format, error action, etc.)
+    /// @return the validation result after conversion
+    /// @throws IOException              if an I/O error occurs while accessing PDF objects
+    /// @throws IllegalArgumentException if parser or options is `null`
     public PdfAValidationResult convert(PDFParser parser, PdfFormatConversionOptions options) throws IOException {
         if (parser == null) {
             throw new IllegalArgumentException("parser must not be null");
@@ -181,9 +164,7 @@ public final class PdfAConverter {
         return result;
     }
 
-    /**
-     * Applies a named fix, catching and logging any exception.
-     */
+    /// Applies a named fix, catching and logging any exception.
     private void applyFix(String name, FixAction action) throws IOException {
         try {
             LOG.fine(() -> "Applying " + name);
@@ -198,16 +179,12 @@ public final class PdfAConverter {
         }
     }
 
-    /**
-     * Functional interface for a fix action that may throw IOException.
-     */
+    /// Functional interface for a fix action that may throw IOException.
     @FunctionalInterface
     private interface FixAction {
-        /**
-         * Runs the fix.
-         *
-         * @throws IOException if an I/O error occurs
-         */
+        /// Runs the fix.
+        ///
+        /// @throws IOException if an I/O error occurs
         void run() throws IOException;
     }
 }

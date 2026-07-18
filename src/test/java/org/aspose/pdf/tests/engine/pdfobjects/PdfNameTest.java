@@ -11,9 +11,7 @@ import java.util.concurrent.CountDownLatch;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link PdfName}.
- */
+/// Tests for [PdfName].
 public class PdfNameTest {
 
     @Test

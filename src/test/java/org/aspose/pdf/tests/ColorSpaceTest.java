@@ -8,9 +8,7 @@ import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for color space classes.
- */
+/// Tests for color space classes.
 public class ColorSpaceTest {
 
     @Test

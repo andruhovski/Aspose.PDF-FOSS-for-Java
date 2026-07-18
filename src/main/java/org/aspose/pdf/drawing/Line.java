@@ -2,28 +2,24 @@ package org.aspose.pdf.drawing;
 
 import java.util.logging.Logger;
 
-/**
- * Represents a line (or polyline) drawing shape.
- * <p>
- * The line is defined by an array of alternating x,y coordinate pairs
- * in user-space units. For a simple line segment, the array has 4 elements
- * (x1, y1, x2, y2). For a polyline, more pairs are included.
- * </p>
- */
+/// Represents a line (or polyline) drawing shape.
+///
+/// The line is defined by an array of alternating x,y coordinate pairs
+/// in user-space units. For a simple line segment, the array has 4 elements
+/// (x1, y1, x2, y2). For a polyline, more pairs are included.
+///
 public class Line extends Shape {
 
     private static final Logger LOG = Logger.getLogger(Line.class.getName());
 
     private float[] positionArray;
 
-    /**
-     * Creates a new line with the specified position array.
-     *
-     * @param positionArray alternating x,y coordinate pairs; must have an even
-     *                      number of elements and at least 4 (two points)
-     * @throws IllegalArgumentException if the array is null, has fewer than
-     *                                  4 elements, or has an odd length
-     */
+    /// Creates a new line with the specified position array.
+    ///
+    /// @param positionArray alternating x,y coordinate pairs; must have an even
+    ///                      number of elements and at least 4 (two points)
+    /// @throws IllegalArgumentException if the array is null, has fewer than
+    ///                                  4 elements, or has an odd length
     public Line(float[] positionArray) {
         if (positionArray == null) {
             throw new IllegalArgumentException("Position array must not be null");
@@ -39,27 +35,21 @@ public class Line extends Shape {
         this.positionArray = positionArray;
     }
 
-    /**
-     * Gets the position array of alternating x,y coordinate pairs.
-     *
-     * @return the position array
-     */
+    /// Gets the position array of alternating x,y coordinate pairs.
+    ///
+    /// @return the position array
     public float[] getPositionArray() {
         return positionArray;
     }
 
-    /**
-     * Sets the position array of alternating x,y coordinate pairs.
-     *
-     * @param positionArray the position array
-     */
+    /// Sets the position array of alternating x,y coordinate pairs.
+    ///
+    /// @param positionArray the position array
     public void setPositionArray(float[] positionArray) {
         this.positionArray = positionArray;
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /// {@inheritDoc}
     @Override
     public void checkBounds(double width, double height) {
         if (positionArray == null) {

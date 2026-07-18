@@ -9,17 +9,15 @@ import java.io.IOException;
 import java.util.List;
 import java.util.logging.Logger;
 
-/**
- * Absorbs (extracts) all text from PDF pages.
- * <p>
- * Usage pattern (matching Aspose.PDF API):
- * <pre>
- *   TextAbsorber absorber = new TextAbsorber();
- *   page.accept(absorber);
- *   String text = absorber.getText();
- * </pre>
- * </p>
- */
+/// Absorbs (extracts) all text from PDF pages.
+///
+/// Usage pattern (matching Aspose.PDF API):
+///
+/// <pre>
+///   TextAbsorber absorber = new TextAbsorber();
+///   page.accept(absorber);
+///   String text = absorber.getText();
+/// </pre>
 public class TextAbsorber {
 
     private static final Logger LOG = Logger.getLogger(TextAbsorber.class.getName());
@@ -52,27 +50,21 @@ public class TextAbsorber {
     private TextExtractionOptions extractionOptions;
     private TextSearchOptions textSearchOptions;
 
-    /**
-     * Creates a TextAbsorber with default options.
-     */
+    /// Creates a TextAbsorber with default options.
     public TextAbsorber() {
     }
 
-    /**
-     * Creates a TextAbsorber with the given extraction options.
-     *
-     * @param options the extraction options
-     */
+    /// Creates a TextAbsorber with the given extraction options.
+    ///
+    /// @param options the extraction options
     public TextAbsorber(TextExtractionOptions options) {
         this.extractionOptions = options;
     }
 
-    /**
-     * Visits a page and extracts its text.
-     *
-     * @param page the PDF page to process
-     * @throws IOException if text extraction fails
-     */
+    /// Visits a page and extracts its text.
+    ///
+    /// @param page the PDF page to process
+    /// @throws IOException if text extraction fails
     public void visit(Page page) throws IOException {
         List<TextFragment> fragments;
         try {
@@ -235,12 +227,10 @@ public class TextAbsorber {
         LOG.fine(() -> "TextAbsorber visited page, total text length: " + extractedText.length());
     }
 
-    /**
-     * Visits every page in the document and extracts its text.
-     *
-     * @param document the document to process
-     * @throws IOException if extraction fails
-     */
+    /// Visits every page in the document and extracts its text.
+    ///
+    /// @param document the document to process
+    /// @throws IOException if extraction fails
     public void visit(Document document) throws IOException {
         if (document == null) {
             return;
@@ -248,9 +238,9 @@ public class TextAbsorber {
         document.getPages().accept(this);
     }
 
-    /** Builds the per-band RTL flag map used by {@link #visit(Page)} to know
-     *  which Y-bands need neutral-fragment reversal. Same band size (2pt) as
-     *  the visual sort so the dispatch agrees. */
+    /// Builds the per-band RTL flag map used by [#visit(Page)] to know
+    ///  which Y-bands need neutral-fragment reversal. Same band size (2pt) as
+    ///  the visual sort so the dispatch agrees.
     private static java.util.Map<Long, Boolean> computeRtlBands(java.util.List<TextFragment> fragments) {
         java.util.Map<Long, int[]> counts = new java.util.HashMap<>();
         for (TextFragment f : fragments) {
@@ -297,13 +287,11 @@ public class TextAbsorber {
         return new StringBuilder(s).reverse().toString();
     }
 
-    /**
-     * Returns true for Hebrew, Arabic, Syriac and Thaana characters and the
-     * standard Arabic presentation forms — the strong-RTL ranges per
-     * Unicode Bidirectional Algorithm (UAX #9). Used by
-     * {@link #reverseRtlRuns(String)} to identify runs that must be flipped
-     * from PDF visual order back to logical order.
-     */
+    /// Returns true for Hebrew, Arabic, Syriac and Thaana characters and the
+    /// standard Arabic presentation forms — the strong-RTL ranges per
+    /// Unicode Bidirectional Algorithm (UAX #9). Used by
+    /// [#reverseRtlRuns(String)] to identify runs that must be flipped
+    /// from PDF visual order back to logical order.
     static boolean isStrongRtl(char c) {
         return (c >= 0x0590 && c <= 0x05FF)   // Hebrew
             || (c >= 0x0600 && c <= 0x06FF)   // Arabic
@@ -329,19 +317,17 @@ public class TextAbsorber {
         return false;
     }
 
-    /**
-     * Reverses each Hebrew/Arabic (strong-RTL) run inside {@code text},
-     * including any neutral characters that sit between RTL letters, so that
-     * a fragment carrying glyphs in PDF visual order yields logical Unicode
-     * order. Pure-LTR strings are returned unchanged.
-     * <p>
-     * Mirrors the simple reversal pass that Aspose.PDF for .NET applies after
-     * fragment extraction; it is a pragmatic substitute for the full UAX #9
-     * Bidirectional Algorithm and is sufficient for typical document text
-     * where RTL runs do not deeply nest LTR runs (the case for PDFNEWNET-28621
-     * and the other Hebrew/Arabic regression fixtures).
-     * </p>
-     */
+    /// Reverses each Hebrew/Arabic (strong-RTL) run inside `text`,
+    /// including any neutral characters that sit between RTL letters, so that
+    /// a fragment carrying glyphs in PDF visual order yields logical Unicode
+    /// order. Pure-LTR strings are returned unchanged.
+    ///
+    /// Mirrors the simple reversal pass that Aspose.PDF for .NET applies after
+    /// fragment extraction; it is a pragmatic substitute for the full UAX #9
+    /// Bidirectional Algorithm and is sufficient for typical document text
+    /// where RTL runs do not deeply nest LTR runs (the case for PDFNEWNET-28621
+    /// and the other Hebrew/Arabic regression fixtures).
+    ///
     static String reverseRtlRuns(String text) {
         if (text == null || text.isEmpty()) return text;
         // Quick check — if no RTL chars at all, skip work.
@@ -390,19 +376,15 @@ public class TextAbsorber {
         return out.toString();
     }
 
-    /**
-     * Returns fragments ordered top-to-bottom (descending Y) and left-to-right
-     * (ascending X) within ~1pt-tall bands so that fragments emitted at near-
-     * identical Y get grouped into one visual line. Stable: ties preserve
-     * original content-stream order. Used by Pure-mode line reconstruction so
-     * that form-XObject overlays rendered after the page content can merge into
-     * the page line they visually cover (PDFNEWNET-31272).
-     */
-    /**
-     * Returns the dominant baseline rotation (0/90/180/270) across the given
-     * fragments, weighted by glyph count so a few stray rotated marks don't
-     * flip a horizontal page. Returns 0 when there is no clear majority.
-     */
+    /// Returns fragments ordered top-to-bottom (descending Y) and left-to-right
+    /// (ascending X) within \~1pt-tall bands so that fragments emitted at near-
+    /// identical Y get grouped into one visual line. Stable: ties preserve
+    /// original content-stream order. Used by Pure-mode line reconstruction so
+    /// that form-XObject overlays rendered after the page content can merge into
+    /// the page line they visually cover (PDFNEWNET-31272).
+    /// Returns the dominant baseline rotation (0/90/180/270) across the given
+    /// fragments, weighted by glyph count so a few stray rotated marks don't
+    /// flip a horizontal page. Returns 0 when there is no clear majority.
     private static int dominantRotation(java.util.List<TextFragment> fragments) {
         if (fragments == null || fragments.isEmpty()) return 0;
         java.util.Map<Integer, Integer> weight = new java.util.HashMap<>();
@@ -428,12 +410,10 @@ public class TextAbsorber {
         return bestW * 2 > total ? best : 0;
     }
 
-    /**
-     * Visual-position sort for rotated (90°/270°) pages: lines stack along X,
-     * glyphs advance along Y. Bands the X axis into columns (one per rotated
-     * line), orders columns left-to-right, and within a column orders by Y in
-     * the reading direction (ascending for 90°, descending for 270°).
-     */
+    /// Visual-position sort for rotated (90°/270°) pages: lines stack along X,
+    /// glyphs advance along Y. Bands the X axis into columns (one per rotated
+    /// line), orders columns left-to-right, and within a column orders by Y in
+    /// the reading direction (ascending for 90°, descending for 270°).
     private static java.util.List<TextFragment> sortByVisualPositionRotated(
             java.util.List<TextFragment> fragments, int pageRot) {
         if (fragments == null || fragments.size() < 2) return fragments;
@@ -544,12 +524,10 @@ public class TextAbsorber {
         return copy;
     }
 
-    /**
-     * Within each line, reverses the order of consecutive RTL-containing
-     * fragments (with embedded neutral fragments). No-op for lines flagged
-     * as pure RTL (already in descending X by the comparator) or for lines
-     * with no RTL fragments at all.
-     */
+    /// Within each line, reverses the order of consecutive RTL-containing
+    /// fragments (with embedded neutral fragments). No-op for lines flagged
+    /// as pure RTL (already in descending X by the comparator) or for lines
+    /// with no RTL fragments at all.
     private static void reverseConsecutiveRtlRuns(java.util.List<TextFragment> ordered,
                                                   java.util.Map<Long, Boolean> rtlBand,
                                                   double band) {
@@ -615,19 +593,15 @@ public class TextAbsorber {
         }
     }
 
-    /**
-     * Estimates average character width in user space units from fragment rectangles.
-     * Falls back to heuristic based on page width if rectangles are not available.
-     */
+    /// Estimates average character width in user space units from fragment rectangles.
+    /// Falls back to heuristic based on page width if rectangles are not available.
     private double estimateAvgCharWidth(java.util.List<TextFragment> fragments) {
         return estimateAvgCharWidth(fragments, false);
     }
 
-    /**
-     * Estimates the average glyph advance. For rotated text the advance runs
-     * along Y, so the rectangle height and the Y position differences are used
-     * instead of width and X.
-     */
+    /// Estimates the average glyph advance. For rotated text the advance runs
+    /// along Y, so the rectangle height and the Y position differences are used
+    /// instead of width and X.
     private double estimateAvgCharWidth(java.util.List<TextFragment> fragments, boolean rotated) {
         // Method 1: from rectangles (most reliable)
         double totalWidth = 0;
@@ -694,20 +668,16 @@ public class TextAbsorber {
         return 0.5;
     }
 
-    /**
-     * Returns the extracted text.
-     *
-     * @return the accumulated text from all visited pages
-     */
+    /// Returns the extracted text.
+    ///
+    /// @return the accumulated text from all visited pages
     public String getText() {
         return normalizeDuplicatedGlyphWords(normalizeLetterSpacedWords(extractedText.toString()));
     }
 
-    /**
-     * Returns the extraction options.
-     *
-     * @return the options, or null
-     */
+    /// Returns the extraction options.
+    ///
+    /// @return the options, or null
     public TextExtractionOptions getExtractionOptions() {
         if (extractionOptions == null) {
             extractionOptions = new TextExtractionOptions(TextExtractionOptions.TextFormattingMode.Pure);
@@ -715,20 +685,16 @@ public class TextAbsorber {
         return extractionOptions;
     }
 
-    /**
-     * Sets the extraction options.
-     *
-     * @param options the options
-     */
+    /// Sets the extraction options.
+    ///
+    /// @param options the options
     public void setExtractionOptions(TextExtractionOptions options) {
         this.extractionOptions = options;
     }
 
-    /**
-     * Returns text search options associated with this absorber.
-     *
-     * @return the text search options, or {@code null}
-     */
+    /// Returns text search options associated with this absorber.
+    ///
+    /// @return the text search options, or `null`
     public TextSearchOptions getTextSearchOptions() {
         if (textSearchOptions == null) {
             textSearchOptions = new TextSearchOptions();
@@ -736,18 +702,14 @@ public class TextAbsorber {
         return textSearchOptions;
     }
 
-    /**
-     * Sets text search options associated with this absorber.
-     *
-     * @param textSearchOptions the text search options
-     */
+    /// Sets text search options associated with this absorber.
+    ///
+    /// @param textSearchOptions the text search options
     public void setTextSearchOptions(TextSearchOptions textSearchOptions) {
         this.textSearchOptions = textSearchOptions;
     }
 
-    /**
-     * Resets the accumulated text.
-     */
+    /// Resets the accumulated text.
     public void reset() {
         extractedText.setLength(0);
     }
@@ -832,15 +794,13 @@ public class TextAbsorber {
         return uppercaseSb.toString();
     }
 
-    /**
-     * Collapses inter-token whitespace in a "letter-spaced" run, unless the run
-     * contains a multi-space separator. Multiple consecutive spaces between two
-     * letter-spaced tokens (e.g. {@code "S E L L  A L L O C A T I O N"}) are a
-     * deliberate signal from the PDF author that the source text is intentionally
-     * rendered letter-spaced — collapsing it would lose the visible word break.
-     * In that case the run is returned unchanged. PDFNEWNET-33376 is the
-     * canonical test for this behavior.
-     */
+    /// Collapses inter-token whitespace in a "letter-spaced" run, unless the run
+    /// contains a multi-space separator. Multiple consecutive spaces between two
+    /// letter-spaced tokens (e.g. `"S E L L  A L L O C A T I O N"`) are a
+    /// deliberate signal from the PDF author that the source text is intentionally
+    /// rendered letter-spaced — collapsing it would lose the visible word break.
+    /// In that case the run is returned unchanged. PDFNEWNET-33376 is the
+    /// canonical test for this behavior.
     private static String maybeCollapseLetterSpacedRun(String run) {
         if (run.contains("  ")) {
             return run;

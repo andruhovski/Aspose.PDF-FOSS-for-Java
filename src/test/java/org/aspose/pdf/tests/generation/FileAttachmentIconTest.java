@@ -14,12 +14,10 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Stage 11 / Bug J — {@link FileAttachmentAnnotation#setIcon(String)} must
- * write through to the {@code /Name} entry per ISO 32000-1:2008 §12.5.6.15
- * Table 184 so callers no longer have to reach into {@code getPdfDictionary()}
- * directly.
- */
+/// Stage 11 / Bug J — [FileAttachmentAnnotation#setIcon(String)] must
+/// write through to the `/Name` entry per ISO 32000-1:2008 §12.5.6.15
+/// Table 184 so callers no longer have to reach into `getPdfDictionary()`
+/// directly.
 class FileAttachmentIconTest {
 
     private FileAttachmentAnnotation roundTrip(String icon, Path tmp) throws IOException {

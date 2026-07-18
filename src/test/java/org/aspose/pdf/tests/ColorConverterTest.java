@@ -15,14 +15,10 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for ColorConverter and ColorConversionStrategy.
- */
+/// Tests for ColorConverter and ColorConversionStrategy.
 public class ColorConverterTest {
 
-    /**
-     * Helper: creates a document with a single page containing the given content stream.
-     */
+    /// Helper: creates a document with a single page containing the given content stream.
     private Document createDocWithContent(String content) throws IOException {
         Document doc = new Document();
         Page page = doc.getPages().add();

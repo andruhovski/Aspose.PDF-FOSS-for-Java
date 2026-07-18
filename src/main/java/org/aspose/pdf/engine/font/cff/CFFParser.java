@@ -2,47 +2,42 @@ package org.aspose.pdf.engine.font.cff;
 
 import java.io.IOException;
 
-/**
- * Minimal parser for the Compact Font Format (CFF) — Adobe Technical Note #5176.
- *
- * <p>Used only to extract two things from a CFF font program embedded in a PDF:
- * (1) the total glyph count, (2) the glyph-id → glyph-name mapping (the
- * <em>charset</em>). Glyph outlines themselves are NOT decoded here — the
- * caller wraps the original CFF bytes in a synthetic OpenType container and
- * lets Java's font engine rasterise via its native CFF support.</p>
- *
- * <p>What we parse:</p>
- * <ul>
- *   <li>Header (major/minor version, header size, offset size)</li>
- *   <li>Name INDEX — first entry is the PostScript font name</li>
- *   <li>Top DICT INDEX — first entry, extract operators for CharStrings,
- *       Charset, String, etc.</li>
- *   <li>String INDEX — custom strings (SID ≥ 391)</li>
- *   <li>CharStrings INDEX — count only (no decode of glyph programs)</li>
- *   <li>Charset (format 0, 1, or 2) — produces glyph-id → glyph-name array</li>
- * </ul>
- */
+/// Minimal parser for the Compact Font Format (CFF) — Adobe Technical Note #5176.
+///
+/// Used only to extract two things from a CFF font program embedded in a PDF:
+/// (1) the total glyph count, (2) the glyph-id → glyph-name mapping (the
+/// _charset_). Glyph outlines themselves are NOT decoded here — the
+/// caller wraps the original CFF bytes in a synthetic OpenType container and
+/// lets Java's font engine rasterise via its native CFF support.
+///
+/// What we parse:
+///
+///   - Header (major/minor version, header size, offset size)
+///   - Name INDEX — first entry is the PostScript font name
+///   - Top DICT INDEX — first entry, extract operators for CharStrings,
+///     Charset, String, etc.
+///   - String INDEX — custom strings (SID ≥ 391)
+///   - CharStrings INDEX — count only (no decode of glyph programs)
+///   - Charset (format 0, 1, or 2) — produces glyph-id → glyph-name array
 public final class CFFParser {
 
     private final byte[] data;
     private int pos;
 
-    /** Original CFF bytes (verbatim — handy for the OTF wrapper). */
+    /// Original CFF bytes (verbatim — handy for the OTF wrapper).
     public final byte[] cffBytes;
-    /** PostScript font name from the Name INDEX (first entry). */
+    /// PostScript font name from the Name INDEX (first entry).
     public final String fontName;
-    /** Number of glyphs (size of CharStrings INDEX). */
+    /// Number of glyphs (size of CharStrings INDEX).
     public final int numGlyphs;
-    /** Glyph-id → glyph-name table (length == numGlyphs; index 0 is always ".notdef"). */
+    /// Glyph-id → glyph-name table (length == numGlyphs; index 0 is always ".notdef").
     public final String[] glyphNames;
 
-    /**
-     * Parses a CFF stream.
-     *
-     * @param data CFF bytes — typically the contents of a {@code /FontFile3}
-     *             stream with {@code /Subtype /Type1C} or {@code /CIDFontType0C}
-     * @throws IOException on malformed input
-     */
+    /// Parses a CFF stream.
+    ///
+    /// @param data CFF bytes — typically the contents of a `/FontFile3`
+    ///             stream with `/Subtype /Type1C` or `/CIDFontType0C`
+    /// @throws IOException on malformed input
     public CFFParser(byte[] data) throws IOException {
         if (data == null || data.length < 4) {
             throw new IOException("CFF: too short");
@@ -148,7 +143,7 @@ public final class CFFParser {
         return t;
     }
 
-    /** Parses one DICT operand. Returns [value, byteLength, isReal(0/1)] or null on error. */
+    /// Parses one DICT operand. Returns [value, byteLength, isReal(0/1)] or null on error.
     private static long[] parseDictOperand(byte[] dict, int p) {
         int b0 = dict[p] & 0xFF;
         if (b0 >= 32 && b0 <= 246) {

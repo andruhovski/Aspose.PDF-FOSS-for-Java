@@ -5,21 +5,18 @@ import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
 import org.aspose.pdf.engine.pdfobjects.PdfName;
 import org.aspose.pdf.engine.pdfobjects.PdfString;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Represents an Optional Content Group (layer) in a PDF document
- * (ISO 32000-1:2008, §8.11).
- */
+/// Represents an Optional Content Group (layer) in a PDF document
+/// (ISO 32000-1:2008, §8.11).
 public class Layer {
 
     private final PdfDictionary ocgDict;
     private String id;
     private final List<Operator> contents;
 
-    /** Creates a new layer. */
+    /// Creates a new layer.
     public Layer(String id, String name) {
         this.id = id;
         this.ocgDict = new PdfDictionary();
@@ -28,43 +25,41 @@ public class Layer {
         this.contents = new ArrayList<>();
     }
 
-    /** Wraps an existing OCG dictionary. */
+    /// Wraps an existing OCG dictionary.
     public Layer(PdfDictionary ocgDict) {
         this.ocgDict = ocgDict != null ? ocgDict : new PdfDictionary();
         this.contents = new ArrayList<>();
     }
 
-    /**
-     * Wraps an existing OCG dictionary read from a document, keeping the
-     * resource-property name it was referenced by (e.g. {@code oc1} for a
-     * {@code /Resources /Properties /oc1} entry).
-     *
-     * @param id      the layer id (the /Properties resource name)
-     * @param ocgDict the OCG dictionary (ISO 32000-1:2008, §8.11.2)
-     */
+    /// Wraps an existing OCG dictionary read from a document, keeping the
+    /// resource-property name it was referenced by (e.g. `oc1` for a
+    /// `/Resources /Properties /oc1` entry).
+    ///
+    /// @param id      the layer id (the /Properties resource name)
+    /// @param ocgDict the OCG dictionary (ISO 32000-1:2008, §8.11.2)
     public Layer(String id, PdfDictionary ocgDict) {
         this.id = id;
         this.ocgDict = ocgDict != null ? ocgDict : new PdfDictionary();
         this.contents = new ArrayList<>();
     }
 
-    /** Returns the layer ID. */
+    /// Returns the layer ID.
     public String getId() { return id; }
 
-    /** Returns the layer name (/Name). */
+    /// Returns the layer name (/Name).
     public String getName() {
         PdfBase n = ocgDict.get("Name");
         return (n instanceof PdfString) ? ((PdfString) n).getString() : "";
     }
 
-    /** Sets the layer name. */
+    /// Sets the layer name.
     public void setName(String name) {
         ocgDict.set(PdfName.of("Name"), new PdfString(name));
     }
 
-    /** Returns content operators for this layer. */
+    /// Returns content operators for this layer.
     public List<Operator> getContents() { return contents; }
 
-    /** Returns the underlying OCG dictionary. */
+    /// Returns the underlying OCG dictionary.
     public PdfDictionary getPdfDictionary() { return ocgDict; }
 }

@@ -5,11 +5,9 @@ import org.aspose.pdf.engine.script.js.runtime.JSObject;
 import org.aspose.pdf.engine.script.js.runtime.NativeFunction;
 import org.aspose.pdf.engine.script.js.runtime.Undefined;
 
-/**
- * Installs the Error constructor and its native subtypes (ECMA-262 3rd ed.,
- * sec 15.11): EvalError, RangeError, ReferenceError, SyntaxError, TypeError
- * and URIError.
- */
+/// Installs the Error constructor and its native subtypes (ECMA-262 3rd ed.,
+/// sec 15.11): EvalError, RangeError, ReferenceError, SyntaxError, TypeError
+/// and URIError.
 final class ErrorBuiltins {
 
     private static final Object UNDEF = Undefined.INSTANCE;

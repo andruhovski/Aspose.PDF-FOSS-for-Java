@@ -13,18 +13,16 @@ import java.nio.charset.StandardCharsets;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-/**
- * A5.0 verification gate: reproduces the XFA 3.0 specification's documented
- * data-binding worked examples and asserts the merged {@link FormDom} node-for-node
- * against the documented Form DOM result. Unlike {@link BindingEngineTest} (which
- * uses synthetic fixtures whose data parallels the template), these fixtures are
- * the spec's own examples — the oracle the A4 merge must reproduce before any
- * flattening is built on top of it.
- *
- * <p>References are to <em>XFA Specification 3.0</em>, chapter "Basic Data Binding
- * to Produce the XFA Form DOM" (pp.170-206) and chapter 3 "Object Models in XFA"
- * (the Receipt example, pp.86-89).</p>
- */
+/// A5.0 verification gate: reproduces the XFA 3.0 specification's documented
+/// data-binding worked examples and asserts the merged [FormDom] node-for-node
+/// against the documented Form DOM result. Unlike [BindingEngineTest] (which
+/// uses synthetic fixtures whose data parallels the template), these fixtures are
+/// the spec's own examples — the oracle the A4 merge must reproduce before any
+/// flattening is built on top of it.
+///
+/// References are to _XFA Specification 3.0_, chapter "Basic Data Binding
+/// to Produce the XFA Form DOM" (pp.170-206) and chapter 3 "Object Models in XFA"
+/// (the Receipt example, pp.86-89).
 public class SpecExampleBindingTest {
 
     private static final String TPL = XfaNode.TEMPLATE_NS;

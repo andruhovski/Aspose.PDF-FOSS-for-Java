@@ -11,27 +11,23 @@ import java.nio.charset.StandardCharsets;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
-/**
- * Sprint 65 — stream-extraction tolerance.
- *
- * <p>When a stream's {@code /Length} entry disagrees with the file's actual
- * {@code endstream} position, {@link PDFParser} must re-derive the true length by
- * scanning for {@code endstream} and hand the decode filter exactly the stream
- * bytes — never trailing junk (which surfaces downstream as Flate "incorrect
- * header check" / ASCII85 "invalid character") nor a truncated prefix. This
- * mirrors Acrobat / pdf.js tolerance and is the upstream root cause that
- * the Sprint 63 filter-symptom analysis deferred.</p>
- */
+/// Sprint 65 — stream-extraction tolerance.
+///
+/// When a stream's `/Length` entry disagrees with the file's actual
+/// `endstream` position, [PDFParser] must re-derive the true length by
+/// scanning for `endstream` and hand the decode filter exactly the stream
+/// bytes — never trailing junk (which surfaces downstream as Flate "incorrect
+/// header check" / ASCII85 "invalid character") nor a truncated prefix. This
+/// mirrors Acrobat / pdf.js tolerance and is the upstream root cause that
+/// the Sprint 63 filter-symptom analysis deferred.
 public class StreamLengthRecoveryTest {
 
     private static final byte[] CONTENT = "ABCDE".getBytes(StandardCharsets.ISO_8859_1);
 
-    /**
-     * Assembles a minimal single-object PDF with one uncompressed stream whose
-     * declared {@code /Length} is {@code declaredLength} while the true content is
-     * always {@link #CONTENT}. The xref offsets are measured from the assembled
-     * bytes, so they stay valid regardless of the (wrong) declared length.
-     */
+    /// Assembles a minimal single-object PDF with one uncompressed stream whose
+    /// declared `/Length` is `declaredLength` while the true content is
+    /// always [#CONTENT]. The xref offsets are measured from the assembled
+    /// bytes, so they stay valid regardless of the (wrong) declared length.
     private static byte[] buildPdf(int declaredLength) {
         ByteArrayOutputStream bo = new ByteArrayOutputStream();
         write(bo, "%PDF-1.7\n");

@@ -11,14 +11,12 @@ import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Sprint 28 Part A/B — correctness of {@link TextFragmentAbsorber} search and the
- * extract→replace→save→reload pipeline. Written "tests first" to triage which
- * behaviours are actually broken before changing the matching engine.
- */
+/// Sprint 28 Part A/B — correctness of [TextFragmentAbsorber] search and the
+/// extract→replace→save→reload pipeline. Written "tests first" to triage which
+/// behaviours are actually broken before changing the matching engine.
 public class TextFragmentAbsorberCorrectnessTest {
 
-    /** Builds a one-page PDF whose page carries the given lines as TextFragments. */
+    /// Builds a one-page PDF whose page carries the given lines as TextFragments.
     private static byte[] buildPdf(String... lines) throws IOException {
         Document doc = new Document();
         Page page = doc.getPages().add();
@@ -38,7 +36,7 @@ public class TextFragmentAbsorberCorrectnessTest {
         return baos.toByteArray();
     }
 
-    /** Builds a one-page PDF with two fragments on the SAME baseline (adjacent words). */
+    /// Builds a one-page PDF with two fragments on the SAME baseline (adjacent words).
     private static byte[] buildSameLine(String left, String right, double leftX, double rightX) throws IOException {
         Document doc = new Document();
         Page page = doc.getPages().add();

@@ -3,7 +3,7 @@ package org.aspose.pdf;
 import org.aspose.pdf.engine.pdfobjects.PdfArray;
 import org.aspose.pdf.engine.pdfobjects.PdfName;
 
-/** FitB explicit destination — fit page bounding box within window. */
+/// FitB explicit destination — fit page bounding box within window.
 public class FitBExplicitDestination extends ExplicitDestination {
     public FitBExplicitDestination(Page page) { super(page); }
     FitBExplicitDestination(Page page, int pageNum) { super(page != null ? page : null); }

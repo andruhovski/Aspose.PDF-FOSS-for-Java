@@ -1,51 +1,45 @@
 package org.aspose.pdf.annotations;
 
-import org.aspose.pdf.*;
+import org.aspose.pdf.Page;
+import org.aspose.pdf.Point;
+import org.aspose.pdf.Rectangle;
 import org.aspose.pdf.engine.pdfobjects.*;
 
-/**
- * Line annotation (ISO 32000-1:2008, Section 12.5.6.7, /Subtype /Line).
- * <p>
- * A line annotation displays a single straight line on the page, defined
- * by two endpoints. It may optionally include leader lines and line endings.
- * </p>
- */
+/// Line annotation (ISO 32000-1:2008, Section 12.5.6.7, /Subtype /Line).
+///
+/// A line annotation displays a single straight line on the page, defined
+/// by two endpoints. It may optionally include leader lines and line endings.
+///
 public class LineAnnotation extends MarkupAnnotation {
 
     private Point starting;
     private Point ending;
 
-    /**
-     * Constructs a line annotation from an existing PDF dictionary.
-     *
-     * @param dict the PDF dictionary backing this annotation
-     * @param page the page this annotation belongs to
-     */
+    /// Constructs a line annotation from an existing PDF dictionary.
+    ///
+    /// @param dict the PDF dictionary backing this annotation
+    /// @param page the page this annotation belongs to
     public LineAnnotation(PdfDictionary dict, Page page) {
         super(dict, page);
     }
 
-    /**
-     * Constructs a new line annotation with the given rectangle on the specified page.
-     *
-     * @param page the page this annotation belongs to
-     * @param rect the annotation rectangle
-     */
+    /// Constructs a new line annotation with the given rectangle on the specified page.
+    ///
+    /// @param page the page this annotation belongs to
+    /// @param rect the annotation rectangle
     public LineAnnotation(Page page, Rectangle rect) {
         super(page, rect);
         dict.set(PdfName.of("Subtype"), PdfName.of("Line"));
     }
 
-    /**
-     * Constructs a new line annotation with explicit start and end points.
-     *
-     * @param page the page this annotation belongs to
-     * @param rect the annotation rectangle
-     * @param x1   the x-coordinate of the start point
-     * @param y1   the y-coordinate of the start point
-     * @param x2   the x-coordinate of the end point
-     * @param y2   the y-coordinate of the end point
-     */
+    /// Constructs a new line annotation with explicit start and end points.
+    ///
+    /// @param page the page this annotation belongs to
+    /// @param rect the annotation rectangle
+    /// @param x1   the x-coordinate of the start point
+    /// @param y1   the y-coordinate of the start point
+    /// @param x2   the x-coordinate of the end point
+    /// @param y2   the y-coordinate of the end point
     public LineAnnotation(Page page, Rectangle rect, double x1, double y1, double x2, double y2) {
         super(page, rect);
         dict.set(PdfName.of("Subtype"), PdfName.of("Line"));
@@ -59,14 +53,12 @@ public class LineAnnotation extends MarkupAnnotation {
         this.ending = new Point(x2, y2);
     }
 
-    /**
-     * Constructs a new line annotation with {@link Point}-based start and end points.
-     *
-     * @param page       the page this annotation belongs to
-     * @param rect       the annotation rectangle
-     * @param startPoint the start point of the line
-     * @param endPoint   the end point of the line
-     */
+    /// Constructs a new line annotation with [Point]-based start and end points.
+    ///
+    /// @param page       the page this annotation belongs to
+    /// @param rect       the annotation rectangle
+    /// @param startPoint the start point of the line
+    /// @param endPoint   the end point of the line
     public LineAnnotation(Page page, Rectangle rect, Point startPoint, Point endPoint) {
         this(page, rect,
              startPoint != null ? startPoint.getX() : 0,
@@ -75,11 +67,9 @@ public class LineAnnotation extends MarkupAnnotation {
              endPoint != null ? endPoint.getY() : 0);
     }
 
-    /**
-     * Returns the line endpoints as a four-element array [x1, y1, x2, y2].
-     *
-     * @return the line coordinates, or null if not set
-     */
+    /// Returns the line endpoints as a four-element array [x1, y1, x2, y2].
+    ///
+    /// @return the line coordinates, or null if not set
     public double[] getLine() {
         PdfBase l = dict.get("L");
         if (l instanceof PdfArray) {
@@ -94,11 +84,9 @@ public class LineAnnotation extends MarkupAnnotation {
         return null;
     }
 
-    /**
-     * Returns the starting point of the line.
-     *
-     * @return the start point, or null if not set
-     */
+    /// Returns the starting point of the line.
+    ///
+    /// @return the start point, or null if not set
     public Point getStarting() {
         if (starting != null) return starting;
         double[] coords = getLine();
@@ -109,21 +97,17 @@ public class LineAnnotation extends MarkupAnnotation {
         return null;
     }
 
-    /**
-     * Sets the starting point of the line.
-     *
-     * @param point the start point
-     */
+    /// Sets the starting point of the line.
+    ///
+    /// @param point the start point
     public void setStarting(Point point) {
         this.starting = point;
         updateLineArray();
     }
 
-    /**
-     * Returns the ending point of the line.
-     *
-     * @return the end point, or null if not set
-     */
+    /// Returns the ending point of the line.
+    ///
+    /// @return the end point, or null if not set
     public Point getEnding() {
         if (ending != null) return ending;
         double[] coords = getLine();
@@ -134,21 +118,17 @@ public class LineAnnotation extends MarkupAnnotation {
         return null;
     }
 
-    /**
-     * Sets the ending point of the line.
-     *
-     * @param point the end point
-     */
+    /// Sets the ending point of the line.
+    ///
+    /// @param point the end point
     public void setEnding(Point point) {
         this.ending = point;
         updateLineArray();
     }
 
-    /**
-     * Returns the intent of this line annotation.
-     *
-     * @return the line intent
-     */
+    /// Returns the intent of this line annotation.
+    ///
+    /// @return the line intent
     public LineIntent getIntent() {
         String it = dict.getString("IT");
         if ("LineArrow".equals(it)) return LineIntent.LineArrow;
@@ -156,11 +136,9 @@ public class LineAnnotation extends MarkupAnnotation {
         return LineIntent.Undefined;
     }
 
-    /**
-     * Sets the intent of this line annotation.
-     *
-     * @param intent the line intent
-     */
+    /// Sets the intent of this line annotation.
+    ///
+    /// @param intent the line intent
     public void setIntent(LineIntent intent) {
         if (intent == null || intent == LineIntent.Undefined) {
             dict.remove(PdfName.of("IT"));
@@ -169,38 +147,30 @@ public class LineAnnotation extends MarkupAnnotation {
         }
     }
 
-    /**
-     * Returns the line ending style at the start of the line.
-     *
-     * @return the starting style
-     */
+    /// Returns the line ending style at the start of the line.
+    ///
+    /// @return the starting style
     public LineEnding getStartingStyle() {
         return getLineEndingFromLE(0);
     }
 
-    /**
-     * Sets the line ending style at the start of the line.
-     *
-     * @param style the starting style
-     */
+    /// Sets the line ending style at the start of the line.
+    ///
+    /// @param style the starting style
     public void setStartingStyle(LineEnding style) {
         setLineEndingInLE(0, style);
     }
 
-    /**
-     * Returns the line ending style at the end of the line.
-     *
-     * @return the ending style
-     */
+    /// Returns the line ending style at the end of the line.
+    ///
+    /// @return the ending style
     public LineEnding getEndingStyle() {
         return getLineEndingFromLE(1);
     }
 
-    /**
-     * Sets the line ending style at the end of the line.
-     *
-     * @param style the ending style
-     */
+    /// Sets the line ending style at the end of the line.
+    ///
+    /// @param style the ending style
     public void setEndingStyle(LineEnding style) {
         setLineEndingInLE(1, style);
     }
@@ -235,9 +205,7 @@ public class LineAnnotation extends MarkupAnnotation {
         dict.set(PdfName.of("LE"), le);
     }
 
-    /**
-     * Updates the /L array in the PDF dictionary from the current starting/ending points.
-     */
+    /// Updates the /L array in the PDF dictionary from the current starting/ending points.
     private void updateLineArray() {
         Point s = starting != null ? starting : new Point(0, 0);
         Point e = ending != null ? ending : new Point(0, 0);

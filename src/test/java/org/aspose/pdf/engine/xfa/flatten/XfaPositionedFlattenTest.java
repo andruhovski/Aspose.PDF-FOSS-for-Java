@@ -18,11 +18,9 @@ import java.nio.charset.StandardCharsets;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * C1.3 — the resolver wired into the flattener: positioned fields get REAL coordinates
- * (offset by the template contentArea origin), flowed fields keep a flagged placeholder,
- * and the self-consistency invariants hold (on-page, non-zero, positioned vs flowed split).
- */
+/// C1.3 — the resolver wired into the flattener: positioned fields get REAL coordinates
+/// (offset by the template contentArea origin), flowed fields keep a flagged placeholder,
+/// and the self-consistency invariants hold (on-page, non-zero, positioned vs flowed split).
 public class XfaPositionedFlattenTest {
 
     private static final String TPL = XfaNode.TEMPLATE_NS;
@@ -79,7 +77,7 @@ public class XfaPositionedFlattenTest {
         assertOnPageNonZero(doc);
     }
 
-    /** Self-consistency invariant C: every created widget is on-page and has non-zero area. */
+    /// Self-consistency invariant C: every created widget is on-page and has non-zero area.
     private static void assertOnPageNonZero(Document doc) throws Exception {
         Form form = doc.getForm();
         double pageW = doc.getPages().get(1).getRect().getWidth();

@@ -9,10 +9,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Unit tests for {@link FreeTextIntent} enum and the {@code intent / rotate /
- * callout} accessors on {@link FreeTextAnnotation} (ISO 32000-1:2008 §12.5.6.6).
- */
+/// Unit tests for [FreeTextIntent] enum and the `intent / rotate /
+/// callout` accessors on [FreeTextAnnotation] (ISO 32000-1:2008 §12.5.6.6).
 public class FreeTextIntentTests {
 
     @Test

@@ -13,17 +13,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * L1.2 growable-height B oracle: the resolved height of a field is asserted against the
- * hand-computed {@code wrapped-lines × lineHeight} formula, with {@code minH}/{@code maxH}/{@code h}
- * clamping, all measured through the existing {@link TextLayoutHelper} primitive.
- */
+/// L1.2 growable-height B oracle: the resolved height of a field is asserted against the
+/// hand-computed `wrapped-lines × lineHeight` formula, with `minH`/`maxH`/`h`
+/// clamping, all measured through the existing [TextLayoutHelper] primitive.
 public class XfaGrowableHeightTest {
 
     private static final String TPL = org.aspose.pdf.engine.xfa.model.XfaNode.TEMPLATE_NS;
     private static final double EPS = 1e-6;
 
-    /** Helvetica 10pt line height — the formula's unit; read from the same primitive under test. */
+    /// Helvetica 10pt line height — the formula's unit; read from the same primitive under test.
     private static final double LH = TextLayoutHelper.getLineHeight("Helvetica", 10);
 
     @Test

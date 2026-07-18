@@ -14,9 +14,7 @@ import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for the 7 missing API features.
- */
+/// Tests for the 7 missing API features.
 public class MissingApiTest {
 
     // ==================== Feature 1: Page.addStamp ====================

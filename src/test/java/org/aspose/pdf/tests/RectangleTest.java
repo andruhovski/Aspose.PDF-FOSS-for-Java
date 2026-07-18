@@ -8,9 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link Rectangle}.
- */
+/// Tests for [Rectangle].
 public class RectangleTest {
 
     @Test

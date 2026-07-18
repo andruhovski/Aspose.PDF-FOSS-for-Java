@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** P1 lexer tests: token streams, ASI tracking, regex-vs-divide disambiguation. */
+/// P1 lexer tests: token streams, ASI tracking, regex-vs-divide disambiguation.
 public class LexerTokenTest {
 
     private static List<Token> lex(String s) {

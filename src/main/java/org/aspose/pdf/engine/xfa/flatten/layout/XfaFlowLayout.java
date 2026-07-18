@@ -6,71 +6,64 @@ import org.aspose.pdf.engine.xfa.binding.FormField;
 import org.aspose.pdf.engine.xfa.flatten.XfaGeometry;
 import org.aspose.pdf.engine.xfa.flatten.XfaMedium;
 import org.aspose.pdf.engine.xfa.model.XfaMeasurement;
+import org.aspose.pdf.engine.xfa.model.XfaNodeFactory;
 import org.aspose.pdf.engine.xfa.model.template.ContentArea;
 import org.aspose.pdf.engine.xfa.model.template.Template;
-import org.aspose.pdf.engine.xfa.model.XfaNodeFactory;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-/**
- * Builds the XFA <b>Layout DOM</b> for a flowed-root form by flowing its content
- * top-to-bottom into a SINGLE content region (Stage C, sprint L1).
- *
- * <p>This is L1: flow within one region, with each growable object's height resolved
- * from its bound data. It does <b>not</b> paginate, split content, or emit a second
- * page — overflow (content taller than the region) is measured and reported for L2/L3,
- * not acted upon. Paint composition onto the page is L5.</p>
- *
- * <p>Reuses the repo's layout primitives rather than starting a parallel stack:
- * {@link LayoutContext} is the flow cursor (its {@code advanceCursor}/{@code getRemainingHeight}
- * drive both the per-container stacking and the region overflow read);
- * {@link XfaGrowableHeight} (via {@link org.aspose.pdf.engine.layout.TextLayoutHelper})
- * computes data-driven heights; {@link XfaGeometry} supplies anchor resolution for
- * positioned subtrees nested inside the flow. The Form DOM consumed here is already
- * occur-expanded by the binding engine — L1 neither re-expands nor touches binding.</p>
- */
+/// Builds the XFA **Layout DOM** for a flowed-root form by flowing its content
+/// top-to-bottom into a SINGLE content region (Stage C, sprint L1).
+///
+/// This is L1: flow within one region, with each growable object's height resolved
+/// from its bound data. It does **not** paginate, split content, or emit a second
+/// page — overflow (content taller than the region) is measured and reported for L2/L3,
+/// not acted upon. Paint composition onto the page is L5.
+///
+/// Reuses the repo's layout primitives rather than starting a parallel stack:
+/// [LayoutContext] is the flow cursor (its `advanceCursor`/`getRemainingHeight`
+/// drive both the per-container stacking and the region overflow read);
+/// [XfaGrowableHeight] (via [org.aspose.pdf.engine.layout.TextLayoutHelper])
+/// computes data-driven heights; [XfaGeometry] supplies anchor resolution for
+/// positioned subtrees nested inside the flow. The Form DOM consumed here is already
+/// occur-expanded by the binding engine — L1 neither re-expands nor touches binding.
 public final class XfaFlowLayout {
 
-    /** A region tall enough that nested containers never run out of vertical space (they grow). */
+    /// A region tall enough that nested containers never run out of vertical space (they grow).
     private static final double UNBOUNDED = 1.0e7;
 
-    /** Container element kinds that hold layout children. */
+    /// Container element kinds that hold layout children.
     private static final Set<String> CONTAINERS = new HashSet<>(
             Arrays.asList("subform", "subformSet", "exclGroup", "area"));
-    /** Layout-object element kinds placed in the flow. */
+    /// Layout-object element kinds placed in the flow.
     private static final Set<String> LAYOUT = new HashSet<>(
             Arrays.asList("subform", "subformSet", "exclGroup", "area", "field", "draw"));
-    /** Flowed {@code layout} values (children stack); anything else is positioned. */
+    /// Flowed `layout` values (children stack); anything else is positioned.
     private static final Set<String> FLOWED = new HashSet<>(
             Arrays.asList("tb", "lr-tb", "rl-tb", "row", "table"));
 
     private XfaFlowLayout() {
     }
 
-    /** The outcome of laying a flowed-root form into one region. */
+    /// The outcome of laying a flowed-root form into one region.
     public static final class Result {
-        /** The placed Layout DOM root (the form's root container). */
+        /// The placed Layout DOM root (the form's root container).
         public final XfaLayoutNode root;
-        /** Content region width in points. */
+        /// Content region width in points.
         public final double regionWidth;
-        /** Content region height in points (the single region; overflow is measured against it). */
+        /// Content region height in points (the single region; overflow is measured against it).
         public final double regionHeight;
-        /** Total laid-out content height in points (the root's resolved height). */
+        /// Total laid-out content height in points (the root's resolved height).
         public final double contentHeight;
-        /** Overflow in points = {@code contentHeight - regionHeight} (&gt; 0 ⇒ needs pagination, L3). */
+        /// Overflow in points = `contentHeight - regionHeight` (> 0 ⇒ needs pagination, L3).
         public final double overflow;
-        /** Placed leaf objects (field/draw). */
+        /// Placed leaf objects (field/draw).
         public int placedLeaves;
-        /** Placed growable objects (no fixed {@code h}). */
+        /// Placed growable objects (no fixed `h`).
         public int growableObjects;
-        /** Placed positioned objects (offset by their own x/y inside the flow). */
+        /// Placed positioned objects (offset by their own x/y inside the flow).
         public int positionedObjects;
 
         Result(XfaLayoutNode root, double regionWidth, double regionHeight,
@@ -82,19 +75,17 @@ public final class XfaFlowLayout {
             this.overflow = overflow;
         }
 
-        /** @return {@code true} if the laid-out content exceeds the single region (L3 must paginate). */
+        /// @return `true` if the laid-out content exceeds the single region (L3 must paginate).
         public boolean overflows() {
             return overflow > 0.5; // sub-point slack
         }
     }
 
-    /**
-     * Lays the flowed root of {@code dom} into the first content region of {@code tpl}.
-     *
-     * @param dom the merged (occur-expanded) Form DOM
-     * @param tpl the template (for the content region size + medium), or {@code null}
-     * @return the Layout DOM + region/overflow measurement
-     */
+    /// Lays the flowed root of `dom` into the first content region of `tpl`.
+    ///
+    /// @param dom the merged (occur-expanded) Form DOM
+    /// @param tpl the template (for the content region size + medium), or `null`
+    /// @return the Layout DOM + region/overflow measurement
     public static Result layout(FormDom dom, Template tpl) {
         double[] region = contentRegion(tpl);
         double regionW = region[0];
@@ -132,28 +123,24 @@ public final class XfaFlowLayout {
         return out;
     }
 
-    /**
-     * Lays an arbitrary subform/area fragment into a standalone Layout node at the content-region
-     * origin ({@code x=0,y=0}), reusing the same box machinery as the main flow. Used by L4 to
-     * size and place <b>boundary content</b> (a bookend / break leader or trailer subform) before
-     * it is inserted into a page.
-     *
-     * @param fragment   the subform / area element to lay out (a leader/trailer reference target)
-     * @param availWidth the available width in points (normally the content-region width)
-     * @param dom        the merged Form DOM, for any bound field values inside the fragment, or {@code null}
-     * @return the placed layout node (origin-based, height resolved), or {@code null} if {@code fragment} is null
-     */
+    /// Lays an arbitrary subform/area fragment into a standalone Layout node at the content-region
+    /// origin (`x=0,y=0`), reusing the same box machinery as the main flow. Used by L4 to
+    /// size and place **boundary content** (a bookend / break leader or trailer subform) before
+    /// it is inserted into a page.
+    ///
+    /// @param fragment   the subform / area element to lay out (a leader/trailer reference target)
+    /// @param availWidth the available width in points (normally the content-region width)
+    /// @param dom        the merged Form DOM, for any bound field values inside the fragment, or `null`
+    /// @return the placed layout node (origin-based, height resolved), or `null` if `fragment` is null
     public static XfaLayoutNode layoutFragment(Element fragment, double availWidth, FormDom dom) {
         return layoutFragment(fragment, availWidth, dom == null ? null : dom.getFields());
     }
 
-    /**
-     * Lays a fragment as {@link #layoutFragment(Element, double, FormDom)} but resolves bound field
-     * values from an explicit field list rather than the FormDom flow fields. Used by the paginator
-     * to lay out {@code <pageSet>} master furniture against the FormDom master-field channel.
-     *
-     * @param fields the fields whose form nodes supply values for the fragment, or {@code null}
-     */
+    /// Lays a fragment as [#layoutFragment(Element, double, FormDom)] but resolves bound field
+    /// values from an explicit field list rather than the FormDom flow fields. Used by the paginator
+    /// to lay out `<pageSet>` master furniture against the FormDom master-field channel.
+    ///
+    /// @param fields the fields whose form nodes supply values for the fragment, or `null`
     public static XfaLayoutNode layoutFragment(Element fragment, double availWidth, List<FormField> fields) {
         if (fragment == null) {
             return null;
@@ -172,13 +159,11 @@ public final class XfaFlowLayout {
 
     /* ------------------------------- traversal -------------------------------- */
 
-    /**
-     * Lays one box at content-region top-left {@code (absX, absY)} with the given available
-     * width, returning its placed node (position + resolved height + children).
-     *
-     * @param inheritedCols column widths handed down from an enclosing {@code layout="table"}
-     *                      (consumed by a {@code layout="row"} child); {@code null} otherwise
-     */
+    /// Lays one box at content-region top-left `(absX, absY)` with the given available
+    /// width, returning its placed node (position + resolved height + children).
+    ///
+    /// @param inheritedCols column widths handed down from an enclosing `layout="table"`
+    ///                      (consumed by a `layout="row"` child); `null` otherwise
     private static XfaLayoutNode layoutBox(Element el, double absX, double absY, double availWidth,
                                            double[] inheritedCols, Map<Element, FormField> byElement, Result r) {
         String kind = local(el);
@@ -271,13 +256,11 @@ public final class XfaFlowLayout {
 
     /* ----------------------------- layout strategies -------------------------- */
 
-    /**
-     * {@code layout="tb"} / {@code rl-tb} / positioned (L1): flow children stack top-to-bottom;
-     * a positioned child (own x/y) offsets from the content origin and does not advance the
-     * cursor; in a non-flowed container an unpositioned child sits at the content origin.
-     *
-     * @return the content extent (deepest child bottom relative to {@code contentAbsY})
-     */
+    /// `layout="tb"` / `rl-tb` / positioned (L1): flow children stack top-to-bottom;
+    /// a positioned child (own x/y) offsets from the content origin and does not advance the
+    /// cursor; in a non-flowed container an unpositioned child sits at the content origin.
+    ///
+    /// @return the content extent (deepest child bottom relative to `contentAbsY`)
     private static double placeVertical(Element el, XfaLayoutNode node, double contentAbsX,
                                         double contentAbsY, double innerW, boolean flowed,
                                         Map<Element, FormField> byElement, Result r) {
@@ -337,13 +320,11 @@ public final class XfaFlowLayout {
         return contentExtent;
     }
 
-    /**
-     * {@code layout="lr-tb"}: children flow left-to-right at the current line, wrapping to a
-     * new line when the next child would exceed the inner width. Line height = the tallest
-     * child on that line; the cursor drops by the completed line's height on each wrap.
-     *
-     * @return the content extent (bottom of the last line relative to {@code contentAbsY})
-     */
+    /// `layout="lr-tb"`: children flow left-to-right at the current line, wrapping to a
+    /// new line when the next child would exceed the inner width. Line height = the tallest
+    /// child on that line; the cursor drops by the completed line's height on each wrap.
+    ///
+    /// @return the content extent (bottom of the last line relative to `contentAbsY`)
     private static double placeHorizontalWrap(Element el, XfaLayoutNode node, double contentAbsX,
                                               double contentAbsY, double innerW,
                                               Map<Element, FormField> byElement, Result r) {
@@ -434,13 +415,11 @@ public final class XfaFlowLayout {
         return contentExtent;
     }
 
-    /**
-     * The shrink-to-fit content width of a laid-out container node: the rightmost edge of its
-     * placed children (relative to the node's own left edge) plus the container's right inset. Used to
-     * size a width-less child in a horizontal flow so it occupies only as much width as its content.
-     */
-    /** Whether an element carries its own box styling (a {@code <fill>} or {@code <border>} child) — such a
-     * width-less container should keep the full inner width (a banner/section box), not shrink-to-fit. */
+    /// The shrink-to-fit content width of a laid-out container node: the rightmost edge of its
+    /// placed children (relative to the node's own left edge) plus the container's right inset. Used to
+    /// size a width-less child in a horizontal flow so it occupies only as much width as its content.
+    /// Whether an element carries its own box styling (a `<fill>` or `<border>` child) — such a
+    /// width-less container should keep the full inner width (a banner/section box), not shrink-to-fit.
     private static boolean hasBoxStyling(Element el) {
         for (Element c = firstEl(el); c != null; c = nextEl(c)) {
             String ln = local(c);
@@ -467,12 +446,10 @@ public final class XfaFlowLayout {
         return maxRight + ins[2];
     }
 
-    /**
-     * {@code layout="table"}: a subform whose flowed children (rows) stack top-to-bottom, each
-     * row laid out against this table's {@code columnWidths} so columns align across rows.
-     *
-     * @return the content extent (bottom of the last row relative to {@code contentAbsY})
-     */
+    /// `layout="table"`: a subform whose flowed children (rows) stack top-to-bottom, each
+    /// row laid out against this table's `columnWidths` so columns align across rows.
+    ///
+    /// @return the content extent (bottom of the last row relative to `contentAbsY`)
     private static double placeTable(Element el, XfaLayoutNode node, double contentAbsX,
                                      double contentAbsY, double innerW,
                                      Map<Element, FormField> byElement, Result r) {
@@ -483,12 +460,10 @@ public final class XfaFlowLayout {
         return extent[0];
     }
 
-    /**
-     * Places a table's row children against {@code cols}, descending TRANSPARENTLY through any
-     * {@code <subformSet>} grouping (the header rows of an XFA table are wrapped in a subformSet that is
-     * a binding/occur construct, not a layout box — its rows must still receive the table's columns and
-     * sit at the table's x-origin, else the header shears away from the body grid).
-     */
+    /// Places a table's row children against `cols`, descending TRANSPARENTLY through any
+    /// `<subformSet>` grouping (the header rows of an XFA table are wrapped in a subformSet that is
+    /// a binding/occur construct, not a layout box — its rows must still receive the table's columns and
+    /// sit at the table's x-origin, else the header shears away from the body grid).
     private static void placeTableRows(Element container, XfaLayoutNode tableNode, double[] cols,
                                        double contentAbsX, double contentAbsY, double innerW,
                                        LayoutContext flow, Map<Element, FormField> byElement, Result r,
@@ -513,14 +488,12 @@ public final class XfaFlowLayout {
         }
     }
 
-    /**
-     * {@code layout="row"}: cells are placed left-to-right at the row's content origin, each
-     * cell's x = the sum of preceding column widths and width = its column width. The row
-     * height is the tallest (growable) cell — a row is laid out as one line.
-     *
-     * @param cols the effective column widths (the row's own, else the table's inherited)
-     * @return the content extent (the tallest cell height relative to {@code contentAbsY})
-     */
+    /// `layout="row"`: cells are placed left-to-right at the row's content origin, each
+    /// cell's x = the sum of preceding column widths and width = its column width. The row
+    /// height is the tallest (growable) cell — a row is laid out as one line.
+    ///
+    /// @param cols the effective column widths (the row's own, else the table's inherited)
+    /// @return the content extent (the tallest cell height relative to `contentAbsY`)
     private static double placeRow(Element el, XfaLayoutNode node, double contentAbsX,
                                    double contentAbsY, double innerW, double[] cols,
                                    Map<Element, FormField> byElement, Result r) {
@@ -587,11 +560,9 @@ public final class XfaFlowLayout {
         return rowHeight;
     }
 
-    /**
-     * A table cell's {@code colSpan} (number of grid columns it covers). Returns {@code -1} verbatim
-     * for the XFA "span the remainder of the row" sentinel (resolved by the caller against the columns
-     * left); any other value is clamped to at least 1.
-     */
+    /// A table cell's `colSpan` (number of grid columns it covers). Returns `-1` verbatim
+    /// for the XFA "span the remainder of the row" sentinel (resolved by the caller against the columns
+    /// left); any other value is clamped to at least 1.
     private static int colSpan(Element cell) {
         String s = cell.getAttribute("colSpan");
         if (s == null || s.trim().isEmpty()) {
@@ -605,11 +576,9 @@ public final class XfaFlowLayout {
         }
     }
 
-    /**
-     * The effective column widths for a {@code row}/{@code table}: parse this element's own
-     * {@code columnWidths} attribute (space-separated measurements) if present, otherwise the
-     * widths inherited from an enclosing table.
-     */
+    /// The effective column widths for a `row`/`table`: parse this element's own
+    /// `columnWidths` attribute (space-separated measurements) if present, otherwise the
+    /// widths inherited from an enclosing table.
     private static double[] columnWidthsOf(Element el, double[] inherited) {
         String raw = el.getAttribute("columnWidths");
         if (raw == null || raw.trim().isEmpty()) {
@@ -626,10 +595,8 @@ public final class XfaFlowLayout {
 
     /* -------------------------------- region ---------------------------------- */
 
-    /**
-     * The single content region {@code {width,height}} in points: the first
-     * {@code <contentArea>} of the template, else the medium page size as a fallback.
-     */
+    /// The single content region `{width,height}` in points: the first
+    /// `<contentArea>` of the template, else the medium page size as a fallback.
     static double[] contentRegion(Template tpl) {
         if (tpl != null) {
             // Prefer the contentArea of the pageArea the flowed BODY targets: a form may declare a tall
@@ -654,13 +621,11 @@ public final class XfaFlowLayout {
         return XfaMedium.LETTER.clone();
     }
 
-    /**
-     * The contentArea of the pageArea targeted by a flowed body subform — one that carries a
-     * {@code breakBefore}/{@code break} {@code targetType="pageArea"} AND contains a repeating
-     * ({@code <occur max="-1"|&gt;1>}) table/row (the flowing line-item body). Returns {@code null} when
-     * the template has no such targeted body (the common single-region case), so the caller keeps the
-     * first contentArea.
-     */
+    /// The contentArea of the pageArea targeted by a flowed body subform — one that carries a
+    /// `breakBefore`/`break``targetType="pageArea"` AND contains a repeating
+    /// (`<occur max="-1"|&gt;1>`) table/row (the flowing line-item body). Returns `null` when
+    /// the template has no such targeted body (the common single-region case), so the caller keeps the
+    /// first contentArea.
     private static ContentArea bodyContentArea(Element root) {
         String targetId = findBodyBreakTarget(root);
         if (targetId == null) {
@@ -681,7 +646,7 @@ public final class XfaFlowLayout {
         return null;
     }
 
-    /** Finds the pageArea {@code target} of the first flowed subform that both breaks to a pageArea and repeats rows. */
+    /// Finds the pageArea `target` of the first flowed subform that both breaks to a pageArea and repeats rows.
     private static String findBodyBreakTarget(Element el) {
         if ("subform".equals(local(el)) && isFlowed(el) && hasRepeatingTable(el)) {
             String t = breakTargetPageArea(el);
@@ -698,7 +663,7 @@ public final class XfaFlowLayout {
         return null;
     }
 
-    /** The {@code target} of a child {@code <breakBefore>}/{@code <break before>} with {@code targetType="pageArea"}, or null. */
+    /// The `target` of a child `<breakBefore>`/`<break before>` with `targetType="pageArea"`, or null.
     private static String breakTargetPageArea(Element subform) {
         for (Element c = firstEl(subform); c != null; c = nextEl(c)) {
             String ln = local(c);
@@ -713,7 +678,7 @@ public final class XfaFlowLayout {
         return null;
     }
 
-    /** Whether {@code el} contains a descendant container with {@code <occur max="-1">} or {@code max&gt;1} (a repeating body). */
+    /// Whether `el` contains a descendant container with `<occur max="-1">` or `max&gt;1` (a repeating body).
     private static boolean hasRepeatingTable(Element el) {
         for (Element c = firstEl(el); c != null; c = nextEl(c)) {
             if ("occur".equals(local(c))) {
@@ -736,7 +701,7 @@ public final class XfaFlowLayout {
         return false;
     }
 
-    /** Depth-first search for a {@code <pageArea>} whose {@code id} or {@code name} equals {@code key}. */
+    /// Depth-first search for a `<pageArea>` whose `id` or `name` equals `key`.
     private static Element findPageAreaByIdOrName(Element el, String key) {
         for (Element c = firstEl(el); c != null; c = nextEl(c)) {
             if ("pageArea".equals(local(c))
@@ -775,14 +740,12 @@ public final class XfaFlowLayout {
         return layout != null && FLOWED.contains(layout);
     }
 
-    /**
-     * Whether a child occupies space in the print/render layout. Per XFA {@code presence} semantics:
-     * {@code hidden} and {@code inactive} are removed from layout entirely (reserve no space);
-     * {@code invisible} is kept (reserves space, just isn't painted); {@code visible}/absent flows
-     * normally. Content not {@code relevant} to the print context (e.g. {@code relevant="-print"}
-     * interactive-only objects) is likewise excluded — Adobe omits it when printing — so the laid-out
-     * height matches the printed form instead of inflating with hidden/interactive boxes.
-     */
+    /// Whether a child occupies space in the print/render layout. Per XFA `presence` semantics:
+    /// `hidden` and `inactive` are removed from layout entirely (reserve no space);
+    /// `invisible` is kept (reserves space, just isn't painted); `visible`/absent flows
+    /// normally. Content not `relevant` to the print context (e.g. `relevant="-print"`
+    /// interactive-only objects) is likewise excluded — Adobe omits it when printing — so the laid-out
+    /// height matches the printed form instead of inflating with hidden/interactive boxes.
     private static boolean occupiesLayout(Element el) {
         String presence = el.getAttribute("presence");
         if ("hidden".equals(presence) || "inactive".equals(presence)) {
@@ -798,21 +761,19 @@ public final class XfaFlowLayout {
                 && org.aspose.pdf.engine.xfa.flatten.paint.XfaPainter.isInteractiveButton(el);
     }
 
-    /** Convert-only flag: include {@code relevant="-print"} interactive buttons in the layout. */
+    /// Convert-only flag: include `relevant="-print"` interactive buttons in the layout.
     private static final ThreadLocal<Boolean> INCLUDE_INTERACTIVE = ThreadLocal.withInitial(() -> false);
 
-    /**
-     * Enables/disables inclusion of {@code relevant="-print"} interactive buttons in the layout for the
-     * current thread — set by {@link org.aspose.pdf.engine.xfa.flatten.XfaAcroFormConverter} around its
-     * layout pass so the converted AcroForm keeps the +/- controls; off for print/flatten/render.
-     *
-     * @param on whether to include interactive buttons
-     */
+    /// Enables/disables inclusion of `relevant="-print"` interactive buttons in the layout for the
+    /// current thread — set by [org.aspose.pdf.engine.xfa.flatten.XfaAcroFormConverter] around its
+    /// layout pass so the converted AcroForm keeps the +/- controls; off for print/flatten/render.
+    ///
+    /// @param on whether to include interactive buttons
     public static void setIncludeInteractive(boolean on) {
         INCLUDE_INTERACTIVE.set(on);
     }
 
-    /** A positioned object carries its own {@code x} AND {@code y}. */
+    /// A positioned object carries its own `x` AND `y`.
     private static boolean isPositioned(Element el) {
         return !Double.isNaN(measure(el, "x")) && !Double.isNaN(measure(el, "y"));
     }
@@ -860,8 +821,8 @@ public final class XfaFlowLayout {
         return (Element) n;
     }
 
-    /** Whether {@code el} directly nests another grouping container (subform / subformSet / area) —
-     * the marker of a layout group whose minH reserved space for an optional, now-absent occur child. */
+    /// Whether `el` directly nests another grouping container (subform / subformSet / area) —
+    /// the marker of a layout group whose minH reserved space for an optional, now-absent occur child.
     private static boolean hasChildContainer(Element el) {
         for (Element c = firstEl(el); c != null; c = nextEl(c)) {
             String ln = local(c);

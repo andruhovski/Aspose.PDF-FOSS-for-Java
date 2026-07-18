@@ -1,16 +1,14 @@
 package org.aspose.pdf.facades;
 
-/**
- * Enumerates the legacy toolkit key-size options used by {@link PdfFileSecurity}.
- */
+/// Enumerates the legacy toolkit key-size options used by [PdfFileSecurity].
 public enum KeySize {
 
-    /** 40-bit encryption. */
+    /// 40-bit encryption.
     x40,
 
-    /** 128-bit encryption. */
+    /// 128-bit encryption.
     x128,
 
-    /** 256-bit encryption. */
+    /// 256-bit encryption.
     x256
 }

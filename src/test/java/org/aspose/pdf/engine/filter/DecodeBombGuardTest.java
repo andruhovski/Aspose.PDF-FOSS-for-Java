@@ -12,18 +12,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * Guards against decompression bombs in the stream decode filters.
- * <p>
- * A corrupt (or hostile) stream can expand thousands of times its encoded
- * size; without a cap the decode loop grows a {@code ByteArrayOutputStream}
- * until {@link OutOfMemoryError}, which poisons every other thread sharing
- * the heap (observed in mass corpus runs: hundreds of cascading OOMs).
- * {@link DecodeLimits} now bounds a single decoded stream; these tests lower
- * the cap via the {@code aspose.pdf.maxDecodedStreamBytes} system property so
- * the bombs stay test-sized.
- * </p>
- */
+/// Guards against decompression bombs in the stream decode filters.
+///
+/// A corrupt (or hostile) stream can expand thousands of times its encoded
+/// size; without a cap the decode loop grows a `ByteArrayOutputStream`
+/// until [OutOfMemoryError], which poisons every other thread sharing
+/// the heap (observed in mass corpus runs: hundreds of cascading OOMs).
+/// [DecodeLimits] now bounds a single decoded stream; these tests lower
+/// the cap via the `aspose.pdf.maxDecodedStreamBytes` system property so
+/// the bombs stay test-sized.
+///
 public class DecodeBombGuardTest {
 
     private static final long TEST_CAP = 1L << 20; // 1 MB
@@ -50,7 +48,7 @@ public class DecodeBombGuardTest {
         return out.toByteArray();
     }
 
-    /** A 4 MB-of-zeros flate bomb (compresses to ~4 KB) must hit the cap, not OOM. */
+    /// A 4 MB-of-zeros flate bomb (compresses to \~4 KB) must hit the cap, not OOM.
     @Test
     public void flateBombIsRejectedAtCap() {
         setCap(TEST_CAP);
@@ -62,7 +60,7 @@ public class DecodeBombGuardTest {
                 "cap diagnostics expected, got: " + e.getMessage());
     }
 
-    /** Repeat-runs expanding 64:1 past the cap must throw, not OOM. */
+    /// Repeat-runs expanding 64:1 past the cap must throw, not OOM.
     @Test
     public void runLengthBombIsRejectedAtCap() {
         setCap(TEST_CAP);
@@ -78,7 +76,7 @@ public class DecodeBombGuardTest {
                 "cap diagnostics expected, got: " + e.getMessage());
     }
 
-    /** Legitimate data below the cap must round-trip unchanged. */
+    /// Legitimate data below the cap must round-trip unchanged.
     @Test
     public void smallStreamsDecodeNormallyUnderCap() throws Exception {
         setCap(TEST_CAP);
@@ -92,7 +90,7 @@ public class DecodeBombGuardTest {
         // cap shares DecodeLimits.check with the two filters tested above.
     }
 
-    /** The default cap (no property) is 256 MB; the disabled value lifts it. */
+    /// The default cap (no property) is 256 MB; the disabled value lifts it.
     @Test
     public void capDefaultsAndDisable() {
         System.clearProperty(DecodeLimits.PROPERTY);

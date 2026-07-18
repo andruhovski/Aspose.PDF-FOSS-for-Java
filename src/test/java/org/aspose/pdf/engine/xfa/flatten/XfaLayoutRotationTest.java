@@ -13,12 +13,10 @@ import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-/**
- * C1.2 — container rotation. The {@code rotate} attribute (XFA degrees,
- * counterclockwise) rotates a container/field frame about its anchor point; nested
- * rotation composes. Expected rectangles are hand-computed from the rotation of the
- * box corners about the container anchor, then Y-flipped — the B oracle.
- */
+/// C1.2 — container rotation. The `rotate` attribute (XFA degrees,
+/// counterclockwise) rotates a container/field frame about its anchor point; nested
+/// rotation composes. Expected rectangles are hand-computed from the rotation of the
+/// box corners about the container anchor, then Y-flipped — the B oracle.
 public class XfaLayoutRotationTest {
 
     private static final String TPL = XfaNode.TEMPLATE_NS;

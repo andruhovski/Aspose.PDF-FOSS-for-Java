@@ -1,33 +1,24 @@
 package org.aspose.pdf.forms;
 
 import org.aspose.pdf.Color;
-import org.aspose.pdf.engine.pdfobjects.PdfArray;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfFloat;
-import org.aspose.pdf.engine.pdfobjects.PdfInteger;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfString;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.util.logging.Logger;
 
-/**
- * Wrapper around the widget appearance-characteristics dictionary
- * ({@code /MK}, ISO 32000-1:2008 §12.5.6.19).
- *
- * <p>Provides typed access to:</p>
- * <ul>
- *   <li>{@code /BC} — border color ({@link #getBorder()} / {@link #setBorder(Color)})</li>
- *   <li>{@code /BG} — background color ({@link #getBackground()} / {@link #setBackground(Color)})</li>
- *   <li>{@code /R}  — rotation in degrees ({@link #getRotate()} / {@link #setRotate(int)})</li>
- *   <li>{@code /CA} — normal caption</li>
- *   <li>{@code /RC} — rollover caption</li>
- *   <li>{@code /AC} — alternate (down) caption</li>
- * </ul>
- *
- * <p>Mutations write back to the underlying {@code /MK} sub-dictionary of the
- * owning widget; the sub-dictionary is created lazily if absent.</p>
- */
+/// Wrapper around the widget appearance-characteristics dictionary
+/// (`/MK`, ISO 32000-1:2008 §12.5.6.19).
+///
+/// Provides typed access to:
+///
+///   - `/BC` — border color ([#getBorder()] / [#setBorder(Color)])
+///   - `/BG` — background color ([#getBackground()] / [#setBackground(Color)])
+///   - `/R`  — rotation in degrees ([#getRotate()] / [#setRotate(int)])
+///   - `/CA` — normal caption
+///   - `/RC` — rollover caption
+///   - `/AC` — alternate (down) caption
+///
+/// Mutations write back to the underlying `/MK` sub-dictionary of the
+/// owning widget; the sub-dictionary is created lazily if absent.
 public class AppearanceCharacteristics {
 
     private static final Logger LOG = Logger.getLogger(AppearanceCharacteristics.class.getName());
@@ -54,12 +45,10 @@ public class AppearanceCharacteristics {
         writeColor("BC", color);
     }
 
-    /**
-     * Returns the rotation in degrees (0, 90, 180, or 270). Defaults to 0
-     * when {@code /R} is absent or the owning widget has no {@code /MK}.
-     *
-     * @return the rotation, default 0
-     */
+    /// Returns the rotation in degrees (0, 90, 180, or 270). Defaults to 0
+    /// when `/R` is absent or the owning widget has no `/MK`.
+    ///
+    /// @return the rotation, default 0
     public int getRotate() {
         PdfBase mk = owner.get("MK");
         if (!(mk instanceof PdfDictionary)) return 0;
@@ -69,12 +58,10 @@ public class AppearanceCharacteristics {
         return 0;
     }
 
-    /**
-     * Sets the rotation. Should be a multiple of 90 (per spec); a warning is
-     * logged for non-multiples but the value is still written.
-     *
-     * @param rotate rotation in degrees
-     */
+    /// Sets the rotation. Should be a multiple of 90 (per spec); a warning is
+    /// logged for non-multiples but the value is still written.
+    ///
+    /// @param rotate rotation in degrees
     public void setRotate(int rotate) {
         if (rotate % 90 != 0) {
             LOG.warning(() -> "MK /R rotate should be a multiple of 90, got " + rotate);
@@ -82,33 +69,25 @@ public class AppearanceCharacteristics {
         getOrCreateMk().set(PdfName.of("R"), PdfInteger.valueOf(rotate));
     }
 
-    /**
-     * Returns the normal caption (/CA), or {@code null} if not set.
-     */
+    /// Returns the normal caption (/CA), or `null` if not set.
     public String getCaption() { return readString("CA"); }
 
     public void setCaption(String caption) { writeString("CA", caption); }
 
-    /**
-     * Returns the rollover caption (/RC), or {@code null}.
-     */
+    /// Returns the rollover caption (/RC), or `null`.
     public String getRolloverCaption() { return readString("RC"); }
 
     public void setRolloverCaption(String caption) { writeString("RC", caption); }
 
-    /**
-     * Returns the alternate ("down") caption (/AC), or {@code null}.
-     */
+    /// Returns the alternate ("down") caption (/AC), or `null`.
     public String getAlternateCaption() { return readString("AC"); }
 
     public void setAlternateCaption(String caption) { writeString("AC", caption); }
 
-    /**
-     * Returns the underlying {@code /MK} dictionary, creating it on demand.
-     * Useful for callers that need to read or write entries not exposed here.
-     *
-     * @return the /MK dictionary (never null)
-     */
+    /// Returns the underlying `/MK` dictionary, creating it on demand.
+    /// Useful for callers that need to read or write entries not exposed here.
+    ///
+    /// @return the /MK dictionary (never null)
     public PdfDictionary getPdfDictionary() {
         return getOrCreateMk();
     }

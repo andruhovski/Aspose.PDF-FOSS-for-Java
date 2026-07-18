@@ -7,23 +7,19 @@ import org.aspose.pdf.engine.pdfobjects.PdfName;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Set graphics state dictionary operator (gs).
- * <p>
- * Sets the specified parameters in the graphics state from an ExtGState resource
- * dictionary. See ISO 32000-1:2008, §8.4.5, Table 57.
- * </p>
- */
+/// Set graphics state dictionary operator (gs).
+///
+/// Sets the specified parameters in the graphics state from an ExtGState resource
+/// dictionary. See ISO 32000-1:2008, §8.4.5, Table 57.
+///
 public class GS extends Operator {
 
     private final String dictName;
 
-    /**
-     * Creates a GS (gs) operator with the specified ExtGState dictionary name.
-     *
-     * @param dictName the ExtGState resource name (e.g., "GS0")
-     * @throws IllegalArgumentException if dictName is null or empty
-     */
+    /// Creates a GS (gs) operator with the specified ExtGState dictionary name.
+    ///
+    /// @param dictName the ExtGState resource name (e.g., "GS0")
+    /// @throws IllegalArgumentException if dictName is null or empty
     public GS(String dictName) {
         super("gs", Collections.singletonList(PdfName.of(dictName)));
         if (dictName == null || dictName.isEmpty()) {
@@ -32,14 +28,11 @@ public class GS extends Operator {
         this.dictName = dictName;
     }
 
-    /**
-     * Creates a GS (gs) operator from parsed operands.
-     * <p>
-     * Expects one operand: a {@link PdfName} identifying the ExtGState resource.
-     * </p>
-     *
-     * @param operands the operands from the content stream parser
-     */
+    /// Creates a GS (gs) operator from parsed operands.
+    ///
+    /// Expects one operand: a [PdfName] identifying the ExtGState resource.
+    ///
+    /// @param operands the operands from the content stream parser
     public GS(List<PdfBase> operands) {
         super("gs", operands);
         this.dictName = (operands != null && operands.size() > 0 && operands.get(0) instanceof PdfName)
@@ -47,11 +40,9 @@ public class GS extends Operator {
                 : "";
     }
 
-    /**
-     * Returns the ExtGState dictionary resource name.
-     *
-     * @return the dictionary name
-     */
+    /// Returns the ExtGState dictionary resource name.
+    ///
+    /// @return the dictionary name
     public String getDictName() {
         return dictName;
     }

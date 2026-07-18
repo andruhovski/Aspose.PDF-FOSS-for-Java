@@ -1,11 +1,6 @@
 package org.aspose.pdf.engine.font.ttf;
 
-import org.aspose.pdf.engine.pdfobjects.PdfArray;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfInteger;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfStream;
-import org.aspose.pdf.engine.pdfobjects.PdfString;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -13,42 +8,39 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-/**
- * Builds the PDF object graph required to embed a TrueType font as a
- * {@code /Type0} composite font with {@code /Identity-H} encoding
- * (ISO 32000-1:2008, §9.7). The resulting root dictionary is suitable to
- * register under a page's {@code /Resources/Font}; content streams that
- * reference it must emit two-byte glyph IDs (big-endian) inside
- * {@code Tj}/{@code TJ}.
- *
- * <p>Mandatory PDF structure assembled here:</p>
- * <pre>
- *   Type0 root          /Type /Font /Subtype /Type0
- *      └─ /DescendantFonts [ CIDFontType2 ]
- *      └─ /Encoding /Identity-H
- *      └─ /ToUnicode &lt;CMap stream&gt;
- *   CIDFontType2        /Type /Font /Subtype /CIDFontType2
- *      └─ /FontDescriptor
- *      └─ /CIDSystemInfo (Adobe / Identity / 0)
- *      └─ /W [...] (optional, omitted — default width 1000 covers CJK)
- *   FontDescriptor      /Type /FontDescriptor
- *      └─ /FontFile2 &lt;TTF bytes&gt;
- *      └─ /Flags 4 (Symbolic) etc.
- * </pre>
- *
- * <p>For simplicity this MVP embeds the <em>entire</em> TTF without
- * subsetting and skips emitting a {@code /W} width array — viewers fall
- * back to the {@code /DW} default width (1000), which matches the CJK
- * em square the regression-test templates were rendered against. Width
- * accuracy would require glyph-usage tracking; not implemented yet.</p>
- */
+/// Builds the PDF object graph required to embed a TrueType font as a
+/// `/Type0` composite font with `/Identity-H` encoding
+/// (ISO 32000-1:2008, §9.7). The resulting root dictionary is suitable to
+/// register under a page's `/Resources/Font`; content streams that
+/// reference it must emit two-byte glyph IDs (big-endian) inside
+/// `Tj`/`TJ`.
+///
+/// Mandatory PDF structure assembled here:
+///
+/// <pre>
+///   Type0 root          /Type /Font /Subtype /Type0
+///      └─ /DescendantFonts [ CIDFontType2 ]
+///      └─ /Encoding /Identity-H
+///      └─ /ToUnicode &lt;CMap stream&gt;
+///   CIDFontType2        /Type /Font /Subtype /CIDFontType2
+///      └─ /FontDescriptor
+///      └─ /CIDSystemInfo (Adobe / Identity / 0)
+///      └─ /W [...] (optional, omitted — default width 1000 covers CJK)
+///   FontDescriptor      /Type /FontDescriptor
+///      └─ /FontFile2 &lt;TTF bytes&gt;
+///      └─ /Flags 4 (Symbolic) etc.
+/// </pre>
+///
+/// For simplicity this MVP embeds the _entire_ TTF without
+/// subsetting and skips emitting a `/W` width array — viewers fall
+/// back to the `/DW` default width (1000), which matches the CJK
+/// em square the regression-test templates were rendered against. Width
+/// accuracy would require glyph-usage tracking; not implemented yet.
 public final class Type0FontBuilder {
 
-    /**
-     * Result tuple from {@link #build}: the {@code /Type0} font dict to
-     * register under /Resources/Font, plus the {@link TrueTypeReader} the
-     * caller will need to map Unicode → glyph IDs when encoding text.
-     */
+    /// Result tuple from [#build]: the `/Type0` font dict to
+    /// register under /Resources/Font, plus the [TrueTypeReader] the
+    /// caller will need to map Unicode → glyph IDs when encoding text.
     public static final class Result {
         public final PdfDictionary type0Font;
         public final TrueTypeReader reader;
@@ -60,18 +52,16 @@ public final class Type0FontBuilder {
 
     private Type0FontBuilder() {}
 
-    /**
-     * Builds a Type0 graph for a <b>Latin / proportional</b> font: identical to {@link #build} but
-     * additionally emits a real {@code /W} width array derived from the font's {@code hmtx} table and
-     * marks the descriptor {@code /Nonsymbolic}. The base {@link #build} relies on {@code /DW 1000},
-     * which is correct for CJK full-width glyphs but spaces proportional Latin text at one em per
-     * glyph; for XFA paint fidelity (Arial/Times/…) the per-glyph advance MUST come from the font.
-     *
-     * @param baseFontName the {@code /BaseFont} value (PDF-friendly form)
-     * @param ttfBytes     standalone TrueType bytes
-     * @return the assembled Type0 dict (with {@code /W}) + parsed reader
-     * @throws java.io.IOException if the TrueType bytes are malformed
-     */
+    /// Builds a Type0 graph for a **Latin / proportional** font: identical to [#build] but
+    /// additionally emits a real `/W` width array derived from the font's `hmtx` table and
+    /// marks the descriptor `/Nonsymbolic`. The base [#build] relies on `/DW 1000`,
+    /// which is correct for CJK full-width glyphs but spaces proportional Latin text at one em per
+    /// glyph; for XFA paint fidelity (Arial/Times/…) the per-glyph advance MUST come from the font.
+    ///
+    /// @param baseFontName the `/BaseFont` value (PDF-friendly form)
+    /// @param ttfBytes     standalone TrueType bytes
+    /// @return the assembled Type0 dict (with `/W`) + parsed reader
+    /// @throws java.io.IOException if the TrueType bytes are malformed
     public static Result buildLatin(String baseFontName, byte[] ttfBytes) throws java.io.IOException {
         Result base = build(baseFontName, ttfBytes);
         PdfArray descendants = base.type0Font.getArray("DescendantFonts");
@@ -89,10 +79,8 @@ public final class Type0FontBuilder {
         return base;
     }
 
-    /**
-     * Builds the {@code /W} width array {@code [0 [w0 w1 … w(n-1)]]} (CID == GID under Identity-H)
-     * with each advance scaled from font units to the PDF 1000-unit text space.
-     */
+    /// Builds the `/W` width array `[0 [w0 w1 … w(n-1)]]` (CID == GID under Identity-H)
+    /// with each advance scaled from font units to the PDF 1000-unit text space.
     private static PdfArray widthArray(TrueTypeReader reader) {
         int upm = reader.getUnitsPerEm();
         if (upm <= 0) {
@@ -110,17 +98,15 @@ public final class Type0FontBuilder {
         return w;
     }
 
-    /**
-     * Builds the Type0 font object graph for the supplied TrueType bytes.
-     *
-     * @param baseFontName the {@code /BaseFont} value to use on the Type0
-     *                     root and the CIDFontType2 descendant; pass the
-     *                     PDF-friendly form (no spaces).
-     * @param ttfBytes     standalone TrueType bytes (TTC must already be
-     *                     unpacked via {@link FontDiskLookup}).
-     * @return the assembled Type0 dict + parsed reader for encoding-side use
-     * @throws java.io.IOException if the TrueType bytes are malformed
-     */
+    /// Builds the Type0 font object graph for the supplied TrueType bytes.
+    ///
+    /// @param baseFontName the `/BaseFont` value to use on the Type0
+    ///                     root and the CIDFontType2 descendant; pass the
+    ///                     PDF-friendly form (no spaces).
+    /// @param ttfBytes     standalone TrueType bytes (TTC must already be
+    ///                     unpacked via [FontDiskLookup]).
+    /// @return the assembled Type0 dict + parsed reader for encoding-side use
+    /// @throws java.io.IOException if the TrueType bytes are malformed
     public static Result build(String baseFontName, byte[] ttfBytes) throws java.io.IOException {
         TrueTypeReader reader = new TrueTypeReader(ttfBytes);
         String pdfName = pdfSafeName(baseFontName);
@@ -181,12 +167,10 @@ public final class Type0FontBuilder {
         return new Result(type0, reader);
     }
 
-    /**
-     * Generates a {@code /ToUnicode} CMap stream that maps every glyph ID in
-     * the font's cmap back to a single Unicode codepoint. Lets PDF readers
-     * extract text and copy-paste it correctly even though the content
-     * stream carries raw glyph IDs (Identity-H).
-     */
+    /// Generates a `/ToUnicode` CMap stream that maps every glyph ID in
+    /// the font's cmap back to a single Unicode codepoint. Lets PDF readers
+    /// extract text and copy-paste it correctly even though the content
+    /// stream carries raw glyph IDs (Identity-H).
     private static PdfStream buildToUnicodeCMap(TrueTypeReader reader, String pdfName) {
         // Invert the cmap: glyph_id → first Unicode that maps to it.
         Map<Integer, Integer> entries = reader.getCmapEntries();
@@ -245,11 +229,9 @@ public final class Type0FontBuilder {
         return String.format("%04X", v & 0xFFFF);
     }
 
-    /**
-     * Emits {@code codePoint} as its UTF-16 hex representation: 4 hex digits
-     * for BMP, 8 hex digits (surrogate pair) for supplementary planes — the
-     * Adobe ToUnicode CMap value format (§3.9.4 of the CMap spec).
-     */
+    /// Emits `codePoint` as its UTF-16 hex representation: 4 hex digits
+    /// for BMP, 8 hex digits (surrogate pair) for supplementary planes — the
+    /// Adobe ToUnicode CMap value format (§3.9.4 of the CMap spec).
     private static String hexUtf16(int codePoint) {
         if (codePoint <= 0xFFFF) {
             return String.format("%04X", codePoint);
@@ -260,13 +242,11 @@ public final class Type0FontBuilder {
         return String.format("%04X%04X", high, low);
     }
 
-    /**
-     * Replaces characters that PDF doesn't allow inside a /Name with the
-     * placeholder {@code _}. Spaces in particular have to go (e.g.
-     * {@code "Arial Unicode MS"} → {@code "Arial_Unicode_MS"}). The result
-     * is opaque to viewers — what matters is that the same name is used
-     * consistently on the Type0 root and descendant.
-     */
+    /// Replaces characters that PDF doesn't allow inside a /Name with the
+    /// placeholder `_`. Spaces in particular have to go (e.g.
+    /// `"Arial Unicode MS"` → `"Arial_Unicode_MS"`). The result
+    /// is opaque to viewers — what matters is that the same name is used
+    /// consistently on the Type0 root and descendant.
     private static String pdfSafeName(String name) {
         if (name == null || name.isEmpty()) return "Font";
         StringBuilder sb = new StringBuilder(name.length());

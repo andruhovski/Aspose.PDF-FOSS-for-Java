@@ -3,9 +3,7 @@ package org.aspose.pdf;
 import org.aspose.pdf.engine.pdfobjects.PdfArray;
 import org.aspose.pdf.engine.pdfobjects.PdfName;
 
-/**
- * FitR explicit destination — fit specified rectangle within window.
- */
+/// FitR explicit destination — fit specified rectangle within window.
 public class FitRExplicitDestination extends ExplicitDestination {
 
     private final double left, bottom, right, top;

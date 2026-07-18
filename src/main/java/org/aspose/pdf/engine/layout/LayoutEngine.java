@@ -1,27 +1,6 @@
 package org.aspose.pdf.engine.layout;
 
-import org.aspose.pdf.BaseParagraph;
-import org.aspose.pdf.BorderInfo;
-import org.aspose.pdf.Cell;
-import org.aspose.pdf.Color;
-import org.aspose.pdf.FloatingBox;
-import org.aspose.pdf.HeaderFooter;
-import org.aspose.pdf.Heading;
-import org.aspose.pdf.HorizontalAlignment;
-import org.aspose.pdf.HtmlFragment;
-import org.aspose.pdf.Image;
-import org.aspose.pdf.ImageStamp;
-import org.aspose.pdf.MarginInfo;
-import org.aspose.pdf.Note;
-import org.aspose.pdf.Page;
-import org.aspose.pdf.PageInfo;
-import org.aspose.pdf.PageNumberStamp;
-import org.aspose.pdf.Paragraphs;
-import org.aspose.pdf.Rectangle;
-import org.aspose.pdf.Row;
-import org.aspose.pdf.Table;
-import org.aspose.pdf.TextStamp;
-import org.aspose.pdf.TocInfo;
+import org.aspose.pdf.*;
 import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
 import org.aspose.pdf.engine.pdfobjects.PdfName;
 import org.aspose.pdf.engine.pdfobjects.PdfStream;
@@ -33,28 +12,24 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
-/**
- * The main layout engine that converts high-level paragraph objects into PDF content
- * stream bytes during {@code Document.save()}.
- * <p>
- * For each page that has paragraphs, the engine:
- * <ol>
- *   <li>Determines page dimensions and margins</li>
- *   <li>Creates a {@link LayoutContext} to track cursor position</li>
- *   <li>Creates a {@link ContentStreamBuilder} and {@link ResourceBuilder}</li>
- *   <li>Lays out header paragraphs (if present)</li>
- *   <li>Lays out each paragraph (TextFragment, Table, FloatingBox, HtmlFragment, Image)</li>
- *   <li>Lays out footer paragraphs at the bottom (if present)</li>
- *   <li>Applies stamp overlays (TextStamp, ImageStamp, PageNumberStamp)</li>
- *   <li>Sets the resulting content stream and resources on the page dictionary</li>
- * </ol>
- * </p>
- * <p>
- * Text positioning uses PDF coordinates where the origin is at the bottom-left
- * and Y increases upward. Layout flows top-to-bottom: the cursor starts at
- * {@code pageHeight - marginTop} and decreases as content is placed.
- * </p>
- */
+/// The main layout engine that converts high-level paragraph objects into PDF content
+/// stream bytes during `Document.save()`.
+///
+/// For each page that has paragraphs, the engine:
+///
+///   1. Determines page dimensions and margins
+///   2. Creates a [LayoutContext] to track cursor position
+///   3. Creates a [ContentStreamBuilder] and [ResourceBuilder]
+///   4. Lays out header paragraphs (if present)
+///   5. Lays out each paragraph (TextFragment, Table, FloatingBox, HtmlFragment, Image)
+///   6. Lays out footer paragraphs at the bottom (if present)
+///   7. Applies stamp overlays (TextStamp, ImageStamp, PageNumberStamp)
+///   8. Sets the resulting content stream and resources on the page dictionary
+///
+/// Text positioning uses PDF coordinates where the origin is at the bottom-left
+/// and Y increases upward. Layout flows top-to-bottom: the cursor starts at
+/// `pageHeight - marginTop` and decreases as content is placed.
+///
 public class LayoutEngine {
 
     private static final Logger LOG = Logger.getLogger(LayoutEngine.class.getName());
@@ -69,88 +44,78 @@ public class LayoutEngine {
     private static final java.util.regex.Pattern ANY_TAG =
             java.util.regex.Pattern.compile("<[^>]+>");
 
-    /** Default font when none is specified in the TextState. */
+    /// Default font when none is specified in the TextState.
     private static final String DEFAULT_FONT = "Helvetica";
 
-    /** Default font size when none is specified (or zero). */
+    /// Default font size when none is specified (or zero).
     private static final double DEFAULT_FONT_SIZE = 12.0;
 
-    /** Default cell padding when none is specified. */
+    /// Default cell padding when none is specified.
     private static final double DEFAULT_CELL_PADDING = 2.0;
 
-    /** Fallback per-column width used when a table has no explicit ColumnWidths
-     *  and the available content width could not be determined. */
+    /// Fallback per-column width used when a table has no explicit ColumnWidths
+    ///  and the available content width could not be determined.
     private static final double DEFAULT_AUTO_COLUMN_WIDTH = 100.0;
 
-    /** Current page number (1-based) for $p substitution. */
+    /// Current page number (1-based) for $p substitution.
     private int currentPageNumber = 1;
 
-    /** Total page count for $P substitution. */
+    /// Total page count for $P substitution.
     private int totalPageCount = 1;
 
-    /** Auto-numbering counter for footnotes; resets per document save. */
+    /// Auto-numbering counter for footnotes; resets per document save.
     private int nextFootnoteNumber = 1;
 
-    /** Auto-numbering counter for endnotes; resets per document save. */
+    /// Auto-numbering counter for endnotes; resets per document save.
     private int nextEndnoteNumber = 1;
 
-    /** Maximum heading depth that the auto-numbering counter tracks. */
+    /// Maximum heading depth that the auto-numbering counter tracks.
     private static final int MAX_HEADING_LEVELS = 9;
 
-    /**
-     * Carried between paragraphs: baseline Y of the last rendered text line,
-     * X of its right edge, and the line height used. Consumed by the next
-     * paragraph if it has {@link BaseParagraph#isInLineParagraph()} set so
-     * the new content continues on the same baseline. Reset whenever a
-     * non-inline paragraph rebuilds the state, and on page boundaries.
-     */
+    /// Carried between paragraphs: baseline Y of the last rendered text line,
+    /// X of its right edge, and the line height used. Consumed by the next
+    /// paragraph if it has [BaseParagraph#isInLineParagraph()] set so
+    /// the new content continues on the same baseline. Reset whenever a
+    /// non-inline paragraph rebuilds the state, and on page boundaries.
     private double lastLineBaselineY = Double.NaN;
     private double lastLineRightX = Double.NaN;
     private double lastLineHeight = Double.NaN;
 
-    /**
-     * When non-NaN, the next text fragment's FIRST line is rendered at this
-     * X (instead of the content-left margin). Set by {@link #layoutParagraph}
-     * before dispatching an inline paragraph; cleared by
-     * {@link #layoutTextFragment} after it consumes it for the first line.
-     */
+    /// When non-NaN, the next text fragment's FIRST line is rendered at this
+    /// X (instead of the content-left margin). Set by [#layoutParagraph]
+    /// before dispatching an inline paragraph; cleared by
+    /// [#layoutTextFragment] after it consumes it for the first line.
     private double inlineFirstLineX = Double.NaN;
 
-    /**
-     * Hierarchical heading counters per level (1-based level → 0-based index).
-     * On encountering a {@code Heading} with {@code isAutoSequence} true at
-     * level {@code L}, the counter at {@code L-1} is incremented and all
-     * deeper levels are reset, then the marker is built from the non-zero
-     * counters 1..L joined with '.'.
-     */
+    /// Hierarchical heading counters per level (1-based level → 0-based index).
+    /// On encountering a `Heading` with `isAutoSequence` true at
+    /// level `L`, the counter at `L-1` is incremented and all
+    /// deeper levels are reset, then the marker is built from the non-zero
+    /// counters 1..L joined with '.'.
     private final int[] headingCounters = new int[MAX_HEADING_LEVELS];
 
-    /**
-     * Notes pending render at the bottom of the current page. Each entry
-     * holds the resolved marker text and the body text (already joined).
-     * Cleared after every page's footnote block is rendered.
-     */
+    /// Notes pending render at the bottom of the current page. Each entry
+    /// holds the resolved marker text and the body text (already joined).
+    /// Cleared after every page's footnote block is rendered.
     private final List<PendingNote> pendingFootnotes = new ArrayList<>();
 
-    /**
-     * Notes pending render at the end of the document. Accumulated across
-     * pages and flushed on the last page only.
-     */
+    /// Notes pending render at the end of the document. Accumulated across
+    /// pages and flushed on the last page only.
     private final List<PendingNote> pendingEndnotes = new ArrayList<>();
 
-    /** Footnote/endnote line height factor — smaller than body text. */
+    /// Footnote/endnote line height factor — smaller than body text.
     private static final double NOTE_FONT_RATIO = 0.75;
 
-    /** Superscript marker font ratio relative to the body fragment. */
+    /// Superscript marker font ratio relative to the body fragment.
     private static final double SUPERSCRIPT_FONT_RATIO = 0.65;
 
-    /** Vertical raise of the superscript marker above the baseline. */
+    /// Vertical raise of the superscript marker above the baseline.
     private static final double SUPERSCRIPT_RAISE_RATIO = 0.33;
 
-    /** Width of the horizontal separator above a footnote/endnote block (pt). */
+    /// Width of the horizontal separator above a footnote/endnote block (pt).
     private static final double NOTE_SEPARATOR_WIDTH = 70.0;
 
-    /** Held data for a queued footnote or endnote awaiting render. */
+    /// Held data for a queued footnote or endnote awaiting render.
     private static final class PendingNote {
         final String marker;
         final String body;
@@ -160,34 +125,27 @@ public class LayoutEngine {
         }
     }
 
-    /**
-     * Creates a new LayoutEngine.
-     */
+    /// Creates a new LayoutEngine.
     public LayoutEngine() {
         LOG.fine("LayoutEngine created");
     }
 
-    /**
-     * Sets the page numbering context for $p / $P variable substitution.
-     *
-     * @param pageNumber 1-based current page number
-     * @param totalPages total number of pages in the document
-     */
+    /// Sets the page numbering context for $p / $P variable substitution.
+    ///
+    /// @param pageNumber 1-based current page number
+    /// @param totalPages total number of pages in the document
     public void setPageNumbering(int pageNumber, int totalPages) {
         this.currentPageNumber = pageNumber;
         this.totalPageCount = totalPages;
     }
 
-    /**
-     * Performs layout on a page, converting its paragraphs into a PDF content stream.
-     * <p>
-     * After this method completes, the page's PDF dictionary will have its /Contents
-     * entry set to a new PdfStream containing the rendered content, and its /Resources
-     * entry set to the built resources dictionary.
-     * </p>
-     *
-     * @param page the page to lay out
-     */
+    /// Performs layout on a page, converting its paragraphs into a PDF content stream.
+    ///
+    /// After this method completes, the page's PDF dictionary will have its /Contents
+    /// entry set to a new PdfStream containing the rendered content, and its /Resources
+    /// entry set to the built resources dictionary.
+    ///
+    /// @param page the page to lay out
     public void layout(Page page) {
         if (page == null) {
             throw new IllegalArgumentException("Page must not be null");
@@ -309,16 +267,14 @@ public class LayoutEngine {
         LOG.fine(() -> "Layout complete: " + contentBytes.length + " bytes of content stream");
     }
 
-    /**
-     * The rendered header/footer of a page, ready to be wrapped as a Form
-     * XObject overlay. Used for documents loaded from disk, where the full
-     * layout pass ({@link #layout(Page)}) does not run and would otherwise
-     * overwrite the page's existing content.
-     */
+    /// The rendered header/footer of a page, ready to be wrapped as a Form
+    /// XObject overlay. Used for documents loaded from disk, where the full
+    /// layout pass ([#layout(Page)]) does not run and would otherwise
+    /// overwrite the page's existing content.
     public static final class HeaderFooterOverlay {
-        /** Content-stream bytes drawing the header/footer in page user space. */
+        /// Content-stream bytes drawing the header/footer in page user space.
         public final byte[] content;
-        /** The {@code /Resources} dictionary (fonts, image XObjects) referenced by {@link #content}. */
+        /// The `/Resources` dictionary (fonts, image XObjects) referenced by [#content].
         public final PdfDictionary resources;
 
         HeaderFooterOverlay(byte[] content, PdfDictionary resources) {
@@ -327,23 +283,20 @@ public class LayoutEngine {
         }
     }
 
-    /**
-     * Lays out only this page's header and footer paragraphs (set via
-     * {@link Page#setHeader}/{@link Page#setFooter}) into a standalone content
-     * stream, WITHOUT touching the page's existing {@code /Contents} or
-     * {@code /Resources}. Callers wrap the result as a Form XObject overlay.
-     * <p>
-     * This is the loaded-document counterpart to {@link #layout(Page)}: that
-     * method rebuilds the whole page from paragraphs (replacing content), which
-     * is correct only for newly authored pages. PDFNET-38279: footers applied
-     * to the pages of an existing PDF must be appended, not replace the original
-     * content.
-     * </p>
-     *
-     * @param page the page whose header/footer to render
-     * @return the overlay content + resources, or {@code null} if the page has
-     *         neither a header nor a footer with paragraphs
-     */
+    /// Lays out only this page's header and footer paragraphs (set via
+    /// [Page#setHeader]/[Page#setFooter]) into a standalone content
+    /// stream, WITHOUT touching the page's existing `/Contents` or
+    /// `/Resources`. Callers wrap the result as a Form XObject overlay.
+    ///
+    /// This is the loaded-document counterpart to [#layout(Page)]: that
+    /// method rebuilds the whole page from paragraphs (replacing content), which
+    /// is correct only for newly authored pages. PDFNET-38279: footers applied
+    /// to the pages of an existing PDF must be appended, not replace the original
+    /// content.
+    ///
+    /// @param page the page whose header/footer to render
+    /// @return the overlay content + resources, or `null` if the page has
+    ///         neither a header nor a footer with paragraphs
     public HeaderFooterOverlay buildHeaderFooterOverlay(Page page) {
         if (page == null) {
             throw new IllegalArgumentException("Page must not be null");
@@ -424,15 +377,13 @@ public class LayoutEngine {
         return new HeaderFooterOverlay(builder.toByteArray(), resources.buildResourcesDictionary());
     }
 
-    /**
-     * Dispatches a paragraph to the appropriate type-specific renderer.
-     *
-     * @param para      the paragraph to lay out
-     * @param builder   the content stream builder
-     * @param resources the resource builder
-     * @param ctx       the layout context
-     * @return the height consumed by the paragraph
-     */
+    /// Dispatches a paragraph to the appropriate type-specific renderer.
+    ///
+    /// @param para      the paragraph to lay out
+    /// @param builder   the content stream builder
+    /// @param resources the resource builder
+    /// @param ctx       the layout context
+    /// @return the height consumed by the paragraph
     public double layoutParagraph(BaseParagraph para, ContentStreamBuilder builder,
                                    ResourceBuilder resources, LayoutContext ctx) {
         if (para == null) {
@@ -486,15 +437,13 @@ public class LayoutEngine {
         return height;
     }
 
-    /**
-     * Lays out a TextFragment with word wrapping, font selection, and color.
-     *
-     * @param tf        the text fragment
-     * @param builder   the content stream builder
-     * @param resources the resource builder
-     * @param ctx       the layout context
-     * @return the total height consumed
-     */
+    /// Lays out a TextFragment with word wrapping, font selection, and color.
+    ///
+    /// @param tf        the text fragment
+    /// @param builder   the content stream builder
+    /// @param resources the resource builder
+    /// @param ctx       the layout context
+    /// @return the total height consumed
     public double layoutTextFragment(TextFragment tf, ContentStreamBuilder builder,
                                       ResourceBuilder resources, LayoutContext ctx) {
         String text = tf.getText();
@@ -674,15 +623,13 @@ public class LayoutEngine {
         return totalHeight;
     }
 
-    /**
-     * Returns {@code true} when the fragment has at least two non-empty
-     * segments whose styles differ in font style or foreground color. Such
-     * fragments must be rendered run-by-run (see {@link #layoutRichSegments});
-     * uniform or single-segment fragments render via the normal concatenated
-     * path. The font name is deliberately NOT part of the test: many
-     * fragments carry font/size only on the first segment as a placeholder,
-     * and treating that as "heterogeneous" would needlessly divert them.
-     */
+    /// Returns `true` when the fragment has at least two non-empty
+    /// segments whose styles differ in font style or foreground color. Such
+    /// fragments must be rendered run-by-run (see [#layoutRichSegments]);
+    /// uniform or single-segment fragments render via the normal concatenated
+    /// path. The font name is deliberately NOT part of the test: many
+    /// fragments carry font/size only on the first segment as a placeholder,
+    /// and treating that as "heterogeneous" would needlessly divert them.
     private boolean hasHeterogeneousSegments(TextFragment tf) {
         if (tf.getSegments() == null || tf.getSegments().size() < 2) {
             return false;
@@ -709,14 +656,12 @@ public class LayoutEngine {
         return false;
     }
 
-    /**
-     * Renders a fragment whose segments carry heterogeneous styles as a
-     * sequence of styled runs sharing one baseline. Each segment emits its
-     * own fill color and font (including a synthesized bold/italic standard-14
-     * variant via {@link #applyFontStyle}), so per-segment styling survives a
-     * save→reload round trip. No intra-fragment word wrapping is performed —
-     * styled rich runs are assumed short, matching the Aspose generator.
-     */
+    /// Renders a fragment whose segments carry heterogeneous styles as a
+    /// sequence of styled runs sharing one baseline. Each segment emits its
+    /// own fill color and font (including a synthesized bold/italic standard-14
+    /// variant via [#applyFontStyle]), so per-segment styling survives a
+    /// save→reload round trip. No intra-fragment word wrapping is performed —
+    /// styled rich runs are assumed short, matching the Aspose generator.
     private double layoutRichSegments(TextFragment tf, ContentStreamBuilder builder,
                                       ResourceBuilder resources, LayoutContext ctx) {
         // Each segment is rendered with its OWN TextState. We deliberately do
@@ -788,13 +733,11 @@ public class LayoutEngine {
         return lineHeight;
     }
 
-    /**
-     * Maps a base font name + {@link org.aspose.pdf.text.FontStyles} bitmask
-     * to a styled BaseFont name. Standard-14 families map to their canonical
-     * variant ("Helvetica" + Bold → "Helvetica-Bold"); other families get a
-     * "<name>,Bold" suffix so the weight is still encoded in the name and
-     * recoverable on reload even when the exact face is substituted.
-     */
+    /// Maps a base font name + [org.aspose.pdf.text.FontStyles] bitmask
+    /// to a styled BaseFont name. Standard-14 families map to their canonical
+    /// variant ("Helvetica" + Bold → "Helvetica-Bold"); other families get a
+    /// "<name>,Bold" suffix so the weight is still encoded in the name and
+    /// recoverable on reload even when the exact face is substituted.</name>
     private String applyFontStyle(String base, int style) {
         boolean bold = (style & org.aspose.pdf.text.FontStyles.Bold) != 0;
         boolean italic = (style & org.aspose.pdf.text.FontStyles.Italic) != 0;
@@ -813,7 +756,7 @@ public class LayoutEngine {
         return base + "," + suffix;
     }
 
-    /** Canonical standard-14 family for a (lower-cased) base name, or null. */
+    /// Canonical standard-14 family for a (lower-cased) base name, or null.
     private String standard14Family(String lowerName) {
         if (lowerName.startsWith("helvetica") || lowerName.startsWith("arial")) return "Helvetica";
         if (lowerName.startsWith("times")) return "Times";
@@ -821,7 +764,7 @@ public class LayoutEngine {
         return null;
     }
 
-    /** Standard-14 styled variant name for a family + bold/italic flags. */
+    /// Standard-14 styled variant name for a family + bold/italic flags.
     private String styledStandard14(String family, boolean bold, boolean italic) {
         switch (family) {
             case "Helvetica":
@@ -841,11 +784,9 @@ public class LayoutEngine {
         }
     }
 
-    /**
-     * Returns the marker to print for a note. A user-supplied override
-     * ({@link Note#setText} with non-empty value) wins; otherwise the next
-     * auto-number from the appropriate counter is used.
-     */
+    /// Returns the marker to print for a note. A user-supplied override
+    /// ([Note#setText] with non-empty value) wins; otherwise the next
+    /// auto-number from the appropriate counter is used.
     private String resolveNoteMarker(Note note, boolean isEndnote) {
         String override = note.getText();
         if (override != null && !override.isEmpty()) {
@@ -854,12 +795,10 @@ public class LayoutEngine {
         return String.valueOf(isEndnote ? nextEndnoteNumber++ : nextFootnoteNumber++);
     }
 
-    /**
-     * Flattens a note's body paragraphs into a single string. Only
-     * {@link TextFragment} paragraphs are supported — richer paragraphs
-     * (tables, floating boxes inside a note body) would need separate
-     * handling but the tests in scope don't exercise that.
-     */
+    /// Flattens a note's body paragraphs into a single string. Only
+    /// [TextFragment] paragraphs are supported — richer paragraphs
+    /// (tables, floating boxes inside a note body) would need separate
+    /// handling but the tests in scope don't exercise that.
     private String extractNoteBody(Note note) {
         StringBuilder sb = new StringBuilder();
         if (note == null) return "";
@@ -874,11 +813,9 @@ public class LayoutEngine {
         return sb.toString();
     }
 
-    /**
-     * Draws {@code marker} as superscript: smaller font, baseline raised by
-     * a fraction of the body font size. Position is the end of the last
-     * line + a small gap so the marker does not collide with the body text.
-     */
+    /// Draws `marker` as superscript: smaller font, baseline raised by
+    /// a fraction of the body font size. Position is the end of the last
+    /// line + a small gap so the marker does not collide with the body text.
     private void drawSuperscriptMarker(ContentStreamBuilder builder,
                                        String fontResource,
                                        double bodyFontSize,
@@ -898,12 +835,10 @@ public class LayoutEngine {
         builder.endText();
     }
 
-    /**
-     * Renders the per-page footnote block: a thin horizontal separator
-     * followed by each queued footnote as "marker body" on its own (possibly
-     * wrapped) line, anchored at the bottom of the content area. Clears
-     * {@link #pendingFootnotes} afterwards.
-     */
+    /// Renders the per-page footnote block: a thin horizontal separator
+    /// followed by each queued footnote as "marker body" on its own (possibly
+    /// wrapped) line, anchored at the bottom of the content area. Clears
+    /// [#pendingFootnotes] afterwards.
     private void layoutFootnoteBlockIfAny(ContentStreamBuilder builder,
                                           ResourceBuilder resources,
                                           LayoutContext ctx) {
@@ -912,10 +847,8 @@ public class LayoutEngine {
         pendingFootnotes.clear();
     }
 
-    /**
-     * Renders the document-level endnote block on the last page. Drains
-     * {@link #pendingEndnotes}.
-     */
+    /// Renders the document-level endnote block on the last page. Drains
+    /// [#pendingEndnotes].
     private void layoutEndnoteBlockIfLastPage(ContentStreamBuilder builder,
                                               ResourceBuilder resources,
                                               LayoutContext ctx) {
@@ -925,13 +858,11 @@ public class LayoutEngine {
         pendingEndnotes.clear();
     }
 
-    /**
-     * Shared note-block renderer. Anchors the block at the bottom of the
-     * content area: short separator above, then each pending note as a
-     * superscript marker followed by the body text on its own (possibly
-     * wrapped) line. Notes that overflow the available bottom space are
-     * silently dropped.
-     */
+    /// Shared note-block renderer. Anchors the block at the bottom of the
+    /// content area: short separator above, then each pending note as a
+    /// superscript marker followed by the body text on its own (possibly
+    /// wrapped) line. Notes that overflow the available bottom space are
+    /// silently dropped.
     private void drawNoteBlock(List<PendingNote> notes,
                                ContentStreamBuilder builder,
                                ResourceBuilder resources,
@@ -1015,7 +946,7 @@ public class LayoutEngine {
         }
     }
 
-    /** One rendered line of the footnote/endnote block. */
+    /// One rendered line of the footnote/endnote block.
     private static final class RenderedNoteLine {
         final String marker;   // empty for continuation lines
         final String body;
@@ -1027,32 +958,26 @@ public class LayoutEngine {
         }
     }
 
-    /**
-     * Resets per-document note counters and queues. Called from
-     * {@link org.aspose.pdf.Document#save} before laying out the first
-     * page so consecutive saves of the same Document start from {@code 1}.
-     */
-    /**
-     * Picks the right font resource for the current text run. When the
-     * caller's {@link TextState} carries an embedded {@link org.aspose.pdf.text.Font}
-     * with raw TTF bytes, the resource is registered as a Type0 composite
-     * font and the {@link ContentStreamBuilder} is told to encode subsequent
-     * {@code showText} calls as 2-byte CIDs. Otherwise registration falls
-     * back to the standard Type1/WinAnsi path keyed on font name.
-     */
+    /// Resets per-document note counters and queues. Called from
+    /// [org.aspose.pdf.Document#save] before laying out the first
+    /// page so consecutive saves of the same Document start from `1`.
+    /// Picks the right font resource for the current text run. When the
+    /// caller's [TextState] carries an embedded [org.aspose.pdf.text.Font]
+    /// with raw TTF bytes, the resource is registered as a Type0 composite
+    /// font and the [ContentStreamBuilder] is told to encode subsequent
+    /// `showText` calls as 2-byte CIDs. Otherwise registration falls
+    /// back to the standard Type1/WinAnsi path keyed on font name.
     private String registerFontResource(TextState ts, String fontName,
                                         ResourceBuilder resources,
                                         ContentStreamBuilder builder) {
         return registerFontResource(ts, fontName, resources, builder, null);
     }
 
-    /**
-     * Variant of {@link #registerFontResource(TextState, String, ResourceBuilder, ContentStreamBuilder)}
-     * that takes an explicit {@code fontOverride}, used by per-fragment
-     * font substitution (e.g. SimSun → SimSun-ExtB). When non-null the
-     * override is registered as the embedded font; otherwise the resolver
-     * falls back to {@code ts.getFont()} exactly as before.
-     */
+    /// Variant of [#registerFontResource(TextState, String, ResourceBuilder, ContentStreamBuilder)]
+    /// that takes an explicit `fontOverride`, used by per-fragment
+    /// font substitution (e.g. SimSun → SimSun-ExtB). When non-null the
+    /// override is registered as the embedded font; otherwise the resolver
+    /// falls back to `ts.getFont()` exactly as before.
     private String registerFontResource(TextState ts, String fontName,
                                         ResourceBuilder resources,
                                         ContentStreamBuilder builder,
@@ -1074,13 +999,11 @@ public class LayoutEngine {
         return fontResource;
     }
 
-    /**
-     * SimSun-ExtB substitution. When the fragment's text contains
-     * supplementary-plane characters (≥ U+10000) and the embedded font is
-     * SimSun, return a fresh {@code SimSun-ExtB} Font wrapping the bytes of
-     * {@code simsunb.ttf}; otherwise return {@code null} (meaning: keep the
-     * caller's Font as-is). The original {@link TextState} is never mutated.
-     */
+    /// SimSun-ExtB substitution. When the fragment's text contains
+    /// supplementary-plane characters (≥ U+10000) and the embedded font is
+    /// SimSun, return a fresh `SimSun-ExtB` Font wrapping the bytes of
+    /// `simsunb.ttf`; otherwise return `null` (meaning: keep the
+    /// caller's Font as-is). The original [TextState] is never mutated.
     private org.aspose.pdf.text.Font computeExtBOverride(TextState ts, String text) {
         if (ts == null || text == null || text.isEmpty()) return null;
         org.aspose.pdf.text.Font origFont = ts.getFont();
@@ -1099,7 +1022,7 @@ public class LayoutEngine {
         return extB;
     }
 
-    /** {@code true} when any UTF-16 high-surrogate appears in {@code s}. */
+    /// `true` when any UTF-16 high-surrogate appears in `s`.
     private static boolean hasSupplementaryChar(String s) {
         for (int i = 0, n = s.length(); i < n; i++) {
             if (Character.isHighSurrogate(s.charAt(i))) return true;
@@ -1107,7 +1030,7 @@ public class LayoutEngine {
         return false;
     }
 
-    /** Lazy single-load cache for simsunb.ttf. {@code null} if not on disk. */
+    /// Lazy single-load cache for simsunb.ttf. `null` if not on disk.
     private static volatile byte[] CACHED_SIMSUN_EXTB;
     private static volatile boolean SIMSUN_EXTB_PROBED;
 
@@ -1135,13 +1058,11 @@ public class LayoutEngine {
         inlineFirstLineX = Double.NaN;
     }
 
-    /**
-     * Wraps {@code text} so that the first output line fits within
-     * {@code firstWidth} (typically the slack on the previous paragraph's
-     * last line) and subsequent lines fit within {@code restWidth} (the
-     * regular content width). Pure-greedy: words go on the current line
-     * as long as they fit, then overflow to the next.
-     */
+    /// Wraps `text` so that the first output line fits within
+    /// `firstWidth` (typically the slack on the previous paragraph's
+    /// last line) and subsequent lines fit within `restWidth` (the
+    /// regular content width). Pure-greedy: words go on the current line
+    /// as long as they fit, then overflow to the next.
     private static List<String> wrapAsymmetric(String text, String fontName, double fontSize,
                                                double firstWidth, double restWidth) {
         List<String> result = new ArrayList<>();
@@ -1170,13 +1091,11 @@ public class LayoutEngine {
         return result;
     }
 
-    /**
-     * Bumps the auto-sequence counter for {@code level} and returns the
-     * dotted marker ("1", "1.1", "1.2.1", …) joined from levels 1..L.
-     * Counters at depths greater than {@code level} are reset, matching the
-     * outline behaviour used in Word/Aspose where a new H2 inside H1 #2
-     * starts at "2.1" not "2.6".
-     */
+    /// Bumps the auto-sequence counter for `level` and returns the
+    /// dotted marker ("1", "1.1", "1.2.1", …) joined from levels 1..L.
+    /// Counters at depths greater than `level` are reset, matching the
+    /// outline behaviour used in Word/Aspose where a new H2 inside H1 #2
+    /// starts at "2.1" not "2.6".
     private String advanceHeadingMarker(int level) {
         if (level < 1) level = 1;
         if (level > MAX_HEADING_LEVELS) level = MAX_HEADING_LEVELS;
@@ -1190,21 +1109,18 @@ public class LayoutEngine {
         return sb.toString();
     }
 
-    /**
-     * Lays out a Heading paragraph, rendering it as a TOC entry with optional
-     * dot leader line and page number.
-     * <p>
-     * The heading text is indented based on its level (level * 20pt).
-     * When the heading has a TOC page set, a dot leader and page number
-     * are rendered at the right margin.
-     * </p>
-     *
-     * @param heading   the heading to lay out
-     * @param builder   the content stream builder
-     * @param resources the resource builder
-     * @param ctx       the layout context
-     * @return the total height consumed
-     */
+    /// Lays out a Heading paragraph, rendering it as a TOC entry with optional
+    /// dot leader line and page number.
+    ///
+    /// The heading text is indented based on its level (level \* 20pt).
+    /// When the heading has a TOC page set, a dot leader and page number
+    /// are rendered at the right margin.
+    ///
+    /// @param heading   the heading to lay out
+    /// @param builder   the content stream builder
+    /// @param resources the resource builder
+    /// @param ctx       the layout context
+    /// @return the total height consumed
     public double layoutHeading(Heading heading, ContentStreamBuilder builder,
                                  ResourceBuilder resources, LayoutContext ctx) {
         // Determine the display text from segments or text property
@@ -1324,12 +1240,10 @@ public class LayoutEngine {
         return lineHeight;
     }
 
-    /**
-     * Builds the display text for a heading from its segments or text property.
-     *
-     * @param heading the heading
-     * @return the display text, or empty string
-     */
+    /// Builds the display text for a heading from its segments or text property.
+    ///
+    /// @param heading the heading
+    /// @return the display text, or empty string
     private String buildHeadingText(Heading heading) {
         if (!heading.getSegments().isEmpty()) {
             StringBuilder sb = new StringBuilder();
@@ -1343,15 +1257,13 @@ public class LayoutEngine {
         return heading.getText() != null ? heading.getText() : "";
     }
 
-    /**
-     * Lays out a Table with borders, backgrounds, and cell content.
-     *
-     * @param table     the table
-     * @param builder   the content stream builder
-     * @param resources the resource builder
-     * @param ctx       the layout context
-     * @return the total height consumed
-     */
+    /// Lays out a Table with borders, backgrounds, and cell content.
+    ///
+    /// @param table     the table
+    /// @param builder   the content stream builder
+    /// @param resources the resource builder
+    /// @param ctx       the layout context
+    /// @return the total height consumed
     public double layoutTable(Table table, ContentStreamBuilder builder,
                                ResourceBuilder resources, LayoutContext ctx) {
         double tableStartY = ctx.getCursorY();
@@ -1479,31 +1391,26 @@ public class LayoutEngine {
         return totalHeight;
     }
 
-    /**
-     * Applies stamp overlays (TextStamp, ImageStamp, PageNumberStamp) to the page.
-     * <p>
-     * Stamps are rendered at their specified positions independent of the normal
-     * layout flow. Text stamps use the specified font and color.
-     * </p>
-     *
-     * @param page      the page
-     * @param builder   the content stream builder
-     * @param resources the resource builder
-     */
+    /// Applies stamp overlays (TextStamp, ImageStamp, PageNumberStamp) to the page.
+    ///
+    /// Stamps are rendered at their specified positions independent of the normal
+    /// layout flow. Text stamps use the specified font and color.
+    ///
+    /// @param page      the page
+    /// @param builder   the content stream builder
+    /// @param resources the resource builder
     public void layoutStamps(Page page, ContentStreamBuilder builder, ResourceBuilder resources) {
         // Stamps would be applied via page.addStamp() mechanism
         // For now this is a placeholder that can be called externally
         LOG.fine("layoutStamps called (placeholder)");
     }
 
-    /**
-     * Lays out a TextStamp at its specified position.
-     *
-     * @param stamp     the text stamp
-     * @param builder   the content stream builder
-     * @param resources the resource builder
-     * @param pageWidth the page width for alignment
-     */
+    /// Lays out a TextStamp at its specified position.
+    ///
+    /// @param stamp     the text stamp
+    /// @param builder   the content stream builder
+    /// @param resources the resource builder
+    /// @param pageWidth the page width for alignment
     public void layoutTextStamp(TextStamp stamp, ContentStreamBuilder builder,
                                  ResourceBuilder resources, double pageWidth) {
         if (stamp == null || stamp.getValue() == null || stamp.getValue().isEmpty()) {
@@ -1551,9 +1458,7 @@ public class LayoutEngine {
 
     // ---- Private helpers ----
 
-    /**
-     * Lays out an HtmlFragment by stripping HTML tags and rendering as plain text.
-     */
+    /// Lays out an HtmlFragment by stripping HTML tags and rendering as plain text.
     private double layoutHtmlFragment(HtmlFragment html, ContentStreamBuilder builder,
                                        ResourceBuilder resources, LayoutContext ctx) {
         String htmlText = html.getHtmlText();
@@ -1571,9 +1476,7 @@ public class LayoutEngine {
         return layoutTextFragment(tf, builder, resources, ctx);
     }
 
-    /**
-     * Strips HTML tags from a string, converting br/p tags to newlines.
-     */
+    /// Strips HTML tags from a string, converting br/p tags to newlines.
     private String stripHtmlTags(String html) {
         String text = html;
         text = BR_TAG.matcher(text).replaceAll("\n");
@@ -1589,9 +1492,7 @@ public class LayoutEngine {
         return text.trim();
     }
 
-    /**
-     * Lays out a FloatingBox by rendering its contained paragraphs at the box's position.
-     */
+    /// Lays out a FloatingBox by rendering its contained paragraphs at the box's position.
     private double layoutFloatingBox(FloatingBox box, ContentStreamBuilder builder,
                                       ResourceBuilder resources, LayoutContext ctx) {
         double savedX = ctx.getCursorX();
@@ -1639,24 +1540,22 @@ public class LayoutEngine {
         return totalHeight;
     }
 
-    /**
-     * Lays out an {@link Image} paragraph by decoding the source file (or
-     * stream), packaging it as an Image XObject in the page's resources, and
-     * emitting a {@code cm}+{@code Do} pair in the content stream at the
-     * current cursor position. Honours {@link Image#getFixWidth()} /
-     * {@link Image#getFixHeight()} when set; otherwise falls back to the
-     * decoded source dimensions (in points = pixels at 72 DPI).
-     *
-     * <p>JPEG inputs go through verbatim with {@code /Filter /DCTDecode}
-     * (lossless reuse of the source bytes). Other formats (GIF, PNG, BMP)
-     * are decoded into a {@link java.awt.image.BufferedImage}, repacked as
-     * 8-bit DeviceRGB, and {@code /FlateDecode}-compressed.</p>
-     *
-     * <p>When {@link Image#isInLineParagraph()} is true, the image renders
-     * to the right of the previous paragraph's last text line (sharing the
-     * baseline), and {@link #lastLineRightX} is updated so a subsequent
-     * inline text fragment continues on the same row.</p>
-     */
+    /// Lays out an [Image] paragraph by decoding the source file (or
+    /// stream), packaging it as an Image XObject in the page's resources, and
+    /// emitting a `cm`+`Do` pair in the content stream at the
+    /// current cursor position. Honours [Image#getFixWidth()] /
+    /// [Image#getFixHeight()] when set; otherwise falls back to the
+    /// decoded source dimensions (in points = pixels at 72 DPI).
+    ///
+    /// JPEG inputs go through verbatim with `/Filter /DCTDecode`
+    /// (lossless reuse of the source bytes). Other formats (GIF, PNG, BMP)
+    /// are decoded into a [java.awt.image.BufferedImage], repacked as
+    /// 8-bit DeviceRGB, and `/FlateDecode`-compressed.
+    ///
+    /// When [Image#isInLineParagraph()] is true, the image renders
+    /// to the right of the previous paragraph's last text line (sharing the
+    /// baseline), and [#lastLineRightX] is updated so a subsequent
+    /// inline text fragment continues on the same row.
     private double layoutImage(Image image, ContentStreamBuilder builder,
                                 ResourceBuilder resources, LayoutContext ctx) {
         byte[] rawBytes = readImageBytes(image);
@@ -1718,7 +1617,7 @@ public class LayoutEngine {
         return h;
     }
 
-    /** Falls back to reserving placeholder space when image data is unavailable. */
+    /// Falls back to reserving placeholder space when image data is unavailable.
     private double reserveImagePlaceholder(Image image, LayoutContext ctx) {
         double w = image.getFixWidth() > 0 ? image.getFixWidth() : 100;
         double h = image.getFixHeight() > 0 ? image.getFixHeight() : 100;
@@ -1726,7 +1625,7 @@ public class LayoutEngine {
         return h;
     }
 
-    /** Reads image bytes from the configured file path or input stream. */
+    /// Reads image bytes from the configured file path or input stream.
     private byte[] readImageBytes(Image image) {
         try {
             if (image.getFile() != null) {
@@ -1745,7 +1644,7 @@ public class LayoutEngine {
         return null;
     }
 
-    /** Decoded image data ready to be wrapped as a PDF Image XObject. */
+    /// Decoded image data ready to be wrapped as a PDF Image XObject.
     private static final class DecodedImage {
         final int width;
         final int height;
@@ -1782,14 +1681,12 @@ public class LayoutEngine {
         }
     }
 
-    /**
-     * Decodes one specific frame of a multi-frame image source (multi-page
-     * TIFF, animated GIF) through the ImageIO reader plugin.
-     *
-     * @param raw   the raw source bytes
-     * @param frame the 0-based frame index
-     * @return the decoded frame, or {@code null} if the frame cannot be read
-     */
+    /// Decodes one specific frame of a multi-frame image source (multi-page
+    /// TIFF, animated GIF) through the ImageIO reader plugin.
+    ///
+    /// @param raw   the raw source bytes
+    /// @param frame the 0-based frame index
+    /// @return the decoded frame, or `null` if the frame cannot be read
     private DecodedImage decodeImageFrame(byte[] raw, int frame) {
         try (javax.imageio.stream.ImageInputStream iis =
                      javax.imageio.ImageIO.createImageInputStream(new java.io.ByteArrayInputStream(raw))) {
@@ -1809,11 +1706,9 @@ public class LayoutEngine {
         }
     }
 
-    /**
-     * Packs a decoded {@link java.awt.image.BufferedImage} as 8-bit DeviceRGB
-     * with {@code /FlateDecode} compression, compositing any alpha channel
-     * against white so transparent backgrounds match the page paper.
-     */
+    /// Packs a decoded [java.awt.image.BufferedImage] as 8-bit DeviceRGB
+    /// with `/FlateDecode` compression, compositing any alpha channel
+    /// against white so transparent backgrounds match the page paper.
     private static DecodedImage packBufferedImage(java.awt.image.BufferedImage bi) {
         int w = bi.getWidth();
         int h = bi.getHeight();
@@ -1840,17 +1735,15 @@ public class LayoutEngine {
         return new DecodedImage(w, h, "FlateDecode", "DeviceRGB", compressed);
     }
 
-    /**
-     * Returns the 0-based indices of the frames of a multi-frame image that
-     * actually decode. A single-frame (or non-TIFF, non-animated) source
-     * returns a one-element array; a source ImageIO cannot read at all
-     * returns an empty array. Broken frames inside an otherwise valid
-     * multi-page TIFF are skipped — Aspose paginates only decodable frames
-     * (PDFNET-38363: a 21-frame TIFF with one corrupt frame yields 20 pages).
-     *
-     * @param raw the raw source bytes
-     * @return the decodable frame indices, in order
-     */
+    /// Returns the 0-based indices of the frames of a multi-frame image that
+    /// actually decode. A single-frame (or non-TIFF, non-animated) source
+    /// returns a one-element array; a source ImageIO cannot read at all
+    /// returns an empty array. Broken frames inside an otherwise valid
+    /// multi-page TIFF are skipped — Aspose paginates only decodable frames
+    /// (PDFNET-38363: a 21-frame TIFF with one corrupt frame yields 20 pages).
+    ///
+    /// @param raw the raw source bytes
+    /// @return the decodable frame indices, in order
     public static int[] getDecodableImageFrames(byte[] raw) {
         if (raw == null || raw.length == 0) return new int[0];
         // JPEG sources take the verbatim /DCTDecode path and are single-frame.
@@ -1890,10 +1783,8 @@ public class LayoutEngine {
         }
     }
 
-    /**
-     * Wraps a {@link DecodedImage} into a PDF Image XObject PdfStream ready
-     * for registration through {@link ResourceBuilder#addImage}.
-     */
+    /// Wraps a [DecodedImage] into a PDF Image XObject PdfStream ready
+    /// for registration through [ResourceBuilder#addImage].
     private org.aspose.pdf.engine.pdfobjects.PdfStream buildImageXObject(DecodedImage di) {
         org.aspose.pdf.engine.pdfobjects.PdfStream s = new org.aspose.pdf.engine.pdfobjects.PdfStream();
         s.set(PdfName.of("Type"), PdfName.of("XObject"));
@@ -1907,7 +1798,7 @@ public class LayoutEngine {
         return s;
     }
 
-    /** Deflate-compress raw bytes for embedding as a /FlateDecode stream. */
+    /// Deflate-compress raw bytes for embedding as a /FlateDecode stream.
     private static byte[] flateCompress(byte[] raw) {
         java.util.zip.Deflater def = new java.util.zip.Deflater();
         def.setInput(raw);
@@ -1922,7 +1813,7 @@ public class LayoutEngine {
         return out.toByteArray();
     }
 
-    /** Parses JPEG SOFn marker for width/height/components. Mirrors PdfFileMend. */
+    /// Parses JPEG SOFn marker for width/height/components. Mirrors PdfFileMend.
     private static int[] readJpegDimensions(byte[] data) {
         int i = 2;
         while (i + 3 < data.length) {
@@ -1943,9 +1834,7 @@ public class LayoutEngine {
         return null;
     }
 
-    /**
-     * Calculates the height needed for a table row based on its cell content.
-     */
+    /// Calculates the height needed for a table row based on its cell content.
     private double calculateRowHeight(Row row, double[] colWidths, ResourceBuilder resources,
                                        double padTop, double padBottom,
                                        double padLeft, double padRight, Table table) {
@@ -1982,9 +1871,7 @@ public class LayoutEngine {
         return maxHeight;
     }
 
-    /**
-     * Measures the content height of a cell (without padding).
-     */
+    /// Measures the content height of a cell (without padding).
     private double measureCellContent(Cell cell, double innerWidth) {
         double totalHeight = 0;
         Paragraphs paras = cell.getParagraphs();
@@ -2013,9 +1900,7 @@ public class LayoutEngine {
         return totalHeight;
     }
 
-    /**
-     * Layouts the content inside a cell at the given position.
-     */
+    /// Layouts the content inside a cell at the given position.
     private void layoutCellContent(Cell cell, ContentStreamBuilder builder,
                                     ResourceBuilder resources,
                                     double x, double y, double width) {
@@ -2103,10 +1988,8 @@ public class LayoutEngine {
         }
     }
 
-    /**
-     * Draws a border around a cell rectangle. Each side is drawn individually
-     * based on the BorderInfo's per-side GraphInfo settings.
-     */
+    /// Draws a border around a cell rectangle. Each side is drawn individually
+    /// based on the BorderInfo's per-side GraphInfo settings.
     private void drawCellBorder(ContentStreamBuilder builder, BorderInfo border,
                                  double x, double y, double width, double height) {
         builder.saveState();
@@ -2158,13 +2041,11 @@ public class LayoutEngine {
         builder.restoreState();
     }
 
-    /**
-     * Emits a color setting operator to the content stream.
-     *
-     * @param color  the color
-     * @param builder the content stream builder
-     * @param isFill  true for fill color, false for stroke color
-     */
+    /// Emits a color setting operator to the content stream.
+    ///
+    /// @param color  the color
+    /// @param builder the content stream builder
+    /// @param isFill  true for fill color, false for stroke color
     private void emitColor(Color color, ContentStreamBuilder builder, boolean isFill) {
         if (color == null) {
             return;
@@ -2198,9 +2079,7 @@ public class LayoutEngine {
         }
     }
 
-    /**
-     * Converts a PageInfo.MarginInfo to a MarginInfo.
-     */
+    /// Converts a PageInfo.MarginInfo to a MarginInfo.
     private MarginInfo toMarginInfo(PageInfo.MarginInfo piMargin) {
         return new MarginInfo(
                 piMargin.getLeft(),
@@ -2210,19 +2089,15 @@ public class LayoutEngine {
         );
     }
 
-    /**
-     * Parses a space-separated column widths string into an array of doubles.
-     *
-     * @param columnWidths the column widths string (e.g. "100 200 150")
-     * @return the parsed widths array, or empty array if null/empty
-     */
-    /**
-     * Determines the number of columns of a table that has no explicit
-     * ColumnWidths, by taking the widest row (summing each cell's colspan).
-     *
-     * @param table the table
-     * @return the column count, or 0 if the table has no cells
-     */
+    /// Parses a space-separated column widths string into an array of doubles.
+    ///
+    /// @param columnWidths the column widths string (e.g. "100 200 150")
+    /// @return the parsed widths array, or empty array if null/empty
+    /// Determines the number of columns of a table that has no explicit
+    /// ColumnWidths, by taking the widest row (summing each cell's colspan).
+    ///
+    /// @param table the table
+    /// @return the column count, or 0 if the table has no cells
     private int countColumns(Table table) {
         int max = 0;
         for (Row row : table.getRows()) {

@@ -13,14 +13,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
-/**
- * Collects and reports PDF/A validation violations.
- * <p>
- * After validation rules have been applied, this result object holds all violations
- * found. It can determine overall compliance (no ERROR-level violations) and write
- * an XML log in a standard format.
- * </p>
- */
+/// Collects and reports PDF/A validation violations.
+///
+/// After validation rules have been applied, this result object holds all violations
+/// found. It can determine overall compliance (no ERROR-level violations) and write
+/// an XML log in a standard format.
+///
 public final class PdfAValidationResult {
 
     private static final Logger LOG = Logger.getLogger(PdfAValidationResult.class.getName());
@@ -28,12 +26,10 @@ public final class PdfAValidationResult {
     private final List<PdfAViolation> violations = new ArrayList<>();
     private final PdfFormat targetFormat;
 
-    /**
-     * Creates a new validation result for the given target format.
-     *
-     * @param targetFormat the PDF format that was validated against
-     * @throws IllegalArgumentException if targetFormat is {@code null}
-     */
+    /// Creates a new validation result for the given target format.
+    ///
+    /// @param targetFormat the PDF format that was validated against
+    /// @throws IllegalArgumentException if targetFormat is `null`
     public PdfAValidationResult(PdfFormat targetFormat) {
         if (targetFormat == null) {
             throw new IllegalArgumentException("targetFormat must not be null");
@@ -41,12 +37,10 @@ public final class PdfAValidationResult {
         this.targetFormat = targetFormat;
     }
 
-    /**
-     * Adds a pre-constructed violation to this result.
-     *
-     * @param violation the violation to add
-     * @throws IllegalArgumentException if violation is {@code null}
-     */
+    /// Adds a pre-constructed violation to this result.
+    ///
+    /// @param violation the violation to add
+    /// @throws IllegalArgumentException if violation is `null`
     public void addViolation(PdfAViolation violation) {
         if (violation == null) {
             throw new IllegalArgumentException("violation must not be null");
@@ -54,36 +48,30 @@ public final class PdfAValidationResult {
         violations.add(violation);
     }
 
-    /**
-     * Convenience method to add an ERROR-level violation.
-     *
-     * @param ruleId     the rule identifier
-     * @param message    the violation message
-     * @param objectPath the PDF object path (may be {@code null})
-     * @param clause     the ISO clause reference (may be {@code null})
-     */
+    /// Convenience method to add an ERROR-level violation.
+    ///
+    /// @param ruleId     the rule identifier
+    /// @param message    the violation message
+    /// @param objectPath the PDF object path (may be `null`)
+    /// @param clause     the ISO clause reference (may be `null`)
     public void addError(String ruleId, String message, String objectPath, String clause) {
         violations.add(new PdfAViolation(ruleId, PdfAViolation.Severity.ERROR, message, objectPath, clause));
     }
 
-    /**
-     * Convenience method to add a WARNING-level violation.
-     *
-     * @param ruleId     the rule identifier
-     * @param message    the violation message
-     * @param objectPath the PDF object path (may be {@code null})
-     * @param clause     the ISO clause reference (may be {@code null})
-     */
+    /// Convenience method to add a WARNING-level violation.
+    ///
+    /// @param ruleId     the rule identifier
+    /// @param message    the violation message
+    /// @param objectPath the PDF object path (may be `null`)
+    /// @param clause     the ISO clause reference (may be `null`)
     public void addWarning(String ruleId, String message, String objectPath, String clause) {
         violations.add(new PdfAViolation(ruleId, PdfAViolation.Severity.WARNING, message, objectPath, clause));
     }
 
-    /**
-     * Returns {@code true} if the document is compliant (no ERROR-level violations).
-     * Warnings alone do not break compliance.
-     *
-     * @return true if compliant
-     */
+    /// Returns `true` if the document is compliant (no ERROR-level violations).
+    /// Warnings alone do not break compliance.
+    ///
+    /// @return true if compliant
     public boolean isCompliant() {
         for (PdfAViolation v : violations) {
             if (v.getSeverity() == PdfAViolation.Severity.ERROR) {
@@ -93,30 +81,24 @@ public final class PdfAValidationResult {
         return true;
     }
 
-    /**
-     * Returns an unmodifiable list of all violations.
-     *
-     * @return the violations
-     */
+    /// Returns an unmodifiable list of all violations.
+    ///
+    /// @return the violations
     public List<PdfAViolation> getViolations() {
         return Collections.unmodifiableList(violations);
     }
 
-    /**
-     * Returns the target format this result was validated against.
-     *
-     * @return the target format
-     */
+    /// Returns the target format this result was validated against.
+    ///
+    /// @return the target format
     public PdfFormat getTargetFormat() {
         return targetFormat;
     }
 
-    /**
-     * Writes the validation result as an XML log to the specified file path.
-     *
-     * @param filePath the path to write the XML log to
-     * @throws IOException if an I/O error occurs
-     */
+    /// Writes the validation result as an XML log to the specified file path.
+    ///
+    /// @param filePath the path to write the XML log to
+    /// @throws IOException if an I/O error occurs
     public void writeXmlLog(String filePath) throws IOException {
         if (filePath == null) {
             // A null log path means "no log file requested" — same semantics as
@@ -129,28 +111,27 @@ public final class PdfAValidationResult {
         }
     }
 
-    /**
-     * Writes the validation result as an XML log to the specified output stream.
-     * <p>
-     * The XML format is:
-     * <pre>{@code
-     * <?xml version="1.0" encoding="UTF-8"?>
-     * <PdfAValidationLog>
-     *   <TargetFormat>PDF_A_1B</TargetFormat>
-     *   <Timestamp>2024-01-15T10:30:00</Timestamp>
-     *   <Violations>
-     *     <Violation ruleId="6.1.3" severity="ERROR">
-     *       <Message>...</Message>
-     *       <ObjectPath>...</ObjectPath>
-     *       <Clause>...</Clause>
-     *     </Violation>
-     *   </Violations>
-     * </PdfAValidationLog>
-     * }</pre>
-     *
-     * @param os the output stream
-     * @throws IOException if an I/O error occurs
-     */
+    /// Writes the validation result as an XML log to the specified output stream.
+    ///
+    /// The XML format is:
+    ///
+    /// ```
+    /// <?xml version="1.0" encoding="UTF-8"?>
+    /// <PdfAValidationLog>
+    ///   <TargetFormat>PDF_A_1B</TargetFormat>
+    ///   <Timestamp>2024-01-15T10:30:00</Timestamp>
+    ///   <Violations>
+    ///     <Violation ruleId="6.1.3" severity="ERROR">
+    ///       <Message>...</Message>
+    ///       <ObjectPath>...</ObjectPath>
+    ///       <Clause>...</Clause>
+    ///     </Violation>
+    ///   </Violations>
+    /// </PdfAValidationLog>
+    /// ```
+    ///
+    /// @param os the output stream
+    /// @throws IOException if an I/O error occurs
     public void writeXmlLog(OutputStream os) throws IOException {
         StringBuilder xml = new StringBuilder();
         xml.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
@@ -177,9 +158,7 @@ public final class PdfAValidationResult {
         os.write(xml.toString().getBytes(StandardCharsets.UTF_8));
     }
 
-    /**
-     * Escapes XML special characters in text content.
-     */
+    /// Escapes XML special characters in text content.
     private static String escapeXml(String text) {
         if (text == null) {
             return "";
@@ -204,9 +183,7 @@ public final class PdfAValidationResult {
         return sb.toString();
     }
 
-    /**
-     * Escapes XML special characters in attribute values.
-     */
+    /// Escapes XML special characters in attribute values.
     private static String escapeXmlAttr(String text) {
         if (text == null) {
             return "";

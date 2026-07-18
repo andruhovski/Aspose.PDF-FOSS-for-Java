@@ -7,39 +7,32 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
-/**
- * Provides text measurement and word wrapping using PDF standard font metrics.
- * <p>
- * Text widths are computed from the 256-entry width tables in
- * {@link StandardFonts}. Each width value is in units of 1/1000 of text space,
- * so the actual width in user-space units is {@code widths[charCode] / 1000.0 * fontSize}.
- * </p>
- * <p>
- * Word wrapping handles explicit newlines ({@code \n}), word boundaries (spaces),
- * and long-word breaking when a single word exceeds the available line width.
- * </p>
- */
+/// Provides text measurement and word wrapping using PDF standard font metrics.
+///
+/// Text widths are computed from the 256-entry width tables in
+/// [StandardFonts]. Each width value is in units of 1/1000 of text space,
+/// so the actual width in user-space units is `widths[charCode] / 1000.0 * fontSize`.
+///
+/// Word wrapping handles explicit newlines (`\\n`), word boundaries (spaces),
+/// and long-word breaking when a single word exceeds the available line width.
+///
 public final class TextLayoutHelper {
 
     private static final Logger LOG = Logger.getLogger(TextLayoutHelper.class.getName());
 
-    /**
-     * Default line height multiplier (leading factor) applied to font size.
-     */
+    /// Default line height multiplier (leading factor) applied to font size.
     private static final double LINE_HEIGHT_FACTOR = 1.2;
 
     private TextLayoutHelper() {
         // Utility class
     }
 
-    /**
-     * Measures the width of the given text string in user-space units.
-     *
-     * @param text     the text to measure
-     * @param fontName the standard font name (e.g. "Helvetica")
-     * @param fontSize the font size in points
-     * @return the text width in user-space units (points)
-     */
+    /// Measures the width of the given text string in user-space units.
+    ///
+    /// @param text     the text to measure
+    /// @param fontName the standard font name (e.g. "Helvetica")
+    /// @param fontSize the font size in points
+    /// @return the text width in user-space units (points)
     public static double measureTextWidth(String text, String fontName, double fontSize) {
         if (text == null || text.isEmpty()) {
             return 0;
@@ -58,19 +51,16 @@ public final class TextLayoutHelper {
         return totalWidth;
     }
 
-    /**
-     * Wraps text into lines that fit within the specified maximum width.
-     * <p>
-     * Handles explicit newlines ({@code \n}), word boundaries (spaces),
-     * and breaking of words that are too long for a single line.
-     * </p>
-     *
-     * @param text     the text to wrap
-     * @param fontName the standard font name
-     * @param fontSize the font size in points
-     * @param maxWidth the maximum line width in user-space units
-     * @return a list of lines, each fitting within maxWidth (or as close as possible)
-     */
+    /// Wraps text into lines that fit within the specified maximum width.
+    ///
+    /// Handles explicit newlines (`\\n`), word boundaries (spaces),
+    /// and breaking of words that are too long for a single line.
+    ///
+    /// @param text     the text to wrap
+    /// @param fontName the standard font name
+    /// @param fontSize the font size in points
+    /// @param maxWidth the maximum line width in user-space units
+    /// @return a list of lines, each fitting within maxWidth (or as close as possible)
     public static List<String> wrapText(String text, String fontName, double fontSize, double maxWidth) {
         if (text == null || text.isEmpty()) {
             return Collections.singletonList("");
@@ -94,24 +84,19 @@ public final class TextLayoutHelper {
         return result;
     }
 
-    /**
-     * Returns the line height for the given font and size.
-     * <p>
-     * Computed as {@code fontSize * 1.2}, which is a standard default leading
-     * for body text.
-     * </p>
-     *
-     * @param fontName the standard font name
-     * @param fontSize the font size in points
-     * @return the line height in user-space units
-     */
+    /// Returns the line height for the given font and size.
+    ///
+    /// Computed as `fontSize * 1.2`, which is a standard default leading
+    /// for body text.
+    ///
+    /// @param fontName the standard font name
+    /// @param fontSize the font size in points
+    /// @return the line height in user-space units
     public static double getLineHeight(String fontName, double fontSize) {
         return fontSize * LINE_HEIGHT_FACTOR;
     }
 
-    /**
-     * Wraps a single paragraph (no embedded newlines) into lines.
-     */
+    /// Wraps a single paragraph (no embedded newlines) into lines.
     private static void wrapParagraph(String paragraph, String fontName, double fontSize,
                                        double maxWidth, List<String> result) {
         String[] words = paragraph.split(" ", -1);
@@ -170,9 +155,7 @@ public final class TextLayoutHelper {
         }
     }
 
-    /**
-     * Breaks a single long word that exceeds maxWidth into multiple lines.
-     */
+    /// Breaks a single long word that exceeds maxWidth into multiple lines.
     private static void breakLongWord(String word, String fontName, double fontSize,
                                        double maxWidth, List<String> result) {
         int[] widths = getWidthsForFont(fontName);
@@ -203,9 +186,7 @@ public final class TextLayoutHelper {
         }
     }
 
-    /**
-     * Returns the width table for the given font. Falls back to Helvetica if unknown.
-     */
+    /// Returns the width table for the given font. Falls back to Helvetica if unknown.
     private static int[] getWidthsForFont(String fontName) {
         if (fontName != null) {
             int[] w = StandardFonts.getWidths(fontName);
@@ -223,14 +204,12 @@ public final class TextLayoutHelper {
         return new int[256];
     }
 
-    /**
-     * Converts a Java char to its WinAnsiEncoding code.
-     * For ASCII (0-127) and Latin-1 supplement (160-255), the mapping is identity.
-     * For 128-159, checks the Windows-1252 special characters.
-     *
-     * @param ch the character
-     * @return the WinAnsi code (0-255), or -1 if not representable
-     */
+    /// Converts a Java char to its WinAnsiEncoding code.
+    /// For ASCII (0-127) and Latin-1 supplement (160-255), the mapping is identity.
+    /// For 128-159, checks the Windows-1252 special characters.
+    ///
+    /// @param ch the character
+    /// @return the WinAnsi code (0-255), or -1 if not representable
     private static int charToWinAnsi(char ch) {
         return ContentStreamBuilder.unicodeToWinAnsi(ch);
     }

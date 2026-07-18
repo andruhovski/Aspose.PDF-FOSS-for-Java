@@ -7,20 +7,18 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.logging.Logger;
 
-/**
- * Type 4 (PostScript Calculator) function (ISO 32000-1:2008, §7.10.5).
- * Evaluates a PostScript-like expression using a stack machine.
- *
- * <p>Supported operators include arithmetic (add, sub, mul, div, neg, abs, sqrt, exp, ln, log,
- * sin, cos, floor, ceiling, round, truncate), comparison (eq, ne, gt, ge, lt, le),
- * stack manipulation (dup, exch, pop, copy, index, roll), logic (and, or, xor, not),
- * and control (if, ifelse).</p>
- */
+/// Type 4 (PostScript Calculator) function (ISO 32000-1:2008, §7.10.5).
+/// Evaluates a PostScript-like expression using a stack machine.
+///
+/// Supported operators include arithmetic (add, sub, mul, div, neg, abs, sqrt, exp, ln, log,
+/// sin, cos, floor, ceiling, round, truncate), comparison (eq, ne, gt, ge, lt, le),
+/// stack manipulation (dup, exch, pop, copy, index, roll), logic (and, or, xor, not),
+/// and control (if, ifelse).
 public final class PostScriptFunction extends PdfFunction {
 
     private static final Logger LOG = Logger.getLogger(PostScriptFunction.class.getName());
 
-    /** Pre-classified token: either NUMBER with a value, or OPERATOR with an opcode. */
+    /// Pre-classified token: either NUMBER with a value, or OPERATOR with an opcode.
     private static final class Token {
         final int op;       // Opcode for operators; OP_NUMBER for numeric literals
         final double value; // Numeric value if op == OP_NUMBER
@@ -39,9 +37,9 @@ public final class PostScriptFunction extends PdfFunction {
     private static final int OP_DUP = 31, OP_EXCH = 32, OP_POP = 33, OP_COPY = 34, OP_INDEX = 35;
     private static final int OP_TRUE = 36, OP_FALSE = 37;
     private static final int OP_ROLL = 38, OP_CVR = 39, OP_CVI = 40;
-    /** Procedure literal `{...}`: value = token index of the matching close brace. */
+    /// Procedure literal \`{...}\`: value = token index of the matching close brace.
     private static final int OP_PROC = 41;
-    /** Close brace — jump target only, no-op when executed. */
+    /// Close brace — jump target only, no-op when executed.
     private static final int OP_PROCEND = 42;
     private static final int OP_IF = 43, OP_IFELSE = 44;
     private static final int OP_UNKNOWN = 99;
@@ -49,14 +47,12 @@ public final class PostScriptFunction extends PdfFunction {
     private final String program;
     private final Token[] tokens;
 
-    /**
-     * Creates a PostScript function from a PDF stream dictionary.
-     *
-     * @param dict   the function stream dictionary
-     * @param domain the input domain
-     * @param range  the output range
-     * @throws IOException if the stream data cannot be read
-     */
+    /// Creates a PostScript function from a PDF stream dictionary.
+    ///
+    /// @param dict   the function stream dictionary
+    /// @param domain the input domain
+    /// @param range  the output range
+    /// @throws IOException if the stream data cannot be read
     public PostScriptFunction(PdfDictionary dict, double[] domain, double[] range)
             throws IOException {
         super(domain, range);
@@ -69,29 +65,25 @@ public final class PostScriptFunction extends PdfFunction {
         this.tokens = compile(program);
     }
 
-    /**
-     * Creates a PostScript function directly (for testing).
-     *
-     * @param domain  the input domain
-     * @param range   the output range
-     * @param program the PostScript program string (with or without braces)
-     */
+    /// Creates a PostScript function directly (for testing).
+    ///
+    /// @param domain  the input domain
+    /// @param range   the output range
+    /// @param program the PostScript program string (with or without braces)
     public PostScriptFunction(double[] domain, double[] range, String program) {
         super(domain, range);
         this.program = program != null ? program.trim() : "";
         this.tokens = compile(this.program);
     }
 
-    /**
-     * Pre-tokenises the program once at construction time and pre-classifies each
-     * token as either a numeric literal (with parsed value) or an operator opcode.
-     * <p>
-     * Doing this here avoids re-tokenising on every {@link #evaluate(double[])}
-     * call and — crucially — avoids the {@link NumberFormatException}-driven
-     * hot path that was triggered for every operator token of every pixel during
-     * DeviceN/Separation image decoding.
-     * </p>
-     */
+    /// Pre-tokenises the program once at construction time and pre-classifies each
+    /// token as either a numeric literal (with parsed value) or an operator opcode.
+    ///
+    /// Doing this here avoids re-tokenising on every [#evaluate(double\[\])]
+    /// call and — crucially — avoids the [NumberFormatException]-driven
+    /// hot path that was triggered for every operator token of every pixel during
+    /// DeviceN/Separation image decoding.
+    ///
     private static Token[] compile(String prog) {
         if (prog == null || prog.isEmpty()) return new Token[0];
         String body = prog.trim();
@@ -244,11 +236,9 @@ public final class PostScriptFunction extends PdfFunction {
         return result;
     }
 
-    /**
-     * Executes tokens in {@code [from, to)}. Procedure literals push their own
-     * token index and jump past their body; if/ifelse then execute the body
-     * range recursively.
-     */
+    /// Executes tokens in `[from, to)`. Procedure literals push their own
+    /// token index and jump past their body; if/ifelse then execute the body
+    /// range recursively.
     private static int execute(Token[] toks, int from, int to, double[] stack, int sp) {
         for (int i = from; i < to; i++) {
             Token t = toks[i];

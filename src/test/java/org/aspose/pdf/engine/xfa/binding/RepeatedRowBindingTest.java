@@ -12,14 +12,14 @@ import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-/** A4-FIX2: repeated-row / repeated-subform record binding + residual deep dataRef. */
+/// A4-FIX2: repeated-row / repeated-subform record binding + residual deep dataRef.
 public class RepeatedRowBindingTest {
 
     private static final String TPL = XfaNode.TEMPLATE_NS;
     private static final String DATA = "http://www.xfa.org/schema/xfa-data/1.0/";
     private final BindingEngine engine = new BindingEngine();
 
-    /** (A) occur-based rows: one Row instance per data record, same-named cells distinct. */
+    /// (A) occur-based rows: one Row instance per data record, same-named cells distinct.
     @Test
     void occurRowsBindEachRecordDistinctly() throws Exception {
         Template tpl = tpl("<template xmlns='" + TPL + "'><subform name='form1'>"
@@ -42,7 +42,7 @@ public class RepeatedRowBindingTest {
         assertEquals("30", dom.fieldByPath("form1.Table.Row[2].Amount").getValue());
     }
 
-    /** (B) explicit repeated same-named Cell subforms, each one field, paired by order. */
+    /// (B) explicit repeated same-named Cell subforms, each one field, paired by order.
     @Test
     void explicitRepeatedCellsPairByIndex() throws Exception {
         Template tpl = tpl("<template xmlns='" + TPL + "'><subform name='form1'><subform name='Table'>"
@@ -61,8 +61,8 @@ public class RepeatedRowBindingTest {
         assertEquals("AB", dom.fieldByName("Province").getValue());
     }
 
-    /** (C) template inserts a Row subform the data lacks (ancestor) AND repeats it — cells
-     *  must bind to the flat data Cells in order. (sampleFile Page3 shape.) */
+    /// (C) template inserts a Row subform the data lacks (ancestor) AND repeats it — cells
+    ///  must bind to the flat data Cells in order. (sampleFile Page3 shape.)
     @Test
     void repeatedRowWrapperAncestorMatchesFlatCells() throws Exception {
         Template tpl = tpl("<template xmlns='" + TPL + "'><subform name='form1'><subform name='Table'>"
@@ -87,7 +87,7 @@ public class RepeatedRowBindingTest {
         assertEquals("4", dom.fieldByName("D").getValue());
     }
 
-    /** (E) deep dataRef root accessor (TEST_PATIENT root.InputConn.* / poland data.X.Y shape). */
+    /// (E) deep dataRef root accessor (TEST\_PATIENT root.InputConn.\* / poland data.X.Y shape).
     @Test
     void deepDataRefRootAccessor() throws Exception {
         Template tpl = tpl("<template xmlns='" + TPL + "'><subform name='root'>"
@@ -100,7 +100,7 @@ public class RepeatedRowBindingTest {
         assertEquals("CLIENT TEST", dom.fieldByName("ClientName").getValue());
     }
 
-    /** (F) same-named field in two different data groups -> distinct nodes (spec non-unique names). */
+    /// (F) same-named field in two different data groups -> distinct nodes (spec non-unique names).
     @Test
     void sameNamedFieldsInDifferentGroupsBindDistinct() throws Exception {
         Template tpl = tpl("<template xmlns='" + TPL + "'><subform name='form1'>"
@@ -115,9 +115,9 @@ public class RepeatedRowBindingTest {
         assertEquals("Bob", dom.fieldByPath("form1.Seller.Name").getValue());
     }
 
-    /** (G) record nested below an extra wrapper data group (poland shape): the root
-     *  subform name is a grandchild of the datasets data node, and relative dataRefs
-     *  must resolve against the descended record. */
+    /// (G) record nested below an extra wrapper data group (poland shape): the root
+    ///  subform name is a grandchild of the datasets data node, and relative dataRefs
+    ///  must resolve against the descended record.
     @Test
     void recordNestedUnderWrapperGroupBinds() throws Exception {
         Template tpl = tpl("<template xmlns='" + TPL + "'><subform name='Deklaracja'>"
@@ -135,9 +135,9 @@ public class RepeatedRowBindingTest {
                 "record found below the wrapper; $.Naglowek/$.KodFormularza resolve against it");
     }
 
-    /** (H) data encloses the value in extra groups the template does not mirror
-     *  (TEST_PATIENT: template form1/ClientInformation, data root/InputConn/ClientName).
-     *  An automatic field must descend through the unmatched groups as a last resort. */
+    /// (H) data encloses the value in extra groups the template does not mirror
+    ///  (TEST\_PATIENT: template form1/ClientInformation, data root/InputConn/ClientName).
+    ///  An automatic field must descend through the unmatched groups as a last resort.
     @Test
     void automaticFieldDescendsThroughUnmatchedDataGroups() throws Exception {
         Template tpl = tpl("<template xmlns='" + TPL + "'><subform name='form1'>"
@@ -153,8 +153,8 @@ public class RepeatedRowBindingTest {
         assertEquals("126188", dom.fieldByName("DocumentKey").getValue());
     }
 
-    /** (I) descent is LAST RESORT: a direct/ancestor match still wins over a deeper
-     *  same-named value, and descent does not double-consume. */
+    /// (I) descent is LAST RESORT: a direct/ancestor match still wins over a deeper
+    ///  same-named value, and descent does not double-consume.
     @Test
     void directMatchStillWinsOverDeepDescent() throws Exception {
         Template tpl = tpl("<template xmlns='" + TPL + "'><subform name='form1'>"

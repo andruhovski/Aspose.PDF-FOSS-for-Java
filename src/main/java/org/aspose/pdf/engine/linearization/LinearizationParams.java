@@ -1,35 +1,25 @@
 package org.aspose.pdf.engine.linearization;
 
-import org.aspose.pdf.engine.pdfobjects.PdfArray;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfFloat;
-import org.aspose.pdf.engine.pdfobjects.PdfInteger;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectKey;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
 import org.aspose.pdf.engine.io.RandomAccessReader;
 import org.aspose.pdf.engine.parser.PDFLexer;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.logging.Logger;
 
-/**
- * Represents the linearization parameter dictionary (Table F.1, ISO 32000-1:2008).
- * This dictionary must appear within the first 1024 bytes of a linearized PDF.
- *
- * <p>Required keys:</p>
- * <ul>
- *   <li>/Linearized — version number (1.0)</li>
- *   <li>/L — file length in bytes</li>
- *   <li>/H — array [hintStreamOffset, hintStreamLength]</li>
- *   <li>/O — object number of first page's page object</li>
- *   <li>/E — offset of end of first page section</li>
- *   <li>/N — number of pages</li>
- *   <li>/T — offset of first entry in main xref table (or of main xref stream)</li>
- * </ul>
- */
+/// Represents the linearization parameter dictionary (Table F.1, ISO 32000-1:2008).
+/// This dictionary must appear within the first 1024 bytes of a linearized PDF.
+///
+/// Required keys:
+///
+///   - /Linearized — version number (1.0)
+///   - /L — file length in bytes
+///   - /H — array [hintStreamOffset, hintStreamLength]
+///   - /O — object number of first page's page object
+///   - /E — offset of end of first page section
+///   - /N — number of pages
+///   - /T — offset of first entry in main xref table (or of main xref stream)
 public final class LinearizationParams {
 
     private static final Logger LOG = Logger.getLogger(LinearizationParams.class.getName());
@@ -44,12 +34,10 @@ public final class LinearizationParams {
     private long mainXRefOffset;
     private int firstPageNumber; // /P, default 0
 
-    /**
-     * Parses linearization parameters from a PdfDictionary.
-     *
-     * @param dict the linearization parameter dictionary
-     * @return the parsed parameters, or {@code null} if the dict is not a linearization dict
-     */
+    /// Parses linearization parameters from a PdfDictionary.
+    ///
+    /// @param dict the linearization parameter dictionary
+    /// @return the parsed parameters, or `null` if the dict is not a linearization dict
     public static LinearizationParams parse(PdfDictionary dict) {
         if (dict == null) return null;
         PdfBase linValue = dict.get("Linearized");
@@ -76,12 +64,10 @@ public final class LinearizationParams {
         return params;
     }
 
-    /**
-     * Writes this linearization parameter dictionary as a PDF dictionary.
-     * The dictionary is written as an indirect object with the given object number.
-     *
-     * @return the PDF dictionary
-     */
+    /// Writes this linearization parameter dictionary as a PDF dictionary.
+    /// The dictionary is written as an indirect object with the given object number.
+    ///
+    /// @return the PDF dictionary
     public PdfDictionary toDictionary() {
         PdfDictionary dict = new PdfDictionary();
         dict.set(PdfName.of("Linearized"), new PdfFloat(1.0f));
@@ -102,14 +88,12 @@ public final class LinearizationParams {
         return dict;
     }
 
-    /**
-     * Detects whether a PDF is linearized by scanning the first 1024 bytes
-     * for a linearization parameter dictionary.
-     *
-     * @param reader the random access reader positioned at file start
-     * @return the parsed parameters, or {@code null} if not linearized
-     * @throws IOException if an I/O error occurs
-     */
+    /// Detects whether a PDF is linearized by scanning the first 1024 bytes
+    /// for a linearization parameter dictionary.
+    ///
+    /// @param reader the random access reader positioned at file start
+    /// @return the parsed parameters, or `null` if not linearized
+    /// @throws IOException if an I/O error occurs
     public static LinearizationParams detect(RandomAccessReader reader) throws IOException {
         reader.seek(0);
         int scanLen = (int) Math.min(1024, reader.getLength());
@@ -145,9 +129,7 @@ public final class LinearizationParams {
         }
     }
 
-    /**
-     * Parses the linearization dict from raw bytes at the given offset.
-     */
+    /// Parses the linearization dict from raw bytes at the given offset.
     private static LinearizationParams parseLinDictFromReader(
             RandomAccessReader reader, int dictStart, int maxLen) throws IOException {
         // Simple: read bytes and extract key-value pairs
@@ -238,48 +220,46 @@ public final class LinearizationParams {
 
     // ─── Getters and setters ─────────────────────────────────────
 
-    /** Returns the linearization version (always 1.0). */
+    /// Returns the linearization version (always 1.0).
     public double getVersion() { return version; }
 
-    /** Returns the total file length (/L). */
+    /// Returns the total file length (/L).
     public long getFileLength() { return fileLength; }
     public void setFileLength(long fileLength) { this.fileLength = fileLength; }
 
-    /** Returns the primary hint stream byte offset (/H[0]). */
+    /// Returns the primary hint stream byte offset (/H[0]).
     public long getHintStreamOffset() { return hintStreamOffset; }
     public void setHintStreamOffset(long offset) { this.hintStreamOffset = offset; }
 
-    /** Returns the primary hint stream length (/H[1]). */
+    /// Returns the primary hint stream length (/H[1]).
     public int getHintStreamLength() { return hintStreamLength; }
     public void setHintStreamLength(int length) { this.hintStreamLength = length; }
 
-    /** Returns the first page's page object number (/O). */
+    /// Returns the first page's page object number (/O).
     public int getFirstPageObjNum() { return firstPageObjNum; }
     public void setFirstPageObjNum(int num) { this.firstPageObjNum = num; }
 
-    /** Returns the offset of end of first page section (/E). */
+    /// Returns the offset of end of first page section (/E).
     public long getEndOfFirstPage() { return endOfFirstPage; }
     public void setEndOfFirstPage(long offset) { this.endOfFirstPage = offset; }
 
-    /** Returns the number of pages (/N). */
+    /// Returns the number of pages (/N).
     public int getNumPages() { return numPages; }
     public void setNumPages(int n) { this.numPages = n; }
 
-    /** Returns the offset of the main xref table (/T). */
+    /// Returns the offset of the main xref table (/T).
     public long getMainXRefOffset() { return mainXRefOffset; }
     public void setMainXRefOffset(long offset) { this.mainXRefOffset = offset; }
 
-    /** Returns the first page number (/P), default 0. */
+    /// Returns the first page number (/P), default 0.
     public int getFirstPageNumber() { return firstPageNumber; }
     public void setFirstPageNumber(int num) { this.firstPageNumber = num; }
 
-    /**
-     * Validates that /L matches the actual file length.
-     * If mismatched, the file has been modified and linearization is invalid.
-     *
-     * @param actualFileLength the actual file length in bytes
-     * @return {@code true} if the linearization is still valid
-     */
+    /// Validates that /L matches the actual file length.
+    /// If mismatched, the file has been modified and linearization is invalid.
+    ///
+    /// @param actualFileLength the actual file length in bytes
+    /// @return `true` if the linearization is still valid
     public boolean isValid(long actualFileLength) {
         return fileLength == actualFileLength;
     }

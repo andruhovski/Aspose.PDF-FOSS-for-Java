@@ -13,25 +13,21 @@ import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * Renderer regression tests for stroked paths that used to vanish:
- *
- * <ul>
- *   <li><b>Axis-aligned lines</b> - a pure horizontal/vertical line has a
- *       zero-height/width bounding box; {@code Rectangle2D.isEmpty()} reports
- *       it empty and an early-out in {@code strokePath} dropped the whole
- *       stroke (corpus 29903.pdf: every table rule missing).</li>
- *   <li><b>Zero-width strokes</b> - ISO 32000 (8.4.3.2) defines width 0 as
- *       the thinnest device-renderable line, but Java2D draws nothing for a
- *       0-width stroke under the anti-aliased pipeline, and small positive
- *       widths under a down-scaling CTM anti-alias to invisibility. The
- *       renderer now clamps the effective device width to 0.25 px (the
- *       Adobe Reader / reference-renderer convention).</li>
- * </ul>
- */
+/// Renderer regression tests for stroked paths that used to vanish:
+///
+///   - **Axis-aligned lines** - a pure horizontal/vertical line has a
+///     zero-height/width bounding box; `Rectangle2D.isEmpty()` reports
+///     it empty and an early-out in `strokePath` dropped the whole
+///     stroke (corpus 29903.pdf: every table rule missing).
+///   - **Zero-width strokes** - ISO 32000 (8.4.3.2) defines width 0 as
+///     the thinnest device-renderable line, but Java2D draws nothing for a
+///     0-width stroke under the anti-aliased pipeline, and small positive
+///     widths under a down-scaling CTM anti-alias to invisibility. The
+///     renderer now clamps the effective device width to 0.25 px (the
+///     Adobe Reader / reference-renderer convention).
 public class HairlineStrokeRenderTest {
 
-    /** Builds a minimal one-page PDF whose content stream is {@code content}. */
+    /// Builds a minimal one-page PDF whose content stream is `content`.
     private static byte[] minimalPdf(String content) {
         StringBuilder body = new StringBuilder("%PDF-1.4\n");
         String[] objs = {
@@ -55,7 +51,7 @@ public class HairlineStrokeRenderTest {
         return body.toString().getBytes(StandardCharsets.ISO_8859_1);
     }
 
-    /** Renders page 1 at 72 dpi and returns the max count of non-white pixels in any row. */
+    /// Renders page 1 at 72 dpi and returns the max count of non-white pixels in any row.
     private static int widestInkRow(String content) throws Exception {
         try (Document doc = new Document(new ByteArrayInputStream(minimalPdf(content)))) {
             ByteArrayOutputStream png = new ByteArrayOutputStream();
@@ -75,14 +71,14 @@ public class HairlineStrokeRenderTest {
         }
     }
 
-    /** A horizontal 1-width line must not be dropped by the empty-bounds guard. */
+    /// A horizontal 1-width line must not be dropped by the empty-bounds guard.
     @Test
     public void horizontalLineWithNormalWidthIsStroked() throws Exception {
         assertTrue(widestInkRow("0 0 0 RG 1 w 50 150 m 250 150 l S") >= 190,
                 "horizontal line (zero-height bounds) must be stroked");
     }
 
-    /** A vertical 1-width line must not be dropped by the empty-bounds guard. */
+    /// A vertical 1-width line must not be dropped by the empty-bounds guard.
     @Test
     public void verticalLineWithNormalWidthIsStroked() throws Exception {
         // Widest row sees only ~1-2 px of a vertical line; just require ink.
@@ -90,17 +86,15 @@ public class HairlineStrokeRenderTest {
                 "vertical line (zero-width bounds) must be stroked");
     }
 
-    /** Zero-width (`0 w`) = thinnest device line, NOT invisible (ISO 32000 8.4.3.2). */
+    /// Zero-width (\`0 w\`) = thinnest device line, NOT invisible (ISO 32000 8.4.3.2).
     @Test
     public void zeroWidthHairlineIsVisible() throws Exception {
         assertTrue(widestInkRow("0 0 0 RG 0 w 50 150 m 250 150 l S") >= 190,
                 "0-width hairline must render as the thinnest visible line");
     }
 
-    /**
-     * The corpus-29903 shape: a down-scaling CTM (0.05) with a 0-width rule
-     * inside a clip. The stroke must survive both the clip and the scale.
-     */
+    /// The corpus-29903 shape: a down-scaling CTM (0.05) with a 0-width rule
+    /// inside a clip. The stroke must survive both the clip and the scale.
     @Test
     public void hairlineUnderDownScalingCtmAndClipIsVisible() throws Exception {
         String cs = "q 0.05 0 0 0.05 0 0 cm"

@@ -15,18 +15,16 @@ import java.nio.charset.StandardCharsets;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * Audit hygiene guard: the production pagination path must write NOTHING to
- * {@code System.out}/{@code System.err} unless a debug property
- * ({@code -Dxfa.dumpSplit} / {@code -Dxfa.dumpTree}) is explicitly set — the
- * split/tree dumps are diagnostics, not consumer-visible noise. Also proves the
- * dump still works when the flag IS set (so the diagnostics stay usable).
- */
+/// Audit hygiene guard: the production pagination path must write NOTHING to
+/// `System.out`/`System.err` unless a debug property
+/// (`-Dxfa.dumpSplit` / `-Dxfa.dumpTree`) is explicitly set — the
+/// split/tree dumps are diagnostics, not consumer-visible noise. Also proves the
+/// dump still works when the flag IS set (so the diagnostics stay usable).
 public class XfaPageSplitterQuietTest {
 
     private static final String TPL = "http://www.xfa.org/schema/xfa-template/3.0/";
 
-    /** A flowed multi-page table layout (600pt of rows in a 150pt region ⇒ 4 pages). */
+    /// A flowed multi-page table layout (600pt of rows in a 150pt region ⇒ 4 pages).
     private static XfaFlowLayout.Result multiPageLayout() throws Exception {
         StringBuilder rows = new StringBuilder();
         for (int i = 0; i < 20; i++) {

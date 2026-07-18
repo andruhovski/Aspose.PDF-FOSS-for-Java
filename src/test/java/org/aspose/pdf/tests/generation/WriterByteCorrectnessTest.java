@@ -24,30 +24,28 @@ import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Bugs N1 and N2 — writer-byte-level correctness.
- *
- * <p><strong>N1:</strong> ISO 32000-1:2008 §7.5.4 mandates cross-reference
- * table entries to be exactly 20 bytes (SP CR or SP LF terminator — NOT
- * SP CR LF). Without that, readers that index xref by absolute byte offset
- * (Adobe Reader, Ghostscript, mupdf) land in the wrong record.</p>
- *
- * <p><strong>N2:</strong> ISO 32000-1:2008 §7.3.8.1 — "All streams shall be
- * indirect objects". Inline {@code <<…>> stream…endstream} embedded in
- * parent dictionaries are rejected by strict readers.</p>
- *
- * <p>The locale fix (Bug M) has its own dedicated test in
- * {@code TextBuilderLocaleTest}; the combined smoke test
- * {@link #freshDocumentWithFormFields_passesStrictParse} here verifies all
- * three fixes jointly produce a clean round-trip.</p>
- */
+/// Bugs N1 and N2 — writer-byte-level correctness.
+///
+/// **N1:** ISO 32000-1:2008 §7.5.4 mandates cross-reference
+/// table entries to be exactly 20 bytes (SP CR or SP LF terminator — NOT
+/// SP CR LF). Without that, readers that index xref by absolute byte offset
+/// (Adobe Reader, Ghostscript, mupdf) land in the wrong record.
+///
+/// **N2:** ISO 32000-1:2008 §7.3.8.1 — "All streams shall be
+/// indirect objects". Inline `<<…>> stream…endstream` embedded in
+/// parent dictionaries are rejected by strict readers.
+///
+/// The locale fix (Bug M) has its own dedicated test in
+/// `TextBuilderLocaleTest`; the combined smoke test
+/// [#freshDocumentWithFormFields\_passesStrictParse] here verifies all
+/// three fixes jointly produce a clean round-trip.
 class WriterByteCorrectnessTest {
 
     @TempDir Path tempDir;
 
     // ───────────────────────── N1 — xref entry size ──────────────────────────
 
-    /** Build a doc with a few objects so the xref table has &gt;= 4 entries. */
+    /// Build a doc with a few objects so the xref table has >= 4 entries.
     private Path buildDocWithSeveralObjects(String label) throws IOException {
         Path out = tempDir.resolve(label + ".pdf");
         try (Document doc = new Document()) {
@@ -62,7 +60,7 @@ class WriterByteCorrectnessTest {
         return out;
     }
 
-    /** Parses {@code startxref} at the end of {@code data} and returns its offset. */
+    /// Parses `startxref` at the end of `data` and returns its offset.
     private static int parseStartXrefOffset(byte[] data) {
         String tail = new String(data, Math.max(0, data.length - 4096), Math.min(4096, data.length),
                 StandardCharsets.ISO_8859_1);
@@ -73,7 +71,7 @@ class WriterByteCorrectnessTest {
         return last;
     }
 
-    /** Parses the {@code "0 N\n"} subsection header at the xref position; returns count. */
+    /// Parses the `"0 N\\n"` subsection header at the xref position; returns count.
     private static int parseXrefSubsectionCount(byte[] data, int xrefOff) {
         // Expect: "xref\n0 N\n"
         assertArrayEqualsAt(data, xrefOff, "xref\n");
@@ -87,7 +85,7 @@ class WriterByteCorrectnessTest {
         return Integer.parseInt(parts[1]);
     }
 
-    /** Returns the byte offset where the first xref entry begins. */
+    /// Returns the byte offset where the first xref entry begins.
     private static int xrefEntriesStart(byte[] data, int xrefOff) {
         int p = xrefOff + 5; // past "xref\n"
         while (p < data.length && data[p] != '\n') p++;
@@ -193,10 +191,8 @@ class WriterByteCorrectnessTest {
 
     // ───────────────────────── N2 — orphan streams ───────────────────────────
 
-    /**
-     * Returns the offset of the next byte after the closest preceding
-     * {@code " obj\n"} marker (or -1 if none).
-     */
+    /// Returns the offset of the next byte after the closest preceding
+    /// `" obj\\n"` marker (or -1 if none).
     private static int findPrecedingObjStart(byte[] data, int pos) {
         // Search backwards for " obj\n"
         byte[] needle = " obj\n".getBytes(StandardCharsets.US_ASCII);
@@ -223,21 +219,19 @@ class WriterByteCorrectnessTest {
         return count;
     }
 
-    /**
-     * Walks the file; for every {@code "stream"} keyword that is followed by
-     * an EOL (i.e., starts a stream body, not an {@code endstream} substring),
-     * asserts that between the start of the enclosing indirect object
-     * ({@code " obj\n"}) and the stream keyword, the number of {@code "<<"}
-     * matches the number of {@code ">>"} — i.e., the stream's own dictionary
-     * is balanced and closed before the {@code stream} keyword. An imbalance
-     * (more opens than closes) means we're inside a parent dict and the
-     * stream is being serialised inline, violating ISO 32000-1:2008 §7.3.8.1.
-     *
-     * <p>{@code countOccurrences} of {@code "<<"} alone is NOT a valid
-     * invariant: a stream dict may legitimately have nested entries (e.g.,
-     * {@code /Resources << /Font << ... >> >>}) which inflates the {@code <<}
-     * count above 1 even though the stream is correctly indirect.</p>
-     */
+    /// Walks the file; for every `"stream"` keyword that is followed by
+    /// an EOL (i.e., starts a stream body, not an `endstream` substring),
+    /// asserts that between the start of the enclosing indirect object
+    /// (`" obj\\n"`) and the stream keyword, the number of `"<<"`
+    /// matches the number of `">>"` — i.e., the stream's own dictionary
+    /// is balanced and closed before the `stream` keyword. An imbalance
+    /// (more opens than closes) means we're inside a parent dict and the
+    /// stream is being serialised inline, violating ISO 32000-1:2008 §7.3.8.1.
+    ///
+    /// `countOccurrences` of `"<<"` alone is NOT a valid
+    /// invariant: a stream dict may legitimately have nested entries (e.g.,
+    /// `/Resources << /Font << ... >> >>`) which inflates the `<<`
+    /// count above 1 even though the stream is correctly indirect.
     private void assertNoInlineStreams(Path pdf) throws IOException {
         byte[] data = Files.readAllBytes(pdf);
         byte[] streamKW = "stream".getBytes(StandardCharsets.US_ASCII);

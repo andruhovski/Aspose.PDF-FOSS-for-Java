@@ -8,11 +8,7 @@ import org.aspose.pdf.engine.pdfobjects.PdfArray;
 import org.aspose.pdf.engine.pdfobjects.PdfBase;
 import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
 import org.aspose.pdf.engine.pdfobjects.PdfString;
-import org.aspose.pdf.text.TextFragment;
-import org.aspose.pdf.text.TextFragmentAbsorber;
-import org.aspose.pdf.text.TextFragmentCollection;
-import org.aspose.pdf.text.TextReplaceOptions;
-import org.aspose.pdf.text.TextSearchOptions;
+import org.aspose.pdf.text.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,12 +16,10 @@ import java.io.OutputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Provides methods for editing PDF content, primarily text replacement operations.
- * <p>
- * Usage pattern: create an instance, bind a PDF via {@link #bindPdf(String)},
- * perform operations, then {@link #save(String)}.
- */
+/// Provides methods for editing PDF content, primarily text replacement operations.
+///
+/// Usage pattern: create an instance, bind a PDF via [#bindPdf(String)],
+/// perform operations, then [#save(String)].
 public class PdfContentEditor implements AutoCloseable {
 
     private static final Logger LOG = Logger.getLogger(PdfContentEditor.class.getName());
@@ -34,45 +28,35 @@ public class PdfContentEditor implements AutoCloseable {
     private TextReplaceOptions textReplaceOptions;
     private final ReplaceTextStrategy replaceTextStrategy = new ReplaceTextStrategy();
 
-    /**
-     * Creates a new {@code PdfContentEditor} instance.
-     */
+    /// Creates a new `PdfContentEditor` instance.
     public PdfContentEditor() {
     }
 
-    /**
-     * Returns the text replace options used by this editor.
-     *
-     * @return the text replace options, or null
-     */
+    /// Returns the text replace options used by this editor.
+    ///
+    /// @return the text replace options, or null
     public TextReplaceOptions getTextReplaceOptions() {
         return textReplaceOptions;
     }
 
-    /**
-     * Sets the text replace options.
-     *
-     * @param options the text replace options
-     */
+    /// Sets the text replace options.
+    ///
+    /// @param options the text replace options
     public void setTextReplaceOptions(TextReplaceOptions options) {
         this.textReplaceOptions = options;
     }
 
-    /**
-     * Returns text-replacement strategy settings.
-     *
-     * @return replacement strategy configuration
-     */
+    /// Returns text-replacement strategy settings.
+    ///
+    /// @return replacement strategy configuration
     public ReplaceTextStrategy getReplaceTextStrategy() {
         return replaceTextStrategy;
     }
 
-    /**
-     * Binds a PDF file to this editor.
-     *
-     * @param inputFile path to the PDF file
-     * @return {@code true} on success
-     */
+    /// Binds a PDF file to this editor.
+    ///
+    /// @param inputFile path to the PDF file
+    /// @return `true` on success
     public boolean bindPdf(String inputFile) {
         try {
             this.document = new Document(inputFile);
@@ -83,12 +67,10 @@ public class PdfContentEditor implements AutoCloseable {
         }
     }
 
-    /**
-     * Binds a PDF from an input stream.
-     *
-     * @param inputStream the input stream containing PDF data
-     * @return {@code true} on success
-     */
+    /// Binds a PDF from an input stream.
+    ///
+    /// @param inputStream the input stream containing PDF data
+    /// @return `true` on success
     public boolean bindPdf(InputStream inputStream) {
         try {
             this.document = new Document(inputStream);
@@ -99,12 +81,10 @@ public class PdfContentEditor implements AutoCloseable {
         }
     }
 
-    /**
-     * Binds an existing {@link Document} to this editor.
-     *
-     * @param document the document to bind
-     * @return {@code true} on success
-     */
+    /// Binds an existing [Document] to this editor.
+    ///
+    /// @param document the document to bind
+    /// @return `true` on success
     public boolean bindPdf(Document document) {
         if (document == null) {
             LOG.warning("Cannot bind null document");
@@ -114,12 +94,10 @@ public class PdfContentEditor implements AutoCloseable {
         return true;
     }
 
-    /**
-     * Saves the bound document to a file.
-     *
-     * @param outputFile path to the output file
-     * @return {@code true} on success
-     */
+    /// Saves the bound document to a file.
+    ///
+    /// @param outputFile path to the output file
+    /// @return `true` on success
     public boolean save(String outputFile) {
         try {
             document.requestFullRewrite();
@@ -131,12 +109,10 @@ public class PdfContentEditor implements AutoCloseable {
         }
     }
 
-    /**
-     * Saves the bound document to an output stream.
-     *
-     * @param outputStream the output stream
-     * @return {@code true} on success
-     */
+    /// Saves the bound document to an output stream.
+    ///
+    /// @param outputStream the output stream
+    /// @return `true` on success
     public boolean save(OutputStream outputStream) {
         try {
             document.requestFullRewrite();
@@ -148,13 +124,11 @@ public class PdfContentEditor implements AutoCloseable {
         }
     }
 
-    /**
-     * Replaces all occurrences of the specified text throughout the entire document.
-     *
-     * @param searchText  the text to find
-     * @param replaceText the replacement text
-     * @return {@code true} if at least one replacement was made
-     */
+    /// Replaces all occurrences of the specified text throughout the entire document.
+    ///
+    /// @param searchText  the text to find
+    /// @param replaceText the replacement text
+    /// @return `true` if at least one replacement was made
     public boolean replaceText(String searchText, String replaceText) {
         try {
             TextFragmentAbsorber absorber = createAbsorber(searchText);
@@ -179,14 +153,12 @@ public class PdfContentEditor implements AutoCloseable {
         }
     }
 
-    /**
-     * Replaces all occurrences of the specified text on a specific page.
-     *
-     * @param searchText  the text to find
-     * @param pageNumber  1-based page number
-     * @param replaceText the replacement text
-     * @return {@code true} if at least one replacement was made
-     */
+    /// Replaces all occurrences of the specified text on a specific page.
+    ///
+    /// @param searchText  the text to find
+    /// @param pageNumber  1-based page number
+    /// @param replaceText the replacement text
+    /// @return `true` if at least one replacement was made
     public boolean replaceText(String searchText, int pageNumber, String replaceText) {
         try {
             PageCollection pages = document.getPages();
@@ -213,21 +185,17 @@ public class PdfContentEditor implements AutoCloseable {
         }
     }
 
-    /**
-     * Returns the bound document.
-     *
-     * @return the document, or {@code null} if no document is bound
-     */
+    /// Returns the bound document.
+    ///
+    /// @return the document, or `null` if no document is bound
     public Document getDocument() {
         return document;
     }
 
-    /**
-     * Returns stamp metadata stored on a page.
-     *
-     * @param pageNumber 1-based page number
-     * @return an array of stamp info records
-     */
+    /// Returns stamp metadata stored on a page.
+    ///
+    /// @param pageNumber 1-based page number
+    /// @return an array of stamp info records
     public StampInfo[] getStamps(int pageNumber) {
         if (document == null) {
             return new StampInfo[0];
@@ -269,13 +237,11 @@ public class PdfContentEditor implements AutoCloseable {
         }
     }
 
-    /**
-     * Deletes a stamp metadata entry by stamp id.
-     *
-     * @param pageNumber 1-based page number
-     * @param stampId stamp identifier
-     * @return {@code true} if a metadata entry was removed
-     */
+    /// Deletes a stamp metadata entry by stamp id.
+    ///
+    /// @param pageNumber 1-based page number
+    /// @param stampId stamp identifier
+    /// @return `true` if a metadata entry was removed
     public boolean deleteStampById(int pageNumber, int stampId) {
         if (document == null) {
             return false;
@@ -296,12 +262,10 @@ public class PdfContentEditor implements AutoCloseable {
         return false;
     }
 
-    /**
-     * Deletes stamp metadata entries by stamp id from all pages.
-     *
-     * @param stampId stamp identifier
-     * @return {@code true} if at least one metadata entry was removed
-     */
+    /// Deletes stamp metadata entries by stamp id from all pages.
+    ///
+    /// @param stampId stamp identifier
+    /// @return `true` if at least one metadata entry was removed
     public boolean deleteStampById(int stampId) {
         if (document == null) {
             return false;
@@ -318,11 +282,9 @@ public class PdfContentEditor implements AutoCloseable {
         return removed;
     }
 
-    /**
-     * Creates a {@link org.aspose.pdf.annotations.TextAnnotation} on
-     * the given page at the given rectangle. Mirrors C#
-     * {@code PdfContentEditor.CreateText(Rectangle, string, string, bool, string, int)}.
-     */
+    /// Creates a [org.aspose.pdf.annotations.TextAnnotation] on
+    /// the given page at the given rectangle. Mirrors C#
+    /// `PdfContentEditor.CreateText(Rectangle, string, string, bool, string, int)`.
     public boolean createText(org.aspose.pdf.Rectangle rect, String title,
                               String contents, boolean open, String icon, int pageNumber) {
         if (document == null) {
@@ -347,9 +309,7 @@ public class PdfContentEditor implements AutoCloseable {
         }
     }
 
-    /**
-     * Closes the editor and releases the bound document.
-     */
+    /// Closes the editor and releases the bound document.
     public void close() {
         if (document != null) {
             try {

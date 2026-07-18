@@ -3,9 +3,7 @@ package org.aspose.pdf.engine.security.asn1;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Well-known OID constants for PKCS#7, X.509, and PDF signatures.
- */
+/// Well-known OID constants for PKCS#7, X.509, and PDF signatures.
 public final class OIDs {
 
     private OIDs() {}
@@ -103,14 +101,12 @@ public final class OIDs {
         JCA_TO_SIG_OID.put("SHA512withECDSA", ECDSA_WITH_SHA512);
     }
 
-    /**
-     * Returns the JCA signature algorithm name (e.g. {@code SHA256withDSA}) for a
-     * digest algorithm combined with a private/public key algorithm family.
-     *
-     * @param digestAlg JCA digest name (e.g. {@code SHA-256})
-     * @param keyAlgorithm JCA key algorithm ({@code RSA}, {@code DSA}, {@code EC}/{@code ECDSA})
-     * @return the combined JCA signature algorithm name
-     */
+    /// Returns the JCA signature algorithm name (e.g. `SHA256withDSA`) for a
+    /// digest algorithm combined with a private/public key algorithm family.
+    ///
+    /// @param digestAlg JCA digest name (e.g. `SHA-256`)
+    /// @param keyAlgorithm JCA key algorithm (`RSA`, `DSA`, `EC`/`ECDSA`)
+    /// @return the combined JCA signature algorithm name
     public static String signatureAlgorithmFor(String digestAlg, String keyAlgorithm) {
         String d;
         switch (digestAlg == null ? "SHA-256" : digestAlg) {
@@ -128,27 +124,27 @@ public final class OIDs {
         }
     }
 
-    /** Maps OID to JCA digest algorithm name. */
+    /// Maps OID to JCA digest algorithm name.
     public static String toJCADigest(String oid) {
         return OID_TO_JCA_DIGEST.getOrDefault(oid, "SHA-256");
     }
 
-    /** Maps OID to JCA signature algorithm name. */
+    /// Maps OID to JCA signature algorithm name.
     public static String toJCASignature(String oid) {
         return OID_TO_JCA_SIG.getOrDefault(oid, "SHA256withRSA");
     }
 
-    /** Maps JCA digest name to OID. */
+    /// Maps JCA digest name to OID.
     public static String digestToOID(String jcaName) {
         return JCA_TO_OID_DIGEST.getOrDefault(jcaName, SHA256);
     }
 
-    /** Maps JCA signature name to OID. */
+    /// Maps JCA signature name to OID.
     public static String signatureToOID(String jcaName) {
         return JCA_TO_SIG_OID.getOrDefault(jcaName, SHA256_WITH_RSA);
     }
 
-    /** Returns the JCA signature algorithm for a digest + RSA combo. */
+    /// Returns the JCA signature algorithm for a digest + RSA combo.
     public static String signatureAlgorithmForDigest(String digestAlg) {
         switch (digestAlg) {
             case "SHA-1": return "SHA1withRSA";

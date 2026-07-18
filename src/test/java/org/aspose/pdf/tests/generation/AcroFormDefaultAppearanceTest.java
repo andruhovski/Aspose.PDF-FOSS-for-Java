@@ -20,11 +20,9 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Bug D — variable-text form fields must carry a {@code /DA} string with at
- * least a {@code Tf} operator, and the AcroForm root must carry a {@code /DR}
- * resource dictionary providing the font(s) referenced by {@code /DA}.
- */
+/// Bug D — variable-text form fields must carry a `/DA` string with at
+/// least a `Tf` operator, and the AcroForm root must carry a `/DR`
+/// resource dictionary providing the font(s) referenced by `/DA`.
 class AcroFormDefaultAppearanceTest {
 
     @TempDir Path tempDir;

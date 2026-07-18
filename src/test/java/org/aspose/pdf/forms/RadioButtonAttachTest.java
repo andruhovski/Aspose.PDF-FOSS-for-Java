@@ -14,11 +14,9 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Promo 12 — {@link RadioButtonField#add(RadioButtonOptionField)} attach API
- * plus per-option decorators (setBorder/setCaption/setColor/setDefaultAppearance).
- * Closes the RadioButton cluster that blocked 5+ tests in audit 15b.
- */
+/// Promo 12 — [RadioButtonField#add(RadioButtonOptionField)] attach API
+/// plus per-option decorators (setBorder/setCaption/setColor/setDefaultAppearance).
+/// Closes the RadioButton cluster that blocked 5+ tests in audit 15b.
 class RadioButtonAttachTest {
 
     @Test

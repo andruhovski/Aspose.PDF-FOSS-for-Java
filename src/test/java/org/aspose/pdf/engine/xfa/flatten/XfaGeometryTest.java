@@ -14,7 +14,7 @@ import java.nio.charset.StandardCharsets;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-/** A5.1: XFA top-left layout coords -> absolute PDF bottom-left Rectangle. */
+/// A5.1: XFA top-left layout coords -> absolute PDF bottom-left Rectangle.
 public class XfaGeometryTest {
 
     private static final String TPL = XfaNode.TEMPLATE_NS;

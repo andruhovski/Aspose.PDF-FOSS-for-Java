@@ -1,41 +1,30 @@
 package org.aspose.pdf.engine.pdfa.rules;
 
 import org.aspose.pdf.PdfFormat;
-import org.aspose.pdf.engine.pdfobjects.PdfArray;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectKey;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
-import org.aspose.pdf.engine.pdfobjects.PdfStream;
+import org.aspose.pdf.engine.parser.PDFParser;
 import org.aspose.pdf.engine.pdfa.PdfARule;
 import org.aspose.pdf.engine.pdfa.PdfAValidationResult;
-import org.aspose.pdf.engine.parser.PDFParser;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.io.IOException;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Validates PDF file structure requirements for PDF/A compliance.
- *
- * <p>Checks the following ISO 19005 clauses:</p>
- * <ul>
- *   <li>6.1.3 &mdash; Trailer must have /ID and must NOT have /Encrypt</li>
- *   <li>6.1.7 &mdash; No stream dictionary may have /F, /FFilter, /FDecodeParms</li>
- *   <li>6.1.10 &mdash; No /LZWDecode filter in any stream</li>
- *   <li>6.1.11 &mdash; Embedded files restrictions</li>
- *   <li>6.1.13 &mdash; No /OCProperties in catalog (PDF/A-1 only)</li>
- * </ul>
- */
+/// Validates PDF file structure requirements for PDF/A compliance.
+///
+/// Checks the following ISO 19005 clauses:
+///
+///   - 6.1.3 — Trailer must have /ID and must NOT have /Encrypt
+///   - 6.1.7 — No stream dictionary may have /F, /FFilter, /FDecodeParms
+///   - 6.1.10 — No /LZWDecode filter in any stream
+///   - 6.1.11 — Embedded files restrictions
+///   - 6.1.13 — No /OCProperties in catalog (PDF/A-1 only)
 public final class FileStructureRules implements PdfARule {
 
     private static final Logger LOG = Logger.getLogger(FileStructureRules.class.getName());
 
-    /**
-     * Creates a new file structure rules checker.
-     */
+    /// Creates a new file structure rules checker.
     public FileStructureRules() {
         // default constructor
     }
@@ -52,9 +41,7 @@ public final class FileStructureRules implements PdfARule {
         checkOptionalContent(parser, format, result);
     }
 
-    /**
-     * 6.1.3: Trailer must have /ID and must NOT have /Encrypt.
-     */
+    /// 6.1.3: Trailer must have /ID and must NOT have /Encrypt.
     private void checkTrailer(PDFParser parser, PdfFormat format, PdfAValidationResult result) {
         PdfDictionary trailer = parser.getTrailer();
         if (trailer == null) {
@@ -76,10 +63,8 @@ public final class FileStructureRules implements PdfARule {
         }
     }
 
-    /**
-     * 6.1.7: No stream dict may have /F, /FFilter, /FDecodeParms.
-     * 6.1.10: No /LZWDecode filter in any stream.
-     */
+    /// 6.1.7: No stream dict may have /F, /FFilter, /FDecodeParms.
+    /// 6.1.10: No /LZWDecode filter in any stream.
     private void checkStreams(PDFParser parser, PdfFormat format, PdfAValidationResult result) {
         Set<PdfObjectKey> keys = parser.getAllObjectKeys();
         if (keys == null) {
@@ -125,9 +110,7 @@ public final class FileStructureRules implements PdfARule {
         }
     }
 
-    /**
-     * Checks whether a stream uses LZWDecode filter (forbidden by 6.1.10).
-     */
+    /// Checks whether a stream uses LZWDecode filter (forbidden by 6.1.10).
     private void checkLzwFilter(PdfStream stream, String objPath, PdfAValidationResult result) {
         PdfBase filterVal = stream.get("Filter");
         if (filterVal == null) {
@@ -168,12 +151,10 @@ public final class FileStructureRules implements PdfARule {
         }
     }
 
-    /**
-     * 6.1.11: Embedded files restrictions.
-     * PDF/A-1: no /EF in file specs, no /EmbeddedFiles in names dict.
-     * PDF/A-2: allowed if compliant.
-     * PDF/A-3: any embedded files allowed.
-     */
+    /// 6.1.11: Embedded files restrictions.
+    /// PDF/A-1: no /EF in file specs, no /EmbeddedFiles in names dict.
+    /// PDF/A-2: allowed if compliant.
+    /// PDF/A-3: any embedded files allowed.
     private void checkEmbeddedFiles(PDFParser parser, PdfFormat format,
                                      PdfAValidationResult result) {
         // Only PDF/A-1 forbids embedded files entirely
@@ -226,9 +207,7 @@ public final class FileStructureRules implements PdfARule {
         }
     }
 
-    /**
-     * 6.1.13: No /OCProperties in catalog (PDF/A-1 only).
-     */
+    /// 6.1.13: No /OCProperties in catalog (PDF/A-1 only).
     private void checkOptionalContent(PDFParser parser, PdfFormat format,
                                        PdfAValidationResult result) {
         if (!format.isPdfA1()) {
@@ -250,12 +229,10 @@ public final class FileStructureRules implements PdfARule {
         }
     }
 
-    /**
-     * Resolves a PdfBase value to a PdfDictionary, dereferencing if needed.
-     *
-     * @param val the value (may be an indirect reference)
-     * @return the dictionary, or null
-     */
+    /// Resolves a PdfBase value to a PdfDictionary, dereferencing if needed.
+    ///
+    /// @param val the value (may be an indirect reference)
+    /// @return the dictionary, or null
     private static PdfDictionary resolveDict(PdfBase val) {
         if (val instanceof PdfObjectReference) {
             try {

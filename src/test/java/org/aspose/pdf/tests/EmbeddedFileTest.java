@@ -9,9 +9,7 @@ import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for EmbeddedFileCollection, FileSpecification, FileParams.
- */
+/// Tests for EmbeddedFileCollection, FileSpecification, FileParams.
 public class EmbeddedFileTest {
 
     @Test

@@ -1,34 +1,29 @@
 package org.aspose.pdf.annotations;
 
-import org.aspose.pdf.*;
+import org.aspose.pdf.Page;
+import org.aspose.pdf.Rectangle;
 import org.aspose.pdf.engine.pdfobjects.*;
 
-/**
- * Highlight annotation (ISO 32000-1:2008, Section 12.5.6.10, /Subtype /Highlight).
- * <p>
- * A highlight annotation appears as a highlight behind the text. The region
- * to be highlighted is specified by the /QuadPoints array, which defines
- * quadrilaterals covering the text.
- * </p>
- */
+/// Highlight annotation (ISO 32000-1:2008, Section 12.5.6.10, /Subtype /Highlight).
+///
+/// A highlight annotation appears as a highlight behind the text. The region
+/// to be highlighted is specified by the /QuadPoints array, which defines
+/// quadrilaterals covering the text.
+///
 public class HighlightAnnotation extends MarkupAnnotation {
 
-    /**
-     * Constructs a highlight annotation from an existing PDF dictionary.
-     *
-     * @param dict the PDF dictionary backing this annotation
-     * @param page the page this annotation belongs to
-     */
+    /// Constructs a highlight annotation from an existing PDF dictionary.
+    ///
+    /// @param dict the PDF dictionary backing this annotation
+    /// @param page the page this annotation belongs to
     public HighlightAnnotation(PdfDictionary dict, Page page) {
         super(dict, page);
     }
 
-    /**
-     * Constructs a new highlight annotation with the given rectangle on the specified page.
-     *
-     * @param page the page this annotation belongs to
-     * @param rect the annotation rectangle
-     */
+    /// Constructs a new highlight annotation with the given rectangle on the specified page.
+    ///
+    /// @param page the page this annotation belongs to
+    /// @param rect the annotation rectangle
     public HighlightAnnotation(Page page, Rectangle rect) {
         super(page, rect);
         dict.set(PdfName.of("Subtype"), PdfName.of("Highlight"));
@@ -43,15 +38,12 @@ public class HighlightAnnotation extends MarkupAnnotation {
         });
     }
 
-    /**
-     * Returns the quadrilateral points defining the highlighted regions.
-     * <p>
-     * Each set of 8 values defines a quadrilateral: four (x, y) pairs
-     * specifying the corners in counterclockwise order.
-     * </p>
-     *
-     * @return the quad points array, or null if not set
-     */
+    /// Returns the quadrilateral points defining the highlighted regions.
+    ///
+    /// Each set of 8 values defines a quadrilateral: four (x, y) pairs
+    /// specifying the corners in counterclockwise order.
+    ///
+    /// @return the quad points array, or null if not set
     public double[] getQuadPoints() {
         PdfBase qp = dict.get("QuadPoints");
         if (qp instanceof PdfArray) {
@@ -65,11 +57,9 @@ public class HighlightAnnotation extends MarkupAnnotation {
         return null;
     }
 
-    /**
-     * Sets the quadrilateral points defining the highlighted regions.
-     *
-     * @param points the quad points array (multiples of 8 values)
-     */
+    /// Sets the quadrilateral points defining the highlighted regions.
+    ///
+    /// @param points the quad points array (multiples of 8 values)
     public void setQuadPoints(double[] points) {
         if (points == null) return;
         PdfArray arr = new PdfArray();
@@ -79,16 +69,14 @@ public class HighlightAnnotation extends MarkupAnnotation {
         dict.set(PdfName.of("QuadPoints"), arr);
     }
 
-    /**
-     * Sets multiple quadrilaterals at once. Each {@code double[8]} sub-array
-     * is one quad in {@code [TLx TLy TRx TRy BLx BLy BRx BRy]} order
-     * (ISO 32000-1:2008 §12.5.6.10 Table 179). The sub-arrays are
-     * concatenated into the underlying flat representation.
-     *
-     * @param quads array of {@code double[8]} quadrilaterals;
-     *              passing {@code null} removes the {@code /QuadPoints} entry.
-     * @throws IllegalArgumentException if any sub-array is null
-     */
+    /// Sets multiple quadrilaterals at once. Each `double[8]` sub-array
+    /// is one quad in `[TLx TLy TRx TRy BLx BLy BRx BRy]` order
+    /// (ISO 32000-1:2008 §12.5.6.10 Table 179). The sub-arrays are
+    /// concatenated into the underlying flat representation.
+    ///
+    /// @param quads array of `double[8]` quadrilaterals;
+    ///              passing `null` removes the `/QuadPoints` entry.
+    /// @throws IllegalArgumentException if any sub-array is null
     public void setQuadPoints(double[][] quads) {
         if (quads == null) {
             dict.set(PdfName.of("QuadPoints"), (PdfBase) null);

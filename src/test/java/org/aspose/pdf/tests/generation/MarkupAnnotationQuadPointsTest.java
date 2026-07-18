@@ -18,18 +18,16 @@ import java.util.function.BiFunction;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Stage 6 / Bug E — text-markup annotations must auto-derive {@code /QuadPoints}
- * in {@code [TLx TLy TRx TRy BLx BLy BRx BRy]} order per
- * ISO 32000-1:2008 §12.5.6.10 Table 179. Without that order, strict viewers
- * (Poppler/MuPDF) emit {@code "Bad Annot Text Markup QuadPoints"} and the
- * decoration disappears.
- */
+/// Stage 6 / Bug E — text-markup annotations must auto-derive `/QuadPoints`
+/// in `[TLx TLy TRx TRy BLx BLy BRx BRy]` order per
+/// ISO 32000-1:2008 §12.5.6.10 Table 179. Without that order, strict viewers
+/// (Poppler/MuPDF) emit `"Bad Annot Text Markup QuadPoints"` and the
+/// decoration disappears.
 class MarkupAnnotationQuadPointsTest {
 
     private static final double EPS = 1e-6;
 
-    /** Rect(100, 700, 200, 720) ⇒ expected [TLx TLy TRx TRy BLx BLy BRx BRy]. */
+    /// Rect(100, 700, 200, 720) ⇒ expected [TLx TLy TRx TRy BLx BLy BRx BRy].
     private static final double[] EXPECTED = {
             100, 720,  // top-left  (llx, ury)
             200, 720,  // top-right (urx, ury)

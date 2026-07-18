@@ -17,10 +17,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * Guards the {@code removePrivateInfo} pass: XMP metadata and PieceInfo
- * payloads are detached and their streams dropped from the output.
- */
+/// Guards the `removePrivateInfo` pass: XMP metadata and PieceInfo
+/// payloads are detached and their streams dropped from the output.
 public class RemovePrivateInfoTest {
 
     @TempDir
@@ -85,7 +83,7 @@ public class RemovePrivateInfoTest {
         }
     }
 
-    /** Without the flag, metadata must survive optimization. */
+    /// Without the flag, metadata must survive optimization.
     @Test
     public void metadataKeptWithoutFlag() throws Exception {
         Path plain = tempDir.resolve("keep.pdf");

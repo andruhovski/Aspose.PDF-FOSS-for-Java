@@ -14,15 +14,13 @@ import java.nio.charset.StandardCharsets;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * Renderer regression test: a Tiling Pattern fill must stay clipped to the
- * filled path even when the pattern cell's content contains q/Q pairs.
- *
- * <p>The cell runs with a fresh GraphicsState whose clip used to be null —
- * the first Q inside the cell then called applyClip(null) and erased the
- * path clip, splattering the cell content across the whole page (corpus
- * 16222.pdf: a 123pt photo tile painted 20× over the article text).</p>
- */
+/// Renderer regression test: a Tiling Pattern fill must stay clipped to the
+/// filled path even when the pattern cell's content contains q/Q pairs.
+///
+/// The cell runs with a fresh GraphicsState whose clip used to be null —
+/// the first Q inside the cell then called applyClip(null) and erased the
+/// path clip, splattering the cell content across the whole page (corpus
+/// 16222.pdf: a 123pt photo tile painted 20× over the article text).
 public class TilingPatternClipRenderTest {
 
     private static byte[] pdfWithPattern() {

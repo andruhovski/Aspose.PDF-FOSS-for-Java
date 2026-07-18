@@ -2,18 +2,9 @@ package org.aspose.pdf.engine.pdfa.fixes;
 
 import org.aspose.pdf.ConvertErrorAction;
 import org.aspose.pdf.PdfFormat;
-import org.aspose.pdf.engine.pdfobjects.PdfArray;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfBoolean;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfInteger;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectKey;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
-import org.aspose.pdf.engine.pdfobjects.PdfStream;
-import org.aspose.pdf.engine.pdfobjects.PdfString;
-import org.aspose.pdf.engine.pdfa.PdfAValidationResult;
 import org.aspose.pdf.engine.parser.PDFParser;
+import org.aspose.pdf.engine.pdfa.PdfAValidationResult;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.awt.color.ColorSpace;
 import java.awt.color.ICC_Profile;
@@ -22,39 +13,32 @@ import java.io.IOException;
 import java.util.logging.Logger;
 import java.util.zip.DeflaterOutputStream;
 
-/**
- * Graphics-related fixes for PDF/A compliance.
- * <p>
- * Handles output-intent creation (with an sRGB ICC profile), removal of image
- * alternate representations, removal of OPI dictionaries, and interpolation flag
- * correction.
- * </p>
- */
+/// Graphics-related fixes for PDF/A compliance.
+///
+/// Handles output-intent creation (with an sRGB ICC profile), removal of image
+/// alternate representations, removal of OPI dictionaries, and interpolation flag
+/// correction.
+///
 public final class GraphicsFixes {
 
     private static final Logger LOG = Logger.getLogger(GraphicsFixes.class.getName());
 
-    /**
-     * Creates a new GraphicsFixes instance.
-     */
+    /// Creates a new GraphicsFixes instance.
     public GraphicsFixes() {
         // default
     }
 
-    /**
-     * Adds an sRGB output intent to the catalog if no {@code /OutputIntents} array
-     * is present yet.
-     * <p>
-     * An output intent with {@code /S = /GTS_PDFA1} and an embedded sRGB ICC
-     * profile satisfies ISO 19005-1:2005, 6.2.2.
-     * </p>
-     *
-     * @param parser      the parsed PDF
-     * @param format      the target format
-     * @param errorAction the error action strategy
-     * @param result      the validation result
-     * @throws IOException if an I/O error occurs
-     */
+    /// Adds an sRGB output intent to the catalog if no `/OutputIntents` array
+    /// is present yet.
+    ///
+    /// An output intent with `/S = /GTS_PDFA1` and an embedded sRGB ICC
+    /// profile satisfies ISO 19005-1:2005, 6.2.2.
+    ///
+    /// @param parser      the parsed PDF
+    /// @param format      the target format
+    /// @param errorAction the error action strategy
+    /// @param result      the validation result
+    /// @throws IOException if an I/O error occurs
     public void addOutputIntent(PDFParser parser, PdfFormat format,
                                 ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
         PdfDictionary catalog = parser.getCatalog();
@@ -106,18 +90,15 @@ public final class GraphicsFixes {
                 "catalog/OutputIntents", "ISO 19005-1:2005, 6.2.2");
     }
 
-    /**
-     * Removes {@code /Alternates} entries from all image XObject dictionaries.
-     * <p>
-     * PDF/A forbids alternate image representations (ISO 19005-1:2005, 6.2.4).
-     * </p>
-     *
-     * @param parser      the parsed PDF
-     * @param format      the target format
-     * @param errorAction the error action strategy
-     * @param result      the validation result
-     * @throws IOException if an I/O error occurs
-     */
+    /// Removes `/Alternates` entries from all image XObject dictionaries.
+    ///
+    /// PDF/A forbids alternate image representations (ISO 19005-1:2005, 6.2.4).
+    ///
+    /// @param parser      the parsed PDF
+    /// @param format      the target format
+    /// @param errorAction the error action strategy
+    /// @param result      the validation result
+    /// @throws IOException if an I/O error occurs
     public void removeImageAlternates(PDFParser parser, PdfFormat format,
                                       ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
         for (PdfObjectKey key : parser.getAllObjectKeys()) {
@@ -146,18 +127,15 @@ public final class GraphicsFixes {
         }
     }
 
-    /**
-     * Removes {@code /OPI} dictionaries from all image and form XObjects.
-     * <p>
-     * PDF/A forbids OPI (Open Pre-press Interface) references (ISO 19005-1:2005, 6.2.4).
-     * </p>
-     *
-     * @param parser      the parsed PDF
-     * @param format      the target format
-     * @param errorAction the error action strategy
-     * @param result      the validation result
-     * @throws IOException if an I/O error occurs
-     */
+    /// Removes `/OPI` dictionaries from all image and form XObjects.
+    ///
+    /// PDF/A forbids OPI (Open Pre-press Interface) references (ISO 19005-1:2005, 6.2.4).
+    ///
+    /// @param parser      the parsed PDF
+    /// @param format      the target format
+    /// @param errorAction the error action strategy
+    /// @param result      the validation result
+    /// @throws IOException if an I/O error occurs
     public void removeOPI(PDFParser parser, PdfFormat format,
                           ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
         for (PdfObjectKey key : parser.getAllObjectKeys()) {
@@ -183,18 +161,15 @@ public final class GraphicsFixes {
         }
     }
 
-    /**
-     * Sets {@code /Interpolate} to {@code false} on all image XObjects.
-     * <p>
-     * PDF/A-1 requires /Interpolate to be false (ISO 19005-1:2005, 6.2.4).
-     * </p>
-     *
-     * @param parser      the parsed PDF
-     * @param format      the target format
-     * @param errorAction the error action strategy
-     * @param result      the validation result
-     * @throws IOException if an I/O error occurs
-     */
+    /// Sets `/Interpolate` to `false` on all image XObjects.
+    ///
+    /// PDF/A-1 requires /Interpolate to be false (ISO 19005-1:2005, 6.2.4).
+    ///
+    /// @param parser      the parsed PDF
+    /// @param format      the target format
+    /// @param errorAction the error action strategy
+    /// @param result      the validation result
+    /// @throws IOException if an I/O error occurs
     public void fixInterpolate(PDFParser parser, PdfFormat format,
                                ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
         for (PdfObjectKey key : parser.getAllObjectKeys()) {
@@ -220,9 +195,7 @@ public final class GraphicsFixes {
         }
     }
 
-    /**
-     * Finds the maximum object number currently in the parser.
-     */
+    /// Finds the maximum object number currently in the parser.
     private static int findMaxObjectNumber(PDFParser parser) {
         int maxObj = 0;
         for (PdfObjectKey k : parser.getAllObjectKeys()) {
@@ -231,9 +204,7 @@ public final class GraphicsFixes {
         return maxObj;
     }
 
-    /**
-     * Compresses data using Flate.
-     */
+    /// Compresses data using Flate.
     private static byte[] flateCompress(byte[] data) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream(data.length);
         try (DeflaterOutputStream dos = new DeflaterOutputStream(baos)) {

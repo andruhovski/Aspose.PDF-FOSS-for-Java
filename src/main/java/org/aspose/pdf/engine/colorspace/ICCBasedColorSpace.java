@@ -1,40 +1,36 @@
 package org.aspose.pdf.engine.colorspace;
 
+import org.aspose.pdf.engine.parser.PDFParser;
 import org.aspose.pdf.engine.pdfobjects.PdfBase;
 import org.aspose.pdf.engine.pdfobjects.PdfStream;
-import org.aspose.pdf.engine.parser.PDFParser;
 
 import java.awt.color.ICC_ColorSpace;
 import java.awt.color.ICC_Profile;
 import java.io.IOException;
 import java.util.logging.Logger;
 
-/**
- * ICCBased color space (ISO 32000-1:2008, §8.6.5.5).
- * <p>
- * Wraps an ICC profile stream. The embedded profile is parsed with the
- * JDK's own {@link java.awt.color.ICC_Profile} / {@link ICC_ColorSpace}
- * (no external dependency) and used for the actual conversion; if the
- * profile is absent or malformed we fall back to the /Alternate color
- * space (or a Device* space derived from /N).
- * </p>
- */
+/// ICCBased color space (ISO 32000-1:2008, §8.6.5.5).
+///
+/// Wraps an ICC profile stream. The embedded profile is parsed with the
+/// JDK's own [java.awt.color.ICC\_Profile] / [ICC\_ColorSpace]
+/// (no external dependency) and used for the actual conversion; if the
+/// profile is absent or malformed we fall back to the /Alternate color
+/// space (or a Device\* space derived from /N).
+///
 public class ICCBasedColorSpace extends ColorSpaceBase {
 
     private static final Logger LOG = Logger.getLogger(ICCBasedColorSpace.class.getName());
 
     private final int numComponents;
     private final ColorSpaceBase alternate;
-    /** JDK color space built from the embedded profile; null = use alternate. */
+    /// JDK color space built from the embedded profile; null = use alternate.
     private final ICC_ColorSpace iccColorSpace;
 
-    /**
-     * Creates an ICCBasedColorSpace from a profile stream.
-     *
-     * @param iccStream the ICC profile stream (must have /N)
-     * @param parser    the PDF parser (may be null)
-     * @throws IOException if reading the stream dict fails
-     */
+    /// Creates an ICCBasedColorSpace from a profile stream.
+    ///
+    /// @param iccStream the ICC profile stream (must have /N)
+    /// @param parser    the PDF parser (may be null)
+    /// @throws IOException if reading the stream dict fails
     public ICCBasedColorSpace(PdfStream iccStream, PDFParser parser) throws IOException {
         this.numComponents = iccStream.getInt("N", 3);
         this.iccColorSpace = loadIccColorSpace(iccStream, numComponents);
@@ -70,10 +66,8 @@ public class ICCBasedColorSpace extends ColorSpaceBase {
     @Override
     public int getNumberOfComponents() { return numComponents; }
 
-    /**
-     * Converts via the embedded ICC profile (JDK CMM) when available,
-     * otherwise via the /Alternate (or N-derived Device*) color space.
-     */
+    /// Converts via the embedded ICC profile (JDK CMM) when available,
+    /// otherwise via the /Alternate (or N-derived Device\*) color space.
     @Override
     public int toRGBInt(double[] comps) {
         if (iccColorSpace != null && comps != null && comps.length >= numComponents) {
@@ -96,11 +90,9 @@ public class ICCBasedColorSpace extends ColorSpaceBase {
         return alternate.toRGBInt(comps);
     }
 
-    /**
-     * Parses the embedded ICC profile bytes with the JDK CMM. Returns null
-     * (alternate-space fallback) when the data is missing, malformed, or the
-     * component count does not match /N.
-     */
+    /// Parses the embedded ICC profile bytes with the JDK CMM. Returns null
+    /// (alternate-space fallback) when the data is missing, malformed, or the
+    /// component count does not match /N.
     private static ICC_ColorSpace loadIccColorSpace(PdfStream iccStream, int n) {
         try {
             byte[] data = iccStream.getDecodedData();
@@ -119,10 +111,8 @@ public class ICCBasedColorSpace extends ColorSpaceBase {
         }
     }
 
-    /**
-     * Returns the alternate (fallback) color space used for conversions.
-     *
-     * @return the alternate color space
-     */
+    /// Returns the alternate (fallback) color space used for conversions.
+    ///
+    /// @return the alternate color space
     public ColorSpaceBase getAlternate() { return alternate; }
 }

@@ -15,12 +15,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * C2.3 — presence gating: {@code presence=hidden/invisible} objects produce NO marks
- * (this suppresses the draft-watermark exposure defect, ticket class 46656);
- * {@code visible} objects paint. Exercised with {@code <draw>} text labels (a watermark
- * is a {@code <draw>}).
- */
+/// C2.3 — presence gating: `presence=hidden/invisible` objects produce NO marks
+/// (this suppresses the draft-watermark exposure defect, ticket class 46656);
+/// `visible` objects paint. Exercised with `<draw>` text labels (a watermark
+/// is a `<draw>`).
 public class XfaPresencePaintTest {
 
     private static final String TPL = XfaNode.TEMPLATE_NS;

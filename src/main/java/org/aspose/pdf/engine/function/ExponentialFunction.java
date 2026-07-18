@@ -2,31 +2,26 @@ package org.aspose.pdf.engine.function;
 
 import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
 
-/**
- * Type 2 (Exponential Interpolation) function (ISO 32000-1:2008, §7.10.3).
- *
- * <p>Computes: {@code f(x) = C0 + x^N × (C1 - C0)}</p>
- * <ul>
- *   <li>When N=1: linear interpolation from C0 to C1</li>
- *   <li>C0 defaults to [0.0], C1 defaults to [1.0]</li>
- *   <li>Input must be one value; output is same dimensionality as C0/C1</li>
- * </ul>
- *
- * <p>This is the most common function type for Separation tint transforms.</p>
- */
+/// Type 2 (Exponential Interpolation) function (ISO 32000-1:2008, §7.10.3).
+///
+/// Computes: `f(x) = C0 + x^N × (C1 - C0)`
+///
+///   - When N=1: linear interpolation from C0 to C1
+///   - C0 defaults to [0.0], C1 defaults to [1.0]
+///   - Input must be one value; output is same dimensionality as C0/C1
+///
+/// This is the most common function type for Separation tint transforms.
 public final class ExponentialFunction extends PdfFunction {
 
     private final double[] c0;
     private final double[] c1;
     private final double exponent;
 
-    /**
-     * Creates an exponential function from a PDF dictionary.
-     *
-     * @param dict   the function dictionary
-     * @param domain the input domain
-     * @param range  the output range (may be null)
-     */
+    /// Creates an exponential function from a PDF dictionary.
+    ///
+    /// @param dict   the function dictionary
+    /// @param domain the input domain
+    /// @param range  the output range (may be null)
     public ExponentialFunction(PdfDictionary dict, double[] domain, double[] range) {
         super(domain, range);
         this.exponent = dict.getFloat("N", 1.0f);
@@ -38,15 +33,13 @@ public final class ExponentialFunction extends PdfFunction {
         this.c1 = (c1Raw != null) ? c1Raw : fillArray(numOutputs, 1.0);
     }
 
-    /**
-     * Creates an exponential function directly (for testing).
-     *
-     * @param domain   the input domain
-     * @param range    the output range
-     * @param c0       output at input 0
-     * @param c1       output at input 1
-     * @param exponent the interpolation exponent N
-     */
+    /// Creates an exponential function directly (for testing).
+    ///
+    /// @param domain   the input domain
+    /// @param range    the output range
+    /// @param c0       output at input 0
+    /// @param c1       output at input 1
+    /// @param exponent the interpolation exponent N
     public ExponentialFunction(double[] domain, double[] range,
                                 double[] c0, double[] c1, double exponent) {
         super(domain, range);
@@ -69,6 +62,6 @@ public final class ExponentialFunction extends PdfFunction {
         return result;
     }
 
-    /** Returns the exponent N. */
+    /// Returns the exponent N.
     public double getExponent() { return exponent; }
 }

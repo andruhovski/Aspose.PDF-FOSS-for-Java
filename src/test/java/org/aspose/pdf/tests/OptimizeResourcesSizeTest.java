@@ -13,11 +13,9 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * {@code optimizeResources()} must not make the file LARGER than a plain save
- * (PDFNEWNET-30310): optimization emits a compact object-stream rewrite, not a
- * linearized layout whose hint-stream overhead can outweigh the pruning.
- */
+/// `optimizeResources()` must not make the file LARGER than a plain save
+/// (PDFNEWNET-30310): optimization emits a compact object-stream rewrite, not a
+/// linearized layout whose hint-stream overhead can outweigh the pruning.
 public class OptimizeResourcesSizeTest {
 
     private static byte[] buildDoc() throws Exception {

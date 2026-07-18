@@ -9,13 +9,11 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * PDF string object (§7.3.4, ISO 32000-1:2008).
- * <p>
- * A sequence of bytes representable in literal {@code (Hello)} or hexadecimal
- * {@code <48656C6C6F>} form. Supports Unicode via BOM (0xFE 0xFF) + UTF-16BE encoding.
- * </p>
- */
+/// PDF string object (§7.3.4, ISO 32000-1:2008).
+///
+/// A sequence of bytes representable in literal `(Hello)` or hexadecimal
+/// `<48656C6C6F>` form. Supports Unicode via BOM (0xFE 0xFF) + UTF-16BE encoding.
+///
 public final class PdfString extends PdfBase {
 
     private static final Logger LOG = Logger.getLogger(PdfString.class.getName());
@@ -86,12 +84,10 @@ public final class PdfString extends PdfBase {
         PDF_DOC_ENCODING[0x1F] = '\u02DC'; // SMALL TILDE
     }
 
-    /**
-     * Creates a PdfString from raw bytes.
-     *
-     * @param bytes the raw PDF string bytes
-     * @throws IllegalArgumentException if bytes is null
-     */
+    /// Creates a PdfString from raw bytes.
+    ///
+    /// @param bytes the raw PDF string bytes
+    /// @throws IllegalArgumentException if bytes is null
     public PdfString(byte[] bytes) {
         if (bytes == null) {
             throw new IllegalArgumentException("Bytes must not be null");
@@ -99,13 +95,11 @@ public final class PdfString extends PdfBase {
         this.bytes = bytes.clone();
     }
 
-    /**
-     * Creates a PdfString from a Java string.
-     * Uses PDFDocEncoding if possible, otherwise UTF-16BE with BOM.
-     *
-     * @param text the string value
-     * @throws IllegalArgumentException if text is null
-     */
+    /// Creates a PdfString from a Java string.
+    /// Uses PDFDocEncoding if possible, otherwise UTF-16BE with BOM.
+    ///
+    /// @param text the string value
+    /// @throws IllegalArgumentException if text is null
     public PdfString(String text) {
         if (text == null) {
             throw new IllegalArgumentException("Text must not be null");
@@ -128,13 +122,11 @@ public final class PdfString extends PdfBase {
         }
     }
 
-    /**
-     * Creates a PdfString from a hex string (without angle brackets).
-     *
-     * @param hex the hex string (e.g. "48656C6C6F")
-     * @return the PdfString
-     * @throws IllegalArgumentException if hex is null
-     */
+    /// Creates a PdfString from a hex string (without angle brackets).
+    ///
+    /// @param hex the hex string (e.g. "48656C6C6F")
+    /// @return the PdfString
+    /// @throws IllegalArgumentException if hex is null
     public static PdfString fromHex(String hex) {
         if (hex == null) {
             throw new IllegalArgumentException("Hex string must not be null");
@@ -159,20 +151,16 @@ public final class PdfString extends PdfBase {
         return s;
     }
 
-    /**
-     * Returns the raw bytes of this string.
-     *
-     * @return a copy of the raw bytes
-     */
+    /// Returns the raw bytes of this string.
+    ///
+    /// @return a copy of the raw bytes
     public byte[] getBytes() {
         return bytes.clone();
     }
 
-    /**
-     * Decodes the bytes as text: if BOM present, UTF-16BE; otherwise PDFDocEncoding.
-     *
-     * @return the decoded string
-     */
+    /// Decodes the bytes as text: if BOM present, UTF-16BE; otherwise PDFDocEncoding.
+    ///
+    /// @return the decoded string
     public String getString() {
         if (bytes.length >= 2 && (bytes[0] & 0xFF) == 0xFE && (bytes[1] & 0xFF) == 0xFF) {
             return new String(bytes, 2, bytes.length - 2, StandardCharsets.UTF_16BE);
@@ -185,30 +173,24 @@ public final class PdfString extends PdfBase {
         return sb.toString();
     }
 
-    /**
-     * Sets whether this string should always be serialized in hex form.
-     *
-     * @param forceHex true to force hex serialization
-     */
+    /// Sets whether this string should always be serialized in hex form.
+    ///
+    /// @param forceHex true to force hex serialization
     public void setForceHex(boolean forceHex) {
         this.forceHex = forceHex;
     }
 
-    /**
-     * Returns whether this string forces hex serialization.
-     *
-     * @return true if hex is forced
-     */
+    /// Returns whether this string forces hex serialization.
+    ///
+    /// @return true if hex is forced
     public boolean isForceHex() {
         return forceHex;
     }
 
-    /**
-     * Attempts to parse the string as a PDF date.
-     * Format: {@code D:YYYYMMDDHHmmSS+HH'mm'}.
-     *
-     * @return the parsed date, or null if not a valid PDF date
-     */
+    /// Attempts to parse the string as a PDF date.
+    /// Format: `D:YYYYMMDDHHmmSS+HH'mm'`.
+    ///
+    /// @return the parsed date, or null if not a valid PDF date
     public LocalDateTime getAsDate() {
         String text = getString();
         Matcher m = DATE_PATTERN.matcher(text);
@@ -229,12 +211,10 @@ public final class PdfString extends PdfBase {
         }
     }
 
-    /**
-     * Returns the string in hex representation: &lt;AABBCC...&gt;
-     * Used for binary strings (IDs, encryption keys).
-     *
-     * @return hex representation with angle brackets
-     */
+    /// Returns the string in hex representation: <AABBCC...>
+    /// Used for binary strings (IDs, encryption keys).
+    ///
+    /// @return hex representation with angle brackets
     public String getHexString() {
         StringBuilder sb = new StringBuilder(bytes.length * 2 + 2);
         sb.append('<');
@@ -245,12 +225,10 @@ public final class PdfString extends PdfBase {
         return sb.toString();
     }
 
-    /**
-     * Returns true if this string contains non-printable bytes
-     * (likely binary data like file ID or encryption key).
-     *
-     * @return true if any byte is outside printable ASCII range (0x20..0x7E)
-     */
+    /// Returns true if this string contains non-printable bytes
+    /// (likely binary data like file ID or encryption key).
+    ///
+    /// @return true if any byte is outside printable ASCII range (0x20..0x7E)
     public boolean isBinary() {
         for (byte b : bytes) {
             int v = b & 0xFF;
@@ -374,9 +352,7 @@ public final class PdfString extends PdfBase {
         return nonPrintable > bytes.length / 2;
     }
 
-    /**
-     * Tries to encode the string in PDFDocEncoding. Returns null if not possible.
-     */
+    /// Tries to encode the string in PDFDocEncoding. Returns null if not possible.
     private static byte[] tryEncodePdfDoc(String text) {
         byte[] result = new byte[text.length()];
         for (int i = 0; i < text.length(); i++) {
@@ -390,9 +366,7 @@ public final class PdfString extends PdfBase {
         return result;
     }
 
-    /**
-     * Finds the PDFDocEncoding byte for a Unicode character, or -1 if not encodable.
-     */
+    /// Finds the PDFDocEncoding byte for a Unicode character, or -1 if not encodable.
     private static int findPdfDocByte(char c) {
         // Fast path for ASCII
         if (c < 0x80) {

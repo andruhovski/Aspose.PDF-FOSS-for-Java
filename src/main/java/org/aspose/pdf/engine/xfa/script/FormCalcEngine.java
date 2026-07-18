@@ -1,31 +1,27 @@
 package org.aspose.pdf.engine.xfa.script;
 
-import org.aspose.pdf.engine.xfa.model.XfaNode;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeSet;
 
-/**
- * FormCalc evaluator (B2.2) — evaluates a {@link FormCalcParser} AST over the merged Form DOM through
- * the same {@link XfaScriptHost} value bridge + SOM resolver the JS path uses. Typeless: values are
- * {@link Double} (numbers) or {@link String} (text), with FormCalc coercion (empty/{@code null} → 0
- * for arithmetic, → "" for text; comparison numeric when both operands are numeric). A calculate's
- * result is the value of its last expression (written back by {@link XfaScripting}); an explicit
- * {@code $ = …} assignment writes the field directly.
- *
- * <p>Builtins implemented are exactly the B2.0 corpus subset + the common aggregates the FormCalc spec
- * worked examples use: {@code Sum/Avg/Min/Max/Count} (node-set aware), {@code Concat/Len}, {@code Abs/
- * Round}, {@code Exists}, and date helpers {@code Num2Date/Date2Num/Date} (reusing the B3.1
- * {@link XfaUtil} date machinery). The remaining ~297 spec builtins are stubbed (return "") and
- * recorded in {@link #unimplemented()} as a tracked gap.</p>
- */
+/// FormCalc evaluator (B2.2) — evaluates a [FormCalcParser] AST over the merged Form DOM through
+/// the same [XfaScriptHost] value bridge + SOM resolver the JS path uses. Typeless: values are
+/// [Double] (numbers) or [String] (text), with FormCalc coercion (empty/`null` → 0
+/// for arithmetic, → "" for text; comparison numeric when both operands are numeric). A calculate's
+/// result is the value of its last expression (written back by [XfaScripting]); an explicit
+/// `$ = …` assignment writes the field directly.
+///
+/// Builtins implemented are exactly the B2.0 corpus subset + the common aggregates the FormCalc spec
+/// worked examples use: `Sum/Avg/Min/Max/Count` (node-set aware), `Concat/Len`, `Abs/
+/// Round`, `Exists`, and date helpers `Num2Date/Date2Num/Date` (reusing the B3.1
+/// [XfaUtil] date machinery). The remaining \~297 spec builtins are stubbed (return "") and
+/// recorded in [#unimplemented()] as a tracked gap.
 final class FormCalcEngine {
 
     private final XfaScriptHost host;
     private final TreeSet<String> unimplemented = new TreeSet<>();
 
-    /** Milliseconds of 1900-01-01T00:00:00 UTC — the FormCalc date-number epoch. */
+    /// Milliseconds of 1900-01-01T00:00:00 UTC — the FormCalc date-number epoch.
     private static final long EPOCH_1900;
 
     static {
@@ -39,19 +35,17 @@ final class FormCalcEngine {
         this.host = host;
     }
 
-    /** @return the FormCalc builtins encountered but not implemented (a tracked gap, returns ""). */
+    /// @return the FormCalc builtins encountered but not implemented (a tracked gap, returns "").
     TreeSet<String> unimplemented() {
         return unimplemented;
     }
 
-    /**
-     * Parses + evaluates a FormCalc script.
-     *
-     * @param src     the FormCalc source
-     * @param current the calculate/validate/event carrier node (the {@code $} reference + SOM origin)
-     * @return the value of the last expression (Double/String/null)
-     * @throws FormCalcError on a lex/parse/eval failure
-     */
+    /// Parses + evaluates a FormCalc script.
+    ///
+    /// @param src     the FormCalc source
+    /// @param current the calculate/validate/event carrier node (the `$` reference + SOM origin)
+    /// @return the value of the last expression (Double/String/null)
+    /// @throws FormCalcError on a lex/parse/eval failure
     Object run(String src, XfaScriptNode current) {
         FormCalcParser.Block program = FormCalcParser.parse(src);
         return evalBlock(program, current);
@@ -174,7 +168,7 @@ final class FormCalcEngine {
         return n.get("rawValue"); // reuses the JS value bridge (numeric field → Double, else String)
     }
 
-    /** Resolves a reference, treating a bare {@code $} as the current node. */
+    /// Resolves a reference, treating a bare `$` as the current node.
     private XfaScriptNode resolveRef(String path, XfaScriptNode cur) {
         if (path.equals("$")) {
             return cur;
@@ -182,7 +176,7 @@ final class FormCalcEngine {
         return host.resolveOne(path, cur);
     }
 
-    /** Expands a node-set for an aggregate argument (a {@code Ref} → all matching nodes' values). */
+    /// Expands a node-set for an aggregate argument (a `Ref` → all matching nodes' values).
     private List<Object> values(FormCalcParser.Node arg, XfaScriptNode cur) {
         List<Object> out = new ArrayList<>();
         if (arg instanceof FormCalcParser.Ref) {
@@ -294,7 +288,7 @@ final class FormCalcEngine {
         return c.args.get(0);
     }
 
-    /** Sum/Avg/Min/Max/Count over the flattened node-set + scalar arguments. */
+    /// Sum/Avg/Min/Max/Count over the flattened node-set + scalar arguments.
     private Object aggregate(List<FormCalcParser.Node> args, XfaScriptNode cur, String kind) {
         List<Double> nums = new ArrayList<>();
         for (FormCalcParser.Node arg : args) {

@@ -1,45 +1,40 @@
 package org.aspose.pdf.forms;
 
-import org.aspose.pdf.*;
+import org.aspose.pdf.Page;
+import org.aspose.pdf.Rectangle;
 import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Checkbox field (/FT /Btn) (ISO 32000-1:2008, §12.7.4.2.3).
- * <p>
- * A checkbox is a button field that is neither a radio button (bit 16)
- * nor a push button (bit 17). Its value is either "Off" or a custom
- * on-state name derived from the appearance dictionary.
- * </p>
- */
+/// Checkbox field (/FT /Btn) (ISO 32000-1:2008, §12.7.4.2.3).
+///
+/// A checkbox is a button field that is neither a radio button (bit 16)
+/// nor a push button (bit 17). Its value is either "Off" or a custom
+/// on-state name derived from the appearance dictionary.
+///
 public class CheckboxField extends Field {
 
     private BoxStyle style = BoxStyle.Check;
 
-    /**
-     * Constructs a checkbox field from an existing PDF dictionary.
-     *
-     * @param dict     the PDF dictionary backing this field
-     * @param page     the page this field belongs to (may be null)
-     * @param fullName the fully-qualified dotted name
-     */
+    /// Constructs a checkbox field from an existing PDF dictionary.
+    ///
+    /// @param dict     the PDF dictionary backing this field
+    /// @param page     the page this field belongs to (may be null)
+    /// @param fullName the fully-qualified dotted name
     public CheckboxField(PdfDictionary dict, Page page, String fullName) {
         super(dict, page, fullName);
     }
 
-    /**
-     * Constructs a new empty checkbox field.
-     * The field must be added to a form via {@code Form.add(field)} or
-     * {@code Form.add(field, pageNumber)}.
-     *
-     * <p>The {@code /AP/N} entry is created as an empty dictionary; concrete
-     * appearance streams for the {@code Yes} and {@code Off} states are
-     * generated on the next {@link #regenerateAppearance()} call (triggered
-     * automatically by {@link #CheckboxField(Page, Rectangle)} or
-     * {@link #setExportValue(String)} / {@link #setStyle(BoxStyle)}).</p>
-     */
+    /// Constructs a new empty checkbox field.
+    /// The field must be added to a form via `Form.add(field)` or
+    /// `Form.add(field, pageNumber)`.
+    ///
+    /// The `/AP/N` entry is created as an empty dictionary; concrete
+    /// appearance streams for the `Yes` and `Off` states are
+    /// generated on the next [#regenerateAppearance()] call (triggered
+    /// automatically by [#CheckboxField(Page, Rectangle)] or
+    /// [#setExportValue(String)] / [#setStyle(BoxStyle)]).
     public CheckboxField() {
         super(new PdfDictionary(), null, "");
         dict.set(PdfName.of("Type"), PdfName.of("Annot"));
@@ -54,14 +49,13 @@ public class CheckboxField extends Field {
         dict.set(PdfName.of("AP"), ap);
     }
 
-    /**
-     * Constructs a new checkbox field on the specified page with the given rectangle.
-     * <p>Automatically generates Form-XObject {@code /AP/N/Yes} and {@code /AP/N/Off}
-     * appearance streams via {@link FieldAppearanceBuilder} (F-10 fix).</p>
-     *
-     * @param page the page this checkbox belongs to
-     * @param rect the rectangle defining the checkbox position and size
-     */
+    /// Constructs a new checkbox field on the specified page with the given rectangle.
+    ///
+    /// Automatically generates Form-XObject `/AP/N/Yes` and `/AP/N/Off`
+    /// appearance streams via [FieldAppearanceBuilder] (F-10 fix).
+    ///
+    /// @param page the page this checkbox belongs to
+    /// @param rect the rectangle defining the checkbox position and size
     public CheckboxField(Page page, Rectangle rect) {
         this();
         if (page != null) {
@@ -73,13 +67,11 @@ public class CheckboxField extends Field {
         regenerateAppearance();
     }
 
-    /**
-     * Rebuilds the {@code /AP/N/Yes} and {@code /AP/N/Off} appearance streams
-     * from the current rectangle, style and export-value name.
-     *
-     * <p>Idempotent: safe to call after any property change. No-op when the
-     * widget has no {@code /Rect} set yet.</p>
-     */
+    /// Rebuilds the `/AP/N/Yes` and `/AP/N/Off` appearance streams
+    /// from the current rectangle, style and export-value name.
+    ///
+    /// Idempotent: safe to call after any property change. No-op when the
+    /// widget has no `/Rect` set yet.
     public void regenerateAppearance() {
         Rectangle r = getRect();
         if (r == null) return;
@@ -89,29 +81,23 @@ public class CheckboxField extends Field {
         FieldAppearanceBuilder.installAppearance(dict, onStream, onState, offStream);
     }
 
-    /**
-     * Returns the check mark style of this checkbox.
-     *
-     * @return the box style
-     */
+    /// Returns the check mark style of this checkbox.
+    ///
+    /// @return the box style
     public BoxStyle getStyle() { return style; }
 
-    /**
-     * Sets the check mark style of this checkbox and regenerates the
-     * {@code /AP/N} appearance streams so the new glyph is reflected.
-     *
-     * @param style the box style
-     */
+    /// Sets the check mark style of this checkbox and regenerates the
+    /// `/AP/N` appearance streams so the new glyph is reflected.
+    ///
+    /// @param style the box style
     public void setStyle(BoxStyle style) {
         this.style = style;
         regenerateAppearance();
     }
 
-    /**
-     * Sets the width of this checkbox by updating the /Rect entry.
-     *
-     * @param width the width in points
-     */
+    /// Sets the width of this checkbox by updating the /Rect entry.
+    ///
+    /// @param width the width in points
     public void setWidth(double width) {
         Rectangle r = getRect();
         double llx = r != null ? r.getLLX() : 0;
@@ -120,11 +106,9 @@ public class CheckboxField extends Field {
         setRectLenient(new Rectangle(llx, lly, llx + width, ury));
     }
 
-    /**
-     * Sets the height of this checkbox by updating the /Rect entry.
-     *
-     * @param height the height in points
-     */
+    /// Sets the height of this checkbox by updating the /Rect entry.
+    ///
+    /// @param height the height in points
     public void setHeight(double height) {
         Rectangle r = getRect();
         double llx = r != null ? r.getLLX() : 0;
@@ -133,24 +117,19 @@ public class CheckboxField extends Field {
         setRectLenient(new Rectangle(llx, lly, urx, lly + height));
     }
 
-    /**
-     * Returns whether this checkbox is checked.
-     * <p>
-     * Any value except "Off" or null is considered checked.
-     * </p>
-     *
-     * @return true if checked
-     */
+    /// Returns whether this checkbox is checked.
+    ///
+    /// Any value except "Off" or null is considered checked.
+    ///
+    /// @return true if checked
     public boolean isChecked() {
         String v = getValue();
         return v != null && !"Off".equals(v);
     }
 
-    /**
-     * Sets the checked state of this checkbox.
-     *
-     * @param checked true to check, false to uncheck
-     */
+    /// Sets the checked state of this checkbox.
+    ///
+    /// @param checked true to check, false to uncheck
     public void setChecked(boolean checked) {
         String onValue = getOnValue();
         if (checked) {
@@ -162,20 +141,16 @@ public class CheckboxField extends Field {
         }
     }
 
-    /**
-     * Returns the export value (on-state name) of this checkbox.
-     *
-     * @return the export value
-     */
+    /// Returns the export value (on-state name) of this checkbox.
+    ///
+    /// @return the export value
     public String getExportValue() {
         return getOnValue();
     }
 
-    /**
-     * Sets the export value (on-state name) of this checkbox.
-     *
-     * @param exportValue the export value to use when checked
-     */
+    /// Sets the export value (on-state name) of this checkbox.
+    ///
+    /// @param exportValue the export value to use when checked
     public void setExportValue(String exportValue) {
         if (exportValue == null || exportValue.isEmpty()) {
             return;
@@ -194,11 +169,9 @@ public class CheckboxField extends Field {
         regenerateAppearance();
     }
 
-    /**
-     * Adds another allowed on-state for Aspose-compatible checkbox workflows.
-     *
-     * @param optionValue the additional allowed state
-     */
+    /// Adds another allowed on-state for Aspose-compatible checkbox workflows.
+    ///
+    /// @param optionValue the additional allowed state
     public void addOption(String optionValue) {
         if (optionValue == null || optionValue.isEmpty()) {
             return;
@@ -208,12 +181,10 @@ public class CheckboxField extends Field {
         apN.set(PdfName.of(optionValue), PdfNull.INSTANCE);
     }
 
-    /**
-     * Returns all allowed states, including "Off" and any on-state names
-     * present in the normal appearance dictionary.
-     *
-     * @return the list of allowed states
-     */
+    /// Returns all allowed states, including "Off" and any on-state names
+    /// present in the normal appearance dictionary.
+    ///
+    /// @return the list of allowed states
     public List<String> getAllowedStates() {
         List<String> states = new ArrayList<>();
         PdfBase ap = dict.get("AP");
@@ -231,10 +202,8 @@ public class CheckboxField extends Field {
         return states;
     }
 
-    /**
-     * Determines the on-state name from the /AP/N dictionary.
-     * Falls back to "Yes" if no appearance states are found.
-     */
+    /// Determines the on-state name from the /AP/N dictionary.
+    /// Falls back to "Yes" if no appearance states are found.
     private String getOnValue() {
         PdfBase ap = dict.get("AP");
         if (ap instanceof PdfDictionary) {

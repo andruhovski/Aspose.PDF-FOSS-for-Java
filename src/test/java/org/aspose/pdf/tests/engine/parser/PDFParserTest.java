@@ -12,14 +12,10 @@ import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link PDFParser} — full PDF file parser.
- */
+/// Tests for [PDFParser] — full PDF file parser.
 public class PDFParserTest {
 
-    /**
-     * Builds a minimal valid PDF with one page for testing.
-     */
+    /// Builds a minimal valid PDF with one page for testing.
     private static byte[] buildMinimalPDF() {
         // Minimal PDF with catalog, pages, and one page
         StringBuilder sb = new StringBuilder();
@@ -63,9 +59,7 @@ public class PDFParserTest {
         return sb.toString().getBytes(StandardCharsets.ISO_8859_1);
     }
 
-    /**
-     * Test 1: Parse a simple 1-page PDF without errors.
-     */
+    /// Test 1: Parse a simple 1-page PDF without errors.
     @Test
     public void testParseMinimalPDF() throws IOException {
         byte[] pdf = buildMinimalPDF();
@@ -77,9 +71,7 @@ public class PDFParserTest {
         assertTrue(parser.getAllObjectKeys().size() >= 3);
     }
 
-    /**
-     * Test 2: getVersion returns correct version.
-     */
+    /// Test 2: getVersion returns correct version.
     @Test
     public void testGetVersion() throws IOException {
         byte[] pdf = buildMinimalPDF();
@@ -90,9 +82,7 @@ public class PDFParserTest {
         assertEquals(1.4f, parser.getVersion(), 0.01f);
     }
 
-    /**
-     * Test 3: getCatalog returns a dictionary with /Type /Catalog.
-     */
+    /// Test 3: getCatalog returns a dictionary with /Type /Catalog.
     @Test
     public void testGetCatalog() throws IOException {
         byte[] pdf = buildMinimalPDF();
@@ -108,9 +98,7 @@ public class PDFParserTest {
         assertEquals("Catalog", ((PdfName) type).getValue());
     }
 
-    /**
-     * Test 4: getObject loads a page dictionary with /Type /Page.
-     */
+    /// Test 4: getObject loads a page dictionary with /Type /Page.
     @Test
     public void testGetObjectPage() throws IOException {
         byte[] pdf = buildMinimalPDF();
@@ -126,9 +114,7 @@ public class PDFParserTest {
         assertEquals("Page", ((PdfName) type).getValue());
     }
 
-    /**
-     * Test 5: Lazy loading — object cache works.
-     */
+    /// Test 5: Lazy loading — object cache works.
     @Test
     public void testLazyLoadingCache() throws IOException {
         byte[] pdf = buildMinimalPDF();
@@ -141,9 +127,7 @@ public class PDFParserTest {
         assertSame(first, second, "Should return cached instance");
     }
 
-    /**
-     * Test 8: Non-PDF input gives clear error.
-     */
+    /// Test 8: Non-PDF input gives clear error.
     @Test
     public void testNotAPDF() {
         byte[] notPdf = "This is not a PDF".getBytes(StandardCharsets.US_ASCII);
@@ -153,9 +137,7 @@ public class PDFParserTest {
         assertThrows(IOException.class, parser::parse);
     }
 
-    /**
-     * Test 9: Missing object returns PdfNull.
-     */
+    /// Test 9: Missing object returns PdfNull.
     @Test
     public void testMissingObjectReturnsNull() throws IOException {
         byte[] pdf = buildMinimalPDF();
@@ -167,9 +149,7 @@ public class PDFParserTest {
         assertNotNull(missing); // Returns PdfNull, not Java null
     }
 
-    /**
-     * Test: Constructor rejects null.
-     */
+    /// Test: Constructor rejects null.
     @Test
     public void testConstructorRejectsNull() {
         assertThrows(IllegalArgumentException.class, () -> new PDFParser(null));

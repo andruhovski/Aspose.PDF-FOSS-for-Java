@@ -16,12 +16,10 @@ import java.nio.charset.StandardCharsets;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * B3.2 — {@code .instanceManager} (dynamic subform add/remove). B/C oracle: {@code _name.count}
- * reflects the instance list; add/remove/setInstances mutate within {@code <occur min max>} limits;
- * a new instance's fields exist and compute; instanceIndex is correct; mutations flow into calculate
- * and the paginated render.
- */
+/// B3.2 — `.instanceManager` (dynamic subform add/remove). B/C oracle: `_name.count`
+/// reflects the instance list; add/remove/setInstances mutate within `<occur min max>` limits;
+/// a new instance's fields exist and compute; instanceIndex is correct; mutations flow into calculate
+/// and the paginated render.
 public class XfaInstanceManagerTest {
 
     private static final String TPL = XfaNode.TEMPLATE_NS;

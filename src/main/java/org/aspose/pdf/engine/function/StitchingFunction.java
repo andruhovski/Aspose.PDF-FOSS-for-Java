@@ -1,34 +1,30 @@
 package org.aspose.pdf.engine.function;
 
+import org.aspose.pdf.engine.parser.PDFParser;
 import org.aspose.pdf.engine.pdfobjects.PdfArray;
 import org.aspose.pdf.engine.pdfobjects.PdfBase;
 import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.parser.PDFParser;
 
 import java.io.IOException;
 
-/**
- * Type 3 (Stitching) function (ISO 32000-1:2008, §7.10.4).
- * Combines multiple subfunctions over non-overlapping subdomains.
- *
- * <p>The input domain is divided into k intervals by k-1 boundary values.
- * Each interval is mapped to a subfunction's input via the Encode array.</p>
- */
+/// Type 3 (Stitching) function (ISO 32000-1:2008, §7.10.4).
+/// Combines multiple subfunctions over non-overlapping subdomains.
+///
+/// The input domain is divided into k intervals by k-1 boundary values.
+/// Each interval is mapped to a subfunction's input via the Encode array.
 public final class StitchingFunction extends PdfFunction {
 
     private final PdfFunction[] functions;
     private final double[] bounds;
     private final double[] encode;
 
-    /**
-     * Creates a stitching function from a PDF dictionary.
-     *
-     * @param dict   the function dictionary
-     * @param domain the input domain
-     * @param range  the output range
-     * @param parser the PDF parser for resolving subfunctions
-     * @throws IOException if subfunctions cannot be parsed
-     */
+    /// Creates a stitching function from a PDF dictionary.
+    ///
+    /// @param dict   the function dictionary
+    /// @param domain the input domain
+    /// @param range  the output range
+    /// @param parser the PDF parser for resolving subfunctions
+    /// @throws IOException if subfunctions cannot be parsed
     public StitchingFunction(PdfDictionary dict, double[] domain, double[] range,
                               PDFParser parser) throws IOException {
         super(domain, range);
@@ -47,9 +43,7 @@ public final class StitchingFunction extends PdfFunction {
         this.encode = getNumberArray(dict, "Encode");
     }
 
-    /**
-     * Creates a stitching function directly (for testing).
-     */
+    /// Creates a stitching function directly (for testing).
     public StitchingFunction(double[] domain, double[] range,
                               PdfFunction[] functions, double[] bounds, double[] encode) {
         super(domain, range);

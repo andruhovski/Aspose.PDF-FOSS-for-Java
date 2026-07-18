@@ -5,36 +5,32 @@ import org.aspose.pdf.engine.xfa.model.template.Template;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
-/**
- * Resolves the page dimensions an XFA form declares via its {@code <medium>}
- * element (XFA 3.0 §"medium") — the form's own page size, used to size the
- * flattened/painted page instead of a leftover placeholder MediaBox (which on
- * dynamic XFA PDFs is often inverted or wrong).
- *
- * <p>{@code <medium short long orientation stock>}: {@code short}/{@code long}
- * are the page's shorter/longer edges; {@code orientation="landscape"} swaps
- * width/height (default portrait). When {@code short}/{@code long} are absent a
- * {@code stock} name (letter/a4/legal) is used; the final fallback is US Letter.</p>
- */
+/// Resolves the page dimensions an XFA form declares via its `<medium>`
+/// element (XFA 3.0 §"medium") — the form's own page size, used to size the
+/// flattened/painted page instead of a leftover placeholder MediaBox (which on
+/// dynamic XFA PDFs is often inverted or wrong).
+///
+/// `<medium short long orientation stock>`: `short`/`long`
+/// are the page's shorter/longer edges; `orientation="landscape"` swaps
+/// width/height (default portrait). When `short`/`long` are absent a
+/// `stock` name (letter/a4/legal) is used; the final fallback is US Letter.
 public final class XfaMedium {
 
-    /** US Letter in points (the default fallback). */
+    /// US Letter in points (the default fallback).
     public static final double[] LETTER = {612.0, 792.0};
-    /** ISO A4 in points. */
+    /// ISO A4 in points.
     public static final double[] A4 = {595.32, 841.92};
-    /** US Legal in points. */
+    /// US Legal in points.
     public static final double[] LEGAL = {612.0, 1008.0};
 
     private XfaMedium() {
     }
 
-    /**
-     * Resolves the page size {@code {width,height}} in points from the template's
-     * first {@code <medium>}, or US Letter if none is present.
-     *
-     * @param tpl the XFA template, or {@code null}
-     * @return the page size {@code {w,h}} in points (never {@code null})
-     */
+    /// Resolves the page size `{width,height}` in points from the template's
+    /// first `<medium>`, or US Letter if none is present.
+    ///
+    /// @param tpl the XFA template, or `null`
+    /// @return the page size `{w,h}` in points (never `null`)
     public static double[] resolve(Template tpl) {
         if (tpl == null) {
             return LETTER.clone();
@@ -53,15 +49,13 @@ public final class XfaMedium {
         return landscape ? new double[]{l, s} : new double[]{s, l};
     }
 
-    /**
-     * Resolves a single {@code <pageArea>}'s own page size from its direct {@code <medium>} child.
-     * An XFA {@code <pageSet>} may mix pageAreas of different size/orientation (e.g. a landscape
-     * table page and a portrait narrative page); each such pageArea carries its own {@code <medium>}.
-     *
-     * @param pageArea the {@code <pageArea>} element (may be {@code null})
-     * @param fallback the page size to use when the pageArea declares no usable {@code <medium>}
-     * @return the page size {@code {w,h}} in points (never {@code null})
-     */
+    /// Resolves a single `<pageArea>`'s own page size from its direct `<medium>` child.
+    /// An XFA `<pageSet>` may mix pageAreas of different size/orientation (e.g. a landscape
+    /// table page and a portrait narrative page); each such pageArea carries its own `<medium>`.
+    ///
+    /// @param pageArea the `<pageArea>` element (may be `null`)
+    /// @param fallback the page size to use when the pageArea declares no usable `<medium>`
+    /// @return the page size `{w,h}` in points (never `null`)
     public static double[] resolvePageArea(Element pageArea, double[] fallback) {
         double[] fb = fallback != null ? fallback : LETTER.clone();
         if (pageArea == null) {
@@ -81,7 +75,7 @@ public final class XfaMedium {
         return landscape ? new double[]{l, s} : new double[]{s, l};
     }
 
-    /** First direct child element of {@code parent} with the given local name, or null. */
+    /// First direct child element of `parent` with the given local name, or null.
     private static Element directChild(Element parent, String localName) {
         for (Node c = parent.getFirstChild(); c != null; c = c.getNextSibling()) {
             if (c.getNodeType() == Node.ELEMENT_NODE) {
@@ -111,7 +105,7 @@ public final class XfaMedium {
         return m == null ? Double.NaN : XfaGeometry.toPoints(m);
     }
 
-    /** Depth-first search for the first descendant element with the given local name. */
+    /// Depth-first search for the first descendant element with the given local name.
     private static Element findFirst(Element el, String localName) {
         Node c = el.getFirstChild();
         while (c != null) {

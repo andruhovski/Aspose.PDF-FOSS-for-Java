@@ -9,9 +9,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
 
-/**
- * Tests for PDF → HTML conversion.
- */
+/// Tests for PDF → HTML conversion.
 public class PdfToHtmlTest {
 
     private String convertToHtml(Document doc, HtmlSaveOptions opts) throws IOException {

@@ -7,70 +7,56 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Logger;
 
-/**
- * PDF array object (§7.3.6, ISO 32000-1:2008).
- * <p>
- * An ordered collection of PDF objects. Elements may be of different types.
- * Provides typed getters for convenience to avoid casts in client code.
- * </p>
- */
+/// PDF array object (§7.3.6, ISO 32000-1:2008).
+///
+/// An ordered collection of PDF objects. Elements may be of different types.
+/// Provides typed getters for convenience to avoid casts in client code.
+///
 public class PdfArray extends PdfBase implements Iterable<PdfBase> {
 
     private static final Logger LOG = Logger.getLogger(PdfArray.class.getName());
 
     private final List<PdfBase> items;
 
-    /**
-     * Creates an empty array with default initial capacity.
-     */
+    /// Creates an empty array with default initial capacity.
     public PdfArray() {
         this.items = new ArrayList<>(8);
     }
 
-    /**
-     * Creates an empty array with the specified initial capacity.
-     *
-     * @param initialCapacity the initial capacity
-     */
+    /// Creates an empty array with the specified initial capacity.
+    ///
+    /// @param initialCapacity the initial capacity
     public PdfArray(int initialCapacity) {
         this.items = new ArrayList<>(initialCapacity);
     }
 
-    /**
-     * Returns the number of elements.
-     *
-     * @return the size
-     */
+    /// Returns the number of elements.
+    ///
+    /// @return the size
     public int size() {
         return items.size();
     }
 
-    /**
-     * Returns whether the array is empty.
-     *
-     * @return true if empty
-     */
+    /// Returns whether the array is empty.
+    ///
+    /// @return true if empty
     public boolean isEmpty() {
         return items.isEmpty();
     }
 
-    /**
-     * Returns the element at the given index.
-     *
-     * @param index the index
-     * @return the element
-     * @throws IndexOutOfBoundsException if index is out of range
-     */
+    /// Returns the element at the given index.
+    ///
+    /// @param index the index
+    /// @return the element
+    /// @throws IndexOutOfBoundsException if index is out of range
     public PdfBase get(int index) {
         return items.get(index);
     }
 
-    /**
-     * Appends an element to the end.
-     *
-     * @param item the element to add
-     * @throws IllegalArgumentException if item is null
-     */
+    /// Appends an element to the end.
+    ///
+    /// @param item the element to add
+    /// @throws IllegalArgumentException if item is null
     public void add(PdfBase item) {
         if (item == null) {
             item = PdfNull.INSTANCE;
@@ -79,12 +65,10 @@ public class PdfArray extends PdfBase implements Iterable<PdfBase> {
         markDirty();
     }
 
-    /**
-     * Inserts an element at the given index.
-     *
-     * @param index the insertion index
-     * @param item  the element to insert; null is treated as PdfNull
-     */
+    /// Inserts an element at the given index.
+    ///
+    /// @param index the insertion index
+    /// @param item  the element to insert; null is treated as PdfNull
     public void add(int index, PdfBase item) {
         if (item == null) {
             item = PdfNull.INSTANCE;
@@ -93,13 +77,11 @@ public class PdfArray extends PdfBase implements Iterable<PdfBase> {
         markDirty();
     }
 
-    /**
-     * Replaces the element at the given index.
-     *
-     * @param index the index
-     * @param item  the new element; null is treated as PdfNull
-     * @return the previous element
-     */
+    /// Replaces the element at the given index.
+    ///
+    /// @param index the index
+    /// @param item  the new element; null is treated as PdfNull
+    /// @return the previous element
     public PdfBase set(int index, PdfBase item) {
         if (item == null) {
             item = PdfNull.INSTANCE;
@@ -108,33 +90,27 @@ public class PdfArray extends PdfBase implements Iterable<PdfBase> {
         return items.set(index, item);
     }
 
-    /**
-     * Removes the element at the given index.
-     *
-     * @param index the index
-     * @return the removed element
-     */
+    /// Removes the element at the given index.
+    ///
+    /// @param index the index
+    /// @return the removed element
     public PdfBase remove(int index) {
         markDirty();
         return items.remove(index);
     }
 
-    /**
-     * Removes all elements.
-     */
+    /// Removes all elements.
     public void clear() {
         items.clear();
         markDirty();
     }
 
-    /**
-     * Returns the element at the given index as an int, or the default value
-     * if the element is not a numeric type.
-     *
-     * @param index        the index
-     * @param defaultValue the default value
-     * @return the int value or default
-     */
+    /// Returns the element at the given index as an int, or the default value
+    /// if the element is not a numeric type.
+    ///
+    /// @param index        the index
+    /// @param defaultValue the default value
+    /// @return the int value or default
     public int getInt(int index, int defaultValue) {
         if (index < 0 || index >= items.size()) return defaultValue;
         PdfBase obj = items.get(index);
@@ -143,13 +119,11 @@ public class PdfArray extends PdfBase implements Iterable<PdfBase> {
         return defaultValue;
     }
 
-    /**
-     * Returns the element at the given index as a long, or the default value.
-     *
-     * @param index        the index
-     * @param defaultValue the default value
-     * @return the long value or default
-     */
+    /// Returns the element at the given index as a long, or the default value.
+    ///
+    /// @param index        the index
+    /// @param defaultValue the default value
+    /// @return the long value or default
     public long getLong(int index, long defaultValue) {
         if (index < 0 || index >= items.size()) return defaultValue;
         PdfBase obj = items.get(index);
@@ -158,13 +132,11 @@ public class PdfArray extends PdfBase implements Iterable<PdfBase> {
         return defaultValue;
     }
 
-    /**
-     * Returns the element at the given index as a float, or the default value.
-     *
-     * @param index        the index
-     * @param defaultValue the default value
-     * @return the float value or default
-     */
+    /// Returns the element at the given index as a float, or the default value.
+    ///
+    /// @param index        the index
+    /// @param defaultValue the default value
+    /// @return the float value or default
     public float getFloat(int index, float defaultValue) {
         if (index < 0 || index >= items.size()) return defaultValue;
         PdfBase obj = items.get(index);
@@ -173,59 +145,49 @@ public class PdfArray extends PdfBase implements Iterable<PdfBase> {
         return defaultValue;
     }
 
-    /**
-     * Returns the element at the given index as a name string, or null.
-     *
-     * @param index the index
-     * @return the name value or null
-     */
+    /// Returns the element at the given index as a name string, or null.
+    ///
+    /// @param index the index
+    /// @return the name value or null
     public String getName(int index) {
         if (index < 0 || index >= items.size()) return null;
         PdfBase obj = items.get(index);
         return (obj instanceof PdfName) ? ((PdfName) obj).getName() : null;
     }
 
-    /**
-     * Returns the element at the given index as a string value, or null.
-     *
-     * @param index the index
-     * @return the string value or null
-     */
+    /// Returns the element at the given index as a string value, or null.
+    ///
+    /// @param index the index
+    /// @return the string value or null
     public String getString(int index) {
         if (index < 0 || index >= items.size()) return null;
         PdfBase obj = items.get(index);
         return (obj instanceof PdfString) ? ((PdfString) obj).getString() : null;
     }
 
-    /**
-     * Returns the element at the given index as a PdfDictionary, or null.
-     *
-     * @param index the index
-     * @return the dictionary or null
-     */
+    /// Returns the element at the given index as a PdfDictionary, or null.
+    ///
+    /// @param index the index
+    /// @return the dictionary or null
     public PdfDictionary getDictionary(int index) {
         if (index < 0 || index >= items.size()) return null;
         PdfBase obj = items.get(index);
         return (obj instanceof PdfDictionary) ? (PdfDictionary) obj : null;
     }
 
-    /**
-     * Returns the element at the given index as a PdfArray, or null.
-     *
-     * @param index the index
-     * @return the array or null
-     */
+    /// Returns the element at the given index as a PdfArray, or null.
+    ///
+    /// @param index the index
+    /// @return the array or null
     public PdfArray getArray(int index) {
         if (index < 0 || index >= items.size()) return null;
         PdfBase obj = items.get(index);
         return (obj instanceof PdfArray) ? (PdfArray) obj : null;
     }
 
-    /**
-     * Converts this array to a float[]. Non-numeric elements become 0f.
-     *
-     * @return the float array
-     */
+    /// Converts this array to a float[]. Non-numeric elements become 0f.
+    ///
+    /// @return the float array
     public float[] toFloatArray() {
         float[] result = new float[items.size()];
         for (int i = 0; i < result.length; i++) {
@@ -234,11 +196,9 @@ public class PdfArray extends PdfBase implements Iterable<PdfBase> {
         return result;
     }
 
-    /**
-     * Converts this array to an int[]. Non-numeric elements become 0.
-     *
-     * @return the int array
-     */
+    /// Converts this array to an int[]. Non-numeric elements become 0.
+    ///
+    /// @return the int array
     public int[] toIntArray() {
         int[] result = new int[items.size()];
         for (int i = 0; i < result.length; i++) {

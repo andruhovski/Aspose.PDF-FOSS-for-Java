@@ -23,12 +23,10 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * Image-painting coverage: a {@code <draw>}/field whose value is an embedded
- * {@code <value><image contentType="image/png">BASE64</image></value>} (a company logo / picture)
- * is decoded into a page Image XObject and painted with a {@code cm}+{@code Do}. 14758 (the Home
- * Depot purchase order) authors its header logo this way; the painter previously dropped it entirely.
- */
+/// Image-painting coverage: a `<draw>`/field whose value is an embedded
+/// `<value><image contentType="image/png">BASE64</image></value>` (a company logo / picture)
+/// is decoded into a page Image XObject and painted with a `cm`+`Do`. 14758 (the Home
+/// Depot purchase order) authors its header logo this way; the painter previously dropped it entirely.
 public class XfaImagePaintTest {
 
     private static final String TPL = XfaNode.TEMPLATE_NS;

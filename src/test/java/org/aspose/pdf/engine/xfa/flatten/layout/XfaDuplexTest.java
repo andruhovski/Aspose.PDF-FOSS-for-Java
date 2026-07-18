@@ -15,12 +15,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * L4.3 — simplex/duplex page qualification. B/C oracle: under {@code relation="duplexPaginated"} a
- * {@code <pageArea oddOrEven="odd">} that would naturally fall on an even physical side gets a
- * blank page inserted before it so it lands odd; the page count reflects the inserted blank, and
- * the content is untouched. {@code simplexPaginated} imposes no constraint (no blanks).
- */
+/// L4.3 — simplex/duplex page qualification. B/C oracle: under `relation="duplexPaginated"` a
+/// `<pageArea oddOrEven="odd">` that would naturally fall on an even physical side gets a
+/// blank page inserted before it so it lands odd; the page count reflects the inserted blank, and
+/// the content is untouched. `simplexPaginated` imposes no constraint (no blanks).
 public class XfaDuplexTest {
 
     private static final String TPL = XfaNode.TEMPLATE_NS;

@@ -7,25 +7,22 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Logger;
 
-/**
- * Glyph-outline stripper for TrueType font programs: rebuilds a TTF keeping
- * only the outlines of the requested glyph ids (plus their composite
- * components and glyph 0), emptying every other {@code glyf} entry.
- * <p>
- * Glyphs are NOT renumbered — {@code numGlyphs}, {@code cmap},
- * {@code hmtx} and any {@code CIDToGIDMap} stay valid, which makes the
- * transformation safe for CID-keyed fonts where CID == GID (Identity).
- * Outline data dominates font size, so the win is close to a full subset
- * at a fraction of the complexity/risk.
- * </p>
- * <p>
- * The rebuilt file preserves the original table order, recomputes table
- * checksums and {@code head.checkSumAdjustment}, and always uses the LONG
- * {@code loca} format (head.indexToLocFormat = 1). Any structural anomaly
- * aborts the rebuild ({@code null} return) so the caller keeps the
- * original program.
- * </p>
- */
+/// Glyph-outline stripper for TrueType font programs: rebuilds a TTF keeping
+/// only the outlines of the requested glyph ids (plus their composite
+/// components and glyph 0), emptying every other `glyf` entry.
+///
+/// Glyphs are NOT renumbered — `numGlyphs`, `cmap`,
+/// `hmtx` and any `CIDToGIDMap` stay valid, which makes the
+/// transformation safe for CID-keyed fonts where CID == GID (Identity).
+/// Outline data dominates font size, so the win is close to a full subset
+/// at a fraction of the complexity/risk.
+///
+/// The rebuilt file preserves the original table order, recomputes table
+/// checksums and `head.checkSumAdjustment`, and always uses the LONG
+/// `loca` format (head.indexToLocFormat = 1). Any structural anomaly
+/// aborts the rebuild (`null` return) so the caller keeps the
+/// original program.
+///
 final class TtfGlyphStripper {
 
     private static final Logger LOG = Logger.getLogger(TtfGlyphStripper.class.getName());
@@ -42,14 +39,12 @@ final class TtfGlyphStripper {
         this.data = data;
     }
 
-    /**
-     * Rebuilds {@code ttf} with only the given glyph outlines retained.
-     *
-     * @param ttf      the original TrueType program
-     * @param usedGids the glyph ids whose outlines must survive
-     * @return the stripped font, or {@code null} when the font cannot be
-     *         safely rebuilt (caller keeps the original)
-     */
+    /// Rebuilds `ttf` with only the given glyph outlines retained.
+    ///
+    /// @param ttf      the original TrueType program
+    /// @param usedGids the glyph ids whose outlines must survive
+    /// @return the stripped font, or `null` when the font cannot be
+    ///         safely rebuilt (caller keeps the original)
     static byte[] strip(byte[] ttf, Set<Integer> usedGids) {
         try {
             TtfGlyphStripper stripper = new TtfGlyphStripper(ttf);
@@ -110,7 +105,7 @@ final class TtfGlyphStripper {
         return assemble(glyfBytes, locaBytes, headBytes);
     }
 
-    /** Recursively adds a glyph and, for composites, all component glyphs. */
+    /// Recursively adds a glyph and, for composites, all component glyphs.
     private void addWithComponents(int gid, Set<Integer> keep, int depth) {
         if (depth > 8 || !keep.add(gid)) {
             return;
@@ -141,7 +136,7 @@ final class TtfGlyphStripper {
 
     // ================= assembly =================
 
-    /** Rewrites the font with replacement glyf/loca/head tables. */
+    /// Rewrites the font with replacement glyf/loca/head tables.
     private byte[] assemble(byte[] glyfBytes, byte[] locaBytes, byte[] headBytes) {
         int numTables = tables.size();
         int headerSize = 12 + 16 * numTables;

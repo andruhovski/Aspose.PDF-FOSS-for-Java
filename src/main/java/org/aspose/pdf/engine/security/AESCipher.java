@@ -6,54 +6,47 @@ import javax.crypto.spec.SecretKeySpec;
 import java.security.SecureRandom;
 import java.util.Arrays;
 
-/**
- * AES cipher for PDF encryption and decryption — CBC mode.
- * <p>
- * AES-128 (V=4, AESV2): 16-byte key, IV = first 16 bytes of data.
- * AES-256 (V=5, R=6, AESV3): 32-byte key, IV = first 16 bytes of data.
- * </p>
- * <p>
- * Per ISO 32000-1:2008 §7.6.2, the initialization vector is a 16-byte random
- * string stored as the first 16 bytes of the encrypted stream or string.
- * </p>
- */
+/// AES cipher for PDF encryption and decryption — CBC mode.
+///
+/// AES-128 (V=4, AESV2): 16-byte key, IV = first 16 bytes of data.
+/// AES-256 (V=5, R=6, AESV3): 32-byte key, IV = first 16 bytes of data.
+///
+/// Per ISO 32000-1:2008 §7.6.2, the initialization vector is a 16-byte random
+/// string stored as the first 16 bytes of the encrypted stream or string.
+///
 public final class AESCipher {
 
     private static final SecureRandom RANDOM = new SecureRandom();
 
     private AESCipher() {}
 
-    /**
-     * Encrypts data using AES-CBC with PKCS5 padding and a random IV.
-     * The result is {@code IV(16) + ciphertext} — the format expected by
-     * {@link #decrypt(byte[], byte[])}.
-     *
-     * <p>Empty (or null) input short-circuits to an empty ciphertext, so an
-     * empty payload round-trips as empty through {@code encrypt}/{@code decrypt}.
-     * The PDF <em>stream-write</em> path must instead use
-     * {@link #encryptPadded} (Adobe Reader rejects {@code /Length 0} encrypted
-     * streams, so an empty stream still needs its IV + one padding block).</p>
-     *
-     * @param key  16 or 32 byte AES key
-     * @param data plaintext data (may be empty)
-     * @return IV-prefixed ciphertext; empty for empty input
-     */
+    /// Encrypts data using AES-CBC with PKCS5 padding and a random IV.
+    /// The result is `IV(16) + ciphertext` — the format expected by
+    /// [#decrypt(byte\[\], byte\[\])].
+    ///
+    /// Empty (or null) input short-circuits to an empty ciphertext, so an
+    /// empty payload round-trips as empty through `encrypt`/`decrypt`.
+    /// The PDF _stream-write_ path must instead use
+    /// [#encryptPadded] (Adobe Reader rejects `/Length 0` encrypted
+    /// streams, so an empty stream still needs its IV + one padding block).
+    ///
+    /// @param key  16 or 32 byte AES key
+    /// @param data plaintext data (may be empty)
+    /// @return IV-prefixed ciphertext; empty for empty input
     public static byte[] encrypt(byte[] key, byte[] data) {
         if (data == null || data.length == 0) return new byte[0];
         return encryptPadded(key, data);
     }
 
-    /**
-     * Encrypts data using AES-CBC with PKCS5 padding and a random IV, always
-     * emitting {@code IV(16) + ciphertext} — 32 bytes minimum (16-byte IV +
-     * at least one 16-byte PKCS#7-padded block) <b>even for empty input</b>.
-     * This is the object/stream encryption path: Adobe Reader rejects
-     * {@code /Length 0} encrypted streams.
-     *
-     * @param key  16 or 32 byte AES key
-     * @param data plaintext data (may be empty)
-     * @return IV-prefixed ciphertext (32 bytes minimum)
-     */
+    /// Encrypts data using AES-CBC with PKCS5 padding and a random IV, always
+    /// emitting `IV(16) + ciphertext` — 32 bytes minimum (16-byte IV +
+    /// at least one 16-byte PKCS#7-padded block) **even for empty input**.
+    /// This is the object/stream encryption path: Adobe Reader rejects
+    /// `/Length 0` encrypted streams.
+    ///
+    /// @param key  16 or 32 byte AES key
+    /// @param data plaintext data (may be empty)
+    /// @return IV-prefixed ciphertext (32 bytes minimum)
     public static byte[] encryptPadded(byte[] key, byte[] data) {
         if (data == null) data = new byte[0];
         try {
@@ -76,15 +69,13 @@ public final class AESCipher {
         }
     }
 
-    /**
-     * Encrypts data using AES-CBC with an explicit IV and no padding.
-     * Used for R=6 key wrapping (OE, UE) where data is already block-aligned.
-     *
-     * @param key        16 or 32 byte AES key
-     * @param iv         16-byte initialization vector
-     * @param plaintext  data to encrypt (must be a multiple of 16 bytes)
-     * @return ciphertext (same length as plaintext, no IV prepended)
-     */
+    /// Encrypts data using AES-CBC with an explicit IV and no padding.
+    /// Used for R=6 key wrapping (OE, UE) where data is already block-aligned.
+    ///
+    /// @param key        16 or 32 byte AES key
+    /// @param iv         16-byte initialization vector
+    /// @param plaintext  data to encrypt (must be a multiple of 16 bytes)
+    /// @return ciphertext (same length as plaintext, no IV prepended)
     public static byte[] encryptWithIV(byte[] key, byte[] iv, byte[] plaintext) {
         if (plaintext == null || plaintext.length == 0) return new byte[0];
         try {
@@ -98,13 +89,11 @@ public final class AESCipher {
         }
     }
 
-    /**
-     * Decrypts AES-CBC encrypted data.
-     *
-     * @param key  16 or 32 byte key
-     * @param data encrypted data (first 16 bytes = IV)
-     * @return decrypted data
-     */
+    /// Decrypts AES-CBC encrypted data.
+    ///
+    /// @param key  16 or 32 byte key
+    /// @param data encrypted data (first 16 bytes = IV)
+    /// @return decrypted data
     public static byte[] decrypt(byte[] key, byte[] data) {
         if (data == null || data.length < 16) return new byte[0];
         try {
@@ -132,9 +121,7 @@ public final class AESCipher {
         }
     }
 
-    /**
-     * Decrypts with explicit IV (for R=6 key recovery where IV is all zeros).
-     */
+    /// Decrypts with explicit IV (for R=6 key recovery where IV is all zeros).
     public static byte[] decryptWithIV(byte[] key, byte[] iv, byte[] cipherText) {
         if (cipherText == null || cipherText.length == 0) return new byte[0];
         try {

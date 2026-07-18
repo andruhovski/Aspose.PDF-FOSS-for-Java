@@ -5,14 +5,12 @@ import org.aspose.pdf.Color;
 import java.util.Locale;
 import java.util.logging.Logger;
 
-/**
- * Represents the default appearance string (/DA) for form fields and free text annotations
- * (ISO 32000-1:2008, Section 12.7.3.3).
- * <p>
- * The default appearance string contains operators that set the text color and font,
- * e.g. {@code "0 0 0 rg /Helv 12 Tf"}.
- * </p>
- */
+/// Represents the default appearance string (/DA) for form fields and free text annotations
+/// (ISO 32000-1:2008, Section 12.7.3.3).
+///
+/// The default appearance string contains operators that set the text color and font,
+/// e.g. `"0 0 0 rg /Helv 12 Tf"`.
+///
 public class DefaultAppearance {
 
     private static final Logger LOG = Logger.getLogger(DefaultAppearance.class.getName());
@@ -21,91 +19,72 @@ public class DefaultAppearance {
     private double fontSize;
     private Color textColor;
 
-    /**
-     * Creates a DefaultAppearance with default values (Helvetica, 12pt, black).
-     */
+    /// Creates a DefaultAppearance with default values (Helvetica, 12pt, black).
     public DefaultAppearance() {
         this.fontName = "Helvetica";
         this.fontSize = 12;
         this.textColor = Color.BLACK;
     }
 
-    /**
-     * Creates a DefaultAppearance with the specified font, size, and color.
-     *
-     * @param fontName the font name (e.g. "Helvetica", "Courier")
-     * @param fontSize the font size in points
-     * @param color    the text color
-     */
+    /// Creates a DefaultAppearance with the specified font, size, and color.
+    ///
+    /// @param fontName the font name (e.g. "Helvetica", "Courier")
+    /// @param fontSize the font size in points
+    /// @param color    the text color
     public DefaultAppearance(String fontName, double fontSize, Color color) {
         this.fontName = fontName != null ? fontName : "Helvetica";
         this.fontSize = fontSize;
         this.textColor = color != null ? color : Color.BLACK;
     }
 
-    /**
-     * Returns the font name.
-     *
-     * @return the font name
-     */
+    /// Returns the font name.
+    ///
+    /// @return the font name
     public String getFontName() {
         return fontName;
     }
 
-    /**
-     * Sets the font name.
-     *
-     * @param fontName the font name
-     */
+    /// Sets the font name.
+    ///
+    /// @param fontName the font name
     public void setFontName(String fontName) {
         this.fontName = fontName;
     }
 
-    /**
-     * Returns the font size in points.
-     *
-     * @return the font size
-     */
+    /// Returns the font size in points.
+    ///
+    /// @return the font size
     public double getFontSize() {
         return fontSize;
     }
 
-    /**
-     * Sets the font size in points.
-     *
-     * @param fontSize the font size
-     */
+    /// Sets the font size in points.
+    ///
+    /// @param fontSize the font size
     public void setFontSize(double fontSize) {
         this.fontSize = fontSize;
     }
 
-    /**
-     * Returns the text color.
-     *
-     * @return the text color
-     */
+    /// Returns the text color.
+    ///
+    /// @return the text color
     public Color getTextColor() {
         return textColor;
     }
 
-    /**
-     * Sets the text color.
-     *
-     * @param textColor the text color
-     */
+    /// Sets the text color.
+    ///
+    /// @param textColor the text color
     public void setTextColor(Color textColor) {
         this.textColor = textColor;
     }
 
-    /**
-     * Returns the default appearance string in PDF operator format.
-     * <p>
-     * The format is: {@code "r g b rg /FontName fontSize Tf"} for RGB colors,
-     * or {@code "gray g /FontName fontSize Tf"} for grayscale colors.
-     * </p>
-     *
-     * @return the DA string
-     */
+    /// Returns the default appearance string in PDF operator format.
+    ///
+    /// The format is: `"r g b rg /FontName fontSize Tf"` for RGB colors,
+    /// or `"gray g /FontName fontSize Tf"` for grayscale colors.
+    ///
+    /// @return the DA string
     public String getText() {
         StringBuilder sb = new StringBuilder();
         if (textColor != null) {
@@ -131,28 +110,22 @@ public class DefaultAppearance {
         return sb.toString();
     }
 
-    /**
-     * Generates the DA string in PDF operator format.
-     * <p>
-     * Equivalent to {@link #getText()}.
-     * </p>
-     *
-     * @return the DA string
-     */
+    /// Generates the DA string in PDF operator format.
+    ///
+    /// Equivalent to [#getText()].
+    ///
+    /// @return the DA string
     public String toAppearanceString() {
         return getText();
     }
 
-    /**
-     * Parses a default appearance string (/DA) into a {@link DefaultAppearance} object.
-     * <p>
-     * Recognizes patterns like {@code "r g b rg /FontName fontSize Tf"}
-     * and {@code "gray g /FontName fontSize Tf"}.
-     * </p>
-     *
-     * @param da the DA string to parse
-     * @return a new DefaultAppearance parsed from the string, or a default instance if parsing fails
-     */
+    /// Parses a default appearance string (/DA) into a [DefaultAppearance] object.
+    ///
+    /// Recognizes patterns like `"r g b rg /FontName fontSize Tf"`
+    /// and `"gray g /FontName fontSize Tf"`.
+    ///
+    /// @param da the DA string to parse
+    /// @return a new DefaultAppearance parsed from the string, or a default instance if parsing fails
     public static DefaultAppearance fromString(String da) {
         if (da == null || da.trim().isEmpty()) {
             return new DefaultAppearance();
@@ -204,9 +177,7 @@ public class DefaultAppearance {
         return new DefaultAppearance(fontName, fontSize, textColor);
     }
 
-    /**
-     * Converts a PDF resource name back to a standard font name.
-     */
+    /// Converts a PDF resource name back to a standard font name.
     private static String fromResourceName(String resourceName) {
         if (resourceName == null) return "Helvetica";
         switch (resourceName) {
@@ -221,20 +192,16 @@ public class DefaultAppearance {
         }
     }
 
-    /**
-     * Returns the DA string (same as {@link #getText()}).
-     *
-     * @return the DA string
-     */
+    /// Returns the DA string (same as [#getText()]).
+    ///
+    /// @return the DA string
     @Override
     public String toString() {
         return getText();
     }
 
-    /**
-     * Converts a font name to a typical PDF resource name.
-     * Common fonts get short names; others use the name as-is.
-     */
+    /// Converts a font name to a typical PDF resource name.
+    /// Common fonts get short names; others use the name as-is.
     private static String toResourceName(String font) {
         if (font == null) return "Helv";
         switch (font) {

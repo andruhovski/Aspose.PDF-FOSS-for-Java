@@ -1,13 +1,7 @@
 package org.aspose.pdf.engine.optimization;
 
 import org.aspose.pdf.engine.parser.PDFParser;
-import org.aspose.pdf.engine.pdfobjects.PdfArray;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectKey;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
-import org.aspose.pdf.engine.pdfobjects.PdfStream;
+import org.aspose.pdf.engine.pdfobjects.*;
 import org.aspose.pdf.optimization.OptimizationOptions;
 
 import java.io.ByteArrayOutputStream;
@@ -15,28 +9,20 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.logging.Logger;
 
-/**
- * Size-reduction passes over a parsed document's object graph, driven by
- * {@link OptimizationOptions}. Called by
- * {@code Document.optimizeResources(...)} BEFORE the compact full rewrite,
- * so objects orphaned by a pass (e.g. duplicate streams whose references
- * were re-pointed) are dropped by the rewrite's reachability pass.
- * <p>
- * Every pass is safe-by-default: any stream that cannot be read, or whose
- * replacement would not be smaller, is left untouched. Passes only mutate
- * the live object graph (dictionaries, arrays, stream data) — never the
- * file structure, which the writer rebuilds anyway.
- * </p>
- */
+/// Size-reduction passes over a parsed document's object graph, driven by
+/// [OptimizationOptions]. Called by
+/// `Document.optimizeResources(...)` BEFORE the compact full rewrite,
+/// so objects orphaned by a pass (e.g. duplicate streams whose references
+/// were re-pointed) are dropped by the rewrite's reachability pass.
+///
+/// Every pass is safe-by-default: any stream that cannot be read, or whose
+/// replacement would not be smaller, is left untouched. Passes only mutate
+/// the live object graph (dictionaries, arrays, stream data) — never the
+/// file structure, which the writer rebuilds anyway.
+///
 public final class ResourceOptimizer {
 
     private static final Logger LOG = Logger.getLogger(ResourceOptimizer.class.getName());
@@ -44,25 +30,25 @@ public final class ResourceOptimizer {
     private ResourceOptimizer() {
     }
 
-    /** Result counters for logging/tests. */
+    /// Result counters for logging/tests.
     public static final class Stats {
-        /** Number of duplicate streams re-pointed to a canonical copy. */
+        /// Number of duplicate streams re-pointed to a canonical copy.
         public int duplicatesLinked;
-        /** Encoded bytes of the duplicate streams that became unreachable. */
+        /// Encoded bytes of the duplicate streams that became unreachable.
         public long duplicateBytes;
-        /** Number of streams re-encoded with a tighter filter chain. */
+        /// Number of streams re-encoded with a tighter filter chain.
         public int streamsRecompressed;
-        /** Encoded bytes saved by recompression. */
+        /// Encoded bytes saved by recompression.
         public long recompressionSaved;
-        /** Number of images converted to JPEG and/or downsampled. */
+        /// Number of images converted to JPEG and/or downsampled.
         public int imagesRecompressed;
-        /** Encoded bytes saved by image recompression. */
+        /// Encoded bytes saved by image recompression.
         public long imageBytesSaved;
-        /** Private-info dictionary entries removed (Metadata/PieceInfo/…). */
+        /// Private-info dictionary entries removed (Metadata/PieceInfo/…).
         public int privateEntriesRemoved;
-        /** Embedded font programs stripped to their used glyphs. */
+        /// Embedded font programs stripped to their used glyphs.
         public int fontsSubset;
-        /** Bytes saved by glyph stripping (pre-Flate). */
+        /// Bytes saved by glyph stripping (pre-Flate).
         public long fontBytesSaved;
 
         @Override
@@ -76,27 +62,23 @@ public final class ResourceOptimizer {
         }
     }
 
-    /**
-     * Runs the enabled optimization passes over the parser's object graph.
-     *
-     * @param parser  the parsed document (must not be null)
-     * @param options the enabled passes (null → nothing to do)
-     * @return counters describing what was changed
-     */
+    /// Runs the enabled optimization passes over the parser's object graph.
+    ///
+    /// @param parser  the parsed document (must not be null)
+    /// @param options the enabled passes (null → nothing to do)
+    /// @return counters describing what was changed
     public static Stats optimize(PDFParser parser, OptimizationOptions options) {
         return optimize(parser, options, null);
     }
 
-    /**
-     * Runs the enabled optimization passes over the parser's object graph.
-     *
-     * @param parser        the parsed document (must not be null)
-     * @param options       the enabled passes (null → nothing to do)
-     * @param imageDisplay  maximum display size in points per image stream
-     *                      ({@code {widthPt, heightPt}}), used to compute the
-     *                      effective resolution for downsampling; may be null
-     * @return counters describing what was changed
-     */
+    /// Runs the enabled optimization passes over the parser's object graph.
+    ///
+    /// @param parser        the parsed document (must not be null)
+    /// @param options       the enabled passes (null → nothing to do)
+    /// @param imageDisplay  maximum display size in points per image stream
+    ///                      (`{widthPt, heightPt}`), used to compute the
+    ///                      effective resolution for downsampling; may be null
+    /// @return counters describing what was changed
     public static Stats optimize(PDFParser parser, OptimizationOptions options,
                                  Map<PdfStream, double[]> imageDisplay) {
         Stats stats = new Stats();
@@ -132,14 +114,12 @@ public final class ResourceOptimizer {
 
     // ================= Pass: remove private info =================
 
-    /**
-     * Strips application-private and derived payloads that carry no document
-     * content ({@code removePrivateInfo}): XMP {@code /Metadata} streams,
-     * {@code /PieceInfo} (Photoshop/Illustrator round-trip data, often the
-     * largest hidden payload in authored files), page thumbnails
-     * ({@code /Thumb}) and image {@code /Alternates}. The detached streams
-     * become unreachable and are dropped by the compact rewrite.
-     */
+    /// Strips application-private and derived payloads that carry no document
+    /// content (`removePrivateInfo`): XMP `/Metadata` streams,
+    /// `/PieceInfo` (Photoshop/Illustrator round-trip data, often the
+    /// largest hidden payload in authored files), page thumbnails
+    /// (`/Thumb`) and image `/Alternates`. The detached streams
+    /// become unreachable and are dropped by the compact rewrite.
     private static void removePrivateInfo(PDFParser parser, Stats stats) {
         for (PdfObjectKey key : parser.getAllObjectKeys()) {
             PdfBase obj;
@@ -171,14 +151,12 @@ public final class ResourceOptimizer {
 
     // ================= Pass: recompress / downsample images =================
 
-    /**
-     * Converts photographic raster images to JPEG at the requested quality
-     * ({@code compressImages}/{@code imageQuality}) and downsamples images
-     * displayed below their stored resolution ({@code resizeImages}/
-     * {@code maxResolution}). Only unambiguously safe candidates are
-     * touched: 8-bpc DeviceRGB/DeviceGray, no masks, no /Decode remap; a
-     * replacement must be strictly smaller than the current payload.
-     */
+    /// Converts photographic raster images to JPEG at the requested quality
+    /// (`compressImages`/`imageQuality`) and downsamples images
+    /// displayed below their stored resolution (`resizeImages`/
+    /// `maxResolution`). Only unambiguously safe candidates are
+    /// touched: 8-bpc DeviceRGB/DeviceGray, no masks, no /Decode remap; a
+    /// replacement must be strictly smaller than the current payload.
     private static void recompressImages(PDFParser parser, OptimizationOptions options,
                                          Map<PdfStream, double[]> imageDisplay, Stats stats) {
         for (PdfObjectKey key : parser.getAllObjectKeys()) {
@@ -338,7 +316,7 @@ public final class ResourceOptimizer {
         stats.imageBytesSaved += Math.max(0, currentSize - replacement.length);
     }
 
-    /** The single filter name of the stream, or null when unfiltered; "" for chains. */
+    /// The single filter name of the stream, or null when unfiltered; "" for chains.
     private static String singleFilterName(PdfStream stream) {
         PdfBase filter = stream.get("Filter");
         if (filter instanceof PdfObjectReference) {
@@ -361,7 +339,7 @@ public final class ResourceOptimizer {
         return "";
     }
 
-    /** Builds an AWT image over raw 8-bpc gray or RGB component bytes. */
+    /// Builds an AWT image over raw 8-bpc gray or RGB component bytes.
     private static java.awt.image.BufferedImage rasterFromBytes(byte[] raw, int width,
                                                                 int height, boolean gray) {
         java.awt.image.BufferedImage img = new java.awt.image.BufferedImage(
@@ -383,7 +361,7 @@ public final class ResourceOptimizer {
         return img;
     }
 
-    /** Extracts raw 8-bpc gray or RGB component bytes from an AWT image. */
+    /// Extracts raw 8-bpc gray or RGB component bytes from an AWT image.
     private static byte[] bytesFromRaster(java.awt.image.BufferedImage img, boolean gray) {
         int width = img.getWidth();
         int height = img.getHeight();
@@ -405,7 +383,7 @@ public final class ResourceOptimizer {
         return out;
     }
 
-    /** JPEG-encodes the image at the given quality; null when encoding fails. */
+    /// JPEG-encodes the image at the given quality; null when encoding fails.
     private static byte[] encodeJpeg(java.awt.image.BufferedImage img, boolean gray, float quality) {
         try {
             // JPEG has no alpha and the writer needs an opaque raster type.
@@ -445,7 +423,7 @@ public final class ResourceOptimizer {
 
     // ================= Pass: subset (strip) embedded fonts =================
 
-    /** Per-font usage record for the subsetting pass. */
+    /// Per-font usage record for the subsetting pass.
     private static final class SubsetCandidate {
         final PdfDictionary type0;
         final PdfDictionary descendant;
@@ -462,20 +440,18 @@ public final class ResourceOptimizer {
         }
     }
 
-    /**
-     * Strips unused glyph outlines from embedded TrueType programs of
-     * Identity-encoded CID fonts (Type0 → CIDFontType2, Identity-H/V,
-     * Identity CIDToGIDMap — the shape where CID == GID, so used glyphs can
-     * be read directly off the show strings).
-     * <p>
-     * Conservative by design: the pass aborts wholesale when the document
-     * has AcroForm fields (variable text may use any glyph), or when any
-     * content stream fails to parse, or when text is shown through a font
-     * the scanner cannot resolve — under-collecting usage must never
-     * happen. Fonts already carrying a subset prefix are still processed
-     * (a merged document often re-embeds full programs under old names).
-     * </p>
-     */
+    /// Strips unused glyph outlines from embedded TrueType programs of
+    /// Identity-encoded CID fonts (Type0 → CIDFontType2, Identity-H/V,
+    /// Identity CIDToGIDMap — the shape where CID == GID, so used glyphs can
+    /// be read directly off the show strings).
+    ///
+    /// Conservative by design: the pass aborts wholesale when the document
+    /// has AcroForm fields (variable text may use any glyph), or when any
+    /// content stream fails to parse, or when text is shown through a font
+    /// the scanner cannot resolve — under-collecting usage must never
+    /// happen. Fonts already carrying a subset prefix are still processed
+    /// (a merged document often re-embeds full programs under old names).
+    ///
     private static void subsetFonts(PDFParser parser, Stats stats) {
         PdfDictionary catalog;
         try {
@@ -547,7 +523,7 @@ public final class ResourceOptimizer {
         }
     }
 
-    /** Recognises the safe Identity-encoded CIDFontType2 shape, else null. */
+    /// Recognises the safe Identity-encoded CIDFontType2 shape, else null.
     private static SubsetCandidate asSubsetCandidate(PdfDictionary font) {
         if (!"Font".equals(font.getNameAsString("Type"))
                 || !"Type0".equals(font.getNameAsString("Subtype"))) {
@@ -582,7 +558,7 @@ public final class ResourceOptimizer {
         return new SubsetCandidate(font, descendant, descriptor, (PdfStream) fontFile);
     }
 
-    /** Collects CID usage from one page: contents, form XObjects, appearances. */
+    /// Collects CID usage from one page: contents, form XObjects, appearances.
     private static void scanPageUsage(PdfDictionary page,
                                       Map<PdfDictionary, SubsetCandidate> candidates) throws IOException {
         PdfDictionary resources = inheritedResources(page);
@@ -621,7 +597,7 @@ public final class ResourceOptimizer {
         }
     }
 
-    /** Resources with page-tree inheritance (§7.7.3.4). */
+    /// Resources with page-tree inheritance (§7.7.3.4).
     private static PdfDictionary inheritedResources(PdfDictionary page) {
         PdfDictionary node = page;
         for (int depth = 0; node != null && depth < 64; depth++) {
@@ -667,11 +643,9 @@ public final class ResourceOptimizer {
                 candidates, visitedForms, depth);
     }
 
-    /**
-     * Walks one content stream attributing show-operator bytes to fonts.
-     * Throws when text is shown through a font that cannot be resolved —
-     * the caller treats that as "usage unknown" and aborts the pass.
-     */
+    /// Walks one content stream attributing show-operator bytes to fonts.
+    /// Throws when text is shown through a font that cannot be resolved —
+    /// the caller treats that as "usage unknown" and aborts the pass.
     private static void scanContentUsage(byte[] content, PdfDictionary resources,
                                          Map<PdfDictionary, SubsetCandidate> candidates,
                                          java.util.Set<PdfDictionary> visitedForms,
@@ -741,7 +715,7 @@ public final class ResourceOptimizer {
         }
     }
 
-    /** Adds the 2-byte CIDs of a show operator's strings to {@code cids}. */
+    /// Adds the 2-byte CIDs of a show operator's strings to `cids`.
     private static void collectShowBytes(org.aspose.pdf.Operator op, java.util.Set<Integer> cids) {
         java.util.List<PdfBase> operands = op.getOperands();
         if (operands == null) {
@@ -768,7 +742,7 @@ public final class ResourceOptimizer {
         }
     }
 
-    /** Strips the candidate's TTF and updates dict metadata when it shrinks. */
+    /// Strips the candidate's TTF and updates dict metadata when it shrinks.
     private static void applySubset(SubsetCandidate candidate, Stats stats) throws IOException {
         byte[] original = candidate.fontFile2.getDecodedData();
         if (original == null || original.length < 12) {
@@ -789,7 +763,7 @@ public final class ResourceOptimizer {
         stats.fontBytesSaved += original.length - stripped.length;
     }
 
-    /** Prepends the conventional 6-letter subset tag when absent. */
+    /// Prepends the conventional 6-letter subset tag when absent.
     private static void applySubsetPrefix(SubsetCandidate candidate) {
         String base = candidate.type0.getNameAsString("BaseFont");
         if (base == null || (base.length() > 7 && base.charAt(6) == '+')) {
@@ -812,7 +786,7 @@ public final class ResourceOptimizer {
         }
     }
 
-    /** Resolves a possibly-indirect value; null on failure. */
+    /// Resolves a possibly-indirect value; null on failure.
     private static PdfBase resolveValue(PdfBase value) {
         if (value instanceof PdfObjectReference) {
             try {
@@ -824,7 +798,7 @@ public final class ResourceOptimizer {
         return value;
     }
 
-    /** Resolves a possibly-indirect dictionary; null when not a dict. */
+    /// Resolves a possibly-indirect dictionary; null when not a dict.
     private static PdfDictionary resolveDict(PdfBase value) {
         PdfBase resolved = resolveValue(value);
         return resolved instanceof PdfDictionary ? (PdfDictionary) resolved : null;
@@ -832,7 +806,7 @@ public final class ResourceOptimizer {
 
     // ================= Pass: recompress streams =================
 
-    /** Filters whose output is a plain byte-for-byte lossless recoding. */
+    /// Filters whose output is a plain byte-for-byte lossless recoding.
     private static boolean isLosslessByteFilter(String name) {
         return "FlateDecode".equals(name) || "Fl".equals(name)
                 || "LZWDecode".equals(name) || "LZW".equals(name)
@@ -841,14 +815,12 @@ public final class ResourceOptimizer {
                 || "RunLengthDecode".equals(name) || "RL".equals(name);
     }
 
-    /**
-     * Re-encodes every stream whose filter chain is purely lossless
-     * (uncompressed, ASCIIHex/85, LZW, RunLength or loosely-deflated Flate)
-     * as a single maximum-effort {@code /FlateDecode}, adding a PNG
-     * predictor for 8-bpc raster images when that wins. A replacement is
-     * applied only when it is strictly smaller than the current encoded
-     * form, and predictor candidates are verified by decoding them back.
-     */
+    /// Re-encodes every stream whose filter chain is purely lossless
+    /// (uncompressed, ASCIIHex/85, LZW, RunLength or loosely-deflated Flate)
+    /// as a single maximum-effort `/FlateDecode`, adding a PNG
+    /// predictor for 8-bpc raster images when that wins. A replacement is
+    /// applied only when it is strictly smaller than the current encoded
+    /// form, and predictor candidates are verified by decoding them back.
     private static void recompressStreams(PDFParser parser, Stats stats) {
         for (PdfObjectKey key : parser.getAllObjectKeys()) {
             PdfBase obj;
@@ -953,7 +925,7 @@ public final class ResourceOptimizer {
         stats.recompressionSaved += currentSize - best.length;
     }
 
-    /** Maximum-effort raw deflate of the given bytes. */
+    /// Maximum-effort raw deflate of the given bytes.
     private static byte[] deflateBest(byte[] data) {
         java.util.zip.Deflater deflater =
                 new java.util.zip.Deflater(java.util.zip.Deflater.BEST_COMPRESSION);
@@ -968,11 +940,9 @@ public final class ResourceOptimizer {
         return out.toByteArray();
     }
 
-    /**
-     * Returns {@code {columns, colors}} when the stream is an 8-bpc raster
-     * image whose decoded size matches width × colors × height exactly —
-     * the only shape our PNG predictor encoder handles — else {@code null}.
-     */
+    /// Returns `{columns, colors}` when the stream is an 8-bpc raster
+    /// image whose decoded size matches width × colors × height exactly —
+    /// the only shape our PNG predictor encoder handles — else `null`.
     private static int[] predictorGeometry(PdfStream stream, int decodedLength) {
         if (!"Image".equals(stream.getNameAsString("Subtype"))) {
             return null;
@@ -1015,12 +985,10 @@ public final class ResourceOptimizer {
         return new int[]{width, colors};
     }
 
-    /**
-     * PNG predictor pre-filtering (per-row best of None/Sub/Up/Average/Paeth
-     * by the standard minimum-sum-of-absolute-differences heuristic). Output
-     * rows carry the PNG filter-type byte prefix expected by
-     * {@code /Predictor 15} decoding.
-     */
+    /// PNG predictor pre-filtering (per-row best of None/Sub/Up/Average/Paeth
+    /// by the standard minimum-sum-of-absolute-differences heuristic). Output
+    /// rows carry the PNG filter-type byte prefix expected by
+    /// `/Predictor 15` decoding.
     private static byte[] pngPredictorEncode(byte[] data, int columns, int colors) {
         int rowLen = columns * colors;
         int rows = data.length / rowLen;
@@ -1069,7 +1037,7 @@ public final class ResourceOptimizer {
         return out;
     }
 
-    /** PNG Paeth predictor (RFC 2083 §6.6). */
+    /// PNG Paeth predictor (RFC 2083 §6.6).
     private static int paeth(int a, int b, int c) {
         int p = a + b - c;
         int pa = Math.abs(p - a);
@@ -1081,17 +1049,15 @@ public final class ResourceOptimizer {
 
     // ================= Pass: link duplicate streams =================
 
-    /**
-     * Finds streams that are byte-identical (same dictionary content, same
-     * encoded payload) and re-points every reference to the copy with the
-     * lowest object number. The orphaned duplicates are dropped by the
-     * compact rewrite that follows optimization.
-     * <p>
-     * Runs up to three rounds so nested duplicates converge: two images
-     * that differ only in referencing distinct-but-identical soft masks
-     * become identical themselves once the masks are linked in round one.
-     * </p>
-     */
+    /// Finds streams that are byte-identical (same dictionary content, same
+    /// encoded payload) and re-points every reference to the copy with the
+    /// lowest object number. The orphaned duplicates are dropped by the
+    /// compact rewrite that follows optimization.
+    ///
+    /// Runs up to three rounds so nested duplicates converge: two images
+    /// that differ only in referencing distinct-but-identical soft masks
+    /// become identical themselves once the masks are linked in round one.
+    ///
     private static void linkDuplicateStreams(PDFParser parser, Stats stats) {
         for (int round = 0; round < 3; round++) {
             Map<PdfObjectKey, PdfObjectKey> remap = buildDuplicateMap(parser, stats);
@@ -1102,7 +1068,7 @@ public final class ResourceOptimizer {
         }
     }
 
-    /** Maps each duplicate stream's key to the canonical (lowest-numbered) key. */
+    /// Maps each duplicate stream's key to the canonical (lowest-numbered) key.
     private static Map<PdfObjectKey, PdfObjectKey> buildDuplicateMap(PDFParser parser, Stats stats) {
         Map<String, PdfObjectKey> canonical = new HashMap<>();
         Map<PdfObjectKey, PdfObjectKey> remap = new LinkedHashMap<>();
@@ -1144,16 +1110,14 @@ public final class ResourceOptimizer {
         return remap;
     }
 
-    /**
-     * Canonical content signature of a stream: dictionary entries sorted by
-     * key name (skipping {@code /Length}, which the writer recomputes)
-     * followed by the payload bytes. References serialise as
-     * {@code "N G R"}, so streams pointing at different targets stay
-     * distinct until those targets are themselves linked.
-     *
-     * @return the signature, or {@code null} when the stream data cannot be
-     *         read (such streams are never linked)
-     */
+    /// Canonical content signature of a stream: dictionary entries sorted by
+    /// key name (skipping `/Length`, which the writer recomputes)
+    /// followed by the payload bytes. References serialise as
+    /// `"N G R"`, so streams pointing at different targets stay
+    /// distinct until those targets are themselves linked.
+    ///
+    /// @return the signature, or `null` when the stream data cannot be
+    ///         read (such streams are never linked)
     private static String signatureOf(PdfStream stream) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -1194,11 +1158,9 @@ public final class ResourceOptimizer {
         }
     }
 
-    /**
-     * Rewrites every reference in the object graph (all indirect objects
-     * plus the trailer) that points at a re-mapped key so it targets the
-     * canonical copy instead.
-     */
+    /// Rewrites every reference in the object graph (all indirect objects
+    /// plus the trailer) that points at a re-mapped key so it targets the
+    /// canonical copy instead.
     private static void remapReferences(PDFParser parser, Map<PdfObjectKey, PdfObjectKey> remap) {
         PdfObjectReference.ObjectResolver resolver = parser::getObject;
         // Malformed files can contain DIRECT dictionary/array cycles (a dict
@@ -1223,7 +1185,7 @@ public final class ResourceOptimizer {
         }
     }
 
-    /** Recursively replaces re-mapped references inside dicts and arrays. */
+    /// Recursively replaces re-mapped references inside dicts and arrays.
     private static void remapIn(PdfBase node, Map<PdfObjectKey, PdfObjectKey> remap,
                                 PdfObjectReference.ObjectResolver resolver,
                                 java.util.Set<PdfBase> visited) {
@@ -1259,7 +1221,7 @@ public final class ResourceOptimizer {
         }
     }
 
-    /** A new reference to the canonical key, or {@code null} if no remap applies. */
+    /// A new reference to the canonical key, or `null` if no remap applies.
     private static PdfBase replacement(PdfBase value, Map<PdfObjectKey, PdfObjectKey> remap,
                                        PdfObjectReference.ObjectResolver resolver) {
         if (!(value instanceof PdfObjectReference)) {

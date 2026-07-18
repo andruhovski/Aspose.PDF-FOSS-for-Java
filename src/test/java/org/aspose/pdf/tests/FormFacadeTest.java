@@ -16,9 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * Tests for facade-level form helpers.
- */
+/// Tests for facade-level form helpers.
 public class FormFacadeTest {
 
     @Test

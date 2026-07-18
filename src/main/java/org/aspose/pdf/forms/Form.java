@@ -1,20 +1,21 @@
 package org.aspose.pdf.forms;
 
-import org.aspose.pdf.*;
+import org.aspose.pdf.Document;
+import org.aspose.pdf.Page;
+import org.aspose.pdf.PageCollection;
+import org.aspose.pdf.Resources;
 import org.aspose.pdf.annotations.Annotation;
-import org.aspose.pdf.engine.pdfobjects.*;
 import org.aspose.pdf.engine.parser.PDFParser;
+import org.aspose.pdf.engine.pdfobjects.*;
 import org.aspose.pdf.forms.xfa.XfaForm;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.logging.Logger;
 
-/**
- * Represents the interactive form (AcroForm) of a PDF document
- * (ISO 32000-1:2008, §12.7).
- * Accessed via {@code document.getForm()}.
- */
+/// Represents the interactive form (AcroForm) of a PDF document
+/// (ISO 32000-1:2008, §12.7).
+/// Accessed via `document.getForm()`.
 public class Form implements Iterable<Field> {
 
     private static final Logger LOG = Logger.getLogger(Form.class.getName());
@@ -33,29 +34,25 @@ public class Form implements Iterable<Field> {
         this.parser = parser;
     }
 
-    /** Get field by full name */
+    /// Get field by full name
     public Field get(String fieldName) {
         ensureLoaded();
         return fieldsByName.get(fieldName);
     }
 
-    /**
-     * Returns whether a field with the specified name exists.
-     *
-     * @param fieldName the field name to look up
-     * @return true if the field exists
-     */
+    /// Returns whether a field with the specified name exists.
+    ///
+    /// @param fieldName the field name to look up
+    /// @return true if the field exists
     public boolean hasField(String fieldName) {
         return hasField(fieldName, false);
     }
 
-    /**
-     * Returns whether a field with the specified name exists.
-     *
-     * @param fieldName the field name to look up
-     * @param ignoreCase true to compare names case-insensitively
-     * @return true if the field exists
-     */
+    /// Returns whether a field with the specified name exists.
+    ///
+    /// @param fieldName the field name to look up
+    /// @param ignoreCase true to compare names case-insensitively
+    /// @return true if the field exists
     public boolean hasField(String fieldName, boolean ignoreCase) {
         ensureLoaded();
         if (fieldName == null) {
@@ -72,7 +69,7 @@ public class Form implements Iterable<Field> {
         return false;
     }
 
-    /** Get field by 1-based index */
+    /// Get field by 1-based index
     public Field get(int index) {
         ensureLoaded();
         if (index < 1 || index > fields.size())
@@ -80,13 +77,13 @@ public class Form implements Iterable<Field> {
         return fields.get(index - 1);
     }
 
-    /** Get all fields */
+    /// Get all fields
     public Field[] getFields() {
         ensureLoaded();
         return fields.toArray(new Field[0]);
     }
 
-    /** Total field count */
+    /// Total field count
     public int getCount() {
         ensureLoaded();
         return fields.size();
@@ -98,20 +95,18 @@ public class Form implements Iterable<Field> {
         return fields.iterator();
     }
 
-    /** Form type — detects XFA presence from the /XFA entry in the AcroForm dictionary. */
+    /// Form type — detects XFA presence from the /XFA entry in the AcroForm dictionary.
     public FormType getType() {
         PdfBase xfa = resolveRef(acroFormDict.get("XFA"));
         if (xfa == null) return FormType.Standard;
         return FormType.XFA;
     }
 
-    /**
-     * Sets the form type. When set to {@link FormType#Standard}, the /XFA entry
-     * is removed from the AcroForm dictionary, converting the form to pure AcroForm.
-     * The existing /Fields array with AcroForm fields remains intact.
-     *
-     * @param type the desired form type
-     */
+    /// Sets the form type. When set to [FormType#Standard], the /XFA entry
+    /// is removed from the AcroForm dictionary, converting the form to pure AcroForm.
+    /// The existing /Fields array with AcroForm fields remains intact.
+    ///
+    /// @param type the desired form type
     public void setType(FormType type) {
         if (type == FormType.Standard) {
             acroFormDict.remove(PdfName.of("XFA"));
@@ -119,12 +114,10 @@ public class Form implements Iterable<Field> {
         }
     }
 
-    /**
-     * Returns the XFA form object for accessing XFA-specific data.
-     * Returns null if the form does not contain XFA data.
-     *
-     * @return the XfaForm, or null if no /XFA entry exists
-     */
+    /// Returns the XFA form object for accessing XFA-specific data.
+    /// Returns null if the form does not contain XFA data.
+    ///
+    /// @return the XfaForm, or null if no /XFA entry exists
     public XfaForm getXFA() {
         PdfBase xfa = resolveRef(acroFormDict.get("XFA"));
         if (xfa == null) return null;
@@ -139,7 +132,7 @@ public class Form implements Iterable<Field> {
         return xfaForm;
     }
 
-    /** /NeedAppearances */
+    /// /NeedAppearances
     public boolean getNeedAppearances() {
         return acroFormDict.getBoolean("NeedAppearances", false);
     }
@@ -147,19 +140,19 @@ public class Form implements Iterable<Field> {
         acroFormDict.set(PdfName.of("NeedAppearances"), PdfBoolean.valueOf(value));
     }
 
-    /** /DA — default appearance */
+    /// /DA — default appearance
     public String getDefaultAppearance() {
         PdfBase da = acroFormDict.get("DA");
         return (da instanceof PdfString) ? ((PdfString) da).getString() : null;
     }
 
-    /** /DR — default resources */
+    /// /DR — default resources
     public Resources getDefaultResources() {
         PdfBase dr = resolveRef(acroFormDict.get("DR"));
         return (dr instanceof PdfDictionary) ? new Resources((PdfDictionary) dr) : null;
     }
 
-    /** Add a field */
+    /// Add a field
     public void add(Field field) {
         ensureLoaded();
         if (field == null) {
@@ -180,15 +173,13 @@ public class Form implements Iterable<Field> {
         fieldsArray.add(fieldEntry);
     }
 
-    /**
-     * Lazy-populates the AcroForm {@code /DR /Font} dictionary with the two
-     * Standard-14 entries every variable-text widget needs to resolve its
-     * {@code /DA} font selector: {@code /Helv} (Helvetica/WinAnsiEncoding) and
-     * {@code /ZaDb} (ZapfDingbats). Without these, poppler/mupdf log
-     * "Missing 'Tf' operator in field's DA string" and leave the field blank.
-     *
-     * <p>Idempotent: a second call leaves existing entries untouched.</p>
-     */
+    /// Lazy-populates the AcroForm `/DR /Font` dictionary with the two
+    /// Standard-14 entries every variable-text widget needs to resolve its
+    /// `/DA` font selector: `/Helv` (Helvetica/WinAnsiEncoding) and
+    /// `/ZaDb` (ZapfDingbats). Without these, poppler/mupdf log
+    /// "Missing 'Tf' operator in field's DA string" and leave the field blank.
+    ///
+    /// Idempotent: a second call leaves existing entries untouched.
     private void ensureDefaultResources() {
         PdfBase drVal = resolveRef(acroFormDict.get("DR"));
         PdfDictionary dr;
@@ -231,12 +222,10 @@ public class Form implements Iterable<Field> {
         fonts.set(PdfName.of(resName), f);
     }
 
-    /**
-     * Adds a field to the specified page (1-based index).
-     *
-     * @param field     the field to add
-     * @param pageNumber the 1-based page number
-     */
+    /// Adds a field to the specified page (1-based index).
+    ///
+    /// @param field     the field to add
+    /// @param pageNumber the 1-based page number
     public void add(Field field, int pageNumber) {
         if (document != null) {
             try {
@@ -251,20 +240,17 @@ public class Form implements Iterable<Field> {
         add(field);
     }
 
-    /**
-     * Creates a copy of the specified field, assigns it a new name, places it on the
-     * requested page, and adds it to the form.
-     * <p>
-     * This mirrors the common Aspose API workflow used by regression tests:
-     * the original field remains in the form, while the returned field is a newly
-     * created copy with an independent PDF dictionary.
-     * </p>
-     *
-     * @param field      the source field to copy
-     * @param newName    the name for the copied field
-     * @param pageNumber the 1-based target page number
-     * @return the newly added copied field
-     */
+    /// Creates a copy of the specified field, assigns it a new name, places it on the
+    /// requested page, and adds it to the form.
+    ///
+    /// This mirrors the common Aspose API workflow used by regression tests:
+    /// the original field remains in the form, while the returned field is a newly
+    /// created copy with an independent PDF dictionary.
+    ///
+    /// @param field      the source field to copy
+    /// @param newName    the name for the copied field
+    /// @param pageNumber the 1-based target page number
+    /// @return the newly added copied field
     public Field add(Field field, String newName, int pageNumber) {
         ensureLoaded();
         if (field == null) {
@@ -302,16 +288,14 @@ public class Form implements Iterable<Field> {
         return copiedField;
     }
 
-    /**
-     * Returns the number of fields in the form.
-     *
-     * @return the field count
-     */
+    /// Returns the number of fields in the form.
+    ///
+    /// @return the field count
     public int size() {
         return getCount();
     }
 
-    /** Delete field by name */
+    /// Delete field by name
     public void delete(String fieldName) {
         ensureLoaded();
         Field field = fieldsByName.get(fieldName);
@@ -338,19 +322,16 @@ public class Form implements Iterable<Field> {
         }
     }
 
-    /**
-     * Flattens the form by baking each field's widget appearance into its page's
-     * content stream and then removing the AcroForm /Fields array.
-     * <p>
-     * For each field, the widget annotation dictionary (the field itself if it has
-     * /Rect, or each item in /Kids) is located on its page. If the widget has a
-     * normal appearance stream (/AP /N), that appearance is flattened into the
-     * page content via {@link Page#flattenAnnotations()}. The field is then removed
-     * from the /Fields array.
-     * </p>
-     *
-     * @throws IOException if reading appearance streams or modifying content fails
-     */
+    /// Flattens the form by baking each field's widget appearance into its page's
+    /// content stream and then removing the AcroForm /Fields array.
+    ///
+    /// For each field, the widget annotation dictionary (the field itself if it has
+    /// /Rect, or each item in /Kids) is located on its page. If the widget has a
+    /// normal appearance stream (/AP /N), that appearance is flattened into the
+    /// page content via [Page#flattenAnnotations()]. The field is then removed
+    /// from the /Fields array.
+    ///
+    /// @throws IOException if reading appearance streams or modifying content fails
     public void flatten() throws IOException {
         ensureLoaded();
 
@@ -387,28 +368,23 @@ public class Form implements Iterable<Field> {
         while (fieldsArray.size() > 0) fieldsArray.remove(0);
     }
 
-    /**
-     * Flattens the form using the specified settings.
-     * <p>
-     * Behaves like {@link #flatten()} but allows control over the flattening process
-     * via {@link FlattenSettings}, such as whether to update appearances before flattening
-     * or whether to hide buttons.
-     * </p>
-     *
-     * @param settings the flatten settings, or null to use defaults
-     * @throws IOException if reading appearance streams or modifying content fails
-     */
+    /// Flattens the form using the specified settings.
+    ///
+    /// Behaves like [#flatten()] but allows control over the flattening process
+    /// via [FlattenSettings], such as whether to update appearances before flattening
+    /// or whether to hide buttons.
+    ///
+    /// @param settings the flatten settings, or null to use defaults
+    /// @throws IOException if reading appearance streams or modifying content fails
     public void flatten(FlattenSettings settings) throws IOException {
         // For now, delegate to the standard flatten; settings are stored for future use
         flatten();
     }
 
-    /**
-     * Returns the flatten settings used by {@link #flatten()}.
-     * If no settings have been explicitly set, a default instance is returned.
-     *
-     * @return the flatten settings (never null)
-     */
+    /// Returns the flatten settings used by [#flatten()].
+    /// If no settings have been explicitly set, a default instance is returned.
+    ///
+    /// @return the flatten settings (never null)
     public FlattenSettings getFlattenSettings() {
         if (flattenSettings == null) {
             flattenSettings = new FlattenSettings();
@@ -416,20 +392,16 @@ public class Form implements Iterable<Field> {
         return flattenSettings;
     }
 
-    /**
-     * Sets the flatten settings to be used by {@link #flatten()}.
-     *
-     * @param settings the flatten settings
-     */
+    /// Sets the flatten settings to be used by [#flatten()].
+    ///
+    /// @param settings the flatten settings
     public void setFlattenSettings(FlattenSettings settings) {
         this.flattenSettings = settings;
     }
 
     public PdfDictionary getPdfDictionary() { return acroFormDict; }
 
-    /**
-     * Settings that control how form fields are flattened into page content.
-     */
+    /// Settings that control how form fields are flattened into page content.
     public static class FlattenSettings {
 
         private boolean applyRedactions = false;
@@ -437,132 +409,104 @@ public class Form implements Iterable<Field> {
         private boolean updateAppearances = true;
         private boolean callEvents = true;
 
-        /**
-         * Creates a new FlattenSettings with default values.
-         */
+        /// Creates a new FlattenSettings with default values.
         public FlattenSettings() {
         }
 
-        /**
-         * Returns whether redaction annotations should be applied during flattening.
-         *
-         * @return true if redactions are applied
-         */
+        /// Returns whether redaction annotations should be applied during flattening.
+        ///
+        /// @return true if redactions are applied
         public boolean isApplyRedactions() {
             return applyRedactions;
         }
 
-        /**
-         * Returns whether redaction annotations should be applied during flattening.
-         *
-         * @return true if redactions are applied
-         */
+        /// Returns whether redaction annotations should be applied during flattening.
+        ///
+        /// @return true if redactions are applied
         public boolean getApplyRedactions() {
             return applyRedactions;
         }
 
-        /**
-         * Sets whether redaction annotations should be applied during flattening.
-         *
-         * @param applyRedactions true to apply redactions
-         */
+        /// Sets whether redaction annotations should be applied during flattening.
+        ///
+        /// @param applyRedactions true to apply redactions
         public void setApplyRedactions(boolean applyRedactions) {
             this.applyRedactions = applyRedactions;
         }
 
-        /**
-         * Returns whether button fields should be hidden (not rendered) during flattening.
-         *
-         * @return true if buttons are hidden
-         */
+        /// Returns whether button fields should be hidden (not rendered) during flattening.
+        ///
+        /// @return true if buttons are hidden
         public boolean isHideButtons() {
             return hideButtons;
         }
 
-        /**
-         * Returns whether button fields should be hidden (not rendered) during flattening.
-         *
-         * @return true if buttons are hidden
-         */
+        /// Returns whether button fields should be hidden (not rendered) during flattening.
+        ///
+        /// @return true if buttons are hidden
         public boolean getHideButtons() {
             return hideButtons;
         }
 
-        /**
-         * Sets whether button fields should be hidden (not rendered) during flattening.
-         *
-         * @param hideButtons true to hide buttons
-         */
+        /// Sets whether button fields should be hidden (not rendered) during flattening.
+        ///
+        /// @param hideButtons true to hide buttons
         public void setHideButtons(boolean hideButtons) {
             this.hideButtons = hideButtons;
         }
 
-        /**
-         * Returns whether field appearances should be updated before flattening.
-         *
-         * @return true if appearances are updated
-         */
+        /// Returns whether field appearances should be updated before flattening.
+        ///
+        /// @return true if appearances are updated
         public boolean isUpdateAppearances() {
             return updateAppearances;
         }
 
-        /**
-         * Returns whether field appearances should be updated before flattening.
-         *
-         * @return true if appearances are updated
-         */
+        /// Returns whether field appearances should be updated before flattening.
+        ///
+        /// @return true if appearances are updated
         public boolean getUpdateAppearances() {
             return updateAppearances;
         }
 
-        /**
-         * Sets whether field appearances should be updated before flattening.
-         *
-         * @param updateAppearances true to update appearances
-         */
+        /// Sets whether field appearances should be updated before flattening.
+        ///
+        /// @param updateAppearances true to update appearances
         public void setUpdateAppearances(boolean updateAppearances) {
             this.updateAppearances = updateAppearances;
         }
 
-        /**
-         * Returns whether events should be triggered during flattening.
-         *
-         * @return true if events are called
-         */
+        /// Returns whether events should be triggered during flattening.
+        ///
+        /// @return true if events are called
         public boolean isCallEvents() {
             return callEvents;
         }
 
-        /**
-         * Returns whether events should be triggered during flattening.
-         *
-         * @return true if events are called
-         */
+        /// Returns whether events should be triggered during flattening.
+        ///
+        /// @return true if events are called
         public boolean getCallEvents() {
             return callEvents;
         }
 
-        /**
-         * Sets whether events should be triggered during flattening.
-         *
-         * @param callEvents true to call events
-         */
+        /// Sets whether events should be triggered during flattening.
+        ///
+        /// @param callEvents true to call events
         public void setCallEvents(boolean callEvents) {
             this.callEvents = callEvents;
         }
     }
 
-    /**
-     * Form type enumeration.
-     */
+    /// Form type enumeration.
     public enum FormType {
-        /** Pure AcroForm, no XFA. */
+        /// Pure AcroForm, no XFA.
         Standard,
-        /** XFA static form (XFA foreground over PDF background). */
+        /// XFA static form (XFA foreground over PDF background).
         Static,
-        /** XFA dynamic form (fully XFA-driven layout). */
+        /// XFA dynamic form (fully XFA-driven layout).
         Dynamic,
-        /** Generic XFA (when static/dynamic distinction is not determinable). */
+        /// Generic XFA (when static/dynamic distinction is not determinable).
         XFA
     }
 
@@ -576,11 +520,9 @@ public class Form implements Iterable<Field> {
         return arr;
     }
 
-    /**
-     * Drops the cached field index so the next field-access call rescans
-     * {@code /AcroForm/Fields}. Call after structurally mutating the AcroForm
-     * dictionary outside this Form facade (e.g. {@link org.aspose.pdf.facades.FormEditor#copyOuterField}).
-     */
+    /// Drops the cached field index so the next field-access call rescans
+    /// `/AcroForm/Fields`. Call after structurally mutating the AcroForm
+    /// dictionary outside this Form facade (e.g. [org.aspose.pdf.facades.FormEditor#copyOuterField]).
     public void invalidate() {
         this.fields = null;
         this.fieldsByName = null;

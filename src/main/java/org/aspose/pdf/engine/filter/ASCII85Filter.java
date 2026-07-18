@@ -7,30 +7,24 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.logging.Logger;
 
-/**
- * ASCII85Decode filter (§7.4.3, ISO 32000-1:2008).
- * <p>
- * Encodes groups of 4 bytes as 5 ASCII characters in the range '!' (33) to 'u' (117).
- * A group of 4 zero bytes is encoded as the single character 'z'. The end-of-data
- * marker is {@code ~>}.
- * </p>
- */
+/// ASCII85Decode filter (§7.4.3, ISO 32000-1:2008).
+///
+/// Encodes groups of 4 bytes as 5 ASCII characters in the range '!' (33) to 'u' (117).
+/// A group of 4 zero bytes is encoded as the single character 'z'. The end-of-data
+/// marker is `~>`.
+///
 public final class ASCII85Filter implements PdfFilter {
 
     private static final Logger LOG = Logger.getLogger(ASCII85Filter.class.getName());
 
     private static final long[] POW85 = {85L * 85 * 85 * 85, 85L * 85 * 85, 85L * 85, 85, 1};
 
-    /**
-     * Creates an ASCII85Filter instance.
-     */
+    /// Creates an ASCII85Filter instance.
     public ASCII85Filter() {
         // Stateless
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /// {@inheritDoc}
     @Override
     public byte[] decode(byte[] encoded, PdfDictionary params) throws IOException {
         if (encoded == null || encoded.length == 0) {
@@ -128,9 +122,7 @@ public final class ASCII85Filter implements PdfFilter {
         return out.toByteArray();
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /// {@inheritDoc}
     @Override
     public byte[] encode(byte[] decoded, PdfDictionary params) throws IOException {
         if (decoded == null || decoded.length == 0) {
@@ -176,9 +168,7 @@ public final class ASCII85Filter implements PdfFilter {
         return out.toByteArray();
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /// {@inheritDoc}
     @Override
     public PdfName getName() {
         return PdfName.ASCII85_DECODE;

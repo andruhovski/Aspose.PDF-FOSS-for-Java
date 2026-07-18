@@ -6,60 +6,46 @@ import org.aspose.pdf.Rectangle;
 import org.aspose.pdf.engine.layout.ContentStreamBuilder;
 import org.aspose.pdf.engine.xfa.binding.FormDom;
 import org.aspose.pdf.engine.xfa.binding.FormField;
-import org.aspose.pdf.engine.xfa.flatten.layout.XfaBookends;
-import org.aspose.pdf.engine.xfa.flatten.layout.XfaFlowLayout;
-import org.aspose.pdf.engine.xfa.flatten.layout.XfaLayoutNode;
-import org.aspose.pdf.engine.xfa.flatten.layout.XfaPageSplitter;
-import org.aspose.pdf.engine.xfa.flatten.layout.XfaPaginator;
+import org.aspose.pdf.engine.xfa.flatten.layout.*;
 import org.aspose.pdf.engine.xfa.flatten.paint.XfaFontResolver;
 import org.aspose.pdf.engine.xfa.flatten.paint.XfaPainter;
 import org.aspose.pdf.engine.xfa.model.template.Template;
 import org.aspose.pdf.forms.Form;
 import org.w3c.dom.Element;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-/**
- * Converts an XFA form to a properly rendered, editable AcroForm document — the public
- * {@code XfaForm.convertToAcroForm(...)} path (Aspose {@code Form.Type=FormType.Standard}).
- *
- * <p>Unlike the Stage-A {@link XfaFlattener} (which only added fields at statically-resolvable
- * geometry, placing flowed fields in a placeholder grid and painting no static content), this
- * converter drives the Stage-C layout/render track ({@link XfaPaginator}/{@link XfaFlowLayout}/
- * {@link XfaPainter}) so the output is what a generic viewer should show:</p>
- * <ul>
- *   <li>the XFA <b>static content</b> (captions, draws, boilerplate text, boxes/borders) is painted
- *       onto fresh pages — no longer dropped;</li>
- *   <li>interactive AcroForm widgets are placed at their <b>real laid-out positions</b> (from the
- *       paginated layout), not in a synthetic grid;</li>
- *   <li>the XFA <b>"Please wait…" placeholder page(s)</b> shipped in dynamic XFA PDFs are removed
- *       and replaced by the rendered pages.</li>
- * </ul>
- *
- * <p>For each placed field the box + caption are painted (static), while the bound <em>value</em> is
- * carried by the interactive widget (painted with {@code ff=null} so the value is not double-drawn).</p>
- */
+/// Converts an XFA form to a properly rendered, editable AcroForm document — the public
+/// `XfaForm.convertToAcroForm(...)` path (Aspose `Form.Type=FormType.Standard`).
+///
+/// Unlike the Stage-A [XfaFlattener] (which only added fields at statically-resolvable
+/// geometry, placing flowed fields in a placeholder grid and painting no static content), this
+/// converter drives the Stage-C layout/render track ([XfaPaginator]/[XfaFlowLayout]/
+/// [XfaPainter]) so the output is what a generic viewer should show:
+///
+///   - the XFA **static content** (captions, draws, boilerplate text, boxes/borders) is painted
+///     onto fresh pages — no longer dropped;
+///   - interactive AcroForm widgets are placed at their **real laid-out positions** (from the
+///     paginated layout), not in a synthetic grid;
+///   - the XFA **"Please wait…" placeholder page(s)** shipped in dynamic XFA PDFs are removed
+///     and replaced by the rendered pages.
+///
+/// For each placed field the box + caption are painted (static), while the bound _value_ is
+/// carried by the interactive widget (painted with `ff=null` so the value is not double-drawn).
 public final class XfaAcroFormConverter {
 
     private XfaAcroFormConverter() {
     }
 
-    /**
-     * Converts {@code dom} into a rendered editable AcroForm on {@code doc}.
-     *
-     * @param doc      the target document (its existing placeholder pages are replaced)
-     * @param dom      the merged Form DOM
-     * @param tpl      the XFA template (medium + pageSet + layout), or {@code null}
-     * @param policy   the {@code /XFA} handling policy
-     * @param acroForm the AcroForm dictionary (for the {@code /XFA} policy), or {@code null}
-     * @return the conversion result (field counts + carried values)
-     * @throws Exception on document access failure
-     */
+    /// Converts `dom` into a rendered editable AcroForm on `doc`.
+    ///
+    /// @param doc      the target document (its existing placeholder pages are replaced)
+    /// @param dom      the merged Form DOM
+    /// @param tpl      the XFA template (medium + pageSet + layout), or `null`
+    /// @param policy   the `/XFA` handling policy
+    /// @param acroForm the AcroForm dictionary (for the `/XFA` policy), or `null`
+    /// @return the conversion result (field counts + carried values)
+    /// @throws Exception on document access failure
     public static XfaFlattener.Result convert(Document doc, FormDom dom, Template tpl,
                                               XfaFlattener.XfaPolicy policy,
                                               org.aspose.pdf.engine.pdfobjects.PdfDictionary acroForm)
@@ -193,7 +179,7 @@ public final class XfaAcroFormConverter {
         return r;
     }
 
-    /** A field/exclGroup/button to realise as an interactive widget at a laid-out rect. */
+    /// A field/exclGroup/button to realise as an interactive widget at a laid-out rect.
     private static final class Place {
         final Element el;
         final Rectangle rect;
@@ -215,12 +201,10 @@ public final class XfaAcroFormConverter {
         }
     }
 
-    /**
-     * Walks a placed layout node: paints static content (draws/captions/boxes) via the reused C2
-     * painter, and records field/exclGroup nodes for widget creation. A field's box + caption are
-     * painted ({@code ff=null}, so the bound value is left for the widget), then the widget carries
-     * the value.
-     */
+    /// Walks a placed layout node: paints static content (draws/captions/boxes) via the reused C2
+    /// painter, and records field/exclGroup nodes for widget creation. A field's box + caption are
+    /// painted (`ff=null`, so the bound value is left for the widget), then the widget carries
+    /// the value.
     private static void walk(XfaLayoutNode node, Map<Element, FormField> byElement, double mediumH,
                              double contentX, double contentY, ContentStreamBuilder b, XfaPainter.Result r,
                              XfaFontResolver resolver, Set<Element> handled, List<Place> widgets) {
@@ -304,17 +288,15 @@ public final class XfaAcroFormConverter {
         }
     }
 
-    /**
-     * Preserves the value of any bound field the flow layout did not place — as a <b>hidden</b>
-     * widget on the last existing page, so the data is never lost yet the converted AcroForm renders
-     * <em>page-for-page identical to the XFA render</em> (no spurious trailing page).
-     *
-     * <p>These stragglers are the fields the shared layout/paginate pipeline did not position — almost
-     * always {@code presence}=hidden/invisible internal fields (form version, timestamps, record IDs).
-     * The render track ({@link XfaPaginator#paintPaginatedContent}) likewise never shows them, so
-     * hiding their widgets is exactly what keeps the converted AcroForm matching the rendered form,
-     * while keeping the values programmatically accessible (and flatten-safe).</p>
-     */
+    /// Preserves the value of any bound field the flow layout did not place — as a **hidden**
+    /// widget on the last existing page, so the data is never lost yet the converted AcroForm renders
+    /// _page-for-page identical to the XFA render_ (no spurious trailing page).
+    ///
+    /// These stragglers are the fields the shared layout/paginate pipeline did not position — almost
+    /// always `presence`=hidden/invisible internal fields (form version, timestamps, record IDs).
+    /// The render track ([XfaPaginator#paintPaginatedContent]) likewise never shows them, so
+    /// hiding their widgets is exactly what keeps the converted AcroForm matching the rendered form,
+    /// while keeping the values programmatically accessible (and flatten-safe).
     private static void placeUnplacedBoundFields(Document doc, FormDom dom, Form form,
                                                  Map<Element, FormField> byElement, Set<Element> placed,
                                                  Set<String> usedNames, double mediumW, double mediumH,
@@ -378,12 +360,10 @@ public final class XfaAcroFormConverter {
         }
     }
 
-    /**
-     * Creates the clickable push-button widget for an interactive {@code +}/{@code -} control: a
-     * {@link org.aspose.pdf.forms.ButtonField} carrying the caption and the field's original XFA click
-     * script as a {@code /JavaScript} action. (Full dynamic add/remove still needs the XFA runtime; in a
-     * flat AcroForm the button is wired and visible, and the script is preserved.)
-     */
+    /// Creates the clickable push-button widget for an interactive `+`/`-` control: a
+    /// [org.aspose.pdf.forms.ButtonField] carrying the caption and the field's original XFA click
+    /// script as a `/JavaScript` action. (Full dynamic add/remove still needs the XFA runtime; in a
+    /// flat AcroForm the button is wired and visible, and the script is preserved.)
     private static void placeButton(Element el, Rectangle rect, Form form, Page page,
                                     Set<String> usedNames, XfaFlattener.Result r) {
         try {
@@ -411,7 +391,7 @@ public final class XfaAcroFormConverter {
         return f == null || f.getValue() == null || f.getValue().isEmpty();
     }
 
-    /** page-local content coords → PDF user space (flip Y against the medium height). */
+    /// page-local content coords → PDF user space (flip Y against the medium height).
     private static Rectangle rectOf(XfaLayoutNode node, double mediumH, double contentX, double contentY) {
         double llx = contentX + node.getX();
         double topY = contentY + node.getY();

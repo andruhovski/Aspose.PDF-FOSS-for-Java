@@ -8,10 +8,8 @@ import java.io.ByteArrayOutputStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Unit tests for {@link OptimizationOptions} and
- * {@link Document#optimizeResources(OptimizationOptions)}.
- */
+/// Unit tests for [OptimizationOptions] and
+/// [Document#optimizeResources(OptimizationOptions)].
 public class OptimizationOptionsTest {
 
     @Test

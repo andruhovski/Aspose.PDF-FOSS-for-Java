@@ -17,13 +17,11 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * XXE hardening tests for {@link SecureXml} and the two untrusted-XML entry points that
- * use it ({@link XfdfImporter}, {@link PdfBookmarkEditor#importBookmarksWithXML}): a
- * crafted {@code <!DOCTYPE ... SYSTEM "file:///...">} must NOT read local files — the
- * DOCTYPE is rejected (well-formed error) or the entity stays unexpanded. Legitimate
- * XML still imports.
- */
+/// XXE hardening tests for [SecureXml] and the two untrusted-XML entry points that
+/// use it ([XfdfImporter], [PdfBookmarkEditor#importBookmarksWithXML]): a
+/// crafted `<!DOCTYPE ... SYSTEM "file:///...">` must NOT read local files — the
+/// DOCTYPE is rejected (well-formed error) or the entity stays unexpanded. Legitimate
+/// XML still imports.
 public class SecureXmlTest {
 
     private static final String SECRET = "TOP-SECRET-FILE-CONTENT-12345";

@@ -20,21 +20,19 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Stage 1 / Bug A — {@link XImageCollection#add(java.io.InputStream)} must
- * produce a fully-specified Image XObject (ISO 32000-1:2008 §8.9.5 Table 89):
- * the resulting {@code PdfStream} must carry {@code /Type /XObject},
- * {@code /Subtype /Image}, {@code /Filter}, {@code /Width}, {@code /Height},
- * {@code /ColorSpace}, {@code /BitsPerComponent}. Without these entries,
- * strict viewers (Poppler) skip the image with
- * {@code "Syntax Error: Bad image parameters"}.
- */
+/// Stage 1 / Bug A — [XImageCollection#add(java.io.InputStream)] must
+/// produce a fully-specified Image XObject (ISO 32000-1:2008 §8.9.5 Table 89):
+/// the resulting `PdfStream` must carry `/Type /XObject`,
+/// `/Subtype /Image`, `/Filter`, `/Width`, `/Height`,
+/// `/ColorSpace`, `/BitsPerComponent`. Without these entries,
+/// strict viewers (Poppler) skip the image with
+/// `"Syntax Error: Bad image parameters"`.
 class XImageCollectionAddTest {
 
     private static final int W = 32;
     private static final int H = 24;
 
-    /** Returns a {@code WxH} solid-coloured image encoded as the given format ("JPG", "PNG", "BMP", "GIF"). */
+    /// Returns a `WxH` solid-coloured image encoded as the given format ("JPG", "PNG", "BMP", "GIF").
     private static byte[] makeImage(String format) throws IOException {
         BufferedImage img = new BufferedImage(W, H, BufferedImage.TYPE_INT_RGB);
         Graphics2D g = img.createGraphics();
@@ -48,7 +46,7 @@ class XImageCollectionAddTest {
         return baos.toByteArray();
     }
 
-    /** Saves a single-page doc that embeds {@code data} via {@code XImageCollection.add}, reopens, returns the first XImage's underlying PdfStream. */
+    /// Saves a single-page doc that embeds `data` via `XImageCollection.add`, reopens, returns the first XImage's underlying PdfStream.
     private PdfStream embedAndReopen(byte[] data, Path tmp, String label) throws IOException {
         Path out = tmp.resolve(label + ".pdf");
         try (Document doc = new Document()) {

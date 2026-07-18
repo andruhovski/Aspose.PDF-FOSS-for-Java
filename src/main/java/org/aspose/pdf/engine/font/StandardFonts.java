@@ -3,13 +3,11 @@ package org.aspose.pdf.engine.font;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Registry of the 14 Standard PDF Fonts (ISO 32000-1:2008, §9.6.2.2).
- * <p>
- * These fonts do not require embedding — every conforming PDF viewer must support them.
- * Provides predefined width tables and default encoding for each standard font.
- * </p>
- */
+/// Registry of the 14 Standard PDF Fonts (ISO 32000-1:2008, §9.6.2.2).
+///
+/// These fonts do not require embedding — every conforming PDF viewer must support them.
+/// Provides predefined width tables and default encoding for each standard font.
+///
 public final class StandardFonts {
 
     private static final Map<String, int[]> WIDTH_MAP = new HashMap<>(20);
@@ -64,43 +62,35 @@ public final class StandardFonts {
         // Utility class
     }
 
-    /**
-     * Returns whether the given font name is one of the Standard 14 fonts.
-     *
-     * @param fontName the base font name (e.g., "Helvetica", "Courier-Bold")
-     * @return true if it's a standard font
-     */
+    /// Returns whether the given font name is one of the Standard 14 fonts.
+    ///
+    /// @param fontName the base font name (e.g., "Helvetica", "Courier-Bold")
+    /// @return true if it's a standard font
     public static boolean isStandard(String fontName) {
         return fontName != null && WIDTH_MAP.containsKey(normalizeStandardName(fontName));
     }
 
-    /**
-     * Returns the 256-entry width table for the given standard font.
-     * Widths are in units of 1/1000 of text space.
-     *
-     * @param fontName the standard font name
-     * @return the width array (256 entries, 0-based by char code), or null if not standard
-     */
+    /// Returns the 256-entry width table for the given standard font.
+    /// Widths are in units of 1/1000 of text space.
+    ///
+    /// @param fontName the standard font name
+    /// @return the width array (256 entries, 0-based by char code), or null if not standard
     public static int[] getWidths(String fontName) {
         if (fontName == null) return null;
         int[] w = WIDTH_MAP.get(normalizeStandardName(fontName));
         return w != null ? w.clone() : null;
     }
 
-    /**
-     * Returns the default encoding for the given standard font.
-     *
-     * @param fontName the standard font name
-     * @return the encoding, or null if not a standard font
-     */
+    /// Returns the default encoding for the given standard font.
+    ///
+    /// @param fontName the standard font name
+    /// @return the encoding, or null if not a standard font
     public static FontEncoding getEncoding(String fontName) {
         if (fontName == null) return null;
         return ENCODING_MAP.get(normalizeStandardName(fontName));
     }
 
-    /**
-     * Normalizes common alternative names to Standard 14 names.
-     */
+    /// Normalizes common alternative names to Standard 14 names.
     private static String normalizeStandardName(String name) {
         // Handle common aliases
         switch (name) {

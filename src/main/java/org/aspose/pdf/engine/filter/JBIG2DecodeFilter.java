@@ -5,7 +5,6 @@ import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
 import org.aspose.pdf.engine.pdfobjects.PdfName;
 import org.aspose.pdf.engine.pdfobjects.PdfStream;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,29 +12,25 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * JBIG2Decode filter — decodes JBIG2-encoded monochrome images.
- * ISO 32000-1:2008 §7.4.7, encoding standard: ISO/IEC 11544 (ITU T.88).
- *
- * <p>Supports:</p>
- * <ul>
- *   <li>Segment header parsing for all segment types</li>
- *   <li>Page Information segments (type 48) — page buffer allocation</li>
- *   <li>Generic Region segments with MMR coding — reuses Group 4 decoder from
- *       {@link CCITTFaxDecodeFilter}</li>
- *   <li>Immediate lossless generic regions (types 36, 38, 39, 40, 42, 43)</li>
- *   <li>End of Page (49) and End of File (51)</li>
- * </ul>
- *
- * <p>Unsupported segment types (symbol dictionaries, text regions, halftone regions,
- * pattern dictionaries, etc.) are logged and skipped. Full symbol-based decoding
- * is planned for Stage 3.</p>
- *
- * <p>Parameters (Table 12):</p>
- * <ul>
- *   <li>/JBIG2Globals: optional stream containing global segments (symbol dictionaries)</li>
- * </ul>
- */
+/// JBIG2Decode filter — decodes JBIG2-encoded monochrome images.
+/// ISO 32000-1:2008 §7.4.7, encoding standard: ISO/IEC 11544 (ITU T.88).
+///
+/// Supports:
+///
+///   - Segment header parsing for all segment types
+///   - Page Information segments (type 48) — page buffer allocation
+///   - Generic Region segments with MMR coding — reuses Group 4 decoder from
+///     [CCITTFaxDecodeFilter]
+///   - Immediate lossless generic regions (types 36, 38, 39, 40, 42, 43)
+///   - End of Page (49) and End of File (51)
+///
+/// Unsupported segment types (symbol dictionaries, text regions, halftone regions,
+/// pattern dictionaries, etc.) are logged and skipped. Full symbol-based decoding
+/// is planned for Stage 3.
+///
+/// Parameters (Table 12):
+///
+///   - /JBIG2Globals: optional stream containing global segments (symbol dictionaries)
 public final class JBIG2DecodeFilter implements PdfFilter {
 
     private static final Logger LOG = Logger.getLogger(JBIG2DecodeFilter.class.getName());
@@ -92,10 +87,8 @@ public final class JBIG2DecodeFilter implements PdfFilter {
         int combinationOp;    // 0=OR, 1=AND, 2=XOR, 3=XNOR, 4=REPLACE
     }
 
-    /**
-     * Decoded symbol dictionary: stores bitmaps of individual symbols.
-     * Each bitmap is a flat boolean array of size width*height.
-     */
+    /// Decoded symbol dictionary: stores bitmaps of individual symbols.
+    /// Each bitmap is a flat boolean array of size width\*height.
     static final class SymbolDictionary {
         boolean[][] bitmaps;  // [symbolIndex] → flat bitmap
         int[] widths;         // width of each symbol
@@ -199,10 +192,8 @@ public final class JBIG2DecodeFilter implements PdfFilter {
         return pi;
     }
 
-    /**
-     * Decodes a Generic Region segment using MMR (Modified Modified READ = Group 4).
-     * JBIG2 generic regions with MMR use the same coding as CCITT Group 4.
-     */
+    /// Decodes a Generic Region segment using MMR (Modified Modified READ = Group 4).
+    /// JBIG2 generic regions with MMR use the same coding as CCITT Group 4.
     private static boolean[] decodeGenericRegionMMR(byte[] data, int dataOffset, int dataLength,
                                                     int regionW, int regionH) throws IOException {
         // Reuse CCITTFaxDecodeFilter's Group 4 decoder via BitReader
@@ -284,21 +275,19 @@ public final class JBIG2DecodeFilter implements PdfFilter {
         return bitmap;
     }
 
-    /**
-     * Decodes a generic region using arithmetic coding.
-     * ISO/IEC 11544 §6.2.5: uses context from template pixels to drive arithmetic decoder.
-     *
-     * @param data       the segment data array
-     * @param dataOffset start of arithmetic-coded data
-     * @param dataLength length of arithmetic-coded data
-     * @param regionW    region width in pixels
-     * @param regionH    region height in pixels
-     * @param gbTemplate template number (0–3)
-     * @param tpgdOn     whether typical prediction is enabled
-     * @param gbatX      adaptive template pixel X offsets
-     * @param gbatY      adaptive template pixel Y offsets
-     * @return decoded bitmap as flat boolean array
-     */
+    /// Decodes a generic region using arithmetic coding.
+    /// ISO/IEC 11544 §6.2.5: uses context from template pixels to drive arithmetic decoder.
+    ///
+    /// @param data       the segment data array
+    /// @param dataOffset start of arithmetic-coded data
+    /// @param dataLength length of arithmetic-coded data
+    /// @param regionW    region width in pixels
+    /// @param regionH    region height in pixels
+    /// @param gbTemplate template number (0–3)
+    /// @param tpgdOn     whether typical prediction is enabled
+    /// @param gbatX      adaptive template pixel X offsets
+    /// @param gbatY      adaptive template pixel Y offsets
+    /// @return decoded bitmap as flat boolean array
     static boolean[] decodeGenericRegionArith(byte[] data, int dataOffset, int dataLength,
             int regionW, int regionH, int gbTemplate, boolean tpgdOn,
             int[] gbatX, int[] gbatY) {
@@ -353,13 +342,11 @@ public final class JBIG2DecodeFilter implements PdfFilter {
         return bitmap;
     }
 
-    /**
-     * Builds the context value for pixel (row, col) using the specified template.
-     * ISO/IEC 11544 §6.2.5.3, Figures 3–6.
-     *
-     * <p>Template 0: 16 pixels, Template 1: 13 pixels,
-     * Template 2: 10 pixels, Template 3: 10 pixels.</p>
-     */
+    /// Builds the context value for pixel (row, col) using the specified template.
+    /// ISO/IEC 11544 §6.2.5.3, Figures 3–6.
+    ///
+    /// Template 0: 16 pixels, Template 1: 13 pixels,
+    /// Template 2: 10 pixels, Template 3: 10 pixels.
     private static int buildContext(boolean[] bitmap, int w, int h,
                                      int row, int col, int template,
                                      int[] atX, int[] atY) {
@@ -440,19 +427,15 @@ public final class JBIG2DecodeFilter implements PdfFilter {
         return cx;
     }
 
-    /**
-     * Gets pixel value at (row, col); returns 0 for out-of-bounds coordinates.
-     */
+    /// Gets pixel value at (row, col); returns 0 for out-of-bounds coordinates.
     static int px(boolean[] bm, int w, int h, int row, int col) {
         if (row < 0 || row >= h || col < 0 || col >= w) return 0;
         return bm[row * w + col] ? 1 : 0;
     }
 
-    /**
-     * Parses a Generic Region segment header to extract region parameters.
-     * Returns {regionW, regionH, xOffset, yOffset, combinationOp, mmrFlag, headerSize,
-     *          template, typicalPred} or null on error.
-     */
+    /// Parses a Generic Region segment header to extract region parameters.
+    /// Returns {regionW, regionH, xOffset, yOffset, combinationOp, mmrFlag, headerSize,
+    ///          template, typicalPred} or null on error.
     private static int[] parseGenericRegionHeader(byte[] data, Segment seg) {
         int off = seg.dataOffset;
         if (seg.dataLength < 18) return null;
@@ -479,17 +462,15 @@ public final class JBIG2DecodeFilter implements PdfFilter {
     //  Symbol dictionary decoding (§6.5, §7.4.2)
     // ═══════════════════════════════════════════════════════════════
 
-    /**
-     * Decodes a symbol dictionary segment.
-     * ISO/IEC 11544 §6.5: each symbol is decoded using the generic region procedure
-     * (or refinement), and stored for later reference by text regions.
-     *
-     * @param segData         the byte array containing segment data
-     * @param seg             the segment header
-     * @param segmentResults  map of already-decoded symbol dictionaries
-     * @param allSegments     all segments for referred-to lookup
-     * @return the decoded symbol dictionary, or null on error
-     */
+    /// Decodes a symbol dictionary segment.
+    /// ISO/IEC 11544 §6.5: each symbol is decoded using the generic region procedure
+    /// (or refinement), and stored for later reference by text regions.
+    ///
+    /// @param segData         the byte array containing segment data
+    /// @param seg             the segment header
+    /// @param segmentResults  map of already-decoded symbol dictionaries
+    /// @param allSegments     all segments for referred-to lookup
+    /// @return the decoded symbol dictionary, or null on error
     private static SymbolDictionary decodeSymbolDictionary(byte[] segData, Segment seg,
             java.util.Map<Integer, SymbolDictionary> segmentResults,
             java.util.Map<Integer, Segment> allSegments) {
@@ -766,9 +747,7 @@ public final class JBIG2DecodeFilter implements PdfFilter {
         return dict;
     }
 
-    /**
-     * Returns ceil(log2(n)), minimum 0.
-     */
+    /// Returns ceil(log2(n)), minimum 0.
     private static int ceilLog2(int n) {
         if (n <= 1) return 0;
         return 32 - Integer.numberOfLeadingZeros(n - 1);
@@ -804,17 +783,15 @@ public final class JBIG2DecodeFilter implements PdfFilter {
     //  Text region decoding (§6.4, §7.4.3)
     // ═══════════════════════════════════════════════════════════════
 
-    /**
-     * Decodes a text region segment.
-     * ISO/IEC 11544 §6.4: places symbol instances from dictionaries onto a bitmap.
-     *
-     * @param segData        the byte array containing segment data
-     * @param seg            the segment header
-     * @param segmentResults map of already-decoded symbol dictionaries
-     * @param allSegments    all segments for referred-to lookup
-     * @param pageBitmap     the page bitmap to compose onto
-     * @param pageInfo       the page information
-     */
+    /// Decodes a text region segment.
+    /// ISO/IEC 11544 §6.4: places symbol instances from dictionaries onto a bitmap.
+    ///
+    /// @param segData        the byte array containing segment data
+    /// @param seg            the segment header
+    /// @param segmentResults map of already-decoded symbol dictionaries
+    /// @param allSegments    all segments for referred-to lookup
+    /// @param pageBitmap     the page bitmap to compose onto
+    /// @param pageInfo       the page information
     private static void decodeTextRegion(byte[] segData, Segment seg,
             java.util.Map<Integer, SymbolDictionary> segmentResults,
             java.util.Map<Integer, Segment> allSegments,
@@ -1288,9 +1265,7 @@ public final class JBIG2DecodeFilter implements PdfFilter {
 
     // ─── Bitmap composition ──────────────────────────────────────
 
-    /**
-     * Composes a region bitmap onto the page bitmap using the specified combination operator.
-     */
+    /// Composes a region bitmap onto the page bitmap using the specified combination operator.
     private static void composeBitmap(boolean[] page, int pageW, int pageH,
                                       boolean[] region, int regionW, int regionH,
                                       int xOff, int yOff, int combOp) {
@@ -1315,9 +1290,7 @@ public final class JBIG2DecodeFilter implements PdfFilter {
         }
     }
 
-    /**
-     * Packs a boolean bitmap into bytes (true=1=black, MSB first, row-aligned).
-     */
+    /// Packs a boolean bitmap into bytes (true=1=black, MSB first, row-aligned).
     private static byte[] packBitmap(boolean[] bitmap, int width, int height) {
         int rowBytes = (width + 7) / 8;
         byte[] result = new byte[rowBytes * height];

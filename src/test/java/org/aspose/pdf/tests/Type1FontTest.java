@@ -11,9 +11,7 @@ import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link Type1Font}.
- */
+/// Tests for [Type1Font].
 public class Type1FontTest {
 
     @Test

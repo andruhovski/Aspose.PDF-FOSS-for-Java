@@ -1,16 +1,19 @@
 package org.aspose.pdf.annotations;
 
 import org.aspose.pdf.Page;
-import org.aspose.pdf.engine.pdfobjects.*;
 import org.aspose.pdf.engine.parser.PDFParser;
-import java.io.IOException;
-import java.util.*;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.logging.Logger;
 
-/**
- * Collection of annotations on a page (ISO 32000-1:2008, §12.5).
- * Wraps the /Annots array. Uses 1-based indexing.
- */
+/// Collection of annotations on a page (ISO 32000-1:2008, §12.5).
+/// Wraps the /Annots array. Uses 1-based indexing.
 public class AnnotationCollection implements Iterable<Annotation> {
     private static final Logger LOG = Logger.getLogger(AnnotationCollection.class.getName());
     private final PdfArray annotsArray;
@@ -18,26 +21,22 @@ public class AnnotationCollection implements Iterable<Annotation> {
     private final PDFParser parser;
     private List<Annotation> annotations;
 
-    /**
-     * Constructs an annotation collection wrapping the given /Annots PdfArray.
-     *
-     * @param annotsArray the PDF array of annotation dictionaries (or references); if null, an empty array is used
-     * @param page        the page these annotations belong to
-     * @param parser      the PDF parser for resolving indirect references
-     */
+    /// Constructs an annotation collection wrapping the given /Annots PdfArray.
+    ///
+    /// @param annotsArray the PDF array of annotation dictionaries (or references); if null, an empty array is used
+    /// @param page        the page these annotations belong to
+    /// @param parser      the PDF parser for resolving indirect references
     public AnnotationCollection(PdfArray annotsArray, Page page, PDFParser parser) {
         this.annotsArray = annotsArray != null ? annotsArray : new PdfArray();
         this.page = page;
         this.parser = parser;
     }
 
-    /**
-     * Returns the annotation at the specified 1-based index.
-     *
-     * @param index the 1-based index
-     * @return the annotation at the given index
-     * @throws IndexOutOfBoundsException if the index is out of range
-     */
+    /// Returns the annotation at the specified 1-based index.
+    ///
+    /// @param index the 1-based index
+    /// @return the annotation at the given index
+    /// @throws IndexOutOfBoundsException if the index is out of range
     public Annotation get(int index) {
         ensureLoaded();
         if (index < 1 || index > annotations.size())
@@ -45,25 +44,19 @@ public class AnnotationCollection implements Iterable<Annotation> {
         return annotations.get(index - 1);
     }
 
-    /**
-     * Returns the number of annotations in this collection.
-     *
-     * @return the annotation count
-     */
+    /// Returns the number of annotations in this collection.
+    ///
+    /// @return the annotation count
     public int getCount() { ensureLoaded(); return annotations.size(); }
 
-    /**
-     * Returns the number of annotations in this collection.
-     *
-     * @return the annotation count
-     */
+    /// Returns the number of annotations in this collection.
+    ///
+    /// @return the annotation count
     public int size() { return getCount(); }
 
-    /**
-     * Adds an annotation to this collection and the underlying PDF array.
-     *
-     * @param annotation the annotation to add
-     */
+    /// Adds an annotation to this collection and the underlying PDF array.
+    ///
+    /// @param annotation the annotation to add
     public void add(Annotation annotation) {
         // Do NOT force ensureLoaded() here: each Page.getAnnotations() hands back a
         // fresh, unloaded wrapper, so loading the whole /Annots array on every add()
@@ -90,12 +83,10 @@ public class AnnotationCollection implements Iterable<Annotation> {
         annotsArray.add(entry);
     }
 
-    /**
-     * Removes the annotation at the specified 1-based index.
-     *
-     * @param index the 1-based index of the annotation to remove
-     * @throws IndexOutOfBoundsException if the index is out of range
-     */
+    /// Removes the annotation at the specified 1-based index.
+    ///
+    /// @param index the 1-based index of the annotation to remove
+    /// @throws IndexOutOfBoundsException if the index is out of range
     public void delete(int index) {
         ensureLoaded();
         if (index < 1 || index > annotations.size())
@@ -108,11 +99,9 @@ public class AnnotationCollection implements Iterable<Annotation> {
         }
     }
 
-    /**
-     * Removes the specified annotation from this collection.
-     *
-     * @param annotation the annotation to remove
-     */
+    /// Removes the specified annotation from this collection.
+    ///
+    /// @param annotation the annotation to remove
     public void delete(Annotation annotation) {
         ensureLoaded();
         annotations.remove(annotation);
@@ -122,11 +111,9 @@ public class AnnotationCollection implements Iterable<Annotation> {
         }
     }
 
-    /**
-     * Returns an iterator over the annotations in this collection.
-     *
-     * @return an iterator
-     */
+    /// Returns an iterator over the annotations in this collection.
+    ///
+    /// @return an iterator
     @Override
     public Iterator<Annotation> iterator() { ensureLoaded(); return annotations.iterator(); }
 

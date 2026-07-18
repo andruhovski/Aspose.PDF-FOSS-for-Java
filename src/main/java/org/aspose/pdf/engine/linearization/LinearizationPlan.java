@@ -7,17 +7,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Holds the object ordering plan for writing a linearized PDF.
- * Objects are grouped into the parts defined in ISO 32000-1 Annex F §F.3.
- *
- * <ul>
- *   <li>Part 6: First page objects (private + shared needed for first page)</li>
- *   <li>Part 7: Other pages (each page's private objects)</li>
- *   <li>Part 8: Shared objects (referenced by multiple pages, not first)</li>
- *   <li>Parts 4/9: Document-level objects (catalog, page tree, etc.)</li>
- * </ul>
- */
+/// Holds the object ordering plan for writing a linearized PDF.
+/// Objects are grouped into the parts defined in ISO 32000-1 Annex F §F.3.
+///
+///   - Part 6: First page objects (private + shared needed for first page)
+///   - Part 7: Other pages (each page's private objects)
+///   - Part 8: Shared objects (referenced by multiple pages, not first)
+///   - Parts 4/9: Document-level objects (catalog, page tree, etc.)
 public final class LinearizationPlan {
 
     private final List<PdfObjectKey> pageKeys;
@@ -29,18 +25,16 @@ public final class LinearizationPlan {
     private final List<PdfObjectKey> documentLevel;
     private final int numPages;
 
-    /**
-     * Creates a new linearization plan.
-     *
-     * @param pageKeys          page object keys in document order
-     * @param firstPageIndex    index of the first page to display (usually 0)
-     * @param firstPagePrivate  objects private to the first page
-     * @param firstPageShared   shared objects needed by the first page
-     * @param otherPagePrivate  per-page private objects (keyed by page index)
-     * @param sharedObjects     objects shared between non-first pages
-     * @param documentLevel     document-level objects not tied to any page
-     * @param numPages          total number of pages
-     */
+    /// Creates a new linearization plan.
+    ///
+    /// @param pageKeys          page object keys in document order
+    /// @param firstPageIndex    index of the first page to display (usually 0)
+    /// @param firstPagePrivate  objects private to the first page
+    /// @param firstPageShared   shared objects needed by the first page
+    /// @param otherPagePrivate  per-page private objects (keyed by page index)
+    /// @param sharedObjects     objects shared between non-first pages
+    /// @param documentLevel     document-level objects not tied to any page
+    /// @param numPages          total number of pages
     public LinearizationPlan(
             List<PdfObjectKey> pageKeys, int firstPageIndex,
             List<PdfObjectKey> firstPagePrivate, List<PdfObjectKey> firstPageShared,
@@ -57,19 +51,19 @@ public final class LinearizationPlan {
         this.numPages = numPages;
     }
 
-    /** Returns page object keys in document order. */
+    /// Returns page object keys in document order.
     public List<PdfObjectKey> getPageKeys() { return pageKeys; }
 
-    /** Returns the index of the first page to display. */
+    /// Returns the index of the first page to display.
     public int getFirstPageIndex() { return firstPageIndex; }
 
-    /** Returns objects private to the first page (Part 6). */
+    /// Returns objects private to the first page (Part 6).
     public List<PdfObjectKey> getFirstPagePrivate() { return firstPagePrivate; }
 
-    /** Returns shared objects needed for the first page (Part 6). */
+    /// Returns shared objects needed for the first page (Part 6).
     public List<PdfObjectKey> getFirstPageShared() { return firstPageShared; }
 
-    /** Returns all objects for Part 6 (first page private + shared). */
+    /// Returns all objects for Part 6 (first page private + shared).
     public List<PdfObjectKey> getFirstPageObjects() {
         List<PdfObjectKey> result = new ArrayList<>(firstPagePrivate.size() + firstPageShared.size());
         result.addAll(firstPagePrivate);
@@ -77,21 +71,21 @@ public final class LinearizationPlan {
         return result;
     }
 
-    /** Returns private objects for a given page index (Part 7). */
+    /// Returns private objects for a given page index (Part 7).
     public List<PdfObjectKey> getPagePrivateObjects(int pageIndex) {
         List<PdfObjectKey> list = otherPagePrivate.get(pageIndex);
         return list != null ? list : Collections.emptyList();
     }
 
-    /** Returns the per-page private objects map. */
+    /// Returns the per-page private objects map.
     public Map<Integer, List<PdfObjectKey>> getOtherPagePrivate() { return otherPagePrivate; }
 
-    /** Returns shared objects for non-first pages (Part 8). */
+    /// Returns shared objects for non-first pages (Part 8).
     public List<PdfObjectKey> getSharedObjects() { return sharedObjects; }
 
-    /** Returns document-level objects (Parts 4/9). */
+    /// Returns document-level objects (Parts 4/9).
     public List<PdfObjectKey> getDocumentLevel() { return documentLevel; }
 
-    /** Returns the total number of pages. */
+    /// Returns the total number of pages.
     public int getNumPages() { return numPages; }
 }

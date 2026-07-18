@@ -9,9 +9,7 @@ import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link PDFLexer} — PDF tokenizer.
- */
+/// Tests for [PDFLexer] — PDF tokenizer.
 public class PDFLexerTest {
 
     private PDFLexer lexerFor(String input) {

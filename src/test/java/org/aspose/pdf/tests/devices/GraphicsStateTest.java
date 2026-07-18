@@ -10,9 +10,7 @@ import java.awt.BasicStroke;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link GraphicsState}.
- */
+/// Tests for [GraphicsState].
 public class GraphicsStateTest {
 
     @Test

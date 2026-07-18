@@ -1,9 +1,7 @@
 package org.aspose.pdf.facades;
 
 import org.aspose.pdf.Document;
-import org.aspose.pdf.ImageStamp;
 import org.aspose.pdf.Page;
-import org.aspose.pdf.Rectangle;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -12,25 +10,24 @@ import java.io.OutputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Legacy "mend" facade for adding raster images and {@link FormattedText}
- * annotations to existing PDFs without rebuilding the page from scratch.
- * Mirrors {@code Aspose.Pdf.Facades.PdfFileMend}.
- *
- * <p>Typical usage:</p>
- * <pre>{@code
- *   PdfFileMend mend = new PdfFileMend();
- *   mend.setInputFile("in.pdf");
- *   mend.addImage("logo.jpg", 1, 100, 100, 200, 200);
- *   mend.save("out.pdf");
- * }</pre>
- *
- * <p>For full {@link FormattedText} placement (legacy {@code AddText} API)
- * see {@link #addText(FormattedText, int, double, double)} — currently a
- * minimal stub that records intent without rendering glyphs (the C# fixture
- * PDFNEWNET-29975 needs the rich physical-segment layout pipeline that is
- * out of scope for FOSS).</p>
- */
+/// Legacy "mend" facade for adding raster images and [FormattedText]
+/// annotations to existing PDFs without rebuilding the page from scratch.
+/// Mirrors `Aspose.Pdf.Facades.PdfFileMend`.
+///
+/// Typical usage:
+///
+/// ```
+/// PdfFileMend mend = new PdfFileMend();
+///   mend.setInputFile("in.pdf");
+///   mend.addImage("logo.jpg", 1, 100, 100, 200, 200);
+///   mend.save("out.pdf");
+/// ```
+///
+/// For full [FormattedText] placement (legacy `AddText` API)
+/// see [#addText(FormattedText, int, double, double)] — currently a
+/// minimal stub that records intent without rendering glyphs (the C# fixture
+/// PDFNEWNET-29975 needs the rich physical-segment layout pipeline that is
+/// out of scope for FOSS).
 public class PdfFileMend implements Closeable {
 
     private static final Logger LOG = Logger.getLogger(PdfFileMend.class.getName());
@@ -38,26 +35,24 @@ public class PdfFileMend implements Closeable {
     private Document document;
     private boolean ownsDocument;
 
-    /** Empty {@code PdfFileMend}. Use {@link #setInputFile(String)} or {@link #bindPdf(Document)}. */
+    /// Empty `PdfFileMend`. Use [#setInputFile(String)] or [#bindPdf(Document)].
     public PdfFileMend() {
     }
 
-    /** Bound to {@code inputFile}. */
+    /// Bound to `inputFile`.
     public PdfFileMend(String inputFile) {
         setInputFile(inputFile);
     }
 
-    /**
-     * Bound to {@code inputFile} and primed to write the result to {@code outputFile}
-     * when {@link #save()} is called. Mirrors the C# {@code PdfFileMend(string, string)}
-     * constructor.
-     */
+    /// Bound to `inputFile` and primed to write the result to `outputFile`
+    /// when [#save()] is called. Mirrors the C# `PdfFileMend(string, string)`
+    /// constructor.
     public PdfFileMend(String inputFile, String outputFile) {
         setInputFile(inputFile);
         this.pendingOutputFile = outputFile;
     }
 
-    /** Bound to streams; the input is parsed eagerly, the output is wired for {@link #close()}. */
+    /// Bound to streams; the input is parsed eagerly, the output is wired for [#close()].
     public PdfFileMend(InputStream inputStream, OutputStream outputStream) {
         try {
             this.document = new Document(inputStream);
@@ -68,25 +63,23 @@ public class PdfFileMend implements Closeable {
         }
     }
 
-    /** Bound to an already-opened document. */
+    /// Bound to an already-opened document.
     public PdfFileMend(Document document) {
         this.document = document;
         this.ownsDocument = false;
     }
 
-    /** Output stream remembered when constructed via {@link #PdfFileMend(InputStream, OutputStream)}. */
+    /// Output stream remembered when constructed via [#PdfFileMend(InputStream, OutputStream)].
     private OutputStream pendingOutputStream;
 
-    /** Output file remembered when constructed via {@link #PdfFileMend(String, String)}. */
+    /// Output file remembered when constructed via [#PdfFileMend(String, String)].
     private String pendingOutputFile;
 
-    /**
-     * Writes the bound document to the file supplied via the
-     * {@link #PdfFileMend(String, String)} constructor.
-     *
-     * @return {@code true} on success
-     * @throws IllegalStateException if no output path was supplied
-     */
+    /// Writes the bound document to the file supplied via the
+    /// [#PdfFileMend(String, String)] constructor.
+    ///
+    /// @return `true` on success
+    /// @throws IllegalStateException if no output path was supplied
     public boolean save() {
         if (pendingOutputFile == null) {
             throw new IllegalStateException(
@@ -95,17 +88,17 @@ public class PdfFileMend implements Closeable {
         return save(pendingOutputFile);
     }
 
-    /** Returns the bound document, or {@code null} when none is set. */
+    /// Returns the bound document, or `null` when none is set.
     public Document getDocument() {
         return document;
     }
 
-    /** Mirrors C# {@code InputFile} setter: opens {@code inputFile} into a new {@link Document}. */
+    /// Mirrors C# `InputFile` setter: opens `inputFile` into a new [Document].
     public void setInputFile(String inputFile) {
         bindPdf(inputFile);
     }
 
-    /** Loads a fresh {@link Document} from {@code inputFile}. */
+    /// Loads a fresh [Document] from `inputFile`.
     public boolean bindPdf(String inputFile) {
         try {
             this.document = new Document(inputFile);
@@ -117,7 +110,7 @@ public class PdfFileMend implements Closeable {
         }
     }
 
-    /** Loads a fresh {@link Document} from {@code inputStream}. */
+    /// Loads a fresh [Document] from `inputStream`.
     public boolean bindPdf(InputStream inputStream) {
         try {
             this.document = new Document(inputStream);
@@ -129,19 +122,17 @@ public class PdfFileMend implements Closeable {
         }
     }
 
-    /** Binds an already-loaded document. */
+    /// Binds an already-loaded document.
     public boolean bindPdf(Document document) {
         this.document = document;
         this.ownsDocument = false;
         return document != null;
     }
 
-    /**
-     * Adds the image at {@code imageFile} to {@code pageNumber} positioned at
-     * the rectangle {@code [llx,lly] – [urx,ury]}.
-     *
-     * @return {@code true} on success
-     */
+    /// Adds the image at `imageFile` to `pageNumber` positioned at
+    /// the rectangle `[llx,lly] – [urx,ury]`.
+    ///
+    /// @return `true` on success
     public boolean addImage(String imageFile, int pageNumber,
                             double llx, double lly, double urx, double ury) {
         try {
@@ -153,15 +144,13 @@ public class PdfFileMend implements Closeable {
         }
     }
 
-    /**
-     * Adds a JPEG image to the page directly, building the /XObject entry in
-     * page resources and emitting the {@code q cm /imageRes Do Q} operator
-     * stack. Bypasses {@code Page.addStamp(ImageStamp)} which only emits the
-     * Do operator and does NOT register the image XObject — the
-     * regression test {@link org.aspose.pdf.facades.PdfExtractor#extractImage}
-     * walks {@code Resources/XObject} so the entry must be present for
-     * downstream extractor calls to find it.
-     */
+    /// Adds a JPEG image to the page directly, building the /XObject entry in
+    /// page resources and emitting the `q cm /imageRes Do Q` operator
+    /// stack. Bypasses `Page.addStamp(ImageStamp)` which only emits the
+    /// Do operator and does NOT register the image XObject — the
+    /// regression test [org.aspose.pdf.facades.PdfExtractor#extractImage]
+    /// walks `Resources/XObject` so the entry must be present for
+    /// downstream extractor calls to find it.
     private boolean addImageBytes(byte[] jpegBytes, int pageNumber,
                                    double llx, double lly, double urx, double ury) {
         if (document == null || jpegBytes == null || jpegBytes.length == 0) {
@@ -253,10 +242,8 @@ public class PdfFileMend implements Closeable {
         }
     }
 
-    /**
-     * Returns {@code [width, height, components]} parsed from a JPEG SOFn
-     * marker, or {@code null} when no SOFn is found.
-     */
+    /// Returns `[width, height, components]` parsed from a JPEG SOFn
+    /// marker, or `null` when no SOFn is found.
     private static int[] readJpegDimensions(byte[] data) {
         int i = 2; // skip SOI
         while (i + 3 < data.length) {
@@ -289,10 +276,8 @@ public class PdfFileMend implements Closeable {
         return s;
     }
 
-    /**
-     * Adds the image content read from {@code imageStream} to {@code pageNumber}.
-     * Caller retains ownership of the stream.
-     */
+    /// Adds the image content read from `imageStream` to `pageNumber`.
+    /// Caller retains ownership of the stream.
     public boolean addImage(InputStream imageStream, int pageNumber,
                             double llx, double lly, double urx, double ury) {
         try {
@@ -307,22 +292,20 @@ public class PdfFileMend implements Closeable {
         }
     }
 
-    /**
-     * Adds {@code text} to {@code pageNumber} starting at {@code (x, y)} (PDF
-     * user-space coordinates, origin at bottom-left). Each line is shown via
-     * a {@code BT … ET} block sandwiched between {@code q … Q} so existing
-     * page graphics state is preserved. Importantly, the {@code q}/{@code Q}
-     * are emitted OUTSIDE the {@code BT}/{@code ET} block — placing
-     * save/restore inside a text object is illegal per ISO 32000-1 §8.4.4.2
-     * and §9.4.1, and this is exactly what regression PDFNEWNET-32565 checks.
-     *
-     * <p>Background colour, when set on {@link FormattedText}, is painted as
-     * a filled rectangle covering the rendered text bounding box, before the
-     * text run.</p>
-     *
-     * <p>Multiple lines (via {@link FormattedText#addNewLineText(String)})
-     * are rendered top-to-bottom using {@code T*} between {@code Tj} calls.</p>
-     */
+    /// Adds `text` to `pageNumber` starting at `(x, y)` (PDF
+    /// user-space coordinates, origin at bottom-left). Each line is shown via
+    /// a `BT … ET` block sandwiched between `q … Q` so existing
+    /// page graphics state is preserved. Importantly, the `q`/`Q`
+    /// are emitted OUTSIDE the `BT`/`ET` block — placing
+    /// save/restore inside a text object is illegal per ISO 32000-1 §8.4.4.2
+    /// and §9.4.1, and this is exactly what regression PDFNEWNET-32565 checks.
+    ///
+    /// Background colour, when set on [FormattedText], is painted as
+    /// a filled rectangle covering the rendered text bounding box, before the
+    /// text run.
+    ///
+    /// Multiple lines (via [FormattedText#addNewLineText(String)])
+    /// are rendered top-to-bottom using `T*` between `Tj` calls.
     public boolean addText(FormattedText text, int pageNumber, double x, double y) {
         if (document == null || text == null) {
             LOG.warning("PdfFileMend.addText: requires a bound document and non-null text");
@@ -394,12 +377,12 @@ public class PdfFileMend implements Closeable {
         }
     }
 
-    /** Backwards-compatible float overload (matches the legacy C# signature). */
+    /// Backwards-compatible float overload (matches the legacy C# signature).
     public boolean addText(FormattedText text, int pageNumber, float x, float y) {
         return addText(text, pageNumber, (double) x, (double) y);
     }
 
-    /** Splits a {@link FormattedText#getText()} payload back into per-line strings. */
+    /// Splits a [FormattedText#getText()] payload back into per-line strings.
     private static java.util.List<String> textLines(FormattedText text) {
         java.util.List<String> out = new java.util.ArrayList<>();
         for (String line : text.getText().split("\n", -1)) {
@@ -409,12 +392,10 @@ public class PdfFileMend implements Closeable {
         return out;
     }
 
-    /**
-     * Ensures the page resources carry a Type1 font reference for {@code pdfFontName}.
-     * Returns the resource name (e.g. {@code F1}) the caller should use in
-     * {@code /Fxx size Tf} operators. Re-uses an existing entry whose
-     * {@code /BaseFont} matches, otherwise allocates a fresh {@code Fn}.
-     */
+    /// Ensures the page resources carry a Type1 font reference for `pdfFontName`.
+    /// Returns the resource name (e.g. `F1`) the caller should use in
+    /// `/Fxx size Tf` operators. Re-uses an existing entry whose
+    /// `/BaseFont` matches, otherwise allocates a fresh `Fn`.
     private static String ensureType1Font(Page page, String pdfFontName) {
         org.aspose.pdf.Resources resources = page.ensureResources();
         org.aspose.pdf.engine.pdfobjects.PdfDictionary fonts = resources.getFonts();
@@ -454,7 +435,7 @@ public class PdfFileMend implements Closeable {
         return resName;
     }
 
-    /** Appends an {@code r g b RG} (stroke) or {@code r g b rg} (fill) op to {@code sb}. */
+    /// Appends an `r g b RG` (stroke) or `r g b rg` (fill) op to `sb`.
     private static void appendRgb(StringBuilder sb, org.aspose.pdf.Color c, boolean fill) {
         // Color.getR/G/B already returns 0..1.
         double r = c != null ? c.getR() : 0;
@@ -464,13 +445,11 @@ public class PdfFileMend implements Closeable {
                 .append(fill ? " rg\n" : " RG\n");
     }
 
-    /**
-     * Encodes {@code s} as a PDF literal string (parens) with the canonical
-     * escape set from ISO 32000-1 §7.3.4.2: backslash, parens, CR, LF, tab,
-     * backspace, form-feed, plus 8-bit bytes via three-octal {@code \DDD}.
-     * Strings are encoded as WinAnsi (cp1252), matching the font's
-     * {@code /Encoding /WinAnsiEncoding} stamp.
-     */
+    /// Encodes `s` as a PDF literal string (parens) with the canonical
+    /// escape set from ISO 32000-1 §7.3.4.2: backslash, parens, CR, LF, tab,
+    /// backspace, form-feed, plus 8-bit bytes via three-octal `\\DDD`.
+    /// Strings are encoded as WinAnsi (cp1252), matching the font's
+    /// `/Encoding /WinAnsiEncoding` stamp.
     private static String escapeLiteralString(String s) {
         byte[] bytes;
         try {
@@ -506,7 +485,7 @@ public class PdfFileMend implements Closeable {
         return out.toString();
     }
 
-    /** Saves the bound document to {@code outputFile}. */
+    /// Saves the bound document to `outputFile`.
     public boolean save(String outputFile) {
         if (document == null) return false;
         try {
@@ -519,7 +498,7 @@ public class PdfFileMend implements Closeable {
         }
     }
 
-    /** Saves the bound document to {@code outputStream}. */
+    /// Saves the bound document to `outputStream`.
     public boolean save(OutputStream outputStream) {
         if (document == null) return false;
         try {
@@ -532,11 +511,9 @@ public class PdfFileMend implements Closeable {
         }
     }
 
-    /**
-     * Releases the bound document. If constructed with
-     * {@link #PdfFileMend(InputStream, OutputStream)}, the result is auto-saved
-     * to the bound output stream first.
-     */
+    /// Releases the bound document. If constructed with
+    /// [#PdfFileMend(InputStream, OutputStream)], the result is auto-saved
+    /// to the bound output stream first.
     @Override
     public void close() {
         if (pendingOutputStream != null && document != null) {

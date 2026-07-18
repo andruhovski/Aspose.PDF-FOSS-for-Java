@@ -10,7 +10,7 @@ import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-/** FIX.2 — page size resolved from the XFA &lt;medium&gt; (short/long/orientation/stock). */
+/// FIX.2 — page size resolved from the XFA <medium> (short/long/orientation/stock).
 public class XfaMediumTest {
 
     private static final String TPL = "http://www.xfa.org/schema/xfa-template/3.0/";

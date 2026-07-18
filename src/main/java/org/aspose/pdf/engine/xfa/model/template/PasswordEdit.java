@@ -1,79 +1,76 @@
 package org.aspose.pdf.engine.xfa.model.template;
 
 import org.aspose.pdf.engine.xfa.model.XfaNode;
-import org.aspose.pdf.engine.xfa.model.XfaMeasurement;
 import org.w3c.dom.Element;
 
-/**
- * Typed XFA template element <code>passwordEdit</code>. Attribute and child
- * accessors are typed; unknown attributes/children round-trip via the DOM.
- */
+/// Typed XFA template element `passwordEdit`. Attribute and child
+/// accessors are typed; unknown attributes/children round-trip via the DOM.
 public final class PasswordEdit extends XfaNode {
 
-    /** Wraps a backing <code>passwordEdit</code> element. */
+    /// Wraps a backing `passwordEdit` element.
     public PasswordEdit(Element element, XfaNode parent) {
         super(element, parent);
     }
 
-    /** Allowed values of the <code>hScrollPolicy</code> attribute. */
+    /// Allowed values of the `hScrollPolicy` attribute.
     public enum HScrollPolicyValue {
         AUTO("auto"),
         OFF("off"),
         ON("on");
         private final String v;
         HScrollPolicyValue(String v) { this.v = v; }
-        /** @return the XFA attribute string for this value. */
+        /// @return the XFA attribute string for this value.
         public String value() { return v; }
-        /** @param s raw value @return the matching constant, or null. */
+        /// @param s raw value @return the matching constant, or null.
         public static HScrollPolicyValue fromValue(String s) {
             for (HScrollPolicyValue e : values()) { if (e.v.equals(s)) return e; }
             return null;
         }
     }
-    /** @return the typed <code>hScrollPolicy</code> attribute, or null. */
+    /// @return the typed `hScrollPolicy` attribute, or null.
     public HScrollPolicyValue getHScrollPolicy() {
         String v = getAttribute("hScrollPolicy");
         return v == null ? null : HScrollPolicyValue.fromValue(v);
     }
-    /** Sets the <code>hScrollPolicy</code> attribute. */
+    /// Sets the `hScrollPolicy` attribute.
     public void setHScrollPolicy(HScrollPolicyValue value) {
         setAttribute("hScrollPolicy", value == null ? null : value.value());
     }
-    /** @return the raw <code>hScrollPolicy</code> string, or null. */
+    /// @return the raw `hScrollPolicy` string, or null.
     public String getHScrollPolicyRaw() { return getAttribute("hScrollPolicy"); }
 
-    /** @return the typed <code>id</code> attribute, or null. */
+    /// @return the typed `id` attribute, or null.
     public String getId() { return getString("id"); }
-    /** Sets the <code>id</code> attribute. */
+    /// Sets the `id` attribute.
     public void setId(String value) { setAttribute("id", value); }
 
-    /** @return the typed <code>passwordChar</code> attribute, or null. */
+    /// @return the typed `passwordChar` attribute, or null.
     public String getPasswordChar() { return getString("passwordChar"); }
-    /** Sets the <code>passwordChar</code> attribute. */
+    /// Sets the `passwordChar` attribute.
     public void setPasswordChar(String value) { setAttribute("passwordChar", value); }
 
-    /** @return the typed <code>use</code> attribute, or null. */
+    /// @return the typed `use` attribute, or null.
     public String getUse() { return getString("use"); }
-    /** Sets the <code>use</code> attribute. */
+    /// Sets the `use` attribute.
     public void setUse(String value) { setAttribute("use", value); }
 
-    /** @return the typed <code>usehref</code> attribute, or null. */
+    /// @return the typed `usehref` attribute, or null.
     public String getUsehref() { return getString("usehref"); }
-    /** Sets the <code>usehref</code> attribute. */
+    /// Sets the `usehref` attribute.
     public void setUsehref(String value) { setAttribute("usehref", value); }
 
-    /** @return the <code>border</code> child (typed), or null. */
+    /// @return the `border` child (typed), or null.
     public Border getBorder() { return (Border) getChild("border"); }
-    /** Ensures and returns the <code>border</code> child. */
+    /// Ensures and returns the `border` child.
     public Border ensureBorder() { return (Border) ensureChild("border"); }
 
-    /** @return the <code>extras</code> child (typed), or null. */
+    /// @return the `extras` child (typed), or null.
     public Extras getExtras() { return (Extras) getChild("extras"); }
-    /** Ensures and returns the <code>extras</code> child. */
+    /// Ensures and returns the `extras` child.
     public Extras ensureExtras() { return (Extras) ensureChild("extras"); }
 
-    /** @return the <code>margin</code> child (typed), or null. */
+    /// @return the `margin` child (typed), or null.
     public Margin getMargin() { return (Margin) getChild("margin"); }
-    /** Ensures and returns the <code>margin</code> child. */
+    /// Ensures and returns the `margin` child.
     public Margin ensureMargin() { return (Margin) ensureChild("margin"); }
 }

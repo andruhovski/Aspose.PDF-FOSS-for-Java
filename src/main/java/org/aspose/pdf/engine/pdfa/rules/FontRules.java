@@ -1,14 +1,10 @@
 package org.aspose.pdf.engine.pdfa.rules;
 
 import org.aspose.pdf.PdfFormat;
-import org.aspose.pdf.engine.pdfobjects.PdfArray;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
+import org.aspose.pdf.engine.parser.PDFParser;
 import org.aspose.pdf.engine.pdfa.PdfARule;
 import org.aspose.pdf.engine.pdfa.PdfAValidationResult;
-import org.aspose.pdf.engine.parser.PDFParser;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -18,37 +14,30 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
-/**
- * Validates font requirements for PDF/A compliance (most critical rule set).
- *
- * <p>Checks the following ISO 19005 clauses:</p>
- * <ul>
- *   <li>6.3.4 &mdash; All fonts must be embedded (FontDescriptor has FontFile/FontFile2/FontFile3)</li>
- *   <li>6.3.5 &mdash; Subset Type1 must have /CharSet; Subset CIDFont must have /CIDSet</li>
- *   <li>6.3.7 &mdash; Non-symbolic TrueType: Encoding must be MacRomanEncoding or WinAnsiEncoding</li>
- *   <li>6.3.8 &mdash; Level A/U: font must have /ToUnicode CMap</li>
- *   <li>6.3.3.2 &mdash; CIDFontType2: must have /CIDToGIDMap</li>
- * </ul>
- */
+/// Validates font requirements for PDF/A compliance (most critical rule set).
+///
+/// Checks the following ISO 19005 clauses:
+///
+///   - 6.3.4 — All fonts must be embedded (FontDescriptor has FontFile/FontFile2/FontFile3)
+///   - 6.3.5 — Subset Type1 must have /CharSet; Subset CIDFont must have /CIDSet
+///   - 6.3.7 — Non-symbolic TrueType: Encoding must be MacRomanEncoding or WinAnsiEncoding
+///   - 6.3.8 — Level A/U: font must have /ToUnicode CMap
+///   - 6.3.3.2 — CIDFontType2: must have /CIDToGIDMap
 public final class FontRules implements PdfARule {
 
     private static final Logger LOG = Logger.getLogger(FontRules.class.getName());
 
-    /** Pattern to detect subset font names: 6 uppercase letters followed by '+'. */
+    /// Pattern to detect subset font names: 6 uppercase letters followed by '+'.
     private static final Pattern SUBSET_PREFIX = Pattern.compile("^[A-Z]{6}\\+.+");
 
-    /**
-     * Hard cap on Form XObject nesting depth while scanning resources.
-     * A malformed PDF whose Form XObjects reference one another's /Resources
-     * (directly or transitively) would otherwise recurse without bound and
-     * blow the stack (PDFNET-55144). The identity guard below handles true
-     * cycles; this is a belt-and-suspenders limit for pathological chains.
-     */
+    /// Hard cap on Form XObject nesting depth while scanning resources.
+    /// A malformed PDF whose Form XObjects reference one another's /Resources
+    /// (directly or transitively) would otherwise recurse without bound and
+    /// blow the stack (PDFNET-55144). The identity guard below handles true
+    /// cycles; this is a belt-and-suspenders limit for pathological chains.
     private static final int MAX_RESOURCE_DEPTH = 64;
 
-    /**
-     * Creates a new font rules checker.
-     */
+    /// Creates a new font rules checker.
     public FontRules() {
         // default constructor
     }
@@ -61,9 +50,7 @@ public final class FontRules implements PdfARule {
         checkPages(parser, format, result);
     }
 
-    /**
-     * Iterates all pages and checks each page's font resources.
-     */
+    /// Iterates all pages and checks each page's font resources.
     private void checkPages(PDFParser parser, PdfFormat format, PdfAValidationResult result) {
         PdfDictionary catalog;
         try {
@@ -96,9 +83,7 @@ public final class FontRules implements PdfARule {
         }
     }
 
-    /**
-     * Checks all fonts in a resources dictionary, including fonts in Form XObjects.
-     */
+    /// Checks all fonts in a resources dictionary, including fonts in Form XObjects.
     private void checkFonts(PdfDictionary resources, String pagePath,
                              PdfFormat format, PdfAValidationResult result) {
         // Identity-based set guards against resource cycles (a Form XObject whose
@@ -146,9 +131,7 @@ public final class FontRules implements PdfARule {
         }
     }
 
-    /**
-     * Validates a single font dictionary.
-     */
+    /// Validates a single font dictionary.
     private void checkSingleFont(PdfDictionary font, String fontPath,
                                   PdfFormat format, PdfAValidationResult result) {
         String subtype = font.getNameAsString("Subtype");
@@ -204,9 +187,7 @@ public final class FontRules implements PdfARule {
         }
     }
 
-    /**
-     * Checks composite (Type0) fonts and their descendant CIDFonts.
-     */
+    /// Checks composite (Type0) fonts and their descendant CIDFonts.
     private void checkCompositeFont(PdfDictionary font, String fontPath,
                                      PdfFormat format, PdfAValidationResult result) {
         String baseFont = font.getNameAsString("BaseFont");
@@ -267,9 +248,7 @@ public final class FontRules implements PdfARule {
         }
     }
 
-    /**
-     * 6.3.7: Non-symbolic TrueType font must use MacRomanEncoding or WinAnsiEncoding.
-     */
+    /// 6.3.7: Non-symbolic TrueType font must use MacRomanEncoding or WinAnsiEncoding.
     private void checkTrueTypeEncoding(PdfDictionary font, PdfDictionary fontDescriptor,
                                         String fontPath, String baseFont,
                                         PdfAValidationResult result) {
@@ -301,9 +280,7 @@ public final class FontRules implements PdfARule {
         }
     }
 
-    /**
-     * 6.3.8: Level A/U: font must have /ToUnicode CMap (exceptions for standard encodings).
-     */
+    /// 6.3.8: Level A/U: font must have /ToUnicode CMap (exceptions for standard encodings).
     private void checkToUnicode(PdfDictionary font, String fontPath,
                                  String baseFont, PdfAValidationResult result) {
         // Exception: if encoding is a standard one, /ToUnicode is not required
@@ -327,9 +304,7 @@ public final class FontRules implements PdfARule {
         }
     }
 
-    /**
-     * Resolves a PdfBase to a PdfDictionary, dereferencing indirect references.
-     */
+    /// Resolves a PdfBase to a PdfDictionary, dereferencing indirect references.
     private static PdfDictionary resolveDict(PdfBase val) {
         if (val instanceof PdfObjectReference) {
             try {
@@ -341,9 +316,7 @@ public final class FontRules implements PdfARule {
         return (val instanceof PdfDictionary) ? (PdfDictionary) val : null;
     }
 
-    /**
-     * Resolves a PdfBase to a PdfArray, dereferencing indirect references.
-     */
+    /// Resolves a PdfBase to a PdfArray, dereferencing indirect references.
     private static PdfArray resolveArray(PdfBase val) {
         if (val instanceof PdfObjectReference) {
             try {

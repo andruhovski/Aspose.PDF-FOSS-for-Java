@@ -7,34 +7,33 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Locale;
 import java.util.logging.Logger;
 
-/**
- * Converts a PDF {@link Document} to HTML markup.
- * <p>
- * Supports two layout modes:
- * <ul>
- *   <li><b>Fixed layout</b> (default) — each text span is absolutely positioned,
- *       faithfully reproducing the original PDF layout.</li>
- *   <li><b>Reflowable layout</b> — text is grouped into paragraphs and headings
- *       for responsive display.</li>
- * </ul>
- * Images can be embedded as Base64 data URIs or saved to an external folder.
- * </p>
- */
+/// Converts a PDF [Document] to HTML markup.
+///
+/// Supports two layout modes:
+///
+///   - **Fixed layout** (default) — each text span is absolutely positioned,
+///     faithfully reproducing the original PDF layout.
+///   - **Reflowable layout** — text is grouped into paragraphs and headings
+///     for responsive display.
+///
+/// Images can be embedded as Base64 data URIs or saved to an external folder.
+///
 public class PdfToHtmlConverter {
 
     private static final Logger LOG = Logger.getLogger(PdfToHtmlConverter.class.getName());
 
-    /**
-     * Converts the given PDF document to an HTML string.
-     *
-     * @param document the PDF document to convert
-     * @param options  save options controlling layout, images, etc.
-     * @return the HTML string
-     * @throws IOException if reading the document fails
-     */
+    /// Converts the given PDF document to an HTML string.
+    ///
+    /// @param document the PDF document to convert
+    /// @param options  save options controlling layout, images, etc.
+    /// @return the HTML string
+    /// @throws IOException if reading the document fails
     public String convert(Document document, HtmlSaveOptions options) throws IOException {
         if (options == null) options = new HtmlSaveOptions();
 
@@ -95,13 +94,11 @@ public class PdfToHtmlConverter {
         html.append("</div>\n");
     }
 
-    /**
-     * Emits every ruled table of the page (detected by {@link TableAbsorber})
-     * as an HTML {@code <table>} with one {@code <td>} per detected cell.
-     * Border-box-only regions (a single row or column) are left to the text
-     * flow. Returns the page rectangles the emitted tables cover so the
-     * caller can exclude their text from the regular flow.
-     */
+    /// Emits every ruled table of the page (detected by [TableAbsorber])
+    /// as an HTML `<table>` with one `<td>` per detected cell.
+    /// Border-box-only regions (a single row or column) are left to the text
+    /// flow. Returns the page rectangles the emitted tables cover so the
+    /// caller can exclude their text from the regular flow.
     private List<Rectangle> appendTables(StringBuilder html, Page page,
                                          HtmlSaveOptions options, Rectangle box) {
         List<Rectangle> covered = new ArrayList<>();
@@ -137,7 +134,7 @@ public class PdfToHtmlConverter {
         return covered;
     }
 
-    /** Whether the text position lies inside any of the covered rectangles. */
+    /// Whether the text position lies inside any of the covered rectangles.
     private static boolean insideAny(List<Rectangle> rects, Position pos) {
         if (pos == null || rects.isEmpty()) {
             return false;
@@ -389,7 +386,7 @@ public class PdfToHtmlConverter {
         return java.util.Base64.getEncoder().encodeToString(baos.toByteArray());
     }
 
-    /** Maps a PDF font name to a CSS font-family string. */
+    /// Maps a PDF font name to a CSS font-family string.
     public static String mapFontToCSS(String pdfFontName) {
         if (pdfFontName == null) return "'Helvetica',sans-serif";
         String lower = pdfFontName.toLowerCase();
@@ -401,7 +398,7 @@ public class PdfToHtmlConverter {
         return "'" + pdfFontName + "',sans-serif";
     }
 
-    /** Escapes special HTML characters in text. */
+    /// Escapes special HTML characters in text.
     public static String escapeHtml(String text) {
         if (text == null) return "";
         return text.replace("&", "&amp;")

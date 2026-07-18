@@ -1,34 +1,30 @@
 package org.aspose.pdf.engine.pattern;
 
-import java.awt.Graphics2D;
+import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.image.BufferedImage;
 import java.util.logging.Logger;
 
-/**
- * Renders shading fills onto a Graphics2D context.
- * Handles the {@code sh} operator and Pattern color spaces with shading patterns.
- *
- * <p>For axial, radial, and function-based shadings, the renderer samples the function
- * at each pixel within the clipping bounds. For mesh shadings (types 4–7), a fallback
- * color is used.</p>
- */
+/// Renders shading fills onto a Graphics2D context.
+/// Handles the `sh` operator and Pattern color spaces with shading patterns.
+///
+/// For axial, radial, and function-based shadings, the renderer samples the function
+/// at each pixel within the clipping bounds. For mesh shadings (types 4–7), a fallback
+/// color is used.
 public final class ShadingRenderer {
 
     private static final Logger LOG = Logger.getLogger(ShadingRenderer.class.getName());
 
     private ShadingRenderer() {}
 
-    /**
-     * Renders a shading fill onto the Graphics2D context.
-     * Fills the current clipping region with the shading colors.
-     *
-     * @param g2d       the graphics context
-     * @param shading   the shading to render
-     * @param ctm       current transformation matrix (user space → device space)
-     * @param clipBounds the clipping bounds in device space (may be {@code null})
-     */
+    /// Renders a shading fill onto the Graphics2D context.
+    /// Fills the current clipping region with the shading colors.
+    ///
+    /// @param g2d       the graphics context
+    /// @param shading   the shading to render
+    /// @param ctm       current transformation matrix (user space → device space)
+    /// @param clipBounds the clipping bounds in device space (may be `null`)
     public static void render(Graphics2D g2d, Shading shading,
                                AffineTransform ctm, java.awt.Rectangle clipBounds) {
         if (shading == null) return;
@@ -45,10 +41,8 @@ public final class ShadingRenderer {
         }
     }
 
-    /**
-     * Renders a shading by sampling the function at each pixel.
-     * Works for axial, radial, and function-based shadings.
-     */
+    /// Renders a shading by sampling the function at each pixel.
+    /// Works for axial, radial, and function-based shadings.
     private static void renderPixelBased(Graphics2D g2d, Shading shading,
                                           AffineTransform ctm, java.awt.Rectangle clipUser) {
         // ctm maps shading space → DEVICE pixels (base g2d transform × state
@@ -109,12 +103,10 @@ public final class ShadingRenderer {
         }
     }
 
-    /** Upper bound on the sampled shading raster (≈ a few full pages at 300 dpi). */
+    /// Upper bound on the sampled shading raster (≈ a few full pages at 300 dpi).
     private static final long MAX_SHADING_PIXELS = 64L * 1024 * 1024;
 
-    /**
-     * Renders a fallback for mesh shadings (types 4–7): fills with background or gray.
-     */
+    /// Renders a fallback for mesh shadings (types 4–7): fills with background or gray.
     private static void renderFallback(Graphics2D g2d, Shading shading,
                                          java.awt.Rectangle clip) {
         double[] bg = shading.getBackground();
@@ -129,12 +121,10 @@ public final class ShadingRenderer {
         g2d.fillRect(clip.x, clip.y, clip.width, clip.height);
     }
 
-    /**
-     * Converts shading-function output to packed ARGB via the shading's
-     * ColorSpace. The components are in the SHADING's color space — reading
-     * them as RGB renders a DeviceCMYK blue {@code [1 .6 0 0]} as orange
-     * (corpus 29077/10734); Separation/DeviceN need their tint transform.
-     */
+    /// Converts shading-function output to packed ARGB via the shading's
+    /// ColorSpace. The components are in the SHADING's color space — reading
+    /// them as RGB renders a DeviceCMYK blue `[1 .6 0 0]` as orange
+    /// (corpus 29077/10734); Separation/DeviceN need their tint transform.
     private static int colorToARGB(double[] color,
                                    org.aspose.pdf.engine.colorspace.ColorSpaceBase cs) {
         if (color == null || color.length == 0) return 0xFF000000;

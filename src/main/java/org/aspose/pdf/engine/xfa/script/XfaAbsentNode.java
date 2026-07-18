@@ -3,35 +3,32 @@ package org.aspose.pdf.engine.xfa.script;
 import org.aspose.pdf.engine.script.js.runtime.JSObject;
 import org.aspose.pdf.engine.script.js.runtime.Undefined;
 
-/**
- * The XFA <b>absent node</b> (B3.5.1, the keystone) — a null-object {@link JSObject} returned when a
- * SOM expression ({@code xfa.resolveNode}/{@code this.resolveNode}/{@code .item}) or a dotted child
- * step ({@code a.b.c}) resolves to nothing.
- *
- * <p>XFA semantics: an unfound node is still an <i>object</i>, so reads of its value/presence are
- * benign empties and a further dotted step yields another absent node — scripts are written assuming
- * this ({@code xfa.resolveNode("missing").rawValue} and {@code a.b.c.rawValue} must not throw). The
- * JS engine, in contrast, would return {@code undefined}, whose property access throws "Cannot read
- * property X of undefined". This wrapper converts that large class of hard crashes into benign
- * empties:</p>
- * <ul>
- *   <li>value-like reads ({@code rawValue}/{@code value}/{@code formattedValue}/{@code name}/…) → {@code ""};</li>
- *   <li>numeric-like reads ({@code count}/{@code length}/{@code min}/{@code max}/{@code index}) → {@code 0};</li>
- *   <li>{@code isNull} → {@code true} (the idiomatic XFA absence test);</li>
- *   <li>any other property (a further dotted step, {@code nodes}, {@code parent}, …) → this same absent
- *       node, so {@code a.b.c.d} never throws;</li>
- *   <li>the node/list/instanceManager method surface ({@code resolveNode}, {@code nodes.append},
- *       {@code execEvent}, …) are benign no-ops so qualified calls do not raise "is not a function";</li>
- *   <li>writes are dropped (an absent node has nowhere to store a value).</li>
- * </ul>
- *
- * <p><b>Falsiness (the enabling primitive).</b> A JS object is always truthy, which would make
- * {@code while (n) n = n.parent} and {@code if (node.child)} spin/diverge on a null-object. So the
- * absent node opts into {@link JSObject#isFalsy()} → {@code true}: it is <i>falsy</i> in boolean
- * context, matching Acrobat's "missing node is falsy" while still answering property reads as empties.
- * That is what lets the chained-navigation no-throw coexist with terminating guard loops. One shared,
- * stateless instance per {@link XfaScriptHost}.</p>
- */
+/// The XFA **absent node** (B3.5.1, the keystone) — a null-object [JSObject] returned when a
+/// SOM expression (`xfa.resolveNode`/`this.resolveNode`/`.item`) or a dotted child
+/// step (`a.b.c`) resolves to nothing.
+///
+/// XFA semantics: an unfound node is still an _object_, so reads of its value/presence are
+/// benign empties and a further dotted step yields another absent node — scripts are written assuming
+/// this (`xfa.resolveNode("missing").rawValue` and `a.b.c.rawValue` must not throw). The
+/// JS engine, in contrast, would return `undefined`, whose property access throws "Cannot read
+/// property X of undefined". This wrapper converts that large class of hard crashes into benign
+/// empties:
+///
+///   - value-like reads (`rawValue`/`value`/`formattedValue`/`name`/…) → `""`;
+///   - numeric-like reads (`count`/`length`/`min`/`max`/`index`) → `0`;
+///   - `isNull` → `true` (the idiomatic XFA absence test);
+///   - any other property (a further dotted step, `nodes`, `parent`, …) → this same absent
+///     node, so `a.b.c.d` never throws;
+///   - the node/list/instanceManager method surface (`resolveNode`, `nodes.append`,
+///     `execEvent`, …) are benign no-ops so qualified calls do not raise "is not a function";
+///   - writes are dropped (an absent node has nowhere to store a value).
+///
+/// **Falsiness (the enabling primitive).** A JS object is always truthy, which would make
+/// `while (n) n = n.parent` and `if (node.child)` spin/diverge on a null-object. So the
+/// absent node opts into [JSObject#isFalsy()] → `true`: it is _falsy_ in boolean
+/// context, matching Acrobat's "missing node is falsy" while still answering property reads as empties.
+/// That is what lets the chained-navigation no-throw coexist with terminating guard loops. One shared,
+/// stateless instance per [XfaScriptHost].
 final class XfaAbsentNode extends JSObject {
 
     XfaAbsentNode(XfaScriptHost host, JSObject proto) {
@@ -58,7 +55,7 @@ final class XfaAbsentNode extends JSObject {
         }
     }
 
-    /** The absent node is falsy: {@code if (node)} / {@code while (node.child)} guards terminate. */
+    /// The absent node is falsy: `if (node)` / `while (node.child)` guards terminate.
     @Override
     public boolean isFalsy() {
         return true;

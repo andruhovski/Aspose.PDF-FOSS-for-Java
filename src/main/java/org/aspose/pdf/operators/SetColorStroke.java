@@ -5,46 +5,38 @@ import org.aspose.pdf.engine.pdfobjects.PdfBase;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Set color for stroking operations operator (SC).
- * <p>
- * Sets the stroking color value in the current color space. The number
- * of operands depends on the current color space: 1 for DeviceGray/CalGray,
- * 3 for DeviceRGB/CalRGB/Lab, 4 for DeviceCMYK, etc.
- * This operator does not support Pattern color spaces; use {@link SetAdvancedColorStroke}
- * for that.
- * See ISO 32000-1:2008, §8.6.8, Table 74.
- * </p>
- */
+/// Set color for stroking operations operator (SC).
+///
+/// Sets the stroking color value in the current color space. The number
+/// of operands depends on the current color space: 1 for DeviceGray/CalGray,
+/// 3 for DeviceRGB/CalRGB/Lab, 4 for DeviceCMYK, etc.
+/// This operator does not support Pattern color spaces; use [SetAdvancedColorStroke]
+/// for that.
+/// See ISO 32000-1:2008, §8.6.8, Table 74.
+///
 public class SetColorStroke extends BasicSetColorOperator {
 
     private final double[] components;
 
-    /**
-     * Creates a SetColorStroke (SC) operator with the specified color components.
-     *
-     * @param components the color component values (1, 3, or 4 numbers depending on color space)
-     */
+    /// Creates a SetColorStroke (SC) operator with the specified color components.
+    ///
+    /// @param components the color component values (1, 3, or 4 numbers depending on color space)
     public SetColorStroke(double... components) {
         super("SC", toOperandList(components));
         this.components = components != null ? components.clone() : new double[0];
     }
 
-    /**
-     * Creates a SetColorStroke (SC) operator from parsed operands.
-     *
-     * @param operands the operands from the content stream parser
-     */
+    /// Creates a SetColorStroke (SC) operator from parsed operands.
+    ///
+    /// @param operands the operands from the content stream parser
     public SetColorStroke(List<PdfBase> operands) {
         super("SC", operands);
         this.components = parseComponents(operands);
     }
 
-    /**
-     * Returns the color components as an array of doubles.
-     *
-     * @return the color component values
-     */
+    /// Returns the color components as an array of doubles.
+    ///
+    /// @return the color component values
     public double[] getComponents() {
         return components.clone();
     }

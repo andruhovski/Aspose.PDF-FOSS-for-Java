@@ -1,26 +1,18 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.pdfobjects.PdfArray;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfString;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.io.IOException;
 
-/**
- * Go-To action — navigate to a destination within the document (ISO 32000-1:2008, §12.6.4.2).
- */
+/// Go-To action — navigate to a destination within the document (ISO 32000-1:2008, §12.6.4.2).
 public class GoToAction extends PdfAction {
 
-    /** May be either {@link ExplicitDestination} or {@link NamedDestination}. */
+    /// May be either [ExplicitDestination] or [NamedDestination].
     private IAppointment destination;
 
-    /**
-     * Creates a GoToAction targeting a page with default XYZ destination.
-     *
-     * @param page the target page
-     */
+    /// Creates a GoToAction targeting a page with default XYZ destination.
+    ///
+    /// @param page the target page
     public GoToAction(Page page) {
         this.actionDict = new PdfDictionary();
         actionDict.set(PdfName.of("S"), PdfName.of("GoTo"));
@@ -29,20 +21,16 @@ public class GoToAction extends PdfAction {
         actionDict.set(PdfName.of("D"), dest.toPdfArray());
     }
 
-    /**
-     * Creates a GoToAction with no preset destination — used by callers that
-     * subsequently invoke {@link #setDestination(IAppointment)}.
-     */
+    /// Creates a GoToAction with no preset destination — used by callers that
+    /// subsequently invoke [#setDestination(IAppointment)].
     public GoToAction() {
         this.actionDict = new PdfDictionary();
         actionDict.set(PdfName.of("S"), PdfName.of("GoTo"));
     }
 
-    /**
-     * Creates a GoToAction with a specific destination.
-     *
-     * @param dest the explicit destination
-     */
+    /// Creates a GoToAction with a specific destination.
+    ///
+    /// @param dest the explicit destination
     public GoToAction(ExplicitDestination dest) {
         this.actionDict = new PdfDictionary();
         actionDict.set(PdfName.of("S"), PdfName.of("GoTo"));
@@ -52,11 +40,9 @@ public class GoToAction extends PdfAction {
         }
     }
 
-    /**
-     * Creates a GoToAction with a named destination.
-     *
-     * @param dest the named destination
-     */
+    /// Creates a GoToAction with a named destination.
+    ///
+    /// @param dest the named destination
     public GoToAction(NamedDestination dest) {
         this.actionDict = new PdfDictionary();
         actionDict.set(PdfName.of("S"), PdfName.of("GoTo"));
@@ -66,13 +52,11 @@ public class GoToAction extends PdfAction {
         }
     }
 
-    /**
-     * Parses a GoToAction from an existing dictionary.
-     *
-     * @param dict the action dictionary
-     * @param doc  the document for page resolution (may be null)
-     * @throws IOException if parsing fails
-     */
+    /// Parses a GoToAction from an existing dictionary.
+    ///
+    /// @param dict the action dictionary
+    /// @param doc  the document for page resolution (may be null)
+    /// @throws IOException if parsing fails
     public GoToAction(PdfDictionary dict, Document doc) throws IOException {
         this.actionDict = dict;
         PdfBase d = resolve(dict.get("D"));
@@ -90,14 +74,12 @@ public class GoToAction extends PdfAction {
         }
     }
 
-    /**
-     * Returns the destination as an {@link ExplicitDestination} when one is set
-     * (either inline or already resolved during construction); for a
-     * {@link NamedDestination}, returns the lazy-resolved explicit destination,
-     * or {@code null} if the name cannot be resolved.
-     *
-     * @return the resolved explicit destination, or null
-     */
+    /// Returns the destination as an [ExplicitDestination] when one is set
+    /// (either inline or already resolved during construction); for a
+    /// [NamedDestination], returns the lazy-resolved explicit destination,
+    /// or `null` if the name cannot be resolved.
+    ///
+    /// @return the resolved explicit destination, or null
     public ExplicitDestination getDestination() {
         if (destination instanceof ExplicitDestination) {
             return (ExplicitDestination) destination;
@@ -108,23 +90,19 @@ public class GoToAction extends PdfAction {
         return null;
     }
 
-    /**
-     * Returns the raw destination ({@link ExplicitDestination} or
-     * {@link NamedDestination}). Use this when the named-vs-explicit
-     * distinction matters.
-     *
-     * @return the appointment, or null
-     */
+    /// Returns the raw destination ([ExplicitDestination] or
+    /// [NamedDestination]). Use this when the named-vs-explicit
+    /// distinction matters.
+    ///
+    /// @return the appointment, or null
     public IAppointment getAppointment() {
         return destination;
     }
 
-    /**
-     * Sets the destination (accepts both {@link ExplicitDestination} and
-     * {@link NamedDestination}).
-     *
-     * @param dest the destination
-     */
+    /// Sets the destination (accepts both [ExplicitDestination] and
+    /// [NamedDestination]).
+    ///
+    /// @param dest the destination
     public void setDestination(IAppointment dest) {
         this.destination = dest;
         if (dest instanceof ExplicitDestination) {

@@ -15,9 +15,7 @@ import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for XMP metadata parsing, writing, and Document integration.
- */
+/// Tests for XMP metadata parsing, writing, and Document integration.
 public class XmpMetadataTest {
 
     // ── Parser tests ──

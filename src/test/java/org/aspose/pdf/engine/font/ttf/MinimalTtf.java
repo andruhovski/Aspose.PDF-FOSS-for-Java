@@ -5,25 +5,21 @@ import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * Generates a tiny but valid TrueType font <b>in memory</b> for tests — a licence-clean, deterministic
- * fixture (no proprietary font binary is committed). The font defines {@code .notdef} plus the glyphs
- * for the requested characters, each a filled square outline, with caller-chosen advance widths so
- * tests can assert that embedding derives {@code /W} from the font's own {@code hmtx}.
- *
- * <p>Only the tables {@link TrueTypeReader} needs are emitted: {@code head, maxp, hhea, hmtx, cmap}
- * (format 4), {@code loca} (long), {@code glyf}, {@code name}, {@code post} (3.0). unitsPerEm = 1000.</p>
- */
+/// Generates a tiny but valid TrueType font **in memory** for tests — a licence-clean, deterministic
+/// fixture (no proprietary font binary is committed). The font defines `.notdef` plus the glyphs
+/// for the requested characters, each a filled square outline, with caller-chosen advance widths so
+/// tests can assert that embedding derives `/W` from the font's own `hmtx`.
+///
+/// Only the tables [TrueTypeReader] needs are emitted: `head, maxp, hhea, hmtx, cmap`
+/// (format 4), `loca` (long), `glyf`, `name`, `post` (3.0). unitsPerEm = 1000.
 public final class MinimalTtf {
 
     private MinimalTtf() {
     }
 
-    /**
-     * @param familyName the font family name (name table id 1)
-     * @param glyphs     map of char → advance width (font units, unitsPerEm=1000), document order
-     * @return a standalone TTF byte array
-     */
+    /// @param familyName the font family name (name table id 1)
+    /// @param glyphs     map of char → advance width (font units, unitsPerEm=1000), document order
+    /// @return a standalone TTF byte array
     public static byte[] build(String familyName, Map<Character, Integer> glyphs) {
         int nGlyphs = glyphs.size() + 1; // + .notdef
         char[] chars = new char[glyphs.size()];

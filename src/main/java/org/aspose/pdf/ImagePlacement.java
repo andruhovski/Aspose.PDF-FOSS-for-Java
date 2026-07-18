@@ -1,13 +1,11 @@
 package org.aspose.pdf;
 
-/**
- * Describes the placement of an image on a PDF page.
- * <p>
- * Contains the image reference, the current transformation matrix (CTM)
- * at the point the image was rendered, and the computed bounding rectangle
- * and resolution.
- * </p>
- */
+/// Describes the placement of an image on a PDF page.
+///
+/// Contains the image reference, the current transformation matrix (CTM)
+/// at the point the image was rendered, and the computed bounding rectangle
+/// and resolution.
+///
 public class ImagePlacement {
 
     private final XImage image;
@@ -15,13 +13,11 @@ public class ImagePlacement {
     private final Rectangle rectangle;
     private final Page page;
 
-    /**
-     * Creates an ImagePlacement.
-     *
-     * @param image  the image XObject
-     * @param matrix the CTM at the Do operator
-     * @param page   the page containing this placement
-     */
+    /// Creates an ImagePlacement.
+    ///
+    /// @param image  the image XObject
+    /// @param matrix the CTM at the Do operator
+    /// @param page   the page containing this placement
     public ImagePlacement(XImage image, Matrix matrix, Page page) {
         this.image = image;
         this.matrix = matrix != null ? matrix : Matrix.IDENTITY;
@@ -29,47 +25,37 @@ public class ImagePlacement {
         this.rectangle = computeRectangle();
     }
 
-    /**
-     * Returns the placed image.
-     *
-     * @return the XImage
-     */
+    /// Returns the placed image.
+    ///
+    /// @return the XImage
     public XImage getImage() {
         return image;
     }
 
-    /**
-     * Returns the CTM at the point of rendering.
-     *
-     * @return the transformation matrix
-     */
+    /// Returns the CTM at the point of rendering.
+    ///
+    /// @return the transformation matrix
     public Matrix getMatrix() {
         return matrix;
     }
 
-    /**
-     * Returns the bounding rectangle of the image on the page (in page coordinates).
-     *
-     * @return the rectangle
-     */
+    /// Returns the bounding rectangle of the image on the page (in page coordinates).
+    ///
+    /// @return the rectangle
     public Rectangle getRectangle() {
         return rectangle;
     }
 
-    /**
-     * Returns the page containing this image placement.
-     *
-     * @return the page
-     */
+    /// Returns the page containing this image placement.
+    ///
+    /// @return the page
     public Page getPage() {
         return page;
     }
 
-    /**
-     * Returns the horizontal resolution in DPI.
-     *
-     * @return the resolution (dots per inch)
-     */
+    /// Returns the horizontal resolution in DPI.
+    ///
+    /// @return the resolution (dots per inch)
     public double getResolution() {
         double widthPts = rectangle.getWidth();
         int widthPx = image.getWidth();

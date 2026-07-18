@@ -3,9 +3,7 @@ package org.aspose.pdf;
 import org.aspose.pdf.engine.pdfobjects.PdfArray;
 import org.aspose.pdf.engine.pdfobjects.PdfName;
 
-/**
- * FitH explicit destination — fit page width, position at top coordinate.
- */
+/// FitH explicit destination — fit page width, position at top coordinate.
 public class FitHExplicitDestination extends ExplicitDestination {
 
     private final double top;

@@ -19,9 +19,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for PDF digital signature creation and verification.
- */
+/// Tests for PDF digital signature creation and verification.
 public class PdfSignatureTest {
 
     private static PrivateKey privateKey;

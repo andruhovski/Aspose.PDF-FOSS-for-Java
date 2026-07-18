@@ -1,65 +1,51 @@
 package org.aspose.pdf.engine.colorspace;
 
 import org.aspose.pdf.Resources;
-import org.aspose.pdf.engine.pdfobjects.PdfArray;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
-import org.aspose.pdf.engine.pdfobjects.PdfStream;
 import org.aspose.pdf.engine.parser.PDFParser;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.io.IOException;
 import java.util.logging.Logger;
 
-/**
- * Abstract base for all PDF color spaces (ISO 32000-1:2008, §8.6).
- * <p>
- * PDF defines three families of color spaces:
- * <ul>
- *   <li>Device: DeviceRGB, DeviceCMYK, DeviceGray</li>
- *   <li>CIE-based: CalRGB, CalGray, Lab, ICCBased</li>
- *   <li>Special: Indexed, Separation, DeviceN, Pattern</li>
- * </ul>
- * The {@link #resolve} factory method parses a color space specification
- * from a PdfName or PdfArray into the appropriate subclass.
- * </p>
- */
+/// Abstract base for all PDF color spaces (ISO 32000-1:2008, §8.6).
+///
+/// PDF defines three families of color spaces:
+///
+///   - Device: DeviceRGB, DeviceCMYK, DeviceGray
+///   - CIE-based: CalRGB, CalGray, Lab, ICCBased
+///   - Special: Indexed, Separation, DeviceN, Pattern
+///
+/// The [#resolve] factory method parses a color space specification
+/// from a PdfName or PdfArray into the appropriate subclass.
+///
 public abstract class ColorSpaceBase {
 
     private static final Logger LOG = Logger.getLogger(ColorSpaceBase.class.getName());
 
-    /**
-     * Returns the color space name (e.g., "DeviceRGB", "ICCBased", "Indexed").
-     *
-     * @return the color space name
-     */
+    /// Returns the color space name (e.g., "DeviceRGB", "ICCBased", "Indexed").
+    ///
+    /// @return the color space name
     public abstract String getName();
 
-    /**
-     * Returns the number of color components in this color space.
-     *
-     * @return 1 for gray, 3 for RGB, 4 for CMYK, etc.
-     */
+    /// Returns the number of color components in this color space.
+    ///
+    /// @return 1 for gray, 3 for RGB, 4 for CMYK, etc.
     public abstract int getNumberOfComponents();
 
-    /**
-     * Converts component values in THIS color space (each typically 0..1)
-     * to a packed ARGB int (alpha=0xFF).
-     * <p>
-     * The base implementation maps by component count — 1 = gray,
-     * 3 = RGB, 4 = CMYK — which is correct for the Device* families and a
-     * sane fallback for everything else. Subclasses with richer semantics
-     * (Separation/DeviceN tint transforms, Indexed palette lookup, Lab,
-     * CalRGB/CalGray, ICCBased alternate) override this. Shading functions
-     * and image samples MUST go through this method rather than assuming
-     * RGB — a DeviceCMYK shading read as RGB turns blue into orange
-     * (corpus 29077/10734).
-     * </p>
-     *
-     * @param comps the component values in this color space
-     * @return packed ARGB int (alpha=0xFF); black when comps is null/empty
-     */
+    /// Converts component values in THIS color space (each typically 0..1)
+    /// to a packed ARGB int (alpha=0xFF).
+    ///
+    /// The base implementation maps by component count — 1 = gray,
+    /// 3 = RGB, 4 = CMYK — which is correct for the Device\* families and a
+    /// sane fallback for everything else. Subclasses with richer semantics
+    /// (Separation/DeviceN tint transforms, Indexed palette lookup, Lab,
+    /// CalRGB/CalGray, ICCBased alternate) override this. Shading functions
+    /// and image samples MUST go through this method rather than assuming
+    /// RGB — a DeviceCMYK shading read as RGB turns blue into orange
+    /// (corpus 29077/10734).
+    ///
+    /// @param comps the component values in this color space
+    /// @return packed ARGB int (alpha=0xFF); black when comps is null/empty
     public int toRGBInt(double[] comps) {
         if (comps == null || comps.length == 0) return 0xFF000000;
         switch (comps.length) {
@@ -77,34 +63,29 @@ public abstract class ColorSpaceBase {
         }
     }
 
-    /**
-     * Resolves a color space from a PDF object.
-     * <p>
-     * Handles PdfName (e.g., /DeviceRGB) and PdfArray (e.g., [/ICCBased stream]).
-     * </p>
-     *
-     * @param csObj     the color space object (PdfName or PdfArray)
-     * @param resources the page resources for named color space lookup (may be null)
-     * @param parser    the PDF parser for resolving indirect refs (may be null)
-     * @return the resolved color space, or DeviceRGB as default
-     * @throws IOException if resolution fails
-     */
-    /**
-     * Identity-keyed cache of resolved composite color spaces. Content streams
-     * re-select spaces constantly ("/CS1 cs … /CS0 cs …" per text run); without
-     * a cache every {@code cs} operator re-parses the ICC profile and creates a
-     * fresh native LCMS transform — observed as render workers burning 15+ CPU
-     * minutes inside {@code LCMS.createNativeTransform} on a single page. The
-     * resources dictionary hands back the SAME PdfArray instance for a given
-     * name, so identity keys hit reliably ({@code PdfArray.equals} is deep
-     * value equality — unusable here both for cost and for cross-document
-     * collisions). Bounded: cleared wholesale when full so closed documents'
-     * objects are not pinned indefinitely.
-     */
+    /// Resolves a color space from a PDF object.
+    ///
+    /// Handles PdfName (e.g., /DeviceRGB) and PdfArray (e.g., [/ICCBased stream]).
+    ///
+    /// @param csObj     the color space object (PdfName or PdfArray)
+    /// @param resources the page resources for named color space lookup (may be null)
+    /// @param parser    the PDF parser for resolving indirect refs (may be null)
+    /// @return the resolved color space, or DeviceRGB as default
+    /// @throws IOException if resolution fails
+    /// Identity-keyed cache of resolved composite color spaces. Content streams
+    /// re-select spaces constantly ("/CS1 cs … /CS0 cs …" per text run); without
+    /// a cache every `cs` operator re-parses the ICC profile and creates a
+    /// fresh native LCMS transform — observed as render workers burning 15+ CPU
+    /// minutes inside `LCMS.createNativeTransform` on a single page. The
+    /// resources dictionary hands back the SAME PdfArray instance for a given
+    /// name, so identity keys hit reliably (`PdfArray.equals` is deep
+    /// value equality — unusable here both for cost and for cross-document
+    /// collisions). Bounded: cleared wholesale when full so closed documents'
+    /// objects are not pinned indefinitely.
     private static final java.util.Map<PdfBase, ColorSpaceBase> RESOLVE_CACHE =
             java.util.Collections.synchronizedMap(new java.util.IdentityHashMap<>());
 
-    /** Cache bound — typical documents define a handful of color spaces. */
+    /// Cache bound — typical documents define a handful of color spaces.
     private static final int RESOLVE_CACHE_MAX = 256;
 
     public static ColorSpaceBase resolve(PdfBase csObj, Resources resources,
@@ -229,9 +210,7 @@ public abstract class ColorSpaceBase {
         }
     }
 
-    /**
-     * Resolves an indirect object reference.
-     */
+    /// Resolves an indirect object reference.
     protected static PdfBase resolveRef(PdfBase obj) throws IOException {
         if (obj instanceof PdfObjectReference) {
             return ((PdfObjectReference) obj).dereference();
@@ -243,15 +222,13 @@ public abstract class ColorSpaceBase {
     //  CIE color conversion utilities
     // ═══════════════════════════════════════════════════════════════
 
-    /**
-     * Converts CIE XYZ (D65 illuminant) to sRGB (0..1 per component).
-     * Uses the standard sRGB matrix and gamma transfer function.
-     *
-     * @param x the X tristimulus value
-     * @param y the Y tristimulus value
-     * @param z the Z tristimulus value
-     * @return array of [r, g, b] each in 0..1
-     */
+    /// Converts CIE XYZ (D65 illuminant) to sRGB (0..1 per component).
+    /// Uses the standard sRGB matrix and gamma transfer function.
+    ///
+    /// @param x the X tristimulus value
+    /// @param y the Y tristimulus value
+    /// @param z the Z tristimulus value
+    /// @return array of [r, g, b] each in 0..1
     protected static double[] xyzToSRGB(double x, double y, double z) {
         // XYZ → linear RGB (sRGB matrix, D65 illuminant)
         double rl =  3.2406 * x - 1.5372 * y - 0.4986 * z;
@@ -261,46 +238,38 @@ public abstract class ColorSpaceBase {
         return new double[]{srgbGamma(rl), srgbGamma(gl), srgbGamma(bl)};
     }
 
-    /**
-     * Applies the sRGB gamma transfer function to a linear component.
-     */
+    /// Applies the sRGB gamma transfer function to a linear component.
     private static double srgbGamma(double linear) {
         linear = Math.max(0, Math.min(1, linear));
         if (linear <= 0.0031308) return 12.92 * linear;
         return 1.055 * Math.pow(linear, 1.0 / 2.4) - 0.055;
     }
 
-    /**
-     * Clamps a value to [0, 1].
-     *
-     * @param v the value
-     * @return the clamped value
-     */
+    /// Clamps a value to [0, 1].
+    ///
+    /// @param v the value
+    /// @return the clamped value
     protected static double clamp01(double v) {
         return Math.max(0, Math.min(1, v));
     }
 
-    /**
-     * Extracts a triple (3-element double array) from a dictionary key.
-     * Returns the default if not present or wrong size.
-     *
-     * @param dict       the dictionary
-     * @param key        the key
-     * @param defaultVal the default triple
-     * @return the extracted triple
-     */
+    /// Extracts a triple (3-element double array) from a dictionary key.
+    /// Returns the default if not present or wrong size.
+    ///
+    /// @param dict       the dictionary
+    /// @param key        the key
+    /// @param defaultVal the default triple
+    /// @return the extracted triple
     protected static double[] getTriple(PdfDictionary dict, String key, double[] defaultVal) {
         double[] arr = getNumberArray(dict, key);
         return (arr != null && arr.length >= 3) ? arr : defaultVal;
     }
 
-    /**
-     * Extracts a numeric array from a dictionary entry.
-     *
-     * @param dict the dictionary
-     * @param key  the key
-     * @return array of doubles, or {@code null} if not present
-     */
+    /// Extracts a numeric array from a dictionary entry.
+    ///
+    /// @param dict the dictionary
+    /// @param key  the key
+    /// @return array of doubles, or `null` if not present
     protected static double[] getNumberArray(PdfDictionary dict, String key) {
         PdfBase val = dict.get(key);
         if (val instanceof PdfArray) {

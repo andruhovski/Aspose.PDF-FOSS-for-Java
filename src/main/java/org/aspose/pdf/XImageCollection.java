@@ -1,11 +1,7 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
-import org.aspose.pdf.engine.pdfobjects.PdfStream;
 import org.aspose.pdf.engine.parser.PDFParser;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -15,13 +11,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Logger;
 
-/**
- * Collection of image XObjects from a page's /XObject resource dictionary.
- * <p>
- * Wraps the /XObject sub-dictionary, filtering to entries with
- * {@code /Subtype /Image}. Provides 1-based indexed access (Aspose convention).
- * </p>
- */
+/// Collection of image XObjects from a page's /XObject resource dictionary.
+///
+/// Wraps the /XObject sub-dictionary, filtering to entries with
+/// `/Subtype /Image`. Provides 1-based indexed access (Aspose convention).
+///
 public class XImageCollection implements Iterable<XImage> {
 
     private static final Logger LOG = Logger.getLogger(XImageCollection.class.getName());
@@ -35,24 +29,20 @@ public class XImageCollection implements Iterable<XImage> {
     private final PDFParser parser;
     private List<XImage> images;
 
-    /**
-     * Creates an XImageCollection from an /XObject dictionary.
-     *
-     * @param xobjectDict the /XObject sub-dictionary
-     * @param parser      the PDF parser (may be null)
-     */
+    /// Creates an XImageCollection from an /XObject dictionary.
+    ///
+    /// @param xobjectDict the /XObject sub-dictionary
+    /// @param parser      the PDF parser (may be null)
     public XImageCollection(PdfDictionary resourcesDict, PdfDictionary xobjectDict, PDFParser parser) {
         this.resourcesDict = resourcesDict;
         this.xobjectDict = xobjectDict;
         this.parser = parser;
     }
 
-    /**
-     * Creates an XImageCollection from an /XObject dictionary.
-     *
-     * @param xobjectDict the /XObject sub-dictionary
-     * @param parser the PDF parser (may be null)
-     */
+    /// Creates an XImageCollection from an /XObject dictionary.
+    ///
+    /// @param xobjectDict the /XObject sub-dictionary
+    /// @param parser the PDF parser (may be null)
     public XImageCollection(PdfDictionary xobjectDict, PDFParser parser) {
         this(synthesizeResources(xobjectDict), xobjectDict, parser);
     }
@@ -65,13 +55,11 @@ public class XImageCollection implements Iterable<XImage> {
         return resources;
     }
 
-    /**
-     * Returns the image at the given 1-based index.
-     *
-     * @param index the 1-based index
-     * @return the XImage
-     * @throws IndexOutOfBoundsException if index is out of range
-     */
+    /// Returns the image at the given 1-based index.
+    ///
+    /// @param index the 1-based index
+    /// @return the XImage
+    /// @throws IndexOutOfBoundsException if index is out of range
     public XImage get(int index) {
         ensureLoaded();
         if (index < 1 || index > images.size()) {
@@ -81,12 +69,10 @@ public class XImageCollection implements Iterable<XImage> {
         return images.get(index - 1);
     }
 
-    /**
-     * Returns the image by resource name (e.g., "Im1").
-     *
-     * @param name the resource name
-     * @return the XImage, or null if not found
-     */
+    /// Returns the image by resource name (e.g., "Im1").
+    ///
+    /// @param name the resource name
+    /// @return the XImage, or null if not found
     public XImage get(String name) {
         ensureLoaded();
         for (XImage img : images) {
@@ -97,30 +83,24 @@ public class XImageCollection implements Iterable<XImage> {
         return null;
     }
 
-    /**
-     * Returns the number of images.
-     *
-     * @return the image count
-     */
+    /// Returns the number of images.
+    ///
+    /// @return the image count
     public int getCount() {
         ensureLoaded();
         return images.size();
     }
 
-    /**
-     * Returns the number of images (alias for {@link #getCount()}).
-     *
-     * @return the image count
-     */
+    /// Returns the number of images (alias for [#getCount()]).
+    ///
+    /// @return the image count
     public int size() {
         return getCount();
     }
 
-    /**
-     * Returns an array of all image resource names in this collection.
-     *
-     * @return array of names
-     */
+    /// Returns an array of all image resource names in this collection.
+    ///
+    /// @return array of names
     public String[] getNames() {
         ensureLoaded();
         java.util.List<String> names = new java.util.ArrayList<>();
@@ -138,22 +118,20 @@ public class XImageCollection implements Iterable<XImage> {
         return images.iterator();
     }
 
-    /**
-     * Adds an image from an input stream to this collection. The bytes may be
-     * JPEG (stored verbatim with {@code /Filter /DCTDecode}) or any format
-     * decodable by {@link javax.imageio.ImageIO} — PNG, BMP, GIF — in which
-     * case the image is decoded to RGB/grayscale and re-emitted as
-     * {@code /FlateDecode}-compressed pixels. The resulting Image XObject
-     * carries every entry required by ISO 32000-1:2008 §8.9.5 Table 89
-     * ({@code /Type /XObject}, {@code /Subtype /Image}, {@code /Width},
-     * {@code /Height}, {@code /ColorSpace}, {@code /BitsPerComponent},
-     * {@code /Filter}). Animation in GIF inputs is lost — only the first
-     * frame is embedded.
-     *
-     * @param imageStream the image data (JPEG, PNG, BMP, GIF)
-     * @throws IOException if reading the stream fails or the bytes are not a
-     *                     recognised image format
-     */
+    /// Adds an image from an input stream to this collection. The bytes may be
+    /// JPEG (stored verbatim with `/Filter /DCTDecode`) or any format
+    /// decodable by [javax.imageio.ImageIO] — PNG, BMP, GIF — in which
+    /// case the image is decoded to RGB/grayscale and re-emitted as
+    /// `/FlateDecode`-compressed pixels. The resulting Image XObject
+    /// carries every entry required by ISO 32000-1:2008 §8.9.5 Table 89
+    /// (`/Type /XObject`, `/Subtype /Image`, `/Width`,
+    /// `/Height`, `/ColorSpace`, `/BitsPerComponent`,
+    /// `/Filter`). Animation in GIF inputs is lost — only the first
+    /// frame is embedded.
+    ///
+    /// @param imageStream the image data (JPEG, PNG, BMP, GIF)
+    /// @throws IOException if reading the stream fails or the bytes are not a
+    ///                     recognised image format
     public void add(InputStream imageStream) throws IOException {
         byte[] data = readAll(imageStream);
         String name = "Im" + (getCount() + 1);
@@ -162,23 +140,19 @@ public class XImageCollection implements Iterable<XImage> {
         invalidateCache();
     }
 
-    /**
-     * Deletes the image at the given 1-based index from the parent /XObject dictionary.
-     *
-     * @param index the 1-based index
-     * @throws IndexOutOfBoundsException if index is out of range
-     */
+    /// Deletes the image at the given 1-based index from the parent /XObject dictionary.
+    ///
+    /// @param index the 1-based index
+    /// @throws IndexOutOfBoundsException if index is out of range
     public void delete(int index) {
         XImage image = get(index);
         image.delete();
         invalidateCache();
     }
 
-    /**
-     * Deletes the image with the given resource name.
-     *
-     * @param name the image resource name
-     */
+    /// Deletes the image with the given resource name.
+    ///
+    /// @param name the image resource name
     public void delete(String name) {
         XImage image = get(name);
         if (image != null) {
@@ -187,26 +161,22 @@ public class XImageCollection implements Iterable<XImage> {
         }
     }
 
-    /**
-     * Replaces the image at the given 1-based index with a new image.
-     *
-     * @param index          the 1-based index
-     * @param newImageStream the replacement image stream
-     * @throws IOException if reading or replacing image data fails
-     */
+    /// Replaces the image at the given 1-based index with a new image.
+    ///
+    /// @param index          the 1-based index
+    /// @param newImageStream the replacement image stream
+    /// @throws IOException if reading or replacing image data fails
     public void replace(int index, InputStream newImageStream) throws IOException {
         XImage image = get(index);
         image.replace(newImageStream);
         invalidateCache();
     }
 
-    /**
-     * Replaces the image with the given resource name with a new image.
-     *
-     * @param name           the image resource name
-     * @param newImageStream the replacement image stream
-     * @throws IOException if reading or replacing image data fails
-     */
+    /// Replaces the image with the given resource name with a new image.
+    ///
+    /// @param name           the image resource name
+    /// @param newImageStream the replacement image stream
+    /// @throws IOException if reading or replacing image data fails
     public void replace(String name, InputStream newImageStream) throws IOException {
         XImage image = get(name);
         if (image == null) {

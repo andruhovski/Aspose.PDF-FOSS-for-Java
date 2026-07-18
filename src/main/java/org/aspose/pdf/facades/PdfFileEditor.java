@@ -1,25 +1,9 @@
 package org.aspose.pdf.facades;
 
-import org.aspose.pdf.Document;
-import org.aspose.pdf.PageSize;
-import org.aspose.pdf.Page;
-import org.aspose.pdf.PageCollection;
-import org.aspose.pdf.Rectangle;
-import org.aspose.pdf.Resources;
-import org.aspose.pdf.engine.pdfobjects.PdfArray;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectCloner;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
-import org.aspose.pdf.engine.pdfobjects.PdfStream;
+import org.aspose.pdf.*;
+import org.aspose.pdf.engine.pdfobjects.*;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.IdentityHashMap;
@@ -28,13 +12,11 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Provides methods for manipulating PDF files: concatenating, extracting pages,
- * splitting, inserting, and deleting pages.
- * <p>
- * This is the most commonly used facade. All public methods return {@code boolean}
- * indicating success or failure, and log errors rather than throwing exceptions.
- */
+/// Provides methods for manipulating PDF files: concatenating, extracting pages,
+/// splitting, inserting, and deleting pages.
+///
+/// This is the most commonly used facade. All public methods return `boolean`
+/// indicating success or failure, and log errors rather than throwing exceptions.
 public class PdfFileEditor {
 
     static {
@@ -49,138 +31,112 @@ public class PdfFileEditor {
     private Exception lastException;
     private boolean useDiskBuffer;
     private boolean optimizeSize;
-    /**
-     * Default {@code true} — historical OpenPDF behaviour was to always merge
-     * outlines on concatenate (BUG-049), and several already-passing tests
-     * rely on it. A test that explicitly disables it via
-     * {@link #setCopyOutlines(boolean)} is honoured.
-     */
+    /// Default `true` — historical OpenPDF behaviour was to always merge
+    /// outlines on concatenate (BUG-049), and several already-passing tests
+    /// rely on it. A test that explicitly disables it via
+    /// [#setCopyOutlines(boolean)] is honoured.
     private boolean copyOutlines = true;
     private boolean copyLogicalStructure;
     private boolean keepActions = true;
 
-    /**
-     * Creates a new {@code PdfFileEditor} instance.
-     */
+    /// Creates a new `PdfFileEditor` instance.
     public PdfFileEditor() {
     }
 
-    /**
-     * Returns whether {@code concatenate(...)} should copy /Outlines from the
-     * source documents into the destination.
-     *
-     * @return current flag
-     */
+    /// Returns whether `concatenate(...)` should copy /Outlines from the
+    /// source documents into the destination.
+    ///
+    /// @return current flag
     public boolean isCopyOutlines() {
         return copyOutlines;
     }
 
-    /**
-     * Enables or disables /Outlines copying during concatenation.
-     *
-     * @param copyOutlines {@code true} to merge bookmarks from each source
-     */
+    /// Enables or disables /Outlines copying during concatenation.
+    ///
+    /// @param copyOutlines`true` to merge bookmarks from each source
     public void setCopyOutlines(boolean copyOutlines) {
         this.copyOutlines = copyOutlines;
     }
 
-    /**
-     * Returns whether {@code concatenate(...)} should preserve /StructTreeRoot
-     * logical-structure information from the source documents.
-     *
-     * @return current flag
-     */
+    /// Returns whether `concatenate(...)` should preserve /StructTreeRoot
+    /// logical-structure information from the source documents.
+    ///
+    /// @return current flag
     public boolean isCopyLogicalStructure() {
         return copyLogicalStructure;
     }
 
-    /**
-     * Enables or disables /StructTreeRoot copying during concatenation.
-     *
-     * @param copyLogicalStructure {@code true} to merge tagged structure from each source
-     */
+    /// Enables or disables /StructTreeRoot copying during concatenation.
+    ///
+    /// @param copyLogicalStructure`true` to merge tagged structure from each source
     public void setCopyLogicalStructure(boolean copyLogicalStructure) {
         this.copyLogicalStructure = copyLogicalStructure;
     }
 
-    /**
-     * Returns whether page-level /AA (additional actions) entries should be
-     * kept when copying pages.
-     *
-     * @return current flag; defaults to {@code true} to match Aspose behaviour
-     */
+    /// Returns whether page-level /AA (additional actions) entries should be
+    /// kept when copying pages.
+    ///
+    /// @return current flag; defaults to `true` to match Aspose behaviour
     public boolean isKeepActions() {
         return keepActions;
     }
 
-    /**
-     * Enables or disables /AA preservation when copying pages.
-     *
-     * @param keepActions {@code true} to keep additional-action entries
-     */
+    /// Enables or disables /AA preservation when copying pages.
+    ///
+    /// @param keepActions`true` to keep additional-action entries
     public void setKeepActions(boolean keepActions) {
         this.keepActions = keepActions;
     }
 
-    /**
-     * Page-break descriptor used by {@link PdfFileEditor#addPageBreak(Document, Document, PageBreak[])}.
-     * <p>
-     * Each instance points to a 1-based {@code pageNumber} in the source
-     * document and a vertical offset {@code y} (in default user-space units,
-     * measured from the bottom of the page) at which the source page should be
-     * split into two pages in the destination document.
-     * </p>
-     */
+    /// Page-break descriptor used by [PdfFileEditor#addPageBreak(Document, Document, PageBreak\[\])].
+    ///
+    /// Each instance points to a 1-based `pageNumber` in the source
+    /// document and a vertical offset `y` (in default user-space units,
+    /// measured from the bottom of the page) at which the source page should be
+    /// split into two pages in the destination document.
+    ///
     public static class PageBreak {
         private final int pageNumber;
         private final double y;
 
-        /**
-         * Creates a new page-break descriptor.
-         *
-         * @param pageNumber 1-based page number in the source document
-         * @param y          vertical split position in default user-space units
-         */
+        /// Creates a new page-break descriptor.
+        ///
+        /// @param pageNumber 1-based page number in the source document
+        /// @param y          vertical split position in default user-space units
         public PageBreak(int pageNumber, double y) {
             this.pageNumber = pageNumber;
             this.y = y;
         }
 
-        /** @return 1-based source page number */
+        /// @return 1-based source page number
         public int getPageNumber() {
             return pageNumber;
         }
 
-        /** @return vertical split position in default user-space units */
+        /// @return vertical split position in default user-space units
         public double getY() {
             return y;
         }
     }
 
-    /**
-     * Returns the last exception captured by a Try* wrapper, or {@code null} if none.
-     *
-     * @return the last exception or {@code null}
-     */
+    /// Returns the last exception captured by a Try\* wrapper, or `null` if none.
+    ///
+    /// @return the last exception or `null`
     public Exception getLastException() {
         return lastException;
     }
 
-    /**
-     * Returns whether this editor should prefer disk-buffer-oriented
-     * concatenation strategies for large workloads.
-     *
-     * @return {@code true} if disk buffering is enabled
-     */
+    /// Returns whether this editor should prefer disk-buffer-oriented
+    /// concatenation strategies for large workloads.
+    ///
+    /// @return `true` if disk buffering is enabled
     public boolean isUseDiskBuffer() {
         return useDiskBuffer;
     }
 
-    /**
-     * Enables or disables disk-buffer-oriented concatenation strategies.
-     *
-     * @param useDiskBuffer {@code true} to enable disk buffering
-     */
+    /// Enables or disables disk-buffer-oriented concatenation strategies.
+    ///
+    /// @param useDiskBuffer`true` to enable disk buffering
     public void setUseDiskBuffer(boolean useDiskBuffer) {
         this.useDiskBuffer = useDiskBuffer;
     }
@@ -213,32 +169,26 @@ public class PdfFileEditor {
         doc.save(outputStream);
     }
 
-    /**
-     * Returns whether facade save operations request a compact, size-optimised
-     * rewrite. API-compatible with Aspose's {@code PdfFileEditor.OptimizeSize}.
-     *
-     * @return {@code true} if compact-size saving is enabled
-     */
+    /// Returns whether facade save operations request a compact, size-optimised
+    /// rewrite. API-compatible with Aspose's `PdfFileEditor.OptimizeSize`.
+    ///
+    /// @return `true` if compact-size saving is enabled
     public boolean isOptimizeSize() {
         return optimizeSize;
     }
 
-    /**
-     * Sets whether facade save operations (concatenate, extract, ...) request a
-     * compact, size-optimised rewrite of the output document.
-     *
-     * @param optimizeSize {@code true} to enable compact-size saving
-     */
+    /// Sets whether facade save operations (concatenate, extract, ...) request a
+    /// compact, size-optimised rewrite of the output document.
+    ///
+    /// @param optimizeSize`true` to enable compact-size saving
     public void setOptimizeSize(boolean optimizeSize) {
         this.optimizeSize = optimizeSize;
     }
 
-    /**
-     * Binds a PDF file to this editor.
-     *
-     * @param inputFile path to the PDF file
-     * @return {@code true} on success
-     */
+    /// Binds a PDF file to this editor.
+    ///
+    /// @param inputFile path to the PDF file
+    /// @return `true` on success
     public boolean bindPdf(String inputFile) {
         try {
             this.document = new Document(inputFile);
@@ -249,12 +199,10 @@ public class PdfFileEditor {
         }
     }
 
-    /**
-     * Binds a PDF from an input stream.
-     *
-     * @param inputStream the input stream containing PDF data
-     * @return {@code true} on success
-     */
+    /// Binds a PDF from an input stream.
+    ///
+    /// @param inputStream the input stream containing PDF data
+    /// @return `true` on success
     public boolean bindPdf(InputStream inputStream) {
         try {
             this.document = new Document(inputStream);
@@ -265,12 +213,10 @@ public class PdfFileEditor {
         }
     }
 
-    /**
-     * Binds an existing {@link Document} to this editor.
-     *
-     * @param document the document to bind
-     * @return {@code true} on success
-     */
+    /// Binds an existing [Document] to this editor.
+    ///
+    /// @param document the document to bind
+    /// @return `true` on success
     public boolean bindPdf(Document document) {
         if (document == null) {
             LOG.warning("Cannot bind null document");
@@ -280,12 +226,10 @@ public class PdfFileEditor {
         return true;
     }
 
-    /**
-     * Saves the bound document to a file.
-     *
-     * @param outputFile path to the output file
-     * @return {@code true} on success
-     */
+    /// Saves the bound document to a file.
+    ///
+    /// @param outputFile path to the output file
+    /// @return `true` on success
     public boolean save(String outputFile) {
         try {
             saveFacade(document, outputFile);
@@ -296,12 +240,10 @@ public class PdfFileEditor {
         }
     }
 
-    /**
-     * Saves the bound document to an output stream.
-     *
-     * @param outputStream the output stream
-     * @return {@code true} on success
-     */
+    /// Saves the bound document to an output stream.
+    ///
+    /// @param outputStream the output stream
+    /// @return `true` on success
     public boolean save(OutputStream outputStream) {
         try {
             saveFacade(document, outputStream);
@@ -312,14 +254,12 @@ public class PdfFileEditor {
         }
     }
 
-    /**
-     * Concatenates multiple PDF files into one output file.
-     * The first file is used as the base document; pages from remaining files are appended.
-     *
-     * @param inputFiles  array of input PDF file paths
-     * @param outputFile  path to the output PDF file
-     * @return {@code true} on success
-     */
+    /// Concatenates multiple PDF files into one output file.
+    /// The first file is used as the base document; pages from remaining files are appended.
+    ///
+    /// @param inputFiles  array of input PDF file paths
+    /// @param outputFile  path to the output PDF file
+    /// @return `true` on success
     public boolean concatenate(String[] inputFiles, String outputFile) {
         if (inputFiles == null || inputFiles.length == 0) {
             LOG.warning("No input files provided for concatenation");
@@ -362,14 +302,12 @@ public class PdfFileEditor {
         }
     }
 
-    /**
-     * Merges every entry from {@code src.getEmbeddedFiles()} into
-     * {@code dst.getEmbeddedFiles()} as a fresh {@link FileSpecification} so
-     * the embedded stream is owned by the destination's object table (the
-     * source's PDF objects die when its document closes). Mirrors the
-     * Aspose contract that concatenate preserves attachments from every
-     * input — PDFNEWNET-32261.
-     */
+    /// Merges every entry from `src.getEmbeddedFiles()` into
+    /// `dst.getEmbeddedFiles()` as a fresh [FileSpecification] so
+    /// the embedded stream is owned by the destination's object table (the
+    /// source's PDF objects die when its document closes). Mirrors the
+    /// Aspose contract that concatenate preserves attachments from every
+    /// input — PDFNEWNET-32261.
     private void copyEmbeddedFiles(Document src, Document dst) {
         try {
             org.aspose.pdf.EmbeddedFileCollection srcEf = src.getEmbeddedFiles();
@@ -405,15 +343,13 @@ public class PdfFileEditor {
         }
     }
 
-    /**
-     * Best-effort merge of the source document's logical structure into the
-     * destination, used when {@link #setCopyLogicalStructure(boolean)} is
-     * enabled. The current implementation only propagates the {@code /MarkInfo}
-     * "Marked=true" hint — full {@code /StructTreeRoot} cross-document rewrite
-     * is engine-level work and is out of scope for the facade. The flag still
-     * exists so callers that toggle it for API parity don't fail, and so
-     * the resulting destination is a valid tagged-PDF container.
-     */
+    /// Best-effort merge of the source document's logical structure into the
+    /// destination, used when [#setCopyLogicalStructure(boolean)] is
+    /// enabled. The current implementation only propagates the `/MarkInfo`
+    /// "Marked=true" hint — full `/StructTreeRoot` cross-document rewrite
+    /// is engine-level work and is out of scope for the facade. The flag still
+    /// exists so callers that toggle it for API parity don't fail, and so
+    /// the resulting destination is a valid tagged-PDF container.
     private void copyLogicalStructure(Document src, Document dst, int pageOffset) {
         try {
             PdfDictionary srcCatalog = src.getCatalog();
@@ -440,27 +376,25 @@ public class PdfFileEditor {
         }
     }
 
-    /**
-     * Splits each page in {@code src} at the configured {@link PageBreak} y-offset
-     * and appends both halves to {@code dst}. Implementation strategy:
-     * <ol>
-     *   <li>For each source page referenced by a {@link PageBreak}: append the
-     *       whole page to {@code dst} twice; on the first copy crop the
-     *       {@code MediaBox} to {@code [llx, y, urx, ury]} (top half), on the
-     *       second copy crop to {@code [llx, lly, urx, y]} (bottom half).</li>
-     *   <li>Pages that are not split are appended verbatim.</li>
-     * </ol>
-     * MediaBox cropping is the simplest faithful approximation of Aspose's
-     * AddPageBreak — it preserves all content streams and resources so the
-     * absorber test in PDFNET-49995 (text from both halves must be retrievable)
-     * is satisfied without re-laying-out content.
-     *
-     * @param src    the source document
-     * @param dst    the destination document (must not be null)
-     * @param breaks page-break descriptors; if empty, all source pages are
-     *               appended whole
-     * @return {@code true} on success
-     */
+    /// Splits each page in `src` at the configured [PageBreak] y-offset
+    /// and appends both halves to `dst`. Implementation strategy:
+    ///
+    ///   1. For each source page referenced by a [PageBreak]: append the
+    ///     whole page to `dst` twice; on the first copy crop the
+    ///     `MediaBox` to `[llx, y, urx, ury]` (top half), on the
+    ///     second copy crop to `[llx, lly, urx, y]` (bottom half).
+    ///   2. Pages that are not split are appended verbatim.
+    ///
+    /// MediaBox cropping is the simplest faithful approximation of Aspose's
+    /// AddPageBreak — it preserves all content streams and resources so the
+    /// absorber test in PDFNET-49995 (text from both halves must be retrievable)
+    /// is satisfied without re-laying-out content.
+    ///
+    /// @param src    the source document
+    /// @param dst    the destination document (must not be null)
+    /// @param breaks page-break descriptors; if empty, all source pages are
+    ///               appended whole
+    /// @return `true` on success
     public boolean addPageBreak(Document src, Document dst, PageBreak[] breaks) {
         if (src == null || dst == null) {
             LOG.warning("addPageBreak: source or destination document is null");
@@ -505,13 +439,11 @@ public class PdfFileEditor {
         }
     }
 
-    /**
-     * Copies outline items from {@code src} into {@code dst}, re-targeting each
-     * destination's page reference by adding {@code pageOffset} so it points at
-     * the page index that was just appended into {@code dst}. Limits work to
-     * the first {@code srcPageCount} pages of the source so destinations
-     * referencing pages outside the imported range are dropped.
-     */
+    /// Copies outline items from `src` into `dst`, re-targeting each
+    /// destination's page reference by adding `pageOffset` so it points at
+    /// the page index that was just appended into `dst`. Limits work to
+    /// the first `srcPageCount` pages of the source so destinations
+    /// referencing pages outside the imported range are dropped.
     private void copyOutlines(Document src, Document dst, int pageOffset, int srcPageCount) {
         try {
             org.aspose.pdf.OutlineCollection srcOutlines = src.getOutlines();
@@ -575,13 +507,11 @@ public class PdfFileEditor {
         return new org.aspose.pdf.XYZExplicitDestination(newPage, Double.NaN, Double.NaN, 0);
     }
 
-    /**
-     * Concatenates multiple PDF streams into one output stream.
-     *
-     * @param inputStreams  array of input streams containing PDF data
-     * @param outputStream  the output stream
-     * @return {@code true} on success
-     */
+    /// Concatenates multiple PDF streams into one output stream.
+    ///
+    /// @param inputStreams  array of input streams containing PDF data
+    /// @param outputStream  the output stream
+    /// @return `true` on success
     public boolean concatenate(InputStream[] inputStreams, OutputStream outputStream) {
         if (inputStreams == null || inputStreams.length == 0) {
             LOG.warning("No input streams provided for concatenation");
@@ -611,13 +541,11 @@ public class PdfFileEditor {
         }
     }
 
-    /**
-     * Concatenates multiple documents, appending all pages to the result document.
-     *
-     * @param documents  array of source documents
-     * @param result     the target document to receive all pages
-     * @return {@code true} on success
-     */
+    /// Concatenates multiple documents, appending all pages to the result document.
+    ///
+    /// @param documents  array of source documents
+    /// @param result     the target document to receive all pages
+    /// @return `true` on success
     public boolean concatenate(Document[] documents, Document result) {
         if (documents == null || documents.length == 0 || result == null) {
             LOG.warning("Invalid arguments for document concatenation");
@@ -652,15 +580,13 @@ public class PdfFileEditor {
         }
     }
 
-    /**
-     * Extracts a range of pages from a PDF file to an output file.
-     *
-     * @param inputFile  path to the input PDF file
-     * @param startPage  1-based start page number (inclusive)
-     * @param endPage    1-based end page number (inclusive)
-     * @param outputFile path to the output PDF file
-     * @return {@code true} on success
-     */
+    /// Extracts a range of pages from a PDF file to an output file.
+    ///
+    /// @param inputFile  path to the input PDF file
+    /// @param startPage  1-based start page number (inclusive)
+    /// @param endPage    1-based end page number (inclusive)
+    /// @param outputFile path to the output PDF file
+    /// @return `true` on success
     public boolean extract(String inputFile, int startPage, int endPage, String outputFile) {
         try {
             Document srcDoc = new Document(inputFile);
@@ -679,14 +605,12 @@ public class PdfFileEditor {
         }
     }
 
-    /**
-     * Extracts specific pages from a PDF file to an output file.
-     *
-     * @param inputFile   path to the input PDF file
-     * @param pageNumbers array of 1-based page numbers to extract
-     * @param outputFile  path to the output PDF file
-     * @return {@code true} on success
-     */
+    /// Extracts specific pages from a PDF file to an output file.
+    ///
+    /// @param inputFile   path to the input PDF file
+    /// @param pageNumbers array of 1-based page numbers to extract
+    /// @param outputFile  path to the output PDF file
+    /// @return `true` on success
     public boolean extract(String inputFile, int[] pageNumbers, String outputFile) {
         try {
             Document srcDoc = new Document(inputFile);
@@ -707,23 +631,13 @@ public class PdfFileEditor {
         }
     }
 
-    /**
-     * Splits a PDF file so that each page becomes a separate PDF document
-     * saved in the specified output directory.
-     *
-     * @param inputFile path to the input PDF file
-     * @param outputDir path to the output directory
-     * @return {@code true} on success
-     */
-    /**
-     * Splits the input PDF into one byte-array per page, returned as an
-     * array of {@link java.io.ByteArrayOutputStream}. Mirrors the C# overload
-     * {@code MemoryStream[] PdfFileEditor.SplitToPages(string)}.
-     *
-     * @param inputFile path to the input PDF file
-     * @return one byte-array stream per page (caller can {@code writeTo} or
-     *         {@code toByteArray}); empty array on failure
-     */
+    /// Splits the input PDF into one byte-array per page, returned as an
+    /// array of [java.io.ByteArrayOutputStream]. Mirrors the C# overload
+    /// `MemoryStream[] PdfFileEditor.SplitToPages(string)`.
+    ///
+    /// @param inputFile path to the input PDF file
+    /// @return one byte-array stream per page (caller can `writeTo` or
+    ///         `toByteArray`); empty array on failure
     public java.io.ByteArrayOutputStream[] splitToPages(String inputFile) {
         try (Document srcDoc = new Document(inputFile)) {
             PageCollection srcPages = srcDoc.getPages();
@@ -745,6 +659,12 @@ public class PdfFileEditor {
         }
     }
 
+    /// Splits a PDF file so that each page becomes a separate PDF document
+    /// saved in the specified output directory.
+    ///
+    /// @param inputFile path to the input PDF file
+    /// @param outputDir path to the output directory
+    /// @return `true` on success
     public boolean splitToPages(String inputFile, String outputDir) {
         try {
             Document srcDoc = new Document(inputFile);
@@ -767,14 +687,12 @@ public class PdfFileEditor {
         }
     }
 
-    /**
-     * Extracts pages {@code 1..pageNum} from the input stream into the output stream.
-     *
-     * @param inputStream the source PDF stream
-     * @param pageNum the 1-based last page to keep
-     * @param outputStream the destination PDF stream
-     * @return {@code true} on success
-     */
+    /// Extracts pages `1..pageNum` from the input stream into the output stream.
+    ///
+    /// @param inputStream the source PDF stream
+    /// @param pageNum the 1-based last page to keep
+    /// @param outputStream the destination PDF stream
+    /// @return `true` on success
     public boolean splitFromFirst(InputStream inputStream, int pageNum, OutputStream outputStream) {
         try {
             Document srcDoc = new Document(inputStream);
@@ -793,14 +711,12 @@ public class PdfFileEditor {
         }
     }
 
-    /**
-     * Extracts pages {@code pageNum..lastPage} from the input stream into the output stream.
-     *
-     * @param inputStream the source PDF stream
-     * @param pageNum the 1-based first page to keep
-     * @param outputStream the destination PDF stream
-     * @return {@code true} on success
-     */
+    /// Extracts pages `pageNum..lastPage` from the input stream into the output stream.
+    ///
+    /// @param inputStream the source PDF stream
+    /// @param pageNum the 1-based first page to keep
+    /// @param outputStream the destination PDF stream
+    /// @return `true` on success
     public boolean splitToEnd(InputStream inputStream, int pageNum, OutputStream outputStream) {
         try {
             Document srcDoc = new Document(inputStream);
@@ -819,17 +735,15 @@ public class PdfFileEditor {
         }
     }
 
-    /**
-     * Inserts pages from a source file into a target file at the specified position.
-     *
-     * @param inputFile      path to the input PDF file
-     * @param insertPosition 1-based position where pages should be inserted
-     * @param portFile       path to the PDF file containing pages to insert
-     * @param startPage      1-based start page in portFile (inclusive)
-     * @param endPage        1-based end page in portFile (inclusive)
-     * @param outputFile     path to the output PDF file
-     * @return {@code true} on success
-     */
+    /// Inserts pages from a source file into a target file at the specified position.
+    ///
+    /// @param inputFile      path to the input PDF file
+    /// @param insertPosition 1-based position where pages should be inserted
+    /// @param portFile       path to the PDF file containing pages to insert
+    /// @param startPage      1-based start page in portFile (inclusive)
+    /// @param endPage        1-based end page in portFile (inclusive)
+    /// @param outputFile     path to the output PDF file
+    /// @return `true` on success
     public boolean insert(String inputFile, int insertPosition, String portFile,
                           int startPage, int endPage, String outputFile) {
         try {
@@ -851,15 +765,13 @@ public class PdfFileEditor {
         }
     }
 
-    /**
-     * Deletes specified pages from a PDF file and saves the result.
-     * Pages are deleted in reverse order to preserve correct indices.
-     *
-     * @param inputFile   path to the input PDF file
-     * @param pageNumbers array of 1-based page numbers to delete
-     * @param outputFile  path to the output PDF file
-     * @return {@code true} on success
-     */
+    /// Deletes specified pages from a PDF file and saves the result.
+    /// Pages are deleted in reverse order to preserve correct indices.
+    ///
+    /// @param inputFile   path to the input PDF file
+    /// @param pageNumbers array of 1-based page numbers to delete
+    /// @param outputFile  path to the output PDF file
+    /// @return `true` on success
     public boolean delete(String inputFile, int[] pageNumbers, String outputFile) {
         try {
             Document doc = new Document(inputFile);
@@ -881,31 +793,27 @@ public class PdfFileEditor {
         }
     }
 
-    /**
-     * Arranges pages into an N-up layout.
-     * <p>
-     * <strong>Stub implementation.</strong> This method requires a layout engine
-     * and is not yet implemented.
-     *
-     * @param inputFile  path to the input PDF file
-     * @param outputFile path to the output PDF file
-     * @param nX         number of pages horizontally
-     * @param nY         number of pages vertically
-     * @return {@code false} (not implemented)
-     */
+    /// Arranges pages into an N-up layout.
+    ///
+    /// **Stub implementation.** This method requires a layout engine
+    /// and is not yet implemented.
+    ///
+    /// @param inputFile  path to the input PDF file
+    /// @param outputFile path to the output PDF file
+    /// @param nX         number of pages horizontally
+    /// @param nY         number of pages vertically
+    /// @return `false` (not implemented)
     public boolean makeNUp(String inputFile, String outputFile, int nX, int nY) {
         LOG.warning("makeNUp is not yet implemented");
         return false;
     }
 
-    /**
-     * Resizes contents of all pages in the document by wrapping each page's
-     * content stream in a {@code q  scaleX 0 0 scaleY tx ty cm  ... Q} matrix
-     * derived from {@code parameters}.
-     *
-     * @param document   the document whose pages to resize
-     * @param parameters the resize parameters
-     */
+    /// Resizes contents of all pages in the document by wrapping each page's
+    /// content stream in a `q  scaleX 0 0 scaleY tx ty cm  ... Q` matrix
+    /// derived from `parameters`.
+    ///
+    /// @param document   the document whose pages to resize
+    /// @param parameters the resize parameters
     public void resizeContents(Document document, ContentsResizeParameters parameters) {
         if (document == null || parameters == null) {
             LOG.warning("resizeContents: null arguments");
@@ -923,18 +831,16 @@ public class PdfFileEditor {
         resizeContents(document, all, parameters);
     }
 
-    /**
-     * Resizes contents of specific pages in the document by wrapping each
-     * targeted page's content stream in a {@code q ... cm ... Q} matrix
-     * derived from {@code parameters}. Percent values are resolved against
-     * the corresponding page dimension (width for left/right/contentsWidth,
-     * height for top/bottom/contentsHeight); margins+content that do not sum
-     * to the page dimension are auto-adjusted proportionally.
-     *
-     * @param document    the document whose pages to resize
-     * @param pageNumbers array of 1-based page numbers to resize
-     * @param parameters  the resize parameters
-     */
+    /// Resizes contents of specific pages in the document by wrapping each
+    /// targeted page's content stream in a `q ... cm ... Q` matrix
+    /// derived from `parameters`. Percent values are resolved against
+    /// the corresponding page dimension (width for left/right/contentsWidth,
+    /// height for top/bottom/contentsHeight); margins+content that do not sum
+    /// to the page dimension are auto-adjusted proportionally.
+    ///
+    /// @param document    the document whose pages to resize
+    /// @param pageNumbers array of 1-based page numbers to resize
+    /// @param parameters  the resize parameters
     public void resizeContents(Document document, int[] pageNumbers, ContentsResizeParameters parameters) {
         if (document == null || parameters == null || pageNumbers == null) {
             LOG.warning("resizeContents: null arguments");
@@ -950,16 +856,14 @@ public class PdfFileEditor {
         }
     }
 
-    /**
-     * File-path overload mirroring {@code PdfFileEditor.ResizeContents(string, string, ContentsResizeParameters)}
-     * in Aspose. Opens {@code inputFile}, applies the resize, saves to
-     * {@code outputFile}.
-     *
-     * @param inputFile  path to the source PDF
-     * @param outputFile path to the destination PDF
-     * @param parameters the resize parameters
-     * @return {@code true} on success
-     */
+    /// File-path overload mirroring `PdfFileEditor.ResizeContents(string, string, ContentsResizeParameters)`
+    /// in Aspose. Opens `inputFile`, applies the resize, saves to
+    /// `outputFile`.
+    ///
+    /// @param inputFile  path to the source PDF
+    /// @param outputFile path to the destination PDF
+    /// @param parameters the resize parameters
+    /// @return `true` on success
     public boolean resizeContents(String inputFile, String outputFile,
                                   ContentsResizeParameters parameters) {
         try (Document doc = new Document(inputFile)) {
@@ -972,21 +876,17 @@ public class PdfFileEditor {
         }
     }
 
-    /**
-     * Resolves a {@link ContentsResizeValue} to absolute PDF units. A null
-     * value is treated as zero so that callers can omit margins they do not
-     * want to set.
-     */
+    /// Resolves a [ContentsResizeValue] to absolute PDF units. A null
+    /// value is treated as zero so that callers can omit margins they do not
+    /// want to set.
     private static double resolveResizeValue(ContentsResizeValue v, double pageDim) {
         if (v == null) return 0;
         return v.isPercent() ? (v.getValue() * pageDim / 100.0) : v.getValue();
     }
 
-    /**
-     * Computes scaleX/scaleY/tx/ty from {@code parameters} relative to
-     * {@code page}'s media box, then wraps its content stream in
-     * {@code q ... cm ... Q}.
-     */
+    /// Computes scaleX/scaleY/tx/ty from `parameters` relative to
+    /// `page`'s media box, then wraps its content stream in
+    /// `q ... cm ... Q`.
     private void applyResizeToPage(Page page, ContentsResizeParameters parameters) throws IOException {
         Rectangle media = page.getMediaBox();
         if (media == null) {
@@ -1049,24 +949,21 @@ public class PdfFileEditor {
         transformAnnotations(page, scaleX, scaleY, tx, ty);
     }
 
-    /**
-     * Applies an affine transformation {@code [scaleX 0 0 scaleY tx ty]} to
-     * every annotation on the page so they stay visually anchored to the
-     * resized content. Mirrors the C# Aspose {@code ResizeContents} behavior.
-     *
-     * <p>Transforms:</p>
-     * <ul>
-     *   <li>{@code Annotation.Rect} — both corners</li>
-     *   <li>{@code TextMarkupAnnotation.QuadPoints} (Highlight/Underline/StrikeOut/Squiggly)</li>
-     *   <li>{@code InkAnnotation.InkList} — every point in every stroke</li>
-     * </ul>
-     *
-     * @param page   the page whose annotations to transform
-     * @param scaleX horizontal scale factor
-     * @param scaleY vertical scale factor
-     * @param tx     horizontal translation in points
-     * @param ty     vertical translation in points
-     */
+    /// Applies an affine transformation `[scaleX 0 0 scaleY tx ty]` to
+    /// every annotation on the page so they stay visually anchored to the
+    /// resized content. Mirrors the C# Aspose `ResizeContents` behavior.
+    ///
+    /// Transforms:
+    ///
+    ///   - `Annotation.Rect` — both corners
+    ///   - `TextMarkupAnnotation.QuadPoints` (Highlight/Underline/StrikeOut/Squiggly)
+    ///   - `InkAnnotation.InkList` — every point in every stroke
+    ///
+    /// @param page   the page whose annotations to transform
+    /// @param scaleX horizontal scale factor
+    /// @param scaleY vertical scale factor
+    /// @param tx     horizontal translation in points
+    /// @param ty     vertical translation in points
     private static void transformAnnotations(Page page, double scaleX, double scaleY,
                                              double tx, double ty) {
         org.aspose.pdf.annotations.AnnotationCollection annots = page.getAnnotations();
@@ -1134,10 +1031,8 @@ public class PdfFileEditor {
         }
     }
 
-    /**
-     * Transforms a flat array of (x, y) pairs by an affine transform.
-     * Returns a new array, or {@code null} if the input is null/empty.
-     */
+    /// Transforms a flat array of (x, y) pairs by an affine transform.
+    /// Returns a new array, or `null` if the input is null/empty.
     private static double[] transformXYArray(double[] xy, double scaleX, double scaleY,
                                              double tx, double ty) {
         if (xy == null || xy.length == 0) return null;
@@ -1149,9 +1044,7 @@ public class PdfFileEditor {
         return out;
     }
 
-    /**
-     * Parameters for resizing page contents.
-     */
+    /// Parameters for resizing page contents.
     public static class ContentsResizeParameters {
 
         private ContentsResizeValue leftMargin;
@@ -1161,16 +1054,14 @@ public class PdfFileEditor {
         private ContentsResizeValue contentsWidth;
         private ContentsResizeValue contentsHeight;
 
-        /**
-         * Creates resize parameters with the specified margins and content dimensions.
-         *
-         * @param leftMargin     the left margin value
-         * @param contentsWidth  the content width value
-         * @param rightMargin    the right margin value
-         * @param topMargin      the top margin value
-         * @param contentsHeight the content height value
-         * @param bottomMargin   the bottom margin value
-         */
+        /// Creates resize parameters with the specified margins and content dimensions.
+        ///
+        /// @param leftMargin     the left margin value
+        /// @param contentsWidth  the content width value
+        /// @param rightMargin    the right margin value
+        /// @param topMargin      the top margin value
+        /// @param contentsHeight the content height value
+        /// @param bottomMargin   the bottom margin value
         public ContentsResizeParameters(
                 ContentsResizeValue leftMargin, ContentsResizeValue contentsWidth, ContentsResizeValue rightMargin,
                 ContentsResizeValue topMargin, ContentsResizeValue contentsHeight, ContentsResizeValue bottomMargin) {
@@ -1182,80 +1073,66 @@ public class PdfFileEditor {
             this.bottomMargin = bottomMargin;
         }
 
-        /**
-         * Gets the left margin value.
-         *
-         * @return the left margin
-         */
+        /// Gets the left margin value.
+        ///
+        /// @return the left margin
         public ContentsResizeValue getLeftMargin() { return leftMargin; }
 
-        /**
-         * Gets the right margin value.
-         *
-         * @return the right margin
-         */
+        /// Gets the right margin value.
+        ///
+        /// @return the right margin
         public ContentsResizeValue getRightMargin() { return rightMargin; }
 
-        /**
-         * Gets the top margin value.
-         *
-         * @return the top margin
-         */
+        /// Gets the top margin value.
+        ///
+        /// @return the top margin
         public ContentsResizeValue getTopMargin() { return topMargin; }
 
-        /**
-         * Gets the bottom margin value.
-         *
-         * @return the bottom margin
-         */
+        /// Gets the bottom margin value.
+        ///
+        /// @return the bottom margin
         public ContentsResizeValue getBottomMargin() { return bottomMargin; }
 
-        /**
-         * Gets the contents width value.
-         *
-         * @return the contents width
-         */
+        /// Gets the contents width value.
+        ///
+        /// @return the contents width
         public ContentsResizeValue getContentsWidth() { return contentsWidth; }
 
-        /**
-         * Gets the contents height value.
-         *
-         * @return the contents height
-         */
+        /// Gets the contents height value.
+        ///
+        /// @return the contents height
         public ContentsResizeValue getContentsHeight() { return contentsHeight; }
 
-        /** Sets the left margin value. */
+        /// Sets the left margin value.
         public void setLeftMargin(ContentsResizeValue v) { this.leftMargin = v; }
 
-        /** Sets the right margin value. */
+        /// Sets the right margin value.
         public void setRightMargin(ContentsResizeValue v) { this.rightMargin = v; }
 
-        /** Sets the top margin value. */
+        /// Sets the top margin value.
         public void setTopMargin(ContentsResizeValue v) { this.topMargin = v; }
 
-        /** Sets the bottom margin value. */
+        /// Sets the bottom margin value.
         public void setBottomMargin(ContentsResizeValue v) { this.bottomMargin = v; }
 
-        /** Sets the contents width value. */
+        /// Sets the contents width value.
         public void setContentsWidth(ContentsResizeValue v) { this.contentsWidth = v; }
 
-        /** Sets the contents height value. */
+        /// Sets the contents height value.
         public void setContentsHeight(ContentsResizeValue v) { this.contentsHeight = v; }
 
-        /**
-         * Creates a {@code ContentsResizeParameters} with the specified content
-         * dimensions and zero margins. Margins can be adjusted afterward via
-         * the setters.
-         *
-         * <p>Shortcut for the common case "resize page to W×H then adjust
-         * margins separately" — mirrors C# Aspose
-         * {@code PdfFileEditor.ContentsResizeParameters.PageResize(width, height)}.</p>
-         *
-         * @param width  target content width in points (absolute, not percent)
-         * @param height target content height in points
-         * @return a new {@code ContentsResizeParameters} with content =
-         *         (width, height) and all margins = 0
-         */
+        /// Creates a `ContentsResizeParameters` with the specified content
+        /// dimensions and zero margins. Margins can be adjusted afterward via
+        /// the setters.
+        ///
+        /// Shortcut for the common case "resize page to W×H then adjust
+        /// margins separately" — mirrors C# Aspose
+        /// `PdfFileEditor.ContentsResizeParameters.PageResize(width, height)`.
+        ///
+        /// @param width  target content width in points (absolute, not percent)
+        /// @param height target content height in points
+        /// @return a new `ContentsResizeParameters` with content =
+        ///         (width, height) and all margins = 0
         public static ContentsResizeParameters pageResize(double width, double height) {
             return new ContentsResizeParameters(
                     ContentsResizeValue.units(0),
@@ -1267,10 +1144,8 @@ public class PdfFileEditor {
         }
     }
 
-    /**
-     * Represents a value used in content resizing parameters.
-     * Can be specified as an absolute value in points or as a percentage.
-     */
+    /// Represents a value used in content resizing parameters.
+    /// Can be specified as an absolute value in points or as a percentage.
     public static class ContentsResizeValue {
 
         private final double value;
@@ -1281,51 +1156,41 @@ public class PdfFileEditor {
             this.isPercent = isPercent;
         }
 
-        /**
-         * Creates a percentage-based resize value.
-         *
-         * @param value the percentage value
-         * @return a new {@code ContentsResizeValue}
-         */
+        /// Creates a percentage-based resize value.
+        ///
+        /// @param value the percentage value
+        /// @return a new `ContentsResizeValue`
         public static ContentsResizeValue percents(double value) {
             return new ContentsResizeValue(value, true);
         }
 
-        /**
-         * Creates an absolute resize value in points.
-         *
-         * @param value the value in points
-         * @return a new {@code ContentsResizeValue}
-         */
+        /// Creates an absolute resize value in points.
+        ///
+        /// @param value the value in points
+        /// @return a new `ContentsResizeValue`
         public static ContentsResizeValue units(double value) {
             return new ContentsResizeValue(value, false);
         }
 
-        /**
-         * Gets the numeric value.
-         *
-         * @return the value
-         */
+        /// Gets the numeric value.
+        ///
+        /// @return the value
         public double getValue() { return value; }
 
-        /**
-         * Returns whether this value is a percentage.
-         *
-         * @return {@code true} if percentage, {@code false} if absolute
-         */
+        /// Returns whether this value is a percentage.
+        ///
+        /// @return `true` if percentage, `false` if absolute
         public boolean isPercent() { return isPercent; }
     }
 
-    /**
-     * Arranges pages into a booklet layout.
-     * <p>
-     * <strong>Stub implementation.</strong> This method requires a layout engine
-     * and is not yet implemented.
-     *
-     * @param inputFile  path to the input PDF file
-     * @param outputFile path to the output PDF file
-     * @return {@code false} (not implemented)
-     */
+    /// Arranges pages into a booklet layout.
+    ///
+    /// **Stub implementation.** This method requires a layout engine
+    /// and is not yet implemented.
+    ///
+    /// @param inputFile  path to the input PDF file
+    /// @param outputFile path to the output PDF file
+    /// @return `false` (not implemented)
     public boolean makeBooklet(String inputFile, String outputFile) {
         try {
             Document srcDoc = new Document(inputFile);
@@ -1339,13 +1204,11 @@ public class PdfFileEditor {
         }
     }
 
-    /**
-     * Arranges pages from the input stream into a booklet layout saved to the output stream.
-     *
-     * @param inputStream source PDF stream
-     * @param outputStream destination PDF stream
-     * @return {@code true} on success
-     */
+    /// Arranges pages from the input stream into a booklet layout saved to the output stream.
+    ///
+    /// @param inputStream source PDF stream
+    /// @param outputStream destination PDF stream
+    /// @return `true` on success
     public boolean makeBooklet(InputStream inputStream, OutputStream outputStream) {
         try {
             Document srcDoc = new Document(inputStream);
@@ -1359,14 +1222,12 @@ public class PdfFileEditor {
         }
     }
 
-    /**
-     * Arranges pages into a booklet layout using the specified target page size.
-     *
-     * @param inputFile source PDF file
-     * @param outputFile destination PDF file
-     * @param pageSize target booklet page size
-     * @return {@code true} on success
-     */
+    /// Arranges pages into a booklet layout using the specified target page size.
+    ///
+    /// @param inputFile source PDF file
+    /// @param outputFile destination PDF file
+    /// @param pageSize target booklet page size
+    /// @return `true` on success
     public boolean makeBooklet(String inputFile, String outputFile, PageSize pageSize) {
         try {
             Document srcDoc = new Document(inputFile);
@@ -1379,14 +1240,12 @@ public class PdfFileEditor {
         }
     }
 
-    /**
-     * Arranges pages from the input stream into a booklet layout with the specified target page size.
-     *
-     * @param inputStream source PDF stream
-     * @param outputStream destination PDF stream
-     * @param pageSize target booklet page size
-     * @return {@code true} on success
-     */
+    /// Arranges pages from the input stream into a booklet layout with the specified target page size.
+    ///
+    /// @param inputStream source PDF stream
+    /// @param outputStream destination PDF stream
+    /// @param pageSize target booklet page size
+    /// @return `true` on success
     public boolean makeBooklet(InputStream inputStream, OutputStream outputStream, PageSize pageSize) {
         try {
             Document srcDoc = new Document(inputStream);
@@ -1399,29 +1258,25 @@ public class PdfFileEditor {
         }
     }
 
-    /**
-     * Concatenates two PDF files into one output file.
-     *
-     * @param firstInputFile  path to the first input PDF
-     * @param secondInputFile path to the second input PDF
-     * @param outputFile      path to the output PDF file
-     * @return {@code true} on success
-     */
+    /// Concatenates two PDF files into one output file.
+    ///
+    /// @param firstInputFile  path to the first input PDF
+    /// @param secondInputFile path to the second input PDF
+    /// @param outputFile      path to the output PDF file
+    /// @return `true` on success
     public boolean concatenate(String firstInputFile, String secondInputFile, String outputFile) {
         return concatenate(new String[]{firstInputFile, secondInputFile}, outputFile);
     }
 
-    /**
-     * Appends a range of pages from {@code portFile} to the end of {@code inputFile},
-     * writing the result to {@code outputFile}.
-     *
-     * @param inputFile  path to the base PDF file
-     * @param portFile   path to the PDF file containing pages to append
-     * @param startPage  1-based start page in portFile (inclusive)
-     * @param endPage    1-based end page in portFile (inclusive)
-     * @param outputFile path to the output PDF file
-     * @return {@code true} on success
-     */
+    /// Appends a range of pages from `portFile` to the end of `inputFile`,
+    /// writing the result to `outputFile`.
+    ///
+    /// @param inputFile  path to the base PDF file
+    /// @param portFile   path to the PDF file containing pages to append
+    /// @param startPage  1-based start page in portFile (inclusive)
+    /// @param endPage    1-based end page in portFile (inclusive)
+    /// @param outputFile path to the output PDF file
+    /// @return `true` on success
     public boolean append(String inputFile, String portFile, int startPage, int endPage, String outputFile) {
         try {
             Document baseDoc = new Document(inputFile);
@@ -1440,26 +1295,22 @@ public class PdfFileEditor {
         }
     }
 
-    /**
-     * Extracts pages {@code 1..pageNum} into {@code outputFile}.
-     *
-     * @param inputFile  path to the input PDF file
-     * @param pageNum    1-based last page to keep (inclusive)
-     * @param outputFile path to the output PDF file
-     * @return {@code true} on success
-     */
+    /// Extracts pages `1..pageNum` into `outputFile`.
+    ///
+    /// @param inputFile  path to the input PDF file
+    /// @param pageNum    1-based last page to keep (inclusive)
+    /// @param outputFile path to the output PDF file
+    /// @return `true` on success
     public boolean splitFromFirst(String inputFile, int pageNum, String outputFile) {
         return extract(inputFile, 1, pageNum, outputFile);
     }
 
-    /**
-     * Extracts pages {@code pageNum..lastPage} into {@code outputFile}.
-     *
-     * @param inputFile  path to the input PDF file
-     * @param pageNum    1-based first page to keep (inclusive)
-     * @param outputFile path to the output PDF file
-     * @return {@code true} on success
-     */
+    /// Extracts pages `pageNum..lastPage` into `outputFile`.
+    ///
+    /// @param inputFile  path to the input PDF file
+    /// @param pageNum    1-based first page to keep (inclusive)
+    /// @param outputFile path to the output PDF file
+    /// @return `true` on success
     public boolean splitToEnd(String inputFile, int pageNum, String outputFile) {
         try {
             Document srcDoc = new Document(inputFile);
@@ -1596,19 +1447,17 @@ public class PdfFileEditor {
         return String.format(java.util.Locale.US, "%.4f %.4f %.4f %.4f %.4f %.4f cm\n", a, b, c, d, e, f);
     }
 
-    /**
-     * Expands the MediaBox and CropBox of the specified pages by the given margins (in points),
-     * preserving the original content position (content shifts by {@code left} and {@code bottom}).
-     *
-     * @param inputFile  path to the input PDF file
-     * @param outputFile path to the output PDF file
-     * @param pages      1-based page numbers to modify, or {@code null} for all pages
-     * @param left       left margin to add (points)
-     * @param right      right margin to add (points)
-     * @param top        top margin to add (points)
-     * @param bottom     bottom margin to add (points)
-     * @return {@code true} on success
-     */
+    /// Expands the MediaBox and CropBox of the specified pages by the given margins (in points),
+    /// preserving the original content position (content shifts by `left` and `bottom`).
+    ///
+    /// @param inputFile  path to the input PDF file
+    /// @param outputFile path to the output PDF file
+    /// @param pages      1-based page numbers to modify, or `null` for all pages
+    /// @param left       left margin to add (points)
+    /// @param right      right margin to add (points)
+    /// @param top        top margin to add (points)
+    /// @param bottom     bottom margin to add (points)
+    /// @return `true` on success
     public boolean addMargins(String inputFile, String outputFile, int[] pages,
                               double left, double right, double top, double bottom) {
         try {
@@ -1655,13 +1504,11 @@ public class PdfFileEditor {
     // return true/false. Useful for Aspose API parity.
     // ---------------------------------------------------------------------
 
-    /**
-     * Try-variant of {@link #concatenate(String[], String)}.
-     *
-     * @param inputFiles input files
-     * @param outputFile output file
-     * @return {@code true} on success, {@code false} on exception (see {@link #getLastException()})
-     */
+    /// Try-variant of [#concatenate(String\[\], String)].
+    ///
+    /// @param inputFiles input files
+    /// @param outputFile output file
+    /// @return `true` on success, `false` on exception (see [#getLastException()])
     public boolean tryConcatenate(String[] inputFiles, String outputFile) {
         return trap(() -> {
             if (!concatenate(inputFiles, outputFile)) {
@@ -1670,13 +1517,11 @@ public class PdfFileEditor {
         });
     }
 
-    /**
-     * Try-variant of {@link #concatenate(InputStream[], OutputStream)}.
-     *
-     * @param inputStreams input streams
-     * @param outputStream output stream
-     * @return {@code true} on success, {@code false} on exception
-     */
+    /// Try-variant of [#concatenate(InputStream\[\], OutputStream)].
+    ///
+    /// @param inputStreams input streams
+    /// @param outputStream output stream
+    /// @return `true` on success, `false` on exception
     public boolean tryConcatenate(InputStream[] inputStreams, OutputStream outputStream) {
         return trap(() -> {
             if (!concatenate(inputStreams, outputStream)) {
@@ -1685,13 +1530,11 @@ public class PdfFileEditor {
         });
     }
 
-    /**
-     * Try-variant of {@link #makeBooklet(String, String)}.
-     *
-     * @param inputFile  input file
-     * @param outputFile output file
-     * @return {@code true} on success, {@code false} on exception
-     */
+    /// Try-variant of [#makeBooklet(String, String)].
+    ///
+    /// @param inputFile  input file
+    /// @param outputFile output file
+    /// @return `true` on success, `false` on exception
     public boolean tryMakeBooklet(String inputFile, String outputFile) {
         return trap(() -> {
             if (!makeBooklet(inputFile, outputFile)) {
@@ -1700,15 +1543,13 @@ public class PdfFileEditor {
         });
     }
 
-    /**
-     * Try-variant of {@link #makeNUp(String, String, int, int)}.
-     *
-     * @param inputFile  input file
-     * @param outputFile output file
-     * @param nX         horizontal count
-     * @param nY         vertical count
-     * @return {@code true} on success, {@code false} on exception
-     */
+    /// Try-variant of [#makeNUp(String, String, int, int)].
+    ///
+    /// @param inputFile  input file
+    /// @param outputFile output file
+    /// @param nX         horizontal count
+    /// @param nY         vertical count
+    /// @return `true` on success, `false` on exception
     public boolean tryMakeNUp(String inputFile, String outputFile, int nX, int nY) {
         return trap(() -> {
             if (!makeNUp(inputFile, outputFile, nX, nY)) {
@@ -1717,15 +1558,13 @@ public class PdfFileEditor {
         });
     }
 
-    /**
-     * Try-variant of {@link #extract(String, int, int, String)}.
-     *
-     * @param inputFile  input file
-     * @param startPage  start page (inclusive)
-     * @param endPage    end page (inclusive)
-     * @param outputFile output file
-     * @return {@code true} on success, {@code false} on exception
-     */
+    /// Try-variant of [#extract(String, int, int, String)].
+    ///
+    /// @param inputFile  input file
+    /// @param startPage  start page (inclusive)
+    /// @param endPage    end page (inclusive)
+    /// @param outputFile output file
+    /// @return `true` on success, `false` on exception
     public boolean tryExtract(String inputFile, int startPage, int endPage, String outputFile) {
         return trap(() -> {
             if (!extract(inputFile, startPage, endPage, outputFile)) {
@@ -1734,14 +1573,12 @@ public class PdfFileEditor {
         });
     }
 
-    /**
-     * Try-variant of {@link #extract(String, int[], String)}.
-     *
-     * @param inputFile   input file
-     * @param pageNumbers pages to extract
-     * @param outputFile  output file
-     * @return {@code true} on success, {@code false} on exception
-     */
+    /// Try-variant of [#extract(String, int\[\], String)].
+    ///
+    /// @param inputFile   input file
+    /// @param pageNumbers pages to extract
+    /// @param outputFile  output file
+    /// @return `true` on success, `false` on exception
     public boolean tryExtract(String inputFile, int[] pageNumbers, String outputFile) {
         return trap(() -> {
             if (!extract(inputFile, pageNumbers, outputFile)) {
@@ -1750,27 +1587,23 @@ public class PdfFileEditor {
         });
     }
 
-    /**
-     * Try-variant of {@link #resizeContents(Document, ContentsResizeParameters)}.
-     *
-     * @param document   the document
-     * @param parameters the resize parameters
-     * @return {@code true} on success, {@code false} on exception
-     */
+    /// Try-variant of [#resizeContents(Document, ContentsResizeParameters)].
+    ///
+    /// @param document   the document
+    /// @param parameters the resize parameters
+    /// @return `true` on success, `false` on exception
     public boolean tryResize(Document document, ContentsResizeParameters parameters) {
         return trap(() -> resizeContents(document, parameters));
     }
 
-    /**
-     * Try-variant of {@link #append(String, String, int, int, String)}.
-     *
-     * @param inputFile  base file
-     * @param portFile   file with pages to append
-     * @param startPage  start page in portFile
-     * @param endPage    end page in portFile
-     * @param outputFile output file
-     * @return {@code true} on success, {@code false} on exception
-     */
+    /// Try-variant of [#append(String, String, int, int, String)].
+    ///
+    /// @param inputFile  base file
+    /// @param portFile   file with pages to append
+    /// @param startPage  start page in portFile
+    /// @param endPage    end page in portFile
+    /// @param outputFile output file
+    /// @return `true` on success, `false` on exception
     public boolean tryAppend(String inputFile, String portFile, int startPage, int endPage, String outputFile) {
         return trap(() -> {
             if (!append(inputFile, portFile, startPage, endPage, outputFile)) {
@@ -1779,17 +1612,15 @@ public class PdfFileEditor {
         });
     }
 
-    /**
-     * Try-variant of {@link #insert(String, int, String, int, int, String)}.
-     *
-     * @param inputFile      base file
-     * @param insertPosition insert position
-     * @param portFile       file with pages to insert
-     * @param startPage      start page in portFile
-     * @param endPage        end page in portFile
-     * @param outputFile     output file
-     * @return {@code true} on success, {@code false} on exception
-     */
+    /// Try-variant of [#insert(String, int, String, int, int, String)].
+    ///
+    /// @param inputFile      base file
+    /// @param insertPosition insert position
+    /// @param portFile       file with pages to insert
+    /// @param startPage      start page in portFile
+    /// @param endPage        end page in portFile
+    /// @param outputFile     output file
+    /// @return `true` on success, `false` on exception
     public boolean tryInsert(String inputFile, int insertPosition, String portFile,
                              int startPage, int endPage, String outputFile) {
         return trap(() -> {
@@ -1799,14 +1630,12 @@ public class PdfFileEditor {
         });
     }
 
-    /**
-     * Try-variant of {@link #delete(String, int[], String)}.
-     *
-     * @param inputFile   input file
-     * @param pageNumbers pages to delete
-     * @param outputFile  output file
-     * @return {@code true} on success, {@code false} on exception
-     */
+    /// Try-variant of [#delete(String, int\[\], String)].
+    ///
+    /// @param inputFile   input file
+    /// @param pageNumbers pages to delete
+    /// @param outputFile  output file
+    /// @return `true` on success, `false` on exception
     public boolean tryDelete(String inputFile, int[] pageNumbers, String outputFile) {
         return trap(() -> {
             if (!delete(inputFile, pageNumbers, outputFile)) {
@@ -1815,14 +1644,12 @@ public class PdfFileEditor {
         });
     }
 
-    /**
-     * Try-variant of {@link #splitFromFirst(String, int, String)}.
-     *
-     * @param inputFile  input file
-     * @param pageNum    last page to keep
-     * @param outputFile output file
-     * @return {@code true} on success, {@code false} on exception
-     */
+    /// Try-variant of [#splitFromFirst(String, int, String)].
+    ///
+    /// @param inputFile  input file
+    /// @param pageNum    last page to keep
+    /// @param outputFile output file
+    /// @return `true` on success, `false` on exception
     public boolean trySplitFromFirst(String inputFile, int pageNum, String outputFile) {
         return trap(() -> {
             if (!splitFromFirst(inputFile, pageNum, outputFile)) {
@@ -1831,14 +1658,12 @@ public class PdfFileEditor {
         });
     }
 
-    /**
-     * Try-variant of {@link #splitToEnd(String, int, String)}.
-     *
-     * @param inputFile  input file
-     * @param pageNum    first page to keep
-     * @param outputFile output file
-     * @return {@code true} on success, {@code false} on exception
-     */
+    /// Try-variant of [#splitToEnd(String, int, String)].
+    ///
+    /// @param inputFile  input file
+    /// @param pageNum    first page to keep
+    /// @param outputFile output file
+    /// @return `true` on success, `false` on exception
     public boolean trySplitToEnd(String inputFile, int pageNum, String outputFile) {
         return trap(() -> {
             if (!splitToEnd(inputFile, pageNum, outputFile)) {

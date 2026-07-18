@@ -8,9 +8,7 @@ import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link XForm}.
- */
+/// Tests for [XForm].
 public class XFormTest {
 
     @Test

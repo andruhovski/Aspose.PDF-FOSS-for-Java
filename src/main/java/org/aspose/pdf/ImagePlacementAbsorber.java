@@ -1,47 +1,33 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfFloat;
-import org.aspose.pdf.engine.pdfobjects.PdfInteger;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
-import org.aspose.pdf.engine.pdfobjects.PdfStream;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.io.IOException;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Deque;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Logger;
 
-/**
- * Absorbs (finds) all image placements on PDF pages.
- * <p>
- * Processes the content stream to track the current transformation matrix (CTM),
- * and records each image XObject invocation (Do operator) with its CTM.
- * </p>
- * <p>Usage:
- * <pre>
- *   ImagePlacementAbsorber absorber = new ImagePlacementAbsorber();
- *   page.accept(absorber);
- *   List&lt;ImagePlacement&gt; placements = absorber.getImagePlacements();
- * </pre>
- * </p>
- */
+/// Absorbs (finds) all image placements on PDF pages.
+///
+/// Processes the content stream to track the current transformation matrix (CTM),
+/// and records each image XObject invocation (Do operator) with its CTM.
+///
+/// Usage:
+///
+/// <pre>
+///   ImagePlacementAbsorber absorber = new ImagePlacementAbsorber();
+///   page.accept(absorber);
+///   List&lt;ImagePlacement&gt; placements = absorber.getImagePlacements();
+/// </pre>
 public class ImagePlacementAbsorber {
 
     private static final Logger LOG = Logger.getLogger(ImagePlacementAbsorber.class.getName());
 
     private final List<ImagePlacement> placements = new ArrayList<>();
 
-    /**
-     * Visits a page and finds all image placements.
-     *
-     * @param page the PDF page to process
-     * @throws IOException if content stream processing fails
-     */
+    /// Visits a page and finds all image placements.
+    ///
+    /// @param page the PDF page to process
+    /// @throws IOException if content stream processing fails
     public void visit(Page page) throws IOException {
         Resources res = page.getResources();
         if (res == null) return;
@@ -92,18 +78,14 @@ public class ImagePlacementAbsorber {
         }
     }
 
-    /**
-     * Returns the list of found image placements.
-     *
-     * @return unmodifiable list of placements
-     */
+    /// Returns the list of found image placements.
+    ///
+    /// @return unmodifiable list of placements
     public List<ImagePlacement> getImagePlacements() {
         return Collections.unmodifiableList(placements);
     }
 
-    /**
-     * Clears previously found placements.
-     */
+    /// Clears previously found placements.
     public void reset() {
         placements.clear();
     }

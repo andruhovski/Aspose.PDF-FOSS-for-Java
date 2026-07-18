@@ -7,43 +7,35 @@ import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
 import java.io.IOException;
 import java.util.logging.Logger;
 
-/**
- * Abstract base for all PDF actions (ISO 32000-1:2008, §12.6, p.414).
- * <p>
- * Actions specify what happens when a bookmark, link, or other trigger is activated.
- * Concrete subclasses: {@link GoToAction}, {@link GoToRemoteAction},
- * {@link UriAction}, {@link NamedAction}.
- * </p>
- */
+/// Abstract base for all PDF actions (ISO 32000-1:2008, §12.6, p.414).
+///
+/// Actions specify what happens when a bookmark, link, or other trigger is activated.
+/// Concrete subclasses: [GoToAction], [GoToRemoteAction],
+/// [UriAction], [NamedAction].
+///
 public abstract class PdfAction {
 
     private static final Logger LOG = Logger.getLogger(PdfAction.class.getName());
 
-    /** The underlying action dictionary. */
+    /// The underlying action dictionary.
     protected PdfDictionary actionDict;
 
-    /**
-     * Returns the underlying action dictionary.
-     *
-     * @return the PDF dictionary
-     */
+    /// Returns the underlying action dictionary.
+    ///
+    /// @return the PDF dictionary
     public PdfDictionary getPdfDictionary() { return actionDict; }
 
-    /**
-     * Returns the action type (/S entry).
-     *
-     * @return the action type name (e.g., "GoTo", "URI", "Named")
-     */
+    /// Returns the action type (/S entry).
+    ///
+    /// @return the action type name (e.g., "GoTo", "URI", "Named")
     public String getType() {
         return actionDict != null ? actionDict.getNameAsString("S") : null;
     }
 
-    /**
-     * Returns the next action (/Next), if any.
-     *
-     * @return the next action, or null
-     * @throws IOException if parsing fails
-     */
+    /// Returns the next action (/Next), if any.
+    ///
+    /// @return the next action, or null
+    /// @throws IOException if parsing fails
     public PdfAction getNext() throws IOException {
         if (actionDict == null) return null;
         PdfBase next = resolve(actionDict.get("Next"));
@@ -53,14 +45,12 @@ public abstract class PdfAction {
         return null;
     }
 
-    /**
-     * Factory: creates the appropriate PdfAction subclass from a dictionary.
-     *
-     * @param dict the action dictionary
-     * @param doc  the document for resolving references (may be null)
-     * @return the parsed action, or a GenericAction for unknown types
-     * @throws IOException if parsing fails
-     */
+    /// Factory: creates the appropriate PdfAction subclass from a dictionary.
+    ///
+    /// @param dict the action dictionary
+    /// @param doc  the document for resolving references (may be null)
+    /// @return the parsed action, or a GenericAction for unknown types
+    /// @throws IOException if parsing fails
     public static PdfAction fromDictionary(PdfDictionary dict, Document doc) throws IOException {
         if (dict == null) return null;
         String type = dict.getNameAsString("S");
@@ -87,9 +77,7 @@ public abstract class PdfAction {
         }
     }
 
-    /**
-     * Resolves indirect references.
-     */
+    /// Resolves indirect references.
     protected static PdfBase resolve(PdfBase val) {
         if (val instanceof PdfObjectReference) {
             try { return ((PdfObjectReference) val).dereference(); }

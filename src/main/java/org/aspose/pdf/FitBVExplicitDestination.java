@@ -3,7 +3,7 @@ package org.aspose.pdf;
 import org.aspose.pdf.engine.pdfobjects.PdfArray;
 import org.aspose.pdf.engine.pdfobjects.PdfName;
 
-/** FitBV explicit destination — fit bounding box height, position at left. */
+/// FitBV explicit destination — fit bounding box height, position at left.
 public class FitBVExplicitDestination extends ExplicitDestination {
     private final double left;
     public FitBVExplicitDestination(Page page, double left) { super(page); this.left = left; }

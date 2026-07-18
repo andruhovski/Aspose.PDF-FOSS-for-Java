@@ -6,14 +6,12 @@ import org.aspose.pdf.engine.pdfobjects.PdfStream;
 import java.io.IOException;
 import java.util.logging.Logger;
 
-/**
- * Type 0 (Sampled) function (ISO 32000-1:2008, §7.10.2).
- * Uses a table of sample values with linear interpolation.
- *
- * <p>The function is defined by a multi-dimensional array of sample values.
- * Input values are mapped through Encode/Decode arrays and interpolated
- * between adjacent samples.</p>
- */
+/// Type 0 (Sampled) function (ISO 32000-1:2008, §7.10.2).
+/// Uses a table of sample values with linear interpolation.
+///
+/// The function is defined by a multi-dimensional array of sample values.
+/// Input values are mapped through Encode/Decode arrays and interpolated
+/// between adjacent samples.
 public final class SampledFunction extends PdfFunction {
 
     private static final Logger LOG = Logger.getLogger(SampledFunction.class.getName());
@@ -25,14 +23,12 @@ public final class SampledFunction extends PdfFunction {
     private final int numOutputs;
     private final int[] samples; // flat array of all sample values (unsigned ints)
 
-    /**
-     * Creates a sampled function from a PDF stream dictionary.
-     *
-     * @param dict   the function stream dictionary
-     * @param domain the input domain
-     * @param range  the output range
-     * @throws IOException if the sample data cannot be read
-     */
+    /// Creates a sampled function from a PDF stream dictionary.
+    ///
+    /// @param dict   the function stream dictionary
+    /// @param domain the input domain
+    /// @param range  the output range
+    /// @throws IOException if the sample data cannot be read
     public SampledFunction(PdfDictionary dict, double[] domain, double[] range)
             throws IOException {
         super(domain, range);

@@ -31,18 +31,16 @@ import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Bug Q (defensive guard) + Bug R — every stream in an encrypted output must
- * decrypt cleanly under the file key. Empty streams ({@code /Length 0}) have
- * no IV under AES and are rejected by Adobe Reader; the writer must either
- * skip them or emit a proper IV+padding-block (32 bytes).
- *
- * <p>These tests open the saved file as raw bytes, derive the file key from
- * the password using {@link org.aspose.pdf.engine.security.PDFKeyDerivation},
- * and walk every {@code N G obj <<...>> stream ... endstream} block under
- * AES-256-CBC. Any stream that fails PKCS#7 validation or has {@code /Length 0}
- * triggers a test failure.</p>
- */
+/// Bug Q (defensive guard) + Bug R — every stream in an encrypted output must
+/// decrypt cleanly under the file key. Empty streams (`/Length 0`) have
+/// no IV under AES and are rejected by Adobe Reader; the writer must either
+/// skip them or emit a proper IV+padding-block (32 bytes).
+///
+/// These tests open the saved file as raw bytes, derive the file key from
+/// the password using [org.aspose.pdf.engine.security.PDFKeyDerivation],
+/// and walk every `N G obj <<...>> stream ... endstream` block under
+/// AES-256-CBC. Any stream that fails PKCS#7 validation or has `/Length 0`
+/// triggers a test failure.
 class EncryptedStreamRoundTripTest {
 
     @TempDir Path tempDir;
@@ -61,9 +59,9 @@ class EncryptedStreamRoundTripTest {
                 .computeEncryptionKeyR6User(password.getBytes(StandardCharsets.UTF_8), encDict);
     }
 
-    /** Walks every {@code obj << ... >> stream ... endstream} block and verifies AES-256-CBC
-     *  decryption produces valid PKCS#7 padding. Returns a list of (obj#, reason) failures
-     *  and a count of empty streams. */
+    /// Walks every `obj << ... >> stream ... endstream` block and verifies AES-256-CBC
+    ///  decryption produces valid PKCS#7 padding. Returns a list of (obj#, reason) failures
+    ///  and a count of empty streams.
     private static class StreamAudit {
         final List<int[]> badPkcs7 = new ArrayList<>();
         final List<Integer> empty = new ArrayList<>();

@@ -17,17 +17,15 @@ import java.nio.file.Path;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * Guards the {@code linkDuplicateStreams} optimization pass: the same image
- * placed on several pages as separate (byte-identical) XObjects must collapse
- * to a single stream on {@code optimizeResources()} + save.
- */
+/// Guards the `linkDuplicateStreams` optimization pass: the same image
+/// placed on several pages as separate (byte-identical) XObjects must collapse
+/// to a single stream on `optimizeResources()` + save.
 public class DuplicateStreamLinkTest {
 
     @TempDir
     Path tempDir;
 
-    /** A PNG with enough incompressible content to dominate the file size. */
+    /// A PNG with enough incompressible content to dominate the file size.
     private File writeNoisePng() throws Exception {
         BufferedImage img = new BufferedImage(180, 120, BufferedImage.TYPE_INT_RGB);
         java.util.Random rnd = new java.util.Random(42);   // fixed seed — deterministic bytes
@@ -115,7 +113,7 @@ public class DuplicateStreamLinkTest {
         }
     }
 
-    /** Different streams must NOT be linked (no false positives). */
+    /// Different streams must NOT be linked (no false positives).
     @Test
     public void distinctImagesAreNotLinked() throws Exception {
         try (Document doc = new Document()) {

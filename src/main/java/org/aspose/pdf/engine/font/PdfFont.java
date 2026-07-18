@@ -1,51 +1,43 @@
 package org.aspose.pdf.engine.font;
 
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
-import org.aspose.pdf.engine.pdfobjects.PdfStream;
 import org.aspose.pdf.engine.font.cmap.CMapParser;
 import org.aspose.pdf.engine.font.cmap.ToUnicodeCMap;
 import org.aspose.pdf.engine.parser.PDFParser;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.io.IOException;
 import java.util.logging.Logger;
 
-/**
- * Abstract base class for all PDF font types (ISO 32000-1:2008, §9.5).
- * <p>
- * Handles common font operations including ToUnicode CMap parsing, encoding setup,
- * and the decode pipeline (ToUnicode → Encoding → identity fallback).
- * Concrete subclasses: {@code Type1Font}, {@code TrueTypeFont}, {@code Type0Font},
- * {@code CIDFont}.
- * </p>
- */
+/// Abstract base class for all PDF font types (ISO 32000-1:2008, §9.5).
+///
+/// Handles common font operations including ToUnicode CMap parsing, encoding setup,
+/// and the decode pipeline (ToUnicode → Encoding → identity fallback).
+/// Concrete subclasses: `Type1Font`, `TrueTypeFont`, `Type0Font`,
+/// `CIDFont`.
+///
 public abstract class PdfFont {
 
     private static final Logger LOG = Logger.getLogger(PdfFont.class.getName());
 
-    /** The underlying font dictionary. */
+    /// The underlying font dictionary.
     protected final PdfDictionary fontDict;
-    /** The PDF parser for resolving indirect references. */
+    /// The PDF parser for resolving indirect references.
     protected final PDFParser parser;
-    /** Font name from /BaseFont. */
+    /// Font name from /BaseFont.
     protected String baseFont;
-    /** The font encoding (char code → glyph name → Unicode). */
+    /// The font encoding (char code → glyph name → Unicode).
     protected FontEncoding encoding;
-    /** The ToUnicode CMap (highest priority for decode). */
+    /// The ToUnicode CMap (highest priority for decode).
     protected ToUnicodeCMap toUnicode;
-    /** Font descriptor. */
+    /// Font descriptor.
     protected FontDescriptor fontDescriptor;
-    /** Font metrics. */
+    /// Font metrics.
     protected FontMetrics fontMetrics;
 
-    /**
-     * Creates a PdfFont from a font dictionary.
-     *
-     * @param fontDict the font dictionary
-     * @param parser   the PDF parser for resolving indirect references (may be null)
-     */
+    /// Creates a PdfFont from a font dictionary.
+    ///
+    /// @param fontDict the font dictionary
+    /// @param parser   the PDF parser for resolving indirect references (may be null)
     protected PdfFont(PdfDictionary fontDict, PDFParser parser) {
         this.fontDict = fontDict != null ? fontDict : new PdfDictionary();
         this.parser = parser;
@@ -62,19 +54,16 @@ public abstract class PdfFont {
         initToUnicode();
     }
 
-    /**
-     * Decodes raw character code bytes to a Unicode string.
-     * <p>
-     * The default implementation uses the three-level pipeline:
-     * 1. ToUnicode CMap (highest priority)
-     * 2. Encoding (glyph name → AdobeGlyphList)
-     * 3. Identity fallback (charCode as-is)
-     * </p>
-     *
-     * @param charCodes the raw bytes from the PDF content stream
-     * @return the decoded Unicode string
-     * @throws IOException if decoding fails
-     */
+    /// Decodes raw character code bytes to a Unicode string.
+    ///
+    /// The default implementation uses the three-level pipeline:
+    /// 1. ToUnicode CMap (highest priority)
+    /// 2. Encoding (glyph name → AdobeGlyphList)
+    /// 3. Identity fallback (charCode as-is)
+    ///
+    /// @param charCodes the raw bytes from the PDF content stream
+    /// @return the decoded Unicode string
+    /// @throws IOException if decoding fails
     public String decode(byte[] charCodes) throws IOException {
         StringBuilder sb = new StringBuilder();
         for (byte b : charCodes) {
@@ -101,104 +90,83 @@ public abstract class PdfFont {
         return sb.toString();
     }
 
-    /**
-     * Returns the glyph width for the given character code, in units of 1/1000 text space.
-     *
-     * @param charCode the character code
-     * @return the width
-     */
+    /// Returns the glyph width for the given character code, in units of 1/1000 text space.
+    ///
+    /// @param charCode the character code
+    /// @return the width
     public abstract double getWidth(int charCode);
 
-    /**
-     * Returns the factor that converts a {@link #getWidth(int)} value into a
-     * glyph advance in text space (so {@code getWidth(code) * getWidthUnitScale()
-     * * fontSize} is the advance in user space).
-     * <p>
-     * For all standard font types widths are expressed in 1/1000 of text space,
-     * so this is {@code 0.001}. Type 3 fonts declare their own /FontMatrix and
-     * their /Widths are in glyph space, so that subtype overrides this with the
-     * matrix's horizontal scale (§9.6.5).
-     * </p>
-     *
-     * @return the width-to-text-space scale factor
-     */
+    /// Returns the factor that converts a [#getWidth(int)] value into a
+    /// glyph advance in text space (so `getWidth(code) * getWidthUnitScale()
+    /// * fontSize` is the advance in user space).
+    ///
+    /// For all standard font types widths are expressed in 1/1000 of text space,
+    /// so this is `0.001`. Type 3 fonts declare their own /FontMatrix and
+    /// their /Widths are in glyph space, so that subtype overrides this with the
+    /// matrix's horizontal scale (§9.6.5).
+    ///
+    /// @return the width-to-text-space scale factor
     public double getWidthUnitScale() {
         return 0.001;
     }
 
-    /**
-     * Returns the base font name (/BaseFont).
-     *
-     * @return the font name, or null
-     */
+    /// Returns the base font name (/BaseFont).
+    ///
+    /// @return the font name, or null
     public String getBaseFont() {
         return baseFont;
     }
 
-    /**
-     * Returns the font encoding.
-     *
-     * @return the encoding, or null
-     */
+    /// Returns the font encoding.
+    ///
+    /// @return the encoding, or null
     public FontEncoding getEncoding() {
         return encoding;
     }
 
-    /**
-     * Returns the ToUnicode CMap.
-     *
-     * @return the ToUnicode CMap, or null
-     */
+    /// Returns the ToUnicode CMap.
+    ///
+    /// @return the ToUnicode CMap, or null
     public ToUnicodeCMap getToUnicode() {
         return toUnicode;
     }
 
-    /**
-     * Returns the font descriptor.
-     *
-     * @return the font descriptor, or null
-     */
+    /// Returns the font descriptor.
+    ///
+    /// @return the font descriptor, or null
     public FontDescriptor getFontDescriptor() {
         return fontDescriptor;
     }
 
-    /**
-     * Returns {@code true} when this is a Type0 composite font whose
-     * content-stream encoding uses multi-byte character codes (e.g.
-     * Identity-H = 2 bytes per CID). Used by the renderer to decide
-     * whether to iterate {@code Tj} raw bytes one-by-one or in 2-byte
-     * chunks. Simple fonts (Type1, TrueType) return {@code false}.
-     */
+    /// Returns `true` when this is a Type0 composite font whose
+    /// content-stream encoding uses multi-byte character codes (e.g.
+    /// Identity-H = 2 bytes per CID). Used by the renderer to decide
+    /// whether to iterate `Tj` raw bytes one-by-one or in 2-byte
+    /// chunks. Simple fonts (Type1, TrueType) return `false`.
     public boolean isComposite() {
         return false;
     }
 
-    /**
-     * Returns the font metrics.
-     *
-     * @return the font metrics
-     */
+    /// Returns the font metrics.
+    ///
+    /// @return the font metrics
     public FontMetrics getFontMetrics() {
         return fontMetrics;
     }
 
-    /**
-     * Returns the underlying font dictionary.
-     *
-     * @return the font dictionary
-     */
+    /// Returns the underlying font dictionary.
+    ///
+    /// @return the font dictionary
     public PdfDictionary getFontDictionary() {
         return fontDict;
     }
 
-    /**
-     * Creates the appropriate PdfFont subclass from a font dictionary.
-     *
-     * @param fontDict the font dictionary with /Type /Font
-     * @param parser   the PDF parser
-     * @return the appropriate PdfFont instance
-     * @throws IOException if font creation fails
-     */
+    /// Creates the appropriate PdfFont subclass from a font dictionary.
+    ///
+    /// @param fontDict the font dictionary with /Type /Font
+    /// @param parser   the PDF parser
+    /// @return the appropriate PdfFont instance
+    /// @throws IOException if font creation fails
     public static PdfFont fromDictionary(PdfDictionary fontDict, PDFParser parser) throws IOException {
         if (fontDict == null) {
             throw new IllegalArgumentException("Font dictionary must not be null");
@@ -228,12 +196,10 @@ public abstract class PdfFont {
         }
     }
 
-    /**
-     * Resolves a potentially indirect PDF object reference.
-     *
-     * @param obj the PDF object
-     * @return the resolved object
-     */
+    /// Resolves a potentially indirect PDF object reference.
+    ///
+    /// @param obj the PDF object
+    /// @return the resolved object
     protected PdfBase resolve(PdfBase obj) {
         if (obj instanceof PdfObjectReference) {
             try {
@@ -246,9 +212,7 @@ public abstract class PdfFont {
         return obj;
     }
 
-    /**
-     * Extracts a numeric value from a PDF object.
-     */
+    /// Extracts a numeric value from a PDF object.
     protected static double getNumber(PdfBase val) {
         if (val instanceof org.aspose.pdf.engine.pdfobjects.PdfInteger) {
             return ((org.aspose.pdf.engine.pdfobjects.PdfInteger) val).intValue();

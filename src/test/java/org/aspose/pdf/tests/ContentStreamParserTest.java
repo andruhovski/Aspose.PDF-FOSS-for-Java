@@ -18,9 +18,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link ContentStreamParser}.
- */
+/// Tests for [ContentStreamParser].
 public class ContentStreamParserTest {
 
     @Test
@@ -150,12 +148,10 @@ public class ContentStreamParserTest {
         assertEquals("ET", coll.get(3).getName());
     }
 
-    /**
-     * PDFNEWNET-39178: some producers butt the {@code EI} terminator right
-     * against the last image data byte (no preceding whitespace). The parser
-     * must still find it — otherwise every operator after the inline image
-     * is swallowed into the image data.
-     */
+    /// PDFNEWNET-39178: some producers butt the `EI` terminator right
+    /// against the last image data byte (no preceding whitespace). The parser
+    /// must still find it — otherwise every operator after the inline image
+    /// is swallowed into the image data.
     @Test
     public void parseInlineImageWithoutWhitespaceBeforeEI() throws IOException {
         byte[] imageData = new byte[]{0x10, 0x42, (byte) 0x9C, 0x55, 0x7F};
@@ -174,10 +170,8 @@ public class ContentStreamParserTest {
         assertEquals(imageData.length, data.getBytes().length);
     }
 
-    /**
-     * The BI operator must serialise back as {@code BI <pairs> ID <raw> EI}
-     * (not as generic operands) so a rewritten page still parses.
-     */
+    /// The BI operator must serialise back as `BI <pairs> ID <raw> EI`
+    /// (not as generic operands) so a rewritten page still parses.
     @Test
     public void inlineImageSerializationRoundTrips() throws IOException {
         String content = "BI /W 1 /H 1 /BPC 8 /CS /G ID ÿ\nEI\nBT (tail) Tj ET";

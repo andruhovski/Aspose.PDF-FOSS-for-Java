@@ -12,9 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for PageCollection mutation methods: add(), add(Page), insert(), delete().
- */
+/// Tests for PageCollection mutation methods: add(), add(Page), insert(), delete().
 public class PageCollectionMutationTest {
 
     private PdfDictionary pagesDict;
@@ -256,9 +254,7 @@ public class PageCollectionMutationTest {
         assertEquals(2, collection.get(2).getNumber());
     }
 
-    /**
-     * Creates a minimal page dictionary for testing.
-     */
+    /// Creates a minimal page dictionary for testing.
     private PdfDictionary createPageDict() {
         PdfDictionary dict = new PdfDictionary();
         dict.set(PdfName.TYPE, PdfName.PAGE);
@@ -266,14 +262,12 @@ public class PageCollectionMutationTest {
         return dict;
     }
 
-    /**
-     * Regression: some malformed PDFs point the catalog's {@code /Pages} at a
-     * leaf page instead of the page-tree root (the leaf's {@code /Parent} is the
-     * real {@code /Type /Pages} node). Reading works, but {@code add()} used to
-     * mutate the leaf and the new page was silently lost on save/reopen. The
-     * document must normalize to the true root so an added page survives.
-     * Corpus repro: 33579-2.pdf.
-     */
+    /// Regression: some malformed PDFs point the catalog's `/Pages` at a
+    /// leaf page instead of the page-tree root (the leaf's `/Parent` is the
+    /// real `/Type /Pages` node). Reading works, but `add()` used to
+    /// mutate the leaf and the new page was silently lost on save/reopen. The
+    /// document must normalize to the true root so an added page survives.
+    /// Corpus repro: 33579-2.pdf.
     @Test
     public void catalogPagesPointingAtLeafStillPersistsAddedPage() throws java.io.IOException {
         // Catalog /Pages -> obj 9 (a /Type /Page LEAF) whose /Parent is obj 35,

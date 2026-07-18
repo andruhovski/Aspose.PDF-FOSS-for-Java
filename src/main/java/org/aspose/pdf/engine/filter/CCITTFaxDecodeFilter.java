@@ -1,31 +1,24 @@
 package org.aspose.pdf.engine.filter;
 
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfBoolean;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfInteger;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.logging.Logger;
 
-/**
- * CCITTFaxDecode filter — CCITT Group 3 (1D) and Group 4 (2D) fax decompression.
- * ISO 32000-1:2008 §7.4.6, ITU-T Recommendations T.4 and T.6.
- *
- * <p>Decodes monochrome (1-bit) image data compressed with CCITT fax encoding.
- * Group 3 uses Modified Huffman run-length coding; Group 4 uses 2D MMR coding
- * relative to the previous reference line.</p>
- *
- * <p>Parameters (Table 11):</p>
- * <ul>
- *   <li>K: &lt;0 = Group 4, =0 = Group 3 1D, &gt;0 = Group 3 mixed</li>
- *   <li>Columns: image width in pixels (default 1728)</li>
- *   <li>Rows: image height, 0 = until EOB (default 0)</li>
- *   <li>EndOfLine, EncodedByteAlign, EndOfBlock, BlackIs1</li>
- * </ul>
- */
+/// CCITTFaxDecode filter — CCITT Group 3 (1D) and Group 4 (2D) fax decompression.
+/// ISO 32000-1:2008 §7.4.6, ITU-T Recommendations T.4 and T.6.
+///
+/// Decodes monochrome (1-bit) image data compressed with CCITT fax encoding.
+/// Group 3 uses Modified Huffman run-length coding; Group 4 uses 2D MMR coding
+/// relative to the previous reference line.
+///
+/// Parameters (Table 11):
+///
+///   - K: <0 = Group 4, =0 = Group 3 1D, >0 = Group 3 mixed
+///   - Columns: image width in pixels (default 1728)
+///   - Rows: image height, 0 = until EOB (default 0)
+///   - EndOfLine, EncodedByteAlign, EndOfBlock, BlackIs1
 public final class CCITTFaxDecodeFilter implements PdfFilter {
 
     private static final Logger LOG = Logger.getLogger(CCITTFaxDecodeFilter.class.getName());
@@ -158,7 +151,7 @@ public final class CCITTFaxDecodeFilter implements PdfFilter {
             this.data = data;
         }
 
-        /** Reads one bit. Returns 0 or 1, or -1 on EOF. */
+        /// Reads one bit. Returns 0 or 1, or -1 on EOF.
         int readBit() {
             if (bytePos >= data.length) return -1;
             int bit = (data[bytePos] >> bitPos) & 1;
@@ -166,7 +159,7 @@ public final class CCITTFaxDecodeFilter implements PdfFilter {
             return bit;
         }
 
-        /** Aligns to the next byte boundary. */
+        /// Aligns to the next byte boundary.
         void alignToByte() {
             if (bitPos != 7) { bitPos = 7; bytePos++; }
         }
@@ -175,7 +168,7 @@ public final class CCITTFaxDecodeFilter implements PdfFilter {
             return bytePos >= data.length;
         }
 
-        /** Reads up to 12 bits without consuming, for EOL detection. Returns -1 on EOF. */
+        /// Reads up to 12 bits without consuming, for EOL detection. Returns -1 on EOF.
         int peekBits(int n) {
             int savedByte = bytePos, savedBit = bitPos;
             int val = 0;
@@ -233,10 +226,8 @@ public final class CCITTFaxDecodeFilter implements PdfFilter {
     //  Run-length decoding from Huffman tree
     // ═══════════════════════════════════════════════════════════════
 
-    /**
-     * Reads one complete run (zero or more makeup codes + one terminating code).
-     * Returns total run length, or -1 on failure/EOF.
-     */
+    /// Reads one complete run (zero or more makeup codes + one terminating code).
+    /// Returns total run length, or -1 on failure/EOF.
     static int readRun(BitReader br, HNode tree) {
         int total = 0;
         while (true) {
@@ -313,12 +304,10 @@ public final class CCITTFaxDecodeFilter implements PdfFilter {
         return out.toByteArray();
     }
 
-    /**
-     * Consumes one EOL — any number of fill zeros, at least 11 of them,
-     * terminated by a 1 bit (T.4 §4.1.2) — if and only if one starts at the
-     * current position. Restores the position when the bits ahead are not
-     * an EOL, so image data is never eaten.
-     */
+    /// Consumes one EOL — any number of fill zeros, at least 11 of them,
+    /// terminated by a 1 bit (T.4 §4.1.2) — if and only if one starts at the
+    /// current position. Restores the position when the bits ahead are not
+    /// an EOL, so image data is never eaten.
     static void consumeEOLIfPresent(BitReader br) {
         int savedByte = br.bytePos, savedBit = br.bitPos;
         int zeros = 0;
@@ -340,11 +329,9 @@ public final class CCITTFaxDecodeFilter implements PdfFilter {
         }
     }
 
-    /**
-     * Scans forward to just past the next EOL (≥11 zeros then a 1).
-     *
-     * @return true if an EOL was found, false on EOF
-     */
+    /// Scans forward to just past the next EOL (≥11 zeros then a 1).
+    ///
+    /// @return true if an EOL was found, false on EOF
     static boolean resyncToEOL(BitReader br) {
         int zeros = 0;
         while (true) {
@@ -518,7 +505,7 @@ public final class CCITTFaxDecodeFilter implements PdfFilter {
         return out.toByteArray();
     }
 
-    /** Sets {@code line[from..to)} to {@code color}; clamps to array bounds. */
+    /// Sets `line[from..to)` to `color`; clamps to array bounds.
     private static void fillRun(boolean[] line, int from, int to, boolean color) {
         if (!color) return; // codingLine is initialised to false (white)
         int start = Math.max(from, 0);
@@ -528,19 +515,17 @@ public final class CCITTFaxDecodeFilter implements PdfFilter {
 
     // ─── Group 4 helpers ─────────────────────────────────────────
 
-    /**
-     * Finds b1: the first changing element on the reference line strictly to
-     * the right of {@code a0} whose colour is opposite to {@code curColor}
-     * (T.6 §2.2.1).
-     *
-     * <p>Convention: this decoder tracks {@code a0} as the leading-edge
-     * position of the next run on the coding line. For all calls except the
-     * very first one on a line, the previous mode has just placed a transition
-     * AT column {@code a0}; that transition is already accounted for, so b1
-     * must lie at column &gt; a0. For the first call on a line {@code a0 == 0}
-     * is treated as the imaginary white element at –1, and column 0 itself is
-     * a valid b1.</p>
-     */
+    /// Finds b1: the first changing element on the reference line strictly to
+    /// the right of `a0` whose colour is opposite to `curColor`
+    /// (T.6 §2.2.1).
+    ///
+    /// Convention: this decoder tracks `a0` as the leading-edge
+    /// position of the next run on the coding line. For all calls except the
+    /// very first one on a line, the previous mode has just placed a transition
+    /// AT column `a0`; that transition is already accounted for, so b1
+    /// must lie at column > a0. For the first call on a line `a0 == 0`
+    /// is treated as the imaginary white element at –1, and column 0 itself is
+    /// a valid b1.
     static int findB1(boolean[] refLine, int a0, boolean curColor, int columns,
                       boolean lineStart) {
         // Strict-right-of-a0 except at line start (imaginary white at -1).
@@ -559,15 +544,13 @@ public final class CCITTFaxDecodeFilter implements PdfFilter {
         return columns;
     }
 
-    /** Backwards-compatible overload (treats every call as midline). */
+    /// Backwards-compatible overload (treats every call as midline).
     static int findB1(boolean[] refLine, int a0, boolean curColor, int columns) {
         return findB1(refLine, a0, curColor, columns, false);
     }
 
-    /**
-     * Finds b2: the next changing element strictly after {@code pos} on the
-     * reference line.
-     */
+    /// Finds b2: the next changing element strictly after `pos` on the
+    /// reference line.
     static int findNextChange(boolean[] refLine, int pos, int columns) {
         if (pos >= columns) return columns;
         boolean color = (pos < 0) ? false : refLine[pos];
@@ -593,14 +576,14 @@ public final class CCITTFaxDecodeFilter implements PdfFilter {
     //  Utility methods
     // ═══════════════════════════════════════════════════════════════
 
-    /** Sets 'count' bits starting at position 'start' in the packed byte array. */
+    /// Sets 'count' bits starting at position 'start' in the packed byte array.
     private static void setBits(byte[] line, int start, int count) {
         for (int i = start; i < start + count; i++) {
             line[i >> 3] |= (byte) (0x80 >> (i & 7));
         }
     }
 
-    /** Packs a boolean array into bytes (true=1=black, MSB first). */
+    /// Packs a boolean array into bytes (true=1=black, MSB first).
     static byte[] packLine(boolean[] line, int columns, int rowBytes) {
         byte[] packed = new byte[rowBytes];
         for (int i = 0; i < columns; i++) {
@@ -611,7 +594,7 @@ public final class CCITTFaxDecodeFilter implements PdfFilter {
         return packed;
     }
 
-    /** Detects RTC (Return To Control): 6 consecutive EOL codes. */
+    /// Detects RTC (Return To Control): 6 consecutive EOL codes.
     private static boolean detectRTC(BitReader br) {
         // Simplified: don't look ahead for RTC; let row count or EOF handle termination
         return false;

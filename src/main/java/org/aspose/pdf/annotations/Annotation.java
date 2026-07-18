@@ -2,36 +2,30 @@ package org.aspose.pdf.annotations;
 
 import org.aspose.pdf.*;
 import org.aspose.pdf.engine.pdfobjects.*;
+
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.logging.Logger;
 
-/**
- * Abstract base for all PDF annotations (ISO 32000-1:2008, §12.5).
- */
+/// Abstract base for all PDF annotations (ISO 32000-1:2008, §12.5).
 public abstract class Annotation extends org.aspose.pdf.BaseParagraph {
     private static final Logger LOG = Logger.getLogger(Annotation.class.getName());
     protected PdfDictionary dict;
     protected Page page;
     private Border annotBorder;
 
-    /**
-     * Constructs an annotation from an existing PDF dictionary.
-     *
-     * @param dict the PDF dictionary backing this annotation; if null, a new empty dictionary is created
-     * @param page the page this annotation belongs to
-     */
+    /// Constructs an annotation from an existing PDF dictionary.
+    ///
+    /// @param dict the PDF dictionary backing this annotation; if null, a new empty dictionary is created
+    /// @param page the page this annotation belongs to
     protected Annotation(PdfDictionary dict, Page page) {
         this.dict = dict != null ? dict : new PdfDictionary();
         this.page = page;
     }
 
-    /**
-     * Constructs a new annotation with the given rectangle on the specified page.
-     *
-     * @param page the page this annotation belongs to
-     * @param rect the annotation rectangle
-     */
+    /// Constructs a new annotation with the given rectangle on the specified page.
+    ///
+    /// @param page the page this annotation belongs to
+    /// @param rect the annotation rectangle
     protected Annotation(Page page, Rectangle rect) {
         this.dict = new PdfDictionary();
         this.page = page;
@@ -45,56 +39,48 @@ public abstract class Annotation extends org.aspose.pdf.BaseParagraph {
         setRectLenient(rect);
     }
 
-    /**
-     * Returns the annotation subtype (e.g. "Text", "Link", "Highlight").
-     *
-     * @return the subtype name, or null if not set
-     */
+    /// Returns the annotation subtype (e.g. "Text", "Link", "Highlight").
+    ///
+    /// @return the subtype name, or null if not set
     public String getSubtype() { return dict.getNameAsString("Subtype"); }
 
-    /**
-     * Returns the annotation rectangle defining its location on the page.
-     *
-     * @return the rectangle, or null if not set or malformed
-     */
+    /// Returns the annotation rectangle defining its location on the page.
+    ///
+    /// @return the rectangle, or null if not set or malformed
     public Rectangle getRect() {
         PdfBase r = dict.get("Rect");
         if (r instanceof PdfArray && ((PdfArray) r).size() == 4) return Rectangle.fromPdfArray((PdfArray) r);
         return null;
     }
 
-    /**
-     * Sets the annotation rectangle (ISO 32000-1:2008 §12.5.2, Table 164,
-     * {@code /Rect} entry). The rectangle must have <strong>positive
-     * area</strong> — both width and height must be strictly greater than
-     * zero. Strict spec-compliant viewers (Poppler, MuPDF) reject annotations
-     * whose {@code /Rect} collapses to a line or point with a
-     * {@code "Bad bounding box for annotation"} error.
-     *
-     * <p>For naturally-point-like annotation types (e.g. {@link CaretAnnotation}),
-     * use a dedicated helper that expands the point into a sensible bounding
-     * box — see {@link CaretAnnotation#atPoint(Page, Point)} for the canonical
-     * pattern.</p>
-     *
-     * @param rect the rectangle to set; ignored if null
-     * @throws IllegalArgumentException if {@code rect} has zero or negative
-     *         width or height
-     */
+    /// Sets the annotation rectangle (ISO 32000-1:2008 §12.5.2, Table 164,
+    /// `/Rect` entry). The rectangle must have **positive
+    /// area** — both width and height must be strictly greater than
+    /// zero. Strict spec-compliant viewers (Poppler, MuPDF) reject annotations
+    /// whose `/Rect` collapses to a line or point with a
+    /// `"Bad bounding box for annotation"` error.
+    ///
+    /// For naturally-point-like annotation types (e.g. [CaretAnnotation]),
+    /// use a dedicated helper that expands the point into a sensible bounding
+    /// box — see [CaretAnnotation#atPoint(Page, Point)] for the canonical
+    /// pattern.
+    ///
+    /// @param rect the rectangle to set; ignored if null
+    /// @throws IllegalArgumentException if `rect` has zero or negative
+    ///         width or height
     public void setRect(Rectangle rect) {
         if (rect == null) return;
         requirePositiveArea(rect);
         dict.set(PdfName.of("Rect"), rect.toPdfArray());
     }
 
-    /**
-     * Stores the {@code /Rect} entry without enforcing positive area. Used by
-     * the internal annotation/form-field machinery (constructors, incremental
-     * {@code setWidth}/{@code setHeight} builders) where a transiently or
-     * genuinely degenerate rectangle is valid — Aspose.PDF stores such
-     * rectangles rather than rejecting them (F-10 sibling fix, Sprint 21).
-     *
-     * @param rect the rectangle to store; ignored if null
-     */
+    /// Stores the `/Rect` entry without enforcing positive area. Used by
+    /// the internal annotation/form-field machinery (constructors, incremental
+    /// `setWidth`/`setHeight` builders) where a transiently or
+    /// genuinely degenerate rectangle is valid — Aspose.PDF stores such
+    /// rectangles rather than rejecting them (F-10 sibling fix, Sprint 21).
+    ///
+    /// @param rect the rectangle to store; ignored if null
     protected void setRectLenient(Rectangle rect) {
         if (rect == null) return;
         if (rect.getWidth() <= 0 || rect.getHeight() <= 0) {
@@ -104,15 +90,13 @@ public abstract class Annotation extends org.aspose.pdf.BaseParagraph {
         dict.set(PdfName.of("Rect"), rect.toPdfArray());
     }
 
-    /**
-     * Throws {@link IllegalArgumentException} if the given rectangle has zero
-     * or negative width or height. Used by the public {@link #setRect} setter
-     * and by shape annotation types (e.g. {@link SquareAnnotation}) whose
-     * geometry is meaningless without a positive-area bounding box.
-     *
-     * @param rect the rectangle to validate; null is treated as valid (no-op)
-     * @throws IllegalArgumentException if {@code rect} has non-positive area
-     */
+    /// Throws [IllegalArgumentException] if the given rectangle has zero
+    /// or negative width or height. Used by the public [#setRect] setter
+    /// and by shape annotation types (e.g. [SquareAnnotation]) whose
+    /// geometry is meaningless without a positive-area bounding box.
+    ///
+    /// @param rect the rectangle to validate; null is treated as valid (no-op)
+    /// @throws IllegalArgumentException if `rect` has non-positive area
     protected static void requirePositiveArea(Rectangle rect) {
         if (rect == null) return;
         if (rect.getWidth() <= 0 || rect.getHeight() <= 0) {
@@ -122,93 +106,73 @@ public abstract class Annotation extends org.aspose.pdf.BaseParagraph {
         }
     }
 
-    /**
-     * Returns the text content of the annotation (/Contents entry).
-     *
-     * @return the contents string, or null if not set
-     */
+    /// Returns the text content of the annotation (/Contents entry).
+    ///
+    /// @return the contents string, or null if not set
     public String getContents() {
         PdfBase c = dict.get("Contents");
         return (c instanceof PdfString) ? ((PdfString) c).getString() : null;
     }
 
-    /**
-     * Sets the text content of the annotation (/Contents entry).
-     *
-     * @param contents the contents string, or null to remove
-     */
+    /// Sets the text content of the annotation (/Contents entry).
+    ///
+    /// @param contents the contents string, or null to remove
     public void setContents(String contents) {
         if (contents != null) dict.set(PdfName.of("Contents"), new PdfString(contents));
         else dict.remove(PdfName.of("Contents"));
     }
 
-    /**
-     * Returns the unique name of the annotation (/NM entry).
-     *
-     * @return the name string, or null if not set
-     */
+    /// Returns the unique name of the annotation (/NM entry).
+    ///
+    /// @return the name string, or null if not set
     public String getName() {
         PdfBase nm = dict.get("NM");
         return (nm instanceof PdfString) ? ((PdfString) nm).getString() : null;
     }
 
-    /**
-     * Sets the unique name of the annotation (/NM entry).
-     *
-     * @param name the name string
-     */
+    /// Sets the unique name of the annotation (/NM entry).
+    ///
+    /// @param name the name string
     public void setName(String name) {
         if (name != null) dict.set(PdfName.of("NM"), new PdfString(name));
     }
 
-    /**
-     * Returns the date and time the annotation was last modified (/M entry).
-     *
-     * @return the modification date string, or null if not set
-     */
+    /// Returns the date and time the annotation was last modified (/M entry).
+    ///
+    /// @return the modification date string, or null if not set
     public String getModified() {
         PdfBase m = dict.get("M");
         return (m instanceof PdfString) ? ((PdfString) m).getString() : null;
     }
 
-    /**
-     * Sets the date and time the annotation was last modified (/M entry).
-     *
-     * @param date the modification date string in PDF date format, or null to remove
-     */
+    /// Sets the date and time the annotation was last modified (/M entry).
+    ///
+    /// @param date the modification date string in PDF date format, or null to remove
     public void setModified(String date) {
         if (date != null) dict.set(PdfName.of("M"), new PdfString(date));
         else dict.remove(PdfName.of("M"));
     }
 
-    /**
-     * Returns the annotation flags (/F entry) as a bitmask.
-     *
-     * @return the flags value, or 0 if not set
-     */
+    /// Returns the annotation flags (/F entry) as a bitmask.
+    ///
+    /// @return the flags value, or 0 if not set
     public int getFlags() { return dict.getInt("F", 0); }
 
-    /**
-     * Sets the annotation flags (/F entry) as a bitmask.
-     *
-     * @param flags the flags bitmask
-     */
+    /// Sets the annotation flags (/F entry) as a bitmask.
+    ///
+    /// @param flags the flags bitmask
     public void setFlags(int flags) { dict.set(PdfName.of("F"), PdfInteger.valueOf(flags)); }
 
-    /**
-     * Returns the annotation flags as a typed {@link java.util.EnumSet}.
-     *
-     * @return the set of flags currently set in {@code /F}
-     */
+    /// Returns the annotation flags as a typed [java.util.EnumSet].
+    ///
+    /// @return the set of flags currently set in `/F`
     public java.util.EnumSet<AnnotationFlags> getFlagsAsEnum() {
         return AnnotationFlags.fromBits(getFlags());
     }
 
-    /**
-     * Sets the annotation flags from a typed {@link java.util.EnumSet}.
-     *
-     * @param flags the flags to encode into {@code /F} (must not be null)
-     */
+    /// Sets the annotation flags from a typed [java.util.EnumSet].
+    ///
+    /// @param flags the flags to encode into `/F` (must not be null)
     public void setFlags(java.util.EnumSet<AnnotationFlags> flags) {
         if (flags == null) {
             throw new IllegalArgumentException("flags must not be null");
@@ -216,11 +180,9 @@ public abstract class Annotation extends org.aspose.pdf.BaseParagraph {
         setFlags(AnnotationFlags.toBits(flags));
     }
 
-    /**
-     * Convenience: sets the annotation flags from a varargs list of enum values.
-     *
-     * @param flags the flags to set
-     */
+    /// Convenience: sets the annotation flags from a varargs list of enum values.
+    ///
+    /// @param flags the flags to set
     public void setFlags(AnnotationFlags... flags) {
         java.util.EnumSet<AnnotationFlags> set = java.util.EnumSet.noneOf(AnnotationFlags.class);
         if (flags != null) {
@@ -231,67 +193,49 @@ public abstract class Annotation extends org.aspose.pdf.BaseParagraph {
         setFlags(set);
     }
 
-    /**
-     * Returns whether the Invisible flag (bit 1) is set.
-     *
-     * @return true if the annotation is invisible
-     */
+    /// Returns whether the Invisible flag (bit 1) is set.
+    ///
+    /// @return true if the annotation is invisible
     public boolean isInvisible() { return (getFlags() & 0x01) != 0; }
 
-    /**
-     * Returns whether the Hidden flag (bit 2) is set.
-     *
-     * @return true if the annotation is hidden
-     */
+    /// Returns whether the Hidden flag (bit 2) is set.
+    ///
+    /// @return true if the annotation is hidden
     public boolean isHidden() { return (getFlags() & 0x02) != 0; }
 
-    /**
-     * Returns whether the Print flag (bit 3) is set.
-     *
-     * @return true if the annotation should be printed
-     */
+    /// Returns whether the Print flag (bit 3) is set.
+    ///
+    /// @return true if the annotation should be printed
     public boolean isPrint() { return (getFlags() & 0x04) != 0; }
 
-    /**
-     * Returns whether the NoZoom flag (bit 4) is set.
-     *
-     * @return true if the annotation should not scale with the page
-     */
+    /// Returns whether the NoZoom flag (bit 4) is set.
+    ///
+    /// @return true if the annotation should not scale with the page
     public boolean isNoZoom() { return (getFlags() & 0x08) != 0; }
 
-    /**
-     * Returns whether the NoRotate flag (bit 5) is set.
-     *
-     * @return true if the annotation should not rotate with the page
-     */
+    /// Returns whether the NoRotate flag (bit 5) is set.
+    ///
+    /// @return true if the annotation should not rotate with the page
     public boolean isNoRotate() { return (getFlags() & 0x10) != 0; }
 
-    /**
-     * Returns whether the NoView flag (bit 6) is set.
-     *
-     * @return true if the annotation should not be displayed
-     */
+    /// Returns whether the NoView flag (bit 6) is set.
+    ///
+    /// @return true if the annotation should not be displayed
     public boolean isNoView() { return (getFlags() & 0x20) != 0; }
 
-    /**
-     * Returns whether the ReadOnly flag (bit 7) is set.
-     *
-     * @return true if the annotation is read-only
-     */
+    /// Returns whether the ReadOnly flag (bit 7) is set.
+    ///
+    /// @return true if the annotation is read-only
     public boolean isReadOnly() { return (getFlags() & 0x40) != 0; }
 
-    /**
-     * Returns whether the Locked flag (bit 8) is set.
-     *
-     * @return true if the annotation is locked
-     */
+    /// Returns whether the Locked flag (bit 8) is set.
+    ///
+    /// @return true if the annotation is locked
     public boolean isLocked() { return (getFlags() & 0x80) != 0; }
 
-    /**
-     * Returns the annotation color (/C entry).
-     *
-     * @return the color, or null if not set
-     */
+    /// Returns the annotation color (/C entry).
+    ///
+    /// @return the color, or null if not set
     public Color getColor() {
         PdfBase c = dict.get("C");
         if (c instanceof PdfArray) {
@@ -303,11 +247,9 @@ public abstract class Annotation extends org.aspose.pdf.BaseParagraph {
         return null;
     }
 
-    /**
-     * Sets the annotation color (/C entry) as an RGB color array.
-     *
-     * @param color the color to set, or null to remove
-     */
+    /// Sets the annotation color (/C entry) as an RGB color array.
+    ///
+    /// @param color the color to set, or null to remove
     public void setColor(Color color) {
         if (color == null) { dict.remove(PdfName.of("C")); return; }
         PdfArray c = new PdfArray();
@@ -317,11 +259,9 @@ public abstract class Annotation extends org.aspose.pdf.BaseParagraph {
         dict.set(PdfName.of("C"), c);
     }
 
-    /**
-     * Returns the border of this annotation.
-     *
-     * @return the border, or null
-     */
+    /// Returns the border of this annotation.
+    ///
+    /// @return the border, or null
     public Border getBorder() {
         if (annotBorder == null) {
             annotBorder = new Border(this);
@@ -336,11 +276,9 @@ public abstract class Annotation extends org.aspose.pdf.BaseParagraph {
         return annotBorder;
     }
 
-    /**
-     * Sets the border of this annotation.
-     *
-     * @param border the border to set
-     */
+    /// Sets the border of this annotation.
+    ///
+    /// @param border the border to set
     public void setBorder(Border border) {
         this.annotBorder = border;
         if (border != null) {
@@ -352,17 +290,14 @@ public abstract class Annotation extends org.aspose.pdf.BaseParagraph {
         }
     }
 
-    /**
-     * Returns the raw normal appearance stream (/AP /N) for this annotation
-     * (ISO 32000-1:2008, §12.5.5).
-     * <p>
-     * The normal appearance is used when the annotation is not interacted with.
-     * If /AP /N is a dictionary of sub-appearances (for annotations with
-     * multiple states), this returns null — only direct stream values are returned.
-     * </p>
-     *
-     * @return the normal appearance PdfStream, or null if absent or not a stream
-     */
+    /// Returns the raw normal appearance stream (/AP /N) for this annotation
+    /// (ISO 32000-1:2008, §12.5.5).
+    ///
+    /// The normal appearance is used when the annotation is not interacted with.
+    /// If /AP /N is a dictionary of sub-appearances (for annotations with
+    /// multiple states), this returns null — only direct stream values are returned.
+    ///
+    /// @return the normal appearance PdfStream, or null if absent or not a stream
     public PdfStream getNormalAppearanceStream() {
         PdfBase ap = resolveRef(dict.get("AP"));
         if (!(ap instanceof PdfDictionary)) return null;
@@ -371,27 +306,23 @@ public abstract class Annotation extends org.aspose.pdf.BaseParagraph {
         return null;
     }
 
-    /**
-     * Returns the normal appearance as an {@link XForm}, mirroring the C#
-     * {@code Annotation.NormalAppearance} property. The XForm wraps the
-     * underlying /AP /N PdfStream so callers can iterate its content
-     * operators via {@link XForm#getContents()}.
-     *
-     * @return the XForm wrapping /AP /N, or {@code null} if absent or not a stream
-     */
+    /// Returns the normal appearance as an [XForm], mirroring the C#
+    /// `Annotation.NormalAppearance` property. The XForm wraps the
+    /// underlying /AP /N PdfStream so callers can iterate its content
+    /// operators via [XForm#getContents()].
+    ///
+    /// @return the XForm wrapping /AP /N, or `null` if absent or not a stream
     public XForm getNormalAppearance() {
         PdfStream stream = getNormalAppearanceStream();
         if (stream == null) return null;
         return new XForm(stream, "N", null);
     }
 
-    /**
-     * Resolves an indirect object reference. If the value is a PdfObjectReference,
-     * dereferences it. Otherwise returns the value as-is.
-     *
-     * @param value the PDF value to resolve
-     * @return the resolved value, or null
-     */
+    /// Resolves an indirect object reference. If the value is a PdfObjectReference,
+    /// dereferences it. Otherwise returns the value as-is.
+    ///
+    /// @param value the PDF value to resolve
+    /// @return the resolved value, or null
     private PdfBase resolveRef(PdfBase value) {
         if (value == null) return null;
         if (value instanceof PdfObjectReference) {
@@ -405,17 +336,14 @@ public abstract class Annotation extends org.aspose.pdf.BaseParagraph {
         return value;
     }
 
-    /**
-     * Flattens this annotation into the page content stream.
-     * <p>
-     * Bakes the annotation's normal appearance stream (/AP /N) into the page content
-     * using a CTM to map the appearance BBox to the annotation Rect, then removes
-     * the annotation from the page's /Annots array.
-     * If no normal appearance stream is available, the annotation is simply removed.
-     * </p>
-     *
-     * @throws IOException if reading the appearance stream fails
-     */
+    /// Flattens this annotation into the page content stream.
+    ///
+    /// Bakes the annotation's normal appearance stream (/AP /N) into the page content
+    /// using a CTM to map the appearance BBox to the annotation Rect, then removes
+    /// the annotation from the page's /Annots array.
+    /// If no normal appearance stream is available, the annotation is simply removed.
+    ///
+    /// @throws IOException if reading the appearance stream fails
     public void flatten() throws IOException {
         if (page == null) return;
 
@@ -458,15 +386,12 @@ public abstract class Annotation extends org.aspose.pdf.BaseParagraph {
         page.getAnnotations().delete(this);
     }
 
-    /**
-     * Returns the opacity of the annotation (0.0 = fully transparent, 1.0 = fully opaque).
-     * <p>
-     * For markup annotations, the /CA entry is used. For non-markup annotations,
-     * this returns 1.0 by default.
-     * </p>
-     *
-     * @return the opacity value (0.0 to 1.0)
-     */
+    /// Returns the opacity of the annotation (0.0 = fully transparent, 1.0 = fully opaque).
+    ///
+    /// For markup annotations, the /CA entry is used. For non-markup annotations,
+    /// this returns 1.0 by default.
+    ///
+    /// @return the opacity value (0.0 to 1.0)
     public double getOpacity() {
         PdfBase ca = dict.get("CA");
         if (ca instanceof PdfFloat) return ((PdfFloat) ca).doubleValue();
@@ -474,45 +399,36 @@ public abstract class Annotation extends org.aspose.pdf.BaseParagraph {
         return 1.0;
     }
 
-    /**
-     * Sets the opacity of the annotation (0.0 = fully transparent, 1.0 = fully opaque).
-     *
-     * @param opacity the opacity value (0.0 to 1.0)
-     */
+    /// Sets the opacity of the annotation (0.0 = fully transparent, 1.0 = fully opaque).
+    ///
+    /// @param opacity the opacity value (0.0 to 1.0)
     public void setOpacity(double opacity) {
         dict.set(PdfName.of("CA"), new PdfFloat(opacity));
     }
 
-    /**
-     * Returns the Z-index (drawing order) of this annotation.
-     * Annotations with higher Z-index are drawn on top.
-     *
-     * @return the Z-index
-     */
+    /// Returns the Z-index (drawing order) of this annotation.
+    /// Annotations with higher Z-index are drawn on top.
+    ///
+    /// @return the Z-index
     public int getZIndex() {
         return dict.getInt("ZIndex", 0);
     }
 
-    /**
-     * Sets the Z-index (drawing order) of this annotation.
-     * Annotations with higher Z-index are drawn on top.
-     * Use negative values to place behind page content.
-     *
-     * @param zIndex the Z-index value
-     */
+    /// Sets the Z-index (drawing order) of this annotation.
+    /// Annotations with higher Z-index are drawn on top.
+    /// Use negative values to place behind page content.
+    ///
+    /// @param zIndex the Z-index value
     public void setZIndex(int zIndex) {
         dict.set(PdfName.of("ZIndex"), PdfInteger.valueOf(zIndex));
     }
 
-    /**
-     * Returns the annotation action collection (/AA entry).
-     * <p>
-     * The additional-actions dictionary defines actions to be performed in response
-     * to various trigger events (ISO 32000-1:2008, Section 12.6.3).
-     * </p>
-     *
-     * @return the annotation action collection; never null
-     */
+    /// Returns the annotation action collection (/AA entry).
+    ///
+    /// The additional-actions dictionary defines actions to be performed in response
+    /// to various trigger events (ISO 32000-1:2008, Section 12.6.3).
+    ///
+    /// @return the annotation action collection; never null
     public AnnotationActionCollection getActions() {
         AnnotationActionCollection collection = new AnnotationActionCollection();
         try {
@@ -556,34 +472,26 @@ public abstract class Annotation extends org.aspose.pdf.BaseParagraph {
         return collection;
     }
 
-    /**
-     * Returns the page this annotation belongs to.
-     *
-     * @return the parent page
-     */
+    /// Returns the page this annotation belongs to.
+    ///
+    /// @return the parent page
     public Page getPage() { return page; }
 
-    /**
-     * Sets the page this annotation belongs to.
-     *
-     * @param page the page
-     */
+    /// Sets the page this annotation belongs to.
+    ///
+    /// @param page the page
     public void setPage(Page page) { this.page = page; }
 
-    /**
-     * Returns the underlying PDF dictionary for this annotation.
-     *
-     * @return the PDF dictionary
-     */
+    /// Returns the underlying PDF dictionary for this annotation.
+    ///
+    /// @return the PDF dictionary
     public PdfDictionary getPdfDictionary() { return dict; }
 
-    /**
-     * Factory method: creates a typed annotation from a PDF dictionary based on its /Subtype.
-     *
-     * @param dict the PDF dictionary representing the annotation
-     * @param page the page the annotation belongs to
-     * @return a typed Annotation subclass instance
-     */
+    /// Factory method: creates a typed annotation from a PDF dictionary based on its /Subtype.
+    ///
+    /// @param dict the PDF dictionary representing the annotation
+    /// @param page the page the annotation belongs to
+    /// @return a typed Annotation subclass instance
     public static Annotation fromDictionary(PdfDictionary dict, Page page) {
         String subtype = dict.getNameAsString("Subtype");
         if (subtype == null) return new GenericAnnotation(dict, page);

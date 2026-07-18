@@ -1,21 +1,19 @@
 package org.aspose.pdf.engine.security;
 
-import java.security.MessageDigest;
-import java.util.Arrays;
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import java.security.MessageDigest;
+import java.util.Arrays;
 
-/**
- * PDF encryption key derivation algorithms.
- * <p>
- * Implements Algorithm 2 (§7.6.3.3) for R2-R4, and
- * Algorithms 8/11 (§7.6.3.3.3) for R5/R6 (AES-256).
- * </p>
- */
+/// PDF encryption key derivation algorithms.
+///
+/// Implements Algorithm 2 (§7.6.3.3) for R2-R4, and
+/// Algorithms 8/11 (§7.6.3.3.3) for R5/R6 (AES-256).
+///
 public final class PDFKeyDerivation {
 
-    /** The 32-byte padding string from Algorithm 2 step (a). */
+    /// The 32-byte padding string from Algorithm 2 step (a).
     public static final byte[] PADDING = {
         (byte) 0x28, (byte) 0xBF, (byte) 0x4E, (byte) 0x5E,
         (byte) 0x4E, (byte) 0x75, (byte) 0x8A, (byte) 0x41,
@@ -29,14 +27,12 @@ public final class PDFKeyDerivation {
 
     private PDFKeyDerivation() {}
 
-    /**
-     * Algorithm 2: Compute encryption key for R2-R4.
-     *
-     * @param password   user password bytes (may be empty)
-     * @param encDict    the encryption dictionary
-     * @param documentId first element of /ID array from trailer
-     * @return the encryption key
-     */
+    /// Algorithm 2: Compute encryption key for R2-R4.
+    ///
+    /// @param password   user password bytes (may be empty)
+    /// @param encDict    the encryption dictionary
+    /// @param documentId first element of /ID array from trailer
+    /// @return the encryption key
     public static byte[] computeEncryptionKeyR2R4(byte[] password, PDFEncryptionDict encDict,
                                                     byte[] documentId) {
         try {
@@ -78,10 +74,8 @@ public final class PDFKeyDerivation {
         }
     }
 
-    /**
-     * Compute encryption key for R=5/R=6 (AES-256).
-     * Decrypts /UE using a key derived from password + key salt from /U.
-     */
+    /// Compute encryption key for R=5/R=6 (AES-256).
+    /// Decrypts /UE using a key derived from password + key salt from /U.
     public static byte[] computeEncryptionKeyR6User(byte[] password, PDFEncryptionDict encDict) {
         try {
             byte[] u = encDict.getU();
@@ -101,9 +95,7 @@ public final class PDFKeyDerivation {
         }
     }
 
-    /**
-     * Compute encryption key for R=6 via owner password.
-     */
+    /// Compute encryption key for R=6 via owner password.
     public static byte[] computeEncryptionKeyR6Owner(byte[] password, PDFEncryptionDict encDict) {
         try {
             byte[] o = encDict.getO();
@@ -124,15 +116,13 @@ public final class PDFKeyDerivation {
         }
     }
 
-    /**
-     * R=5 (Adobe Extension Level 3) hash: a single SHA-256 of
-     * {@code password + salt [+ userKey]}, with NO Algorithm 2.B iteration.
-     * <p>
-     * This is the crucial difference from {@link #computeHashR6}: R=5 predates
-     * ISO 32000-2 and uses only the initial hash. Using the iterated R=6 hash on
-     * an R=5 file yields the wrong key and AES decryption produces garbage.
-     * </p>
-     */
+    /// R=5 (Adobe Extension Level 3) hash: a single SHA-256 of
+    /// `password + salt [+ userKey]`, with NO Algorithm 2.B iteration.
+    ///
+    /// This is the crucial difference from [#computeHashR6]: R=5 predates
+    /// ISO 32000-2 and uses only the initial hash. Using the iterated R=6 hash on
+    /// an R=5 file yields the wrong key and AES decryption produces garbage.
+    ///
     public static byte[] computeHashR5(byte[] password, byte[] salt, byte[] userKey) {
         try {
             byte[] truncPw = truncatePassword(password);
@@ -150,10 +140,8 @@ public final class PDFKeyDerivation {
         }
     }
 
-    /**
-     * Compute the file encryption key for R=5 via the user password
-     * (Adobe Extension Level 3 — single SHA-256, no iteration).
-     */
+    /// Compute the file encryption key for R=5 via the user password
+    /// (Adobe Extension Level 3 — single SHA-256, no iteration).
     public static byte[] computeEncryptionKeyR5User(byte[] password, PDFEncryptionDict encDict) {
         try {
             byte[] u = encDict.getU();
@@ -171,10 +159,8 @@ public final class PDFKeyDerivation {
         }
     }
 
-    /**
-     * Compute the file encryption key for R=5 via the owner password
-     * (Adobe Extension Level 3 — single SHA-256, no iteration).
-     */
+    /// Compute the file encryption key for R=5 via the owner password
+    /// (Adobe Extension Level 3 — single SHA-256, no iteration).
     public static byte[] computeEncryptionKeyR5Owner(byte[] password, PDFEncryptionDict encDict) {
         try {
             byte[] o = encDict.getO();
@@ -195,19 +181,16 @@ public final class PDFKeyDerivation {
 
     // ── Write-side: O/U hash generation ──────────────────────────────
 
-    /**
-     * Algorithm 3 (ISO 32000-1:2008, §7.6.3.4): computes the /O (owner) hash.
-     * <p>
-     * The owner password is used to derive a key that encrypts the padded user
-     * password. The result is stored as the /O entry in the encryption dictionary.
-     * </p>
-     *
-     * @param ownerPassword owner password bytes (if null/empty, userPassword is used)
-     * @param userPassword  user password bytes
-     * @param keyLenBytes   key length in bytes (5 for R=2, 16 for R=3/4)
-     * @param R             security handler revision (2, 3, or 4)
-     * @return 32-byte /O hash
-     */
+    /// Algorithm 3 (ISO 32000-1:2008, §7.6.3.4): computes the /O (owner) hash.
+    ///
+    /// The owner password is used to derive a key that encrypts the padded user
+    /// password. The result is stored as the /O entry in the encryption dictionary.
+    ///
+    /// @param ownerPassword owner password bytes (if null/empty, userPassword is used)
+    /// @param userPassword  user password bytes
+    /// @param keyLenBytes   key length in bytes (5 for R=2, 16 for R=3/4)
+    /// @param R             security handler revision (2, 3, or 4)
+    /// @return 32-byte /O hash
     public static byte[] generateO_R2R4(byte[] ownerPassword, byte[] userPassword,
                                          int keyLenBytes, int R) {
         try {
@@ -255,31 +238,25 @@ public final class PDFKeyDerivation {
         }
     }
 
-    /**
-     * Algorithm 4 (ISO 32000-1:2008, §7.6.3.4): computes the /U hash for R=2.
-     * <p>
-     * RC4-encrypts the 32-byte PADDING constant with the file encryption key.
-     * </p>
-     *
-     * @param encryptionKey the file encryption key (5 bytes for R=2)
-     * @return 32-byte /U hash
-     */
+    /// Algorithm 4 (ISO 32000-1:2008, §7.6.3.4): computes the /U hash for R=2.
+    ///
+    /// RC4-encrypts the 32-byte PADDING constant with the file encryption key.
+    ///
+    /// @param encryptionKey the file encryption key (5 bytes for R=2)
+    /// @return 32-byte /U hash
     public static byte[] generateU_R2(byte[] encryptionKey) {
         return RC4Cipher.process(encryptionKey, PADDING.clone());
     }
 
-    /**
-     * Algorithm 5 (ISO 32000-1:2008, §7.6.3.4): computes the /U hash for R=3/4.
-     * <p>
-     * MD5 hashes the PADDING + document ID, then RC4-encrypts with the encryption
-     * key, iterating 19 additional times with XOR-modified keys. The result is
-     * 16 meaningful bytes padded to 32 bytes.
-     * </p>
-     *
-     * @param encryptionKey the file encryption key (16 bytes for R=3/4)
-     * @param documentId    the first element of the /ID array from trailer
-     * @return 32-byte /U hash (first 16 bytes significant, last 16 arbitrary)
-     */
+    /// Algorithm 5 (ISO 32000-1:2008, §7.6.3.4): computes the /U hash for R=3/4.
+    ///
+    /// MD5 hashes the PADDING + document ID, then RC4-encrypts with the encryption
+    /// key, iterating 19 additional times with XOR-modified keys. The result is
+    /// 16 meaningful bytes padded to 32 bytes.
+    ///
+    /// @param encryptionKey the file encryption key (16 bytes for R=3/4)
+    /// @param documentId    the first element of the /ID array from trailer
+    /// @return 32-byte /U hash (first 16 bytes significant, last 16 arbitrary)
     public static byte[] generateU_R3R4(byte[] encryptionKey, byte[] documentId) {
         try {
             // Step a: MD5(PADDING + documentId)
@@ -314,9 +291,7 @@ public final class PDFKeyDerivation {
 
     // ── Shared utilities ─────────────────────────────────────────────
 
-    /**
-     * Pads or truncates a password to exactly 32 bytes.
-     */
+    /// Pads or truncates a password to exactly 32 bytes.
     public static byte[] padPassword(byte[] password) {
         byte[] result = new byte[32];
         if (password == null || password.length == 0) {
@@ -337,15 +312,13 @@ public final class PDFKeyDerivation {
         return Arrays.copyOf(password, 127);
     }
 
-    /**
-     * Computes the R=6 validation or key-derivation hash (ISO 32000-2, Algorithm 2.B).
-     * Returns the 32-byte file key material used for /UE and /OE decryption.
-     *
-     * @param password the password bytes
-     * @param salt     the validation or key salt
-     * @param userKey  the first 48 bytes of /U for owner-password flows, otherwise null
-     * @return the 32-byte R=6 hash result
-     */
+    /// Computes the R=6 validation or key-derivation hash (ISO 32000-2, Algorithm 2.B).
+    /// Returns the 32-byte file key material used for /UE and /OE decryption.
+    ///
+    /// @param password the password bytes
+    /// @param salt     the validation or key salt
+    /// @param userKey  the first 48 bytes of /U for owner-password flows, otherwise null
+    /// @return the 32-byte R=6 hash result
     public static byte[] computeHashR6(byte[] password, byte[] salt, byte[] userKey) {
         try {
             byte[] truncPw = truncatePassword(password);

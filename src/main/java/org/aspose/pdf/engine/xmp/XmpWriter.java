@@ -13,13 +13,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
-/**
- * Serializes an XMP property map to UTF-8 XMP XML with packet wrapper (ISO 16684-1).
- * <p>
- * Generates valid XMP/RDF XML with proper namespace declarations,
- * xpacket processing instructions, and ~2000 bytes of whitespace padding.
- * </p>
- */
+/// Serializes an XMP property map to UTF-8 XMP XML with packet wrapper (ISO 16684-1).
+///
+/// Generates valid XMP/RDF XML with proper namespace declarations,
+/// xpacket processing instructions, and \~2000 bytes of whitespace padding.
+///
 public final class XmpWriter {
 
     private static final Logger LOG = Logger.getLogger(XmpWriter.class.getName());
@@ -29,13 +27,11 @@ public final class XmpWriter {
 
     private XmpWriter() {}
 
-    /**
-     * Serializes XMP properties to UTF-8 bytes with packet wrapper.
-     *
-     * @param properties the property map
-     * @param registry   the namespace registry
-     * @return UTF-8 XMP XML bytes
-     */
+    /// Serializes XMP properties to UTF-8 bytes with packet wrapper.
+    ///
+    /// @param properties the property map
+    /// @param registry   the namespace registry
+    /// @return UTF-8 XMP XML bytes
     public static byte[] serialize(Map<String, XmpProperty> properties,
                                     XmpNamespaceRegistry registry) {
         try {

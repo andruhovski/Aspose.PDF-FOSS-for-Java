@@ -8,9 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link Matrix}.
- */
+/// Tests for [Matrix].
 public class MatrixTest {
 
     @Test

@@ -23,19 +23,17 @@ import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Bug T — {@code RadioButtonField} writes {@code /Kids} as inline dictionaries.
- * ISO 32000-1:2008 §12.7.4.1 Table 220 requires {@code /Kids} to be an array of
- * indirect references. Inline kids make poppler report "Invalid form field
- * reference" + "Bad bounding box". This test asserts that, after save, every
- * {@code /Kids} entry is an {@code N G R} reference resolving to its own
- * top-level object.
- */
+/// Bug T — `RadioButtonField` writes `/Kids` as inline dictionaries.
+/// ISO 32000-1:2008 §12.7.4.1 Table 220 requires `/Kids` to be an array of
+/// indirect references. Inline kids make poppler report "Invalid form field
+/// reference" + "Bad bounding box". This test asserts that, after save, every
+/// `/Kids` entry is an `N G R` reference resolving to its own
+/// top-level object.
 class RadioButtonKidsIndirectTest {
 
     @TempDir Path tempDir;
 
-    /** Returns the bytes of the radio field object whose /T is {@code name}. */
+    /// Returns the bytes of the radio field object whose /T is `name`.
     private static String findFieldObject(byte[] pdf, String name) {
         String s = new String(pdf, StandardCharsets.ISO_8859_1);
         Matcher om = Pattern.compile("(\\d+) (\\d+) obj(.*?)endobj", Pattern.DOTALL).matcher(s);
@@ -48,7 +46,7 @@ class RadioButtonKidsIndirectTest {
         return null;
     }
 
-    /** Extracts the raw text inside the first /Kids [ ... ] array of {@code objBody}. */
+    /// Extracts the raw text inside the first /Kids [ ... ] array of `objBody`.
     private static String kidsArrayText(String objBody) {
         Matcher m = Pattern.compile("/Kids\\s*\\[(.*?)\\]", Pattern.DOTALL).matcher(objBody);
         return m.find() ? m.group(1).trim() : null;

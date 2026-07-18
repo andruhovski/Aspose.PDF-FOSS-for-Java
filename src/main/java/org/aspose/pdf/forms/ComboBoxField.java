@@ -1,31 +1,27 @@
 package org.aspose.pdf.forms;
 
-import org.aspose.pdf.*;
+import org.aspose.pdf.Document;
+import org.aspose.pdf.Page;
+import org.aspose.pdf.Rectangle;
 import org.aspose.pdf.engine.pdfobjects.*;
 
-/**
- * Combo box / dropdown field (/FT /Ch, combo flag) (ISO 32000-1:2008, §12.7.4.4).
- * <p>
- * A combo box allows the user to select a single value from a list of options,
- * and optionally type a custom value if the editable flag is set.
- * </p>
- */
+/// Combo box / dropdown field (/FT /Ch, combo flag) (ISO 32000-1:2008, §12.7.4.4).
+///
+/// A combo box allows the user to select a single value from a list of options,
+/// and optionally type a custom value if the editable flag is set.
+///
 public class ComboBoxField extends Field {
 
-    /**
-     * Constructs a combo box field from an existing PDF dictionary.
-     *
-     * @param dict     the PDF dictionary backing this field
-     * @param page     the page this field belongs to (may be null)
-     * @param fullName the fully-qualified dotted name
-     */
+    /// Constructs a combo box field from an existing PDF dictionary.
+    ///
+    /// @param dict     the PDF dictionary backing this field
+    /// @param page     the page this field belongs to (may be null)
+    /// @param fullName the fully-qualified dotted name
     public ComboBoxField(PdfDictionary dict, Page page, String fullName) {
         super(dict, page, fullName);
     }
 
-    /**
-     * Constructs a new empty combo box field.
-     */
+    /// Constructs a new empty combo box field.
     public ComboBoxField() {
         super(new PdfDictionary(), null, "");
         dict.set(PdfName.of("Type"), PdfName.of("Annot"));
@@ -34,21 +30,17 @@ public class ComboBoxField extends Field {
         dict.set(PdfName.of("Ff"), PdfInteger.valueOf(1 << 17));
     }
 
-    /**
-     * Constructs a new combo box field associated with the given document.
-     *
-     * @param doc the document this field belongs to
-     */
+    /// Constructs a new combo box field associated with the given document.
+    ///
+    /// @param doc the document this field belongs to
     public ComboBoxField(Document doc) {
         this();
     }
 
-    /**
-     * Constructs a new combo box field on the given page with the specified rectangle.
-     *
-     * @param page the page
-     * @param rect the field rectangle
-     */
+    /// Constructs a new combo box field on the given page with the specified rectangle.
+    ///
+    /// @param page the page
+    /// @param rect the field rectangle
     public ComboBoxField(Page page, Rectangle rect) {
         super(new PdfDictionary(), page, "");
         dict.set(PdfName.of("Type"), PdfName.of("Annot"));
@@ -63,16 +55,14 @@ public class ComboBoxField extends Field {
         regenerateAppearance();
     }
 
-    /**
-     * Rebuilds the {@code /AP/N} normal appearance stream from the current
-     * rectangle, default appearance ({@code /DA}) and selected value, so the
-     * dropdown's chosen text is visible in strict viewers (poppler, mupdf) that
-     * render only the appearance stream (F-10 sibling, Sprint 22 Part 3).
-     *
-     * <p>Idempotent. No-op when the widget has no (positive-area) {@code /Rect}
-     * yet — a degenerate or missing rectangle is stored rather than rejected,
-     * matching {@link Field}'s lenient construction semantics.</p>
-     */
+    /// Rebuilds the `/AP/N` normal appearance stream from the current
+    /// rectangle, default appearance (`/DA`) and selected value, so the
+    /// dropdown's chosen text is visible in strict viewers (poppler, mupdf) that
+    /// render only the appearance stream (F-10 sibling, Sprint 22 Part 3).
+    ///
+    /// Idempotent. No-op when the widget has no (positive-area) `/Rect`
+    /// yet — a degenerate or missing rectangle is stored rather than rejected,
+    /// matching [Field]'s lenient construction semantics.
     public void regenerateAppearance() {
         Rectangle rect = getRect();
         if (rect == null) return;
@@ -176,11 +166,9 @@ public class ComboBoxField extends Field {
         return sb.toString();
     }
 
-    /**
-     * Returns the options (/Opt array) for this combo box.
-     *
-     * @return the option collection (never null)
-     */
+    /// Returns the options (/Opt array) for this combo box.
+    ///
+    /// @return the option collection (never null)
     public OptionCollection getOptions() {
         PdfBase opt = dict.get("Opt");
         if (opt instanceof PdfObjectReference) {
@@ -193,30 +181,24 @@ public class ComboBoxField extends Field {
         return new OptionCollection(opt instanceof PdfArray ? (PdfArray) opt : new PdfArray());
     }
 
-    /**
-     * Returns the currently selected value.
-     *
-     * @return the selected value, or null
-     */
+    /// Returns the currently selected value.
+    ///
+    /// @return the selected value, or null
     public String getSelected() {
         return getValue();
     }
 
-    /**
-     * Sets the selected value by string.
-     *
-     * @param value the value to select
-     */
+    /// Sets the selected value by string.
+    ///
+    /// @param value the value to select
     public void setSelected(String value) {
         setValue(value);
         regenerateAppearance();
     }
 
-    /**
-     * Sets the selected option by 1-based index.
-     *
-     * @param index 1-based index of the option to select
-     */
+    /// Sets the selected option by 1-based index.
+    ///
+    /// @param index 1-based index of the option to select
     public void setSelected(int index) {
         OptionCollection opts = getOptions();
         if (index >= 1 && index <= opts.size()) {
@@ -225,11 +207,9 @@ public class ComboBoxField extends Field {
         }
     }
 
-    /**
-     * Adds an option to this combo box (/Opt array).
-     *
-     * @param value the option value to add
-     */
+    /// Adds an option to this combo box (/Opt array).
+    ///
+    /// @param value the option value to add
     public void addOption(String value) {
         PdfBase opt = dict.get("Opt");
         PdfArray arr;
@@ -242,11 +222,9 @@ public class ComboBoxField extends Field {
         arr.add(new PdfString(value.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
     }
 
-    /**
-     * Returns whether this combo box is editable (/Ff bit 19).
-     *
-     * @return true if the user can type a custom value
-     */
+    /// Returns whether this combo box is editable (/Ff bit 19).
+    ///
+    /// @return true if the user can type a custom value
     public boolean isEditable() {
         return (getFieldFlags() & (1 << 18)) != 0;
     }

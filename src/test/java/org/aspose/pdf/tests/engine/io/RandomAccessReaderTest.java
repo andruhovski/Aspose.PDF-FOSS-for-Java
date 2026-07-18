@@ -13,9 +13,7 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link RandomAccessReader}.
- */
+/// Tests for [RandomAccessReader].
 public class RandomAccessReaderTest {
 
     // ---- fromBytes: seek, read, position ----

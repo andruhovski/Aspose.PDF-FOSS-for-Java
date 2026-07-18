@@ -7,13 +7,11 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * Guards the clean-room contextual Arabic shaper used by the RTL text
- * replacement pipeline (RTL2/RTL3_changeText).
- */
+/// Guards the clean-room contextual Arabic shaper used by the RTL text
+/// replacement pipeline (RTL2/RTL3\_changeText).
 public class ArabicShaperTest {
 
-    /** RTL3: روسيا shapes with initial/medial/final contextual forms. */
+    /// RTL3: روسيا shapes with initial/medial/final contextual forms.
     @Test
     public void shapesFullyConnectedWord() {
         // reh(isolated) waw(isolated) seen(initial) yeh(medial) alef(final)
@@ -21,7 +19,7 @@ public class ArabicShaperTest {
                 ArabicShaper.shape("روسيا"));
     }
 
-    /** RTL2 test 3: presentation-form chars pass through and break joining. */
+    /// RTL2 test 3: presentation-form chars pass through and break joining.
     @Test
     public void presentationFormsArePreservedAndNonJoining() {
         // Input: ا ﻷ ه ﺪ ا ف (mix of plain letters and presentation forms).
@@ -30,7 +28,7 @@ public class ArabicShaperTest {
                 ArabicShaper.shape("اﻷهﺪاف"));
     }
 
-    /** Mandatory lam-alef ligature, isolated and final positions. */
+    /// Mandatory lam-alef ligature, isolated and final positions.
     @Test
     public void lamAlefLigature() {
         assertEquals("ﻻ", ArabicShaper.shape("لا"));
@@ -38,7 +36,7 @@ public class ArabicShaperTest {
         assertEquals("ﺑﻼ", ArabicShaper.shape("بلا"));
     }
 
-    /** Harakat are transparent: joining skips them and they are kept. */
+    /// Harakat are transparent: joining skips them and they are kept.
     @Test
     public void combiningMarksAreTransparent() {
         // beh + fatha + yeh: beh initial, yeh final, fatha kept in place.
@@ -46,7 +44,7 @@ public class ArabicShaperTest {
                 ArabicShaper.shape("بَي"));
     }
 
-    /** Non-Arabic text is returned unchanged (same instance). */
+    /// Non-Arabic text is returned unchanged (same instance).
     @Test
     public void nonArabicUntouched() {
         String latin = "777 abc";

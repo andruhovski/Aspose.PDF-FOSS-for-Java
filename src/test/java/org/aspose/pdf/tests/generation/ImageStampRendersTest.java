@@ -26,12 +26,10 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Bug B — {@code Page.addStamp(ImageStamp)} must register the image XObject in
- * the page's {@code /Resources/XObject} dictionary before emitting the
- * {@code Do} operator. Before the fix the operator referenced an unattached
- * resource name and spec-compliant viewers painted nothing.
- */
+/// Bug B — `Page.addStamp(ImageStamp)` must register the image XObject in
+/// the page's `/Resources/XObject` dictionary before emitting the
+/// `Do` operator. Before the fix the operator referenced an unattached
+/// resource name and spec-compliant viewers painted nothing.
 class ImageStampRendersTest {
 
     @TempDir Path tempDir;

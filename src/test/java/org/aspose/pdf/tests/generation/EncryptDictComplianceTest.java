@@ -19,21 +19,19 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Bug P — the encryption dictionary's top-level {@code /Length} entry is
- * meaningful only for V ∈ {1, 2, 4} per ISO 32000-1:2008 §7.6.3 Table 20.
- * For V = 5 (AESV3, R = 6) the key size is fixed at 256 bits and the
- * size information lives at {@code /CF /StdCF /Length} (in bytes).
- * Emitting a top-level {@code /Length} for V = 5 produces
- * {@code "Invalid /Length supplied in Encryption dictionary"} warnings
- * in strict readers (Ghostscript, mupdf).
- */
+/// Bug P — the encryption dictionary's top-level `/Length` entry is
+/// meaningful only for V ∈ {1, 2, 4} per ISO 32000-1:2008 §7.6.3 Table 20.
+/// For V = 5 (AESV3, R = 6) the key size is fixed at 256 bits and the
+/// size information lives at `/CF /StdCF /Length` (in bytes).
+/// Emitting a top-level `/Length` for V = 5 produces
+/// `"Invalid /Length supplied in Encryption dictionary"` warnings
+/// in strict readers (Ghostscript, mupdf).
 class EncryptDictComplianceTest {
 
     @TempDir Path tempDir;
 
-    /** Build a tiny 1-page doc, encrypt with the given algorithm, save, reopen,
-     *  and return the resolved encryption dictionary from the trailer. */
+    /// Build a tiny 1-page doc, encrypt with the given algorithm, save, reopen,
+    ///  and return the resolved encryption dictionary from the trailer.
     private PdfDictionary saveAndGetEncryptDict(CryptoAlgorithm algorithm, String label) throws IOException {
         Path out = tempDir.resolve(label + ".pdf");
         try (Document doc = new Document()) {

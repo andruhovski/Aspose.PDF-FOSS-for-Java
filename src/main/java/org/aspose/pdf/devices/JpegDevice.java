@@ -5,20 +5,18 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageOutputStream;
-import java.awt.Graphics2D;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Iterator;
 import java.util.logging.Logger;
 
-/**
- * Renders a PDF page to JPEG format with configurable compression quality.
- * <p>
- * JPEG does not support alpha, so the rendered image is flattened to an
- * opaque RGB image with a white background before encoding.
- * </p>
- */
+/// Renders a PDF page to JPEG format with configurable compression quality.
+///
+/// JPEG does not support alpha, so the rendered image is flattened to an
+/// opaque RGB image with a white background before encoding.
+///
 public class JpegDevice extends PageDevice {
 
     private static final Logger LOG = Logger.getLogger(JpegDevice.class.getName());
@@ -26,102 +24,82 @@ public class JpegDevice extends PageDevice {
     private final int quality;
     private RenderingOptions renderingOptions;
 
-    /**
-     * Creates a JPEG device with the default 150 DPI resolution and quality 100.
-     */
+    /// Creates a JPEG device with the default 150 DPI resolution and quality 100.
     public JpegDevice() {
         this(new Resolution(150), 100);
     }
 
-    /**
-     * Creates a JPEG device with the default 150 DPI resolution and the given
-     * quality.
-     *
-     * @param quality the JPEG compression quality (1-100, 100 = best)
-     */
+    /// Creates a JPEG device with the default 150 DPI resolution and the given
+    /// quality.
+    ///
+    /// @param quality the JPEG compression quality (1-100, 100 = best)
     public JpegDevice(int quality) {
         this(new Resolution(150), quality);
     }
 
-    /**
-     * Creates a JPEG device with explicit pixel dimensions and the default
-     * 150 DPI resolution + quality 100.
-     *
-     * @param width  target width in pixels
-     * @param height target height in pixels
-     */
+    /// Creates a JPEG device with explicit pixel dimensions and the default
+    /// 150 DPI resolution + quality 100.
+    ///
+    /// @param width  target width in pixels
+    /// @param height target height in pixels
     public JpegDevice(int width, int height) {
         this(width, height, new Resolution(150), 100);
     }
 
-    /**
-     * Creates a JPEG device with explicit pixel dimensions, resolution, and
-     * default quality 100.
-     *
-     * @param width      target width in pixels
-     * @param height     target height in pixels
-     * @param resolution the rendering resolution
-     */
+    /// Creates a JPEG device with explicit pixel dimensions, resolution, and
+    /// default quality 100.
+    ///
+    /// @param width      target width in pixels
+    /// @param height     target height in pixels
+    /// @param resolution the rendering resolution
     public JpegDevice(int width, int height, Resolution resolution) {
         this(width, height, resolution, 100);
     }
 
-    /**
-     * Creates a JPEG device with the given resolution and default quality (100).
-     *
-     * @param resolution the rendering resolution
-     */
+    /// Creates a JPEG device with the given resolution and default quality (100).
+    ///
+    /// @param resolution the rendering resolution
     public JpegDevice(Resolution resolution) {
         this(resolution, 100);
     }
 
-    /**
-     * Creates a JPEG device with the given resolution and quality.
-     *
-     * @param resolution the rendering resolution
-     * @param quality    the JPEG compression quality (1-100, 100 = best)
-     */
+    /// Creates a JPEG device with the given resolution and quality.
+    ///
+    /// @param resolution the rendering resolution
+    /// @param quality    the JPEG compression quality (1-100, 100 = best)
     public JpegDevice(Resolution resolution, int quality) {
         super(resolution);
         this.quality = Math.max(1, Math.min(100, quality));
     }
 
-    /**
-     * Creates a JPEG device with explicit dimensions, resolution, and quality.
-     *
-     * @param width      target width in pixels
-     * @param height     target height in pixels
-     * @param resolution the rendering resolution
-     * @param quality    the JPEG compression quality (1-100)
-     */
+    /// Creates a JPEG device with explicit dimensions, resolution, and quality.
+    ///
+    /// @param width      target width in pixels
+    /// @param height     target height in pixels
+    /// @param resolution the rendering resolution
+    /// @param quality    the JPEG compression quality (1-100)
     public JpegDevice(int width, int height, Resolution resolution, int quality) {
         super(width, height, resolution);
         this.quality = Math.max(1, Math.min(100, quality));
     }
 
-    /**
-     * Returns the JPEG quality setting.
-     *
-     * @return the quality (1-100)
-     */
+    /// Returns the JPEG quality setting.
+    ///
+    /// @return the quality (1-100)
     public int getQuality() {
         return quality;
     }
 
-    /**
-     * Returns the rendering options.
-     *
-     * @return the rendering options, or null
-     */
+    /// Returns the rendering options.
+    ///
+    /// @return the rendering options, or null
     public RenderingOptions getRenderingOptions() {
         return renderingOptions;
     }
 
-    /**
-     * Sets the rendering options.
-     *
-     * @param options the rendering options
-     */
+    /// Sets the rendering options.
+    ///
+    /// @param options the rendering options
     public void setRenderingOptions(RenderingOptions options) {
         this.renderingOptions = options;
     }

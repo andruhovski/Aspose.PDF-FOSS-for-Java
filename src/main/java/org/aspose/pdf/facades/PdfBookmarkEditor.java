@@ -1,57 +1,41 @@
 package org.aspose.pdf.facades;
 
-import org.aspose.pdf.Color;
-import org.aspose.pdf.Document;
-import org.aspose.pdf.ExplicitDestination;
-import org.aspose.pdf.GoToAction;
-import org.aspose.pdf.OutlineCollection;
-import org.aspose.pdf.OutlineItemCollection;
-import org.aspose.pdf.Page;
-import org.aspose.pdf.PageCollection;
-import org.aspose.pdf.PdfAction;
-import org.aspose.pdf.XYZExplicitDestination;
+import org.aspose.pdf.*;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Provides methods for creating, extracting, and deleting bookmarks (outlines)
- * in a PDF document.
- */
+/// Provides methods for creating, extracting, and deleting bookmarks (outlines)
+/// in a PDF document.
 public class PdfBookmarkEditor implements AutoCloseable {
 
     private static final Logger LOG = Logger.getLogger(PdfBookmarkEditor.class.getName());
 
     private Document document;
 
-    /**
-     * Creates a new {@code PdfBookmarkEditor} instance.
-     */
+    /// Creates a new `PdfBookmarkEditor` instance.
     public PdfBookmarkEditor() {
     }
 
-    /** Creates a new editor bound to {@code document}. */
+    /// Creates a new editor bound to `document`.
     public PdfBookmarkEditor(Document document) {
         bindPdf(document);
     }
 
-    /** Returns the bound document, or {@code null}. Mirrors C# {@code PdfBookmarkEditor.Document}. */
+    /// Returns the bound document, or `null`. Mirrors C# `PdfBookmarkEditor.Document`.
     public Document getDocument() {
         return document;
     }
 
-    /**
-     * Binds a PDF file to this editor.
-     *
-     * @param inputFile path to the PDF file
-     * @return {@code true} on success
-     */
+    /// Binds a PDF file to this editor.
+    ///
+    /// @param inputFile path to the PDF file
+    /// @return `true` on success
     public boolean bindPdf(String inputFile) {
         try {
             this.document = new Document(inputFile);
@@ -62,12 +46,10 @@ public class PdfBookmarkEditor implements AutoCloseable {
         }
     }
 
-    /**
-     * Binds a PDF from an input stream.
-     *
-     * @param inputStream the input stream containing PDF data
-     * @return {@code true} on success
-     */
+    /// Binds a PDF from an input stream.
+    ///
+    /// @param inputStream the input stream containing PDF data
+    /// @return `true` on success
     public boolean bindPdf(InputStream inputStream) {
         try {
             this.document = new Document(inputStream);
@@ -78,12 +60,10 @@ public class PdfBookmarkEditor implements AutoCloseable {
         }
     }
 
-    /**
-     * Binds an existing {@link Document} to this editor.
-     *
-     * @param document the document to bind
-     * @return {@code true} on success
-     */
+    /// Binds an existing [Document] to this editor.
+    ///
+    /// @param document the document to bind
+    /// @return `true` on success
     public boolean bindPdf(Document document) {
         if (document == null) {
             LOG.warning("Cannot bind null document");
@@ -93,12 +73,10 @@ public class PdfBookmarkEditor implements AutoCloseable {
         return true;
     }
 
-    /**
-     * Saves the bound document to a file.
-     *
-     * @param outputFile path to the output file
-     * @return {@code true} on success
-     */
+    /// Saves the bound document to a file.
+    ///
+    /// @param outputFile path to the output file
+    /// @return `true` on success
     public boolean save(String outputFile) {
         try {
             document.requestFullRewrite();
@@ -110,12 +88,10 @@ public class PdfBookmarkEditor implements AutoCloseable {
         }
     }
 
-    /**
-     * Saves the bound document to an output stream.
-     *
-     * @param outputStream the output stream
-     * @return {@code true} on success
-     */
+    /// Saves the bound document to an output stream.
+    ///
+    /// @param outputStream the output stream
+    /// @return `true` on success
     public boolean save(OutputStream outputStream) {
         try {
             document.requestFullRewrite();
@@ -127,21 +103,13 @@ public class PdfBookmarkEditor implements AutoCloseable {
         }
     }
 
-    /**
-     * Extracts all bookmarks from the bound document as a {@link Bookmarks} collection.
-     * Child bookmarks are extracted recursively.
-     *
-     * @return the bookmarks collection, or an empty collection if none exist
-     */
-    /**
-     * Exports the document's bookmark tree to an XML file. Mirrors the C#
-     * facade method of the same name. The schema is a simple recursive
-     * {@code <Bookmark>} hierarchy carrying {@code Title}, {@code PageNumber},
-     * {@code Action} and (optionally) nested {@code <Bookmark>} children.
-     *
-     * @param xmlFile path to the output XML file
-     * @throws java.io.IOException on write failure
-     */
+    /// Exports the document's bookmark tree to an XML file. Mirrors the C#
+    /// facade method of the same name. The schema is a simple recursive
+    /// `<Bookmark>` hierarchy carrying `Title`, `PageNumber`,
+    /// `Action` and (optionally) nested `<Bookmark>` children.
+    ///
+    /// @param xmlFile path to the output XML file
+    /// @throws java.io.IOException on write failure
     public void exportBookmarksToXML(String xmlFile) throws java.io.IOException {
         Bookmarks bookmarks = extractBookmarks();
         StringBuilder sb = new StringBuilder();
@@ -155,14 +123,12 @@ public class PdfBookmarkEditor implements AutoCloseable {
                 sb.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
     }
 
-    /**
-     * Imports a bookmark tree previously written by
-     * {@link #exportBookmarksToXML(String)} and adds it to the bound document's
-     * outline.
-     *
-     * @param xmlFile path to the XML file
-     * @throws java.io.IOException on read or parse failure
-     */
+    /// Imports a bookmark tree previously written by
+    /// [#exportBookmarksToXML(String)] and adds it to the bound document's
+    /// outline.
+    ///
+    /// @param xmlFile path to the XML file
+    /// @throws java.io.IOException on read or parse failure
     public void importBookmarksWithXML(String xmlFile) throws java.io.IOException {
         if (document == null) {
             LOG.warning("importBookmarksWithXML called with no bound document");
@@ -285,6 +251,10 @@ public class PdfBookmarkEditor implements AutoCloseable {
         return null;
     }
 
+    /// Extracts all bookmarks from the bound document as a [Bookmarks] collection.
+    /// Child bookmarks are extracted recursively.
+    ///
+    /// @return the bookmarks collection, or an empty collection if none exist
     public Bookmarks extractBookmarks() {
         Bookmarks result = new Bookmarks();
         try {
@@ -301,10 +271,8 @@ public class PdfBookmarkEditor implements AutoCloseable {
         return result;
     }
 
-    /**
-     * Creates bookmarks for all pages in the document.
-     * Each bookmark is titled "Page N" where N is the 1-based page number.
-     */
+    /// Creates bookmarks for all pages in the document.
+    /// Each bookmark is titled "Page N" where N is the 1-based page number.
     public void createBookmarks() {
         try {
             OutlineCollection outlines = document.getOutlines();
@@ -322,13 +290,11 @@ public class PdfBookmarkEditor implements AutoCloseable {
         }
     }
 
-    /**
-     * Creates bookmarks for all pages with specified visual properties.
-     *
-     * @param color  the text color for bookmarks
-     * @param bold   whether to display bookmarks in bold
-     * @param italic whether to display bookmarks in italic
-     */
+    /// Creates bookmarks for all pages with specified visual properties.
+    ///
+    /// @param color  the text color for bookmarks
+    /// @param bold   whether to display bookmarks in bold
+    /// @param italic whether to display bookmarks in italic
     public void createBookmarks(Color color, boolean bold, boolean italic) {
         try {
             OutlineCollection outlines = document.getOutlines();
@@ -349,12 +315,10 @@ public class PdfBookmarkEditor implements AutoCloseable {
         }
     }
 
-    /**
-     * Extracts bookmarks matching the specified title from the bound document.
-     *
-     * @param title the title to match
-     * @return the matching bookmarks, or an empty collection if none found
-     */
+    /// Extracts bookmarks matching the specified title from the bound document.
+    ///
+    /// @param title the title to match
+    /// @return the matching bookmarks, or an empty collection if none found
     public Bookmarks extractBookmarks(String title) {
         Bookmarks result = new Bookmarks();
         try {
@@ -369,9 +333,7 @@ public class PdfBookmarkEditor implements AutoCloseable {
         return result;
     }
 
-    /**
-     * Recursively collects bookmarks matching the specified title.
-     */
+    /// Recursively collects bookmarks matching the specified title.
     private void collectMatchingBookmarks(OutlineItemCollection item, String title,
                                           Bookmarks result, int level) {
         if (title.equals(item.getTitle())) {
@@ -384,13 +346,11 @@ public class PdfBookmarkEditor implements AutoCloseable {
         }
     }
 
-    /**
-     * Creates a bookmark pointing to the specified page and adds it to the document outlines.
-     *
-     * @param title      the bookmark title
-     * @param pageNumber the 1-based page number
-     * @return {@code true} on success
-     */
+    /// Creates a bookmark pointing to the specified page and adds it to the document outlines.
+    ///
+    /// @param title      the bookmark title
+    /// @param pageNumber the 1-based page number
+    /// @return `true` on success
     public boolean createBookmarkOfPage(String title, int pageNumber) {
         try {
             OutlineCollection outlines = document.getOutlines();
@@ -407,11 +367,9 @@ public class PdfBookmarkEditor implements AutoCloseable {
         }
     }
 
-    /**
-     * Deletes all bookmarks from the document.
-     *
-     * @return {@code true} on success
-     */
+    /// Deletes all bookmarks from the document.
+    ///
+    /// @return `true` on success
     public boolean deleteBookmarks() {
         try {
             OutlineCollection outlines = document.getOutlines();
@@ -424,12 +382,10 @@ public class PdfBookmarkEditor implements AutoCloseable {
         }
     }
 
-    /**
-     * Deletes bookmarks with the specified title.
-     *
-     * @param title the title of bookmarks to delete
-     * @return {@code true} on success
-     */
+    /// Deletes bookmarks with the specified title.
+    ///
+    /// @param title the title of bookmarks to delete
+    /// @return `true` on success
     public boolean deleteBookmarks(String title) {
         try {
             OutlineCollection outlines = document.getOutlines();
@@ -453,9 +409,7 @@ public class PdfBookmarkEditor implements AutoCloseable {
         }
     }
 
-    /**
-     * Closes the editor and releases the bound document.
-     */
+    /// Closes the editor and releases the bound document.
     public void close() {
         if (document != null) {
             try {
@@ -467,9 +421,7 @@ public class PdfBookmarkEditor implements AutoCloseable {
         }
     }
 
-    /**
-     * Recursively converts an {@link OutlineItemCollection} to a {@link Bookmark}.
-     */
+    /// Recursively converts an [OutlineItemCollection] to a [Bookmark].
     private Bookmark convertOutline(OutlineItemCollection item) {
         Bookmark bm = new Bookmark();
         bm.setTitle(item.getTitle());

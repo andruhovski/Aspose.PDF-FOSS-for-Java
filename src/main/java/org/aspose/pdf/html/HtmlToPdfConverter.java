@@ -5,7 +5,6 @@ import org.aspose.pdf.annotations.LinkAnnotation;
 import org.aspose.pdf.engine.layout.TextLayoutHelper;
 import org.aspose.pdf.text.TextFragment;
 import org.aspose.pdf.text.TextState;
-
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -14,19 +13,20 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Converts HTML content to a PDF {@link Document}.
- * <p>
- * Supported HTML elements: h1–h6, p, div, span, b/strong, i/em, u,
- * br, table/tr/td/th, ul/ol/li, img (base64 data URIs), a.
- * Inline CSS styles for font, color, and layout are parsed and applied.
- * </p>
- */
+/// Converts HTML content to a PDF [Document].
+///
+/// Supported HTML elements: h1–h6, p, div, span, b/strong, i/em, u,
+/// br, table/tr/td/th, ul/ol/li, img (base64 data URIs), a.
+/// Inline CSS styles for font, color, and layout are parsed and applied.
+///
 public class HtmlToPdfConverter {
 
     private static final Logger LOG = Logger.getLogger(HtmlToPdfConverter.class.getName());
@@ -42,7 +42,9 @@ public class HtmlToPdfConverter {
     private static final Pattern BR_TAG = Pattern.compile("(?is)<br\\b[^>]*>");
     private static final Pattern P_OPEN_TAG = Pattern.compile("(?is)<p\\b[^>]*>");
     private static final Pattern LI_OPEN_TAG = Pattern.compile("(?is)<li\\b[^>]*>");
-    /** Matches <h1>..<h6> opening tags; replacement is built from the captured digit. */
+    /// Matches
+    /// # ..
+    /// ###### opening tags; replacement is built from the captured digit.
     private static final Pattern H_OPEN_TAG = Pattern.compile("(?is)<h([1-6])\\b[^>]*>");
     private static final Pattern LEGACY_BLOCK_TAG = Pattern.compile("(?is)<(p|li|h[1-6])\\b");
     private static final Pattern ANY_TAG = Pattern.compile("(?is)<[^>]*>");
@@ -51,21 +53,17 @@ public class HtmlToPdfConverter {
     private static final Pattern LEGACY_PAGE_SPAN =
             Pattern.compile("(?is)<span\\b[^>]*class\\s*=\\s*['\"][^'\"]*page[^'\"]*['\"][^>]*>\\s*(\\d+)\\s*</span>");
 
-    /**
-     * Internal non-rendering marker used to preserve explicit HTML page breaks
-     * until we redistribute paragraphs across PDF pages.
-     */
+    /// Internal non-rendering marker used to preserve explicit HTML page breaks
+    /// until we redistribute paragraphs across PDF pages.
     private static final class PageBreakParagraph extends BaseParagraph {
     }
 
-    /**
-     * Converts an HTML input stream to a PDF Document.
-     *
-     * @param htmlStream the HTML content
-     * @param options    load options (may be null)
-     * @return a new Document with the HTML content rendered as PDF paragraphs
-     * @throws IOException if reading or parsing fails
-     */
+    /// Converts an HTML input stream to a PDF Document.
+    ///
+    /// @param htmlStream the HTML content
+    /// @param options    load options (may be null)
+    /// @return a new Document with the HTML content rendered as PDF paragraphs
+    /// @throws IOException if reading or parsing fails
     public Document convert(InputStream htmlStream, HtmlLoadOptions options) throws IOException {
         String html = readAll(htmlStream);
         org.w3c.dom.Document dom = HtmlTagParser.parse(html);
@@ -97,14 +95,12 @@ public class HtmlToPdfConverter {
         return doc;
     }
 
-    /**
-     * Converts an HTML string to a PDF Document.
-     *
-     * @param html    the HTML string
-     * @param options load options (may be null)
-     * @return a new Document
-     * @throws IOException if parsing fails
-     */
+    /// Converts an HTML string to a PDF Document.
+    ///
+    /// @param html    the HTML string
+    /// @param options load options (may be null)
+    /// @return a new Document
+    /// @throws IOException if parsing fails
     public Document convert(String html, HtmlLoadOptions options) throws IOException {
         return convert(new ByteArrayInputStream(html.getBytes(StandardCharsets.UTF_8)), options);
     }
@@ -254,21 +250,19 @@ public class HtmlToPdfConverter {
         }
     }
 
-    /**
-     * Renders an HTML anchor ({@code <a href="…">…</a>}) by emitting its inline
-     * text as usual and synthesising a {@link LinkAnnotation} carrying a
-     * {@link GoToURIAction} for the {@code href}.
-     *
-     * <p>Closes BUG-059: previously {@code <a>} fell through to the default
-     * branch which rendered the text but dropped the link target entirely.</p>
-     *
-     * <p>Position note: the annotation rectangle is an approximation based on
-     * the current text fragment in the page paragraph collection — sufficient
-     * for round-tripping the URI (the test target) and for hit-testing the
-     * roughly-correct area. Pixel-accurate positioning would require a
-     * post-layout pass after {@link Document#save}, which is out of scope for
-     * this fix.</p>
-     */
+    /// Renders an HTML anchor (`<a href="…">…</a>`) by emitting its inline
+    /// text as usual and synthesising a [LinkAnnotation] carrying a
+    /// [GoToURIAction] for the `href`.
+    ///
+    /// Closes BUG-059: previously `<a>` fell through to the default
+    /// branch which rendered the text but dropped the link target entirely.
+    ///
+    /// Position note: the annotation rectangle is an approximation based on
+    /// the current text fragment in the page paragraph collection — sufficient
+    /// for round-tripping the URI (the test target) and for hit-testing the
+    /// roughly-correct area. Pixel-accurate positioning would require a
+    /// post-layout pass after [Document#save], which is out of scope for
+    /// this fix.
     private void processAnchor(Element el, Page page, CssContext ctx) {
         String href = el.getAttribute("href");
         if (href == null || href.isEmpty()) {

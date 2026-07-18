@@ -7,13 +7,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Represents a parsed ASN.1 DER (Distinguished Encoding Rules) node.
- * <p>
- * Each DER value is a TLV (Tag-Length-Value) triple. Constructed types
- * (SEQUENCE, SET, context tags) contain child nodes.
- * </p>
- */
+/// Represents a parsed ASN.1 DER (Distinguished Encoding Rules) node.
+///
+/// Each DER value is a TLV (Tag-Length-Value) triple. Constructed types
+/// (SEQUENCE, SET, context tags) contain child nodes.
+///
 public class DERNode {
 
     private final int tag;
@@ -28,30 +26,24 @@ public class DERNode {
         this.constructed = constructed;
     }
 
-    /**
-     * Parses a DER-encoded byte array into a node tree.
-     *
-     * @param data the DER bytes
-     * @return the root node
-     * @throws IOException if parsing fails
-     */
+    /// Parses a DER-encoded byte array into a node tree.
+    ///
+    /// @param data the DER bytes
+    /// @return the root node
+    /// @throws IOException if parsing fails
     public static DERNode parse(byte[] data) throws IOException {
         return parse(data, 0, data.length);
     }
 
-    /**
-     * Parses starting at offset, consuming up to limit.
-     * Returns a single node. Use parseAll for multiple.
-     */
+    /// Parses starting at offset, consuming up to limit.
+    /// Returns a single node. Use parseAll for multiple.
     public static DERNode parse(byte[] data, int offset, int limit) throws IOException {
         if (offset >= limit) throw new IOException("DER: unexpected end of data at offset " + offset);
         int[] pos = {offset};
         return parseNode(data, pos, limit);
     }
 
-    /**
-     * Parses all sequential nodes between offset and limit.
-     */
+    /// Parses all sequential nodes between offset and limit.
     public static List<DERNode> parseAll(byte[] data, int offset, int limit) throws IOException {
         List<DERNode> nodes = new ArrayList<>();
         int[] pos = {offset};
@@ -101,24 +93,24 @@ public class DERNode {
 
     // ── Accessors ──
 
-    /** Returns the tag byte. */
+    /// Returns the tag byte.
     public int getTag() { return tag; }
 
-    /** Returns the raw value bytes. */
+    /// Returns the raw value bytes.
     public byte[] getValue() { return value; }
 
-    /** Returns child nodes (for constructed types). */
+    /// Returns child nodes (for constructed types).
     public List<DERNode> getChildren() { return children; }
 
-    /** Returns true if this is a constructed type. */
+    /// Returns true if this is a constructed type.
     public boolean isConstructed() { return constructed; }
 
-    /** Returns the child at the given index. */
+    /// Returns the child at the given index.
     public DERNode getChild(int index) {
         return children.get(index);
     }
 
-    /** Returns the number of children. */
+    /// Returns the number of children.
     public int getChildCount() { return children.size(); }
 
     // ── Type checks ──
@@ -134,12 +126,12 @@ public class DERNode {
 
     // ── Value extraction ──
 
-    /** Extracts an INTEGER value. */
+    /// Extracts an INTEGER value.
     public BigInteger getInteger() {
         return new BigInteger(value);
     }
 
-    /** Decodes an OID to dotted string. */
+    /// Decodes an OID to dotted string.
     public String getOID() {
         if (value.length == 0) return "";
         StringBuilder sb = new StringBuilder();
@@ -157,13 +149,13 @@ public class DERNode {
         return sb.toString();
     }
 
-    /** Extracts a string value (PrintableString, UTF8String, IA5String, etc.). */
+    /// Extracts a string value (PrintableString, UTF8String, IA5String, etc.).
     public String getString() {
         if (tag == 0x0C) return new String(value, StandardCharsets.UTF_8);
         return new String(value, StandardCharsets.ISO_8859_1);
     }
 
-    /** Returns the total DER-encoded size of this node. */
+    /// Returns the total DER-encoded size of this node.
     public int getEncodedSize() {
         return 1 + DEREncoder.encodedLengthSize(value.length) + value.length;
     }

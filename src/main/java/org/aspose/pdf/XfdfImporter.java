@@ -1,31 +1,31 @@
 package org.aspose.pdf;
 
 import org.aspose.pdf.annotations.*;
-import org.aspose.pdf.engine.pdfobjects.*;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfFloat;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 import org.aspose.pdf.forms.Field;
 import org.aspose.pdf.forms.Form;
-
-import javax.xml.parsers.DocumentBuilder;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import javax.xml.parsers.DocumentBuilder;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
 
-/**
- * Imports annotations and form field data from XFDF (XML Forms Data Format) into a PDF document,
- * per XFDF Specification Version 3.0 (August 2009).
- * <p>
- * Uses {@code javax.xml.parsers.DocumentBuilder} for robust XML parsing.
- * Supports all annotation types, attributes, child elements, and form field values.
- * </p>
- *
- * @see XfdfExporter
- */
+/// Imports annotations and form field data from XFDF (XML Forms Data Format) into a PDF document,
+/// per XFDF Specification Version 3.0 (August 2009).
+///
+/// Uses `javax.xml.parsers.DocumentBuilder` for robust XML parsing.
+/// Supports all annotation types, attributes, child elements, and form field values.
+///
+/// @see XfdfExporter
 public final class XfdfImporter {
 
     private static final Logger LOG = Logger.getLogger(XfdfImporter.class.getName());
@@ -53,7 +53,7 @@ public final class XfdfImporter {
         ELEMENT_TO_SUBTYPE.put("redact", "Redact");
     }
 
-    /** Flag name to bit position mapping per XFDF spec. */
+    /// Flag name to bit position mapping per XFDF spec.
     private static final Map<String, Integer> FLAG_BITS = new HashMap<>();
 
     static {
@@ -73,14 +73,12 @@ public final class XfdfImporter {
         // utility class
     }
 
-    /**
-     * Imports annotations and form fields from an XFDF file into the document.
-     *
-     * @param document the target document
-     * @param filePath the path to the XFDF file
-     * @throws IOException              if reading fails
-     * @throws IllegalArgumentException if document or filePath is null
-     */
+    /// Imports annotations and form fields from an XFDF file into the document.
+    ///
+    /// @param document the target document
+    /// @param filePath the path to the XFDF file
+    /// @throws IOException              if reading fails
+    /// @throws IllegalArgumentException if document or filePath is null
     public static void importXfdf(Document document, String filePath) throws IOException {
         if (filePath == null) {
             throw new IllegalArgumentException("File path must not be null");
@@ -90,26 +88,22 @@ public final class XfdfImporter {
         }
     }
 
-    /**
-     * Imports annotations and form fields from an XFDF input stream into the document.
-     *
-     * @param document the target document
-     * @param input    the input stream containing XFDF XML
-     * @throws IOException              if reading fails
-     * @throws IllegalArgumentException if document or input is null
-     */
+    /// Imports annotations and form fields from an XFDF input stream into the document.
+    ///
+    /// @param document the target document
+    /// @param input    the input stream containing XFDF XML
+    /// @throws IOException              if reading fails
+    /// @throws IllegalArgumentException if document or input is null
     public static void importXfdf(Document document, InputStream input) throws IOException {
         importXfdf(document, input, null);
     }
 
-    /**
-     * Imports annotations from an XFDF input stream, optionally filtering by type.
-     *
-     * @param document the target document
-     * @param input    the input stream containing XFDF XML
-     * @param allowedTypes annotation subtypes to import (null = all)
-     * @throws IOException if reading or parsing fails
-     */
+    /// Imports annotations from an XFDF input stream, optionally filtering by type.
+    ///
+    /// @param document the target document
+    /// @param input    the input stream containing XFDF XML
+    /// @param allowedTypes annotation subtypes to import (null = all)
+    /// @throws IOException if reading or parsing fails
     public static void importXfdf(Document document, InputStream input, Set<String> allowedTypes) throws IOException {
         if (document == null) {
             throw new IllegalArgumentException("Document must not be null");
@@ -144,9 +138,7 @@ public final class XfdfImporter {
         }
     }
 
-    /**
-     * Imports form field values from the {@code <fields>} section.
-     */
+    /// Imports form field values from the `<fields>` section.
     private static void importFields(Document doc, Node fieldsNode) {
         try {
             Form form = doc.getForm();
@@ -157,9 +149,7 @@ public final class XfdfImporter {
         }
     }
 
-    /**
-     * Recursively imports field values from nested {@code <field>} elements.
-     */
+    /// Recursively imports field values from nested `<field>` elements.
     private static void importFieldChildren(Document doc, Node parent, String parentName) {
         NodeList children = parent.getChildNodes();
         for (int i = 0; i < children.getLength(); i++) {
@@ -191,9 +181,7 @@ public final class XfdfImporter {
         }
     }
 
-    /**
-     * Imports annotations from the {@code <annots>} section.
-     */
+    /// Imports annotations from the `<annots>` section.
     private static void importAnnotations(Document doc, Node annotsNode, Set<String> allowedTypes) throws IOException {
         PageCollection pages = doc.getPages();
         NodeList children = annotsNode.getChildNodes();
@@ -236,9 +224,7 @@ public final class XfdfImporter {
         }
     }
 
-    /**
-     * Imports a single annotation element with all its attributes and child elements.
-     */
+    /// Imports a single annotation element with all its attributes and child elements.
     private static void importAnnotation(Element elem, String subtype, PageCollection pages) {
         // Page index (0-based in XFDF)
         int pageIndex = getIntAttr(elem, "page", 0);
@@ -434,9 +420,7 @@ public final class XfdfImporter {
         }
     }
 
-    /**
-     * Creates a typed annotation based on the subtype.
-     */
+    /// Creates a typed annotation based on the subtype.
     private static Annotation createAnnotation(String subtype, Page page, Rectangle rect) {
         switch (subtype) {
             case "Text": return new TextAnnotation(page, rect);
@@ -463,9 +447,7 @@ public final class XfdfImporter {
         }
     }
 
-    /**
-     * Parses XFDF flags string ("print,nozoom,norotate") to integer bitmask.
-     */
+    /// Parses XFDF flags string ("print,nozoom,norotate") to integer bitmask.
     public static int parseFlagsString(String flagsStr) {
         // Try parsing as integer first (backwards compatibility)
         try {
@@ -485,9 +467,7 @@ public final class XfdfImporter {
         return flags;
     }
 
-    /**
-     * Parses a rect string "llx,lly,urx,ury" into a Rectangle.
-     */
+    /// Parses a rect string "llx,lly,urx,ury" into a Rectangle.
     private static Rectangle parseRect(String rectStr) {
         if (rectStr == null || rectStr.isEmpty()) return null;
         String[] parts = rectStr.split(",");
@@ -504,9 +484,7 @@ public final class XfdfImporter {
         }
     }
 
-    /**
-     * Parses a hex color string like "#RRGGBB" into a Color.
-     */
+    /// Parses a hex color string like "#RRGGBB" into a Color.
     public static Color parseHexColor(String hex) {
         if (hex == null || hex.isEmpty()) return null;
         if (hex.startsWith("#")) hex = hex.substring(1);
@@ -533,9 +511,7 @@ public final class XfdfImporter {
         return null;
     }
 
-    /**
-     * Gets the text content of the first child element with the given tag name.
-     */
+    /// Gets the text content of the first child element with the given tag name.
     private static String getChildText(Element parent, String tagName) {
         NodeList children = parent.getElementsByTagName(tagName);
         if (children.getLength() > 0) {
@@ -545,9 +521,7 @@ public final class XfdfImporter {
         return null;
     }
 
-    /**
-     * Gets an integer attribute value, returning the default if not present or invalid.
-     */
+    /// Gets an integer attribute value, returning the default if not present or invalid.
     private static int getIntAttr(Element elem, String name, int defaultValue) {
         String val = elem.getAttribute(name);
         if (val == null || val.isEmpty()) return defaultValue;
@@ -558,9 +532,7 @@ public final class XfdfImporter {
         }
     }
 
-    /**
-     * Parses a delimited string of numbers into a double array.
-     */
+    /// Parses a delimited string of numbers into a double array.
     private static double[] parseNumberList(String s, char delimiter) {
         if (s == null || s.isEmpty()) return null;
         String[] parts = s.split(String.valueOf(delimiter));
@@ -575,12 +547,10 @@ public final class XfdfImporter {
         return result;
     }
 
-    /**
-     * Unescapes XML entities in a string.
-     *
-     * @param s the string containing XML entities
-     * @return the unescaped string
-     */
+    /// Unescapes XML entities in a string.
+    ///
+    /// @param s the string containing XML entities
+    /// @return the unescaped string
     public static String unescapeXml(String s) {
         if (s == null) return null;
         return s.replace("&amp;", "&")

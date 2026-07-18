@@ -9,9 +9,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link PdfObjectKey}.
- */
+/// Tests for [PdfObjectKey].
 public class PdfObjectKeyTest {
 
     @Test

@@ -1,62 +1,59 @@
 package org.aspose.pdf.engine.xfa.model.template;
 
 import org.aspose.pdf.engine.xfa.model.XfaNode;
-import org.aspose.pdf.engine.xfa.model.XfaMeasurement;
 import org.w3c.dom.Element;
 
-/**
- * Typed XFA template element <code>breakBefore</code>. Attribute and child
- * accessors are typed; unknown attributes/children round-trip via the DOM.
- */
+/// Typed XFA template element `breakBefore`. Attribute and child
+/// accessors are typed; unknown attributes/children round-trip via the DOM.
 public final class BreakBefore extends XfaNode {
 
-    /** Wraps a backing <code>breakBefore</code> element. */
+    /// Wraps a backing `breakBefore` element.
     public BreakBefore(Element element, XfaNode parent) {
         super(element, parent);
     }
 
-    /** @return the typed <code>id</code> attribute, or null. */
+    /// @return the typed `id` attribute, or null.
     public String getId() { return getString("id"); }
-    /** Sets the <code>id</code> attribute. */
+    /// Sets the `id` attribute.
     public void setId(String value) { setAttribute("id", value); }
 
-    /** @return the typed <code>leader</code> attribute, or null. */
+    /// @return the typed `leader` attribute, or null.
     public String getLeader() { return getString("leader"); }
-    /** Sets the <code>leader</code> attribute. */
+    /// Sets the `leader` attribute.
     public void setLeader(String value) { setAttribute("leader", value); }
 
-    /** Allowed values of the <code>startNew</code> attribute. */
+    /// Allowed values of the `startNew` attribute.
     public enum StartNewValue {
         V_0("0"),
         V_1("1");
         private final String v;
         StartNewValue(String v) { this.v = v; }
-        /** @return the XFA attribute string for this value. */
+        /// @return the XFA attribute string for this value.
         public String value() { return v; }
-        /** @param s raw value @return the matching constant, or null. */
+        /// @param s raw value @return the matching constant, or null.
         public static StartNewValue fromValue(String s) {
             for (StartNewValue e : values()) { if (e.v.equals(s)) return e; }
             return null;
         }
     }
-    /** @return the typed <code>startNew</code> attribute, or null. */
+    /// @return the typed `startNew` attribute, or null.
     public StartNewValue getStartNew() {
         String v = getAttribute("startNew");
         return v == null ? null : StartNewValue.fromValue(v);
     }
-    /** Sets the <code>startNew</code> attribute. */
+    /// Sets the `startNew` attribute.
     public void setStartNew(StartNewValue value) {
         setAttribute("startNew", value == null ? null : value.value());
     }
-    /** @return the raw <code>startNew</code> string, or null. */
+    /// @return the raw `startNew` string, or null.
     public String getStartNewRaw() { return getAttribute("startNew"); }
 
-    /** @return the typed <code>target</code> attribute, or null. */
+    /// @return the typed `target` attribute, or null.
     public String getTarget() { return getString("target"); }
-    /** Sets the <code>target</code> attribute. */
+    /// Sets the `target` attribute.
     public void setTarget(String value) { setAttribute("target", value); }
 
-    /** Allowed values of the <code>targetType</code> attribute. */
+    /// Allowed values of the `targetType` attribute.
     public enum TargetTypeValue {
         AUTO("auto"),
         CONTENTAREA("contentArea"),
@@ -65,43 +62,43 @@ public final class BreakBefore extends XfaNode {
         PAGEODD("pageOdd");
         private final String v;
         TargetTypeValue(String v) { this.v = v; }
-        /** @return the XFA attribute string for this value. */
+        /// @return the XFA attribute string for this value.
         public String value() { return v; }
-        /** @param s raw value @return the matching constant, or null. */
+        /// @param s raw value @return the matching constant, or null.
         public static TargetTypeValue fromValue(String s) {
             for (TargetTypeValue e : values()) { if (e.v.equals(s)) return e; }
             return null;
         }
     }
-    /** @return the typed <code>targetType</code> attribute, or null. */
+    /// @return the typed `targetType` attribute, or null.
     public TargetTypeValue getTargetType() {
         String v = getAttribute("targetType");
         return v == null ? null : TargetTypeValue.fromValue(v);
     }
-    /** Sets the <code>targetType</code> attribute. */
+    /// Sets the `targetType` attribute.
     public void setTargetType(TargetTypeValue value) {
         setAttribute("targetType", value == null ? null : value.value());
     }
-    /** @return the raw <code>targetType</code> string, or null. */
+    /// @return the raw `targetType` string, or null.
     public String getTargetTypeRaw() { return getAttribute("targetType"); }
 
-    /** @return the typed <code>trailer</code> attribute, or null. */
+    /// @return the typed `trailer` attribute, or null.
     public String getTrailer() { return getString("trailer"); }
-    /** Sets the <code>trailer</code> attribute. */
+    /// Sets the `trailer` attribute.
     public void setTrailer(String value) { setAttribute("trailer", value); }
 
-    /** @return the typed <code>use</code> attribute, or null. */
+    /// @return the typed `use` attribute, or null.
     public String getUse() { return getString("use"); }
-    /** Sets the <code>use</code> attribute. */
+    /// Sets the `use` attribute.
     public void setUse(String value) { setAttribute("use", value); }
 
-    /** @return the typed <code>usehref</code> attribute, or null. */
+    /// @return the typed `usehref` attribute, or null.
     public String getUsehref() { return getString("usehref"); }
-    /** Sets the <code>usehref</code> attribute. */
+    /// Sets the `usehref` attribute.
     public void setUsehref(String value) { setAttribute("usehref", value); }
 
-    /** @return the <code>script</code> child (typed), or null. */
+    /// @return the `script` child (typed), or null.
     public Script getScript() { return (Script) getChild("script"); }
-    /** Ensures and returns the <code>script</code> child. */
+    /// Ensures and returns the `script` child.
     public Script ensureScript() { return (Script) ensureChild("script"); }
 }

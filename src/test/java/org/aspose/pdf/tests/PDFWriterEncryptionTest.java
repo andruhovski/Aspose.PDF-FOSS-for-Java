@@ -35,11 +35,9 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for PDFWriter encryption integration (Step 6 of BUG-011).
- * Verifies encrypt → save → reopen round-trip for RC4-128 and AES-128,
- * non-encrypted regression, and correct exclusion of the /Encrypt dict.
- */
+/// Tests for PDFWriter encryption integration (Step 6 of BUG-011).
+/// Verifies encrypt → save → reopen round-trip for RC4-128 and AES-128,
+/// non-encrypted regression, and correct exclusion of the /Encrypt dict.
 public class PDFWriterEncryptionTest {
 
     private static final SecureRandom RANDOM = new SecureRandom();
@@ -176,9 +174,7 @@ public class PDFWriterEncryptionTest {
 
     // ── Helpers ──
 
-    /**
-     * Creates a simple one-page PDF with the given text.
-     */
+    /// Creates a simple one-page PDF with the given text.
     private void createSimplePdf(String path, String text) throws IOException {
         Document doc = new Document();
         Page page = doc.getPages().add();
@@ -187,9 +183,7 @@ public class PDFWriterEncryptionTest {
         doc.close();
     }
 
-    /**
-     * Creates a PDF with a title in /Info and text on a page.
-     */
+    /// Creates a PDF with a title in /Info and text on a page.
     private void createPdfWithTitle(String path, String title, String text) throws IOException {
         // Create the base PDF first, then modify it to add /Info with title
         Document doc = new Document();
@@ -202,9 +196,7 @@ public class PDFWriterEncryptionTest {
         addInfoTitle(path, title);
     }
 
-    /**
-     * Opens a PDF, adds /Title to the /Info dict, and rewrites the file.
-     */
+    /// Opens a PDF, adds /Title to the /Info dict, and rewrites the file.
     private void addInfoTitle(String path, String title) throws IOException {
         RandomAccessReader reader = RandomAccessReader.fromFile(new File(path));
         PDFParser parser = new PDFParser(reader);
@@ -232,9 +224,7 @@ public class PDFWriterEncryptionTest {
         reader.close();
     }
 
-    /**
-     * Opens an unencrypted PDF, encrypts it, and saves to a new file.
-     */
+    /// Opens an unencrypted PDF, encrypts it, and saves to a new file.
     private void encryptFile(String input, String output,
                               String userPw, String ownerPw,
                               CryptoAlgorithm algorithm, int permissions) throws Exception {

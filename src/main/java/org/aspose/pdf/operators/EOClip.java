@@ -5,22 +5,20 @@ import org.aspose.pdf.engine.pdfobjects.PdfBase;
 
 import java.util.List;
 
-/**
- * Set clipping path operator (W*) using the even-odd rule.
- * <p>
- * Modifies the current clipping path by intersecting it with the current path,
- * using the even-odd rule to determine which regions lie inside the clipping path.
- * See ISO 32000-1:2008, §8.5.4, Table 61.
- * </p>
- */
+/// Set clipping path operator (W\*) using the even-odd rule.
+///
+/// Modifies the current clipping path by intersecting it with the current path,
+/// using the even-odd rule to determine which regions lie inside the clipping path.
+/// See ISO 32000-1:2008, §8.5.4, Table 61.
+///
 public class EOClip extends Operator {
 
-    /** Creates an EOClip operator. */
+    /// Creates an EOClip operator.
     public EOClip() {
         super("W*");
     }
 
-    /** Creates an EOClip operator from parsed operands. */
+    /// Creates an EOClip operator from parsed operands.
     public EOClip(List<PdfBase> operands) {
         super("W*", operands);
     }

@@ -1,73 +1,63 @@
 package org.aspose.pdf.forms;
 
-import org.aspose.pdf.*;
+import org.aspose.pdf.Page;
+import org.aspose.pdf.Rectangle;
 import org.aspose.pdf.annotations.Border;
 import org.aspose.pdf.annotations.WidgetAnnotation;
-import org.aspose.pdf.engine.pdfobjects.*;
 import org.aspose.pdf.engine.parser.PDFParser;
-import java.nio.charset.StandardCharsets;
+import org.aspose.pdf.engine.pdfobjects.*;
+
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Logger;
 
-/**
- * Abstract base for all form fields (ISO 32000-1:2008, §12.7.3).
- * <p>
- * Extends {@link WidgetAnnotation} since in PDF a form field and its widget
- * annotation are often merged into the same dictionary. Subclasses represent
- * specific field types: text, checkbox, radio, combo, list, button, and signature.
- * </p>
- */
+/// Abstract base for all form fields (ISO 32000-1:2008, §12.7.3).
+///
+/// Extends [WidgetAnnotation] since in PDF a form field and its widget
+/// annotation are often merged into the same dictionary. Subclasses represent
+/// specific field types: text, checkbox, radio, combo, list, button, and signature.
+///
 public abstract class
 Field extends WidgetAnnotation implements Iterable<Field> {
 
     private static final Logger LOG = Logger.getLogger(Field.class.getName());
 
-    /** The fully-qualified dotted field name. */
+    /// The fully-qualified dotted field name.
     protected String fullName;
 
-    /** The border of this form field. */
+    /// The border of this form field.
     private Border border;
 
-    /** Cached list of child fields loaded from /Kids. */
+    /// Cached list of child fields loaded from /Kids.
     private List<Field> childFields;
 
-    /**
-     * Constructs a field from an existing PDF dictionary.
-     *
-     * @param dict     the PDF dictionary backing this field
-     * @param page     the page this field belongs to (may be null)
-     * @param fullName the fully-qualified dotted name of the field
-     */
+    /// Constructs a field from an existing PDF dictionary.
+    ///
+    /// @param dict     the PDF dictionary backing this field
+    /// @param page     the page this field belongs to (may be null)
+    /// @param fullName the fully-qualified dotted name of the field
     protected Field(PdfDictionary dict, Page page, String fullName) {
         super(dict, page);
         this.fullName = fullName != null ? fullName : "";
     }
 
-    /**
-     * Returns the border of this form field.
-     *
-     * @return the border, or null if not set
-     */
+    /// Returns the border of this form field.
+    ///
+    /// @return the border, or null if not set
     public Border getBorder() { return border; }
 
-    /**
-     * Sets the border of this form field.
-     *
-     * @param border the border to set
-     */
+    /// Sets the border of this form field.
+    ///
+    /// @param border the border to set
     public void setBorder(Border border) { this.border = border; }
 
-    /** Actions collection for this field. */
+    /// Actions collection for this field.
     private org.aspose.pdf.annotations.AnnotationActionCollection actions;
 
-    /**
-     * Returns the action collection for this field.
-     *
-     * @return the annotation action collection
-     */
+    /// Returns the action collection for this field.
+    ///
+    /// @return the annotation action collection
     public org.aspose.pdf.annotations.AnnotationActionCollection getActions() {
         if (actions == null) {
             actions = new org.aspose.pdf.annotations.AnnotationActionCollection();
@@ -75,11 +65,9 @@ Field extends WidgetAnnotation implements Iterable<Field> {
         return actions;
     }
 
-    /**
-     * Sets the width of the field widget by adjusting the annotation rectangle.
-     *
-     * @param width the width in user-space units
-     */
+    /// Sets the width of the field widget by adjusting the annotation rectangle.
+    ///
+    /// @param width the width in user-space units
     public void setWidth(double width) {
         // Clamp width to a strictly positive value — Annotation.setRect rejects
         // degenerate rectangles per ISO 32000-1:2008 §12.5.2.
@@ -95,11 +83,9 @@ Field extends WidgetAnnotation implements Iterable<Field> {
         }
     }
 
-    /**
-     * Sets the height of the field widget by adjusting the annotation rectangle.
-     *
-     * @param height the height in user-space units
-     */
+    /// Sets the height of the field widget by adjusting the annotation rectangle.
+    ///
+    /// @param height the height in user-space units
     public void setHeight(double height) {
         // See setWidth for rationale on the positive-area clamp.
         double h = Math.max(height, 1);
@@ -111,32 +97,26 @@ Field extends WidgetAnnotation implements Iterable<Field> {
         }
     }
 
-    /**
-     * Returns the partial field name (/T entry).
-     *
-     * @return the partial name, or null if not set
-     */
+    /// Returns the partial field name (/T entry).
+    ///
+    /// @return the partial name, or null if not set
     public String getPartialName() {
         PdfBase t = dict.get("T");
         return (t instanceof PdfString) ? ((PdfString) t).getString() : null;
     }
 
-    /**
-     * Sets the partial field name (/T entry).
-     *
-     * @param name the partial name
-     */
+    /// Sets the partial field name (/T entry).
+    ///
+    /// @param name the partial name
     public void setPartialName(String name) {
         // Same BUG-054 path as setValue — let PdfString(String) decide between
         // PDFDocEncoding and UTF-16BE+BOM so non-Latin partial names round-trip.
         dict.set(PdfName.of("T"), new PdfString(name));
     }
 
-    /**
-     * Returns the fully-qualified dotted name of this field.
-     *
-     * @return the full name
-     */
+    /// Returns the fully-qualified dotted name of this field.
+    ///
+    /// @return the full name
     public String getFullName() {
         // If fullName was not set at construction, derive from partial name
         if ((fullName == null || fullName.isEmpty()) && getPartialName() != null) {
@@ -145,22 +125,18 @@ Field extends WidgetAnnotation implements Iterable<Field> {
         return fullName;
     }
 
-    /**
-     * Returns the alternate (tooltip) name (/TU entry).
-     *
-     * @return the alternate name, or null if not set
-     */
+    /// Returns the alternate (tooltip) name (/TU entry).
+    ///
+    /// @return the alternate name, or null if not set
     public String getAlternateName() {
         PdfBase tu = dict.get("TU");
         return (tu instanceof PdfString) ? ((PdfString) tu).getString() : null;
     }
 
-    /**
-     * Sets the alternate (tooltip) name (/TU entry) — the human-readable label a
-     * viewer shows for the field. {@code null} removes it.
-     *
-     * @param alternateName the tooltip text, or {@code null} to clear
-     */
+    /// Sets the alternate (tooltip) name (/TU entry) — the human-readable label a
+    /// viewer shows for the field. `null` removes it.
+    ///
+    /// @param alternateName the tooltip text, or `null` to clear
     public void setAlternateName(String alternateName) {
         if (alternateName == null) {
             dict.set("TU", null);
@@ -169,16 +145,13 @@ Field extends WidgetAnnotation implements Iterable<Field> {
         }
     }
 
-    /**
-     * Returns the field value (/V entry) as a string.
-     * <p>
-     * If /V is a {@link PdfString}, its string value is returned.
-     * If /V is a {@link PdfName}, the name string is returned.
-     * Otherwise null.
-     * </p>
-     *
-     * @return the value string, or null
-     */
+    /// Returns the field value (/V entry) as a string.
+    ///
+    /// If /V is a [PdfString], its string value is returned.
+    /// If /V is a [PdfName], the name string is returned.
+    /// Otherwise null.
+    ///
+    /// @return the value string, or null
     public String getValue() {
         PdfBase v = dict.get("V");
         if (v instanceof PdfString) return ((PdfString) v).getString();
@@ -186,11 +159,9 @@ Field extends WidgetAnnotation implements Iterable<Field> {
         return null;
     }
 
-    /**
-     * Sets the field value (/V entry).
-     *
-     * @param value the value string, or null to remove
-     */
+    /// Sets the field value (/V entry).
+    ///
+    /// @param value the value string, or null to remove
     public void setValue(String value) {
         if (value != null) {
             // BUG-054 fix: route via PdfString(String) so it picks PDFDocEncoding
@@ -204,11 +175,9 @@ Field extends WidgetAnnotation implements Iterable<Field> {
         }
     }
 
-    /**
-     * Returns the default value (/DV entry) as a string.
-     *
-     * @return the default value, or null
-     */
+    /// Returns the default value (/DV entry) as a string.
+    ///
+    /// @return the default value, or null
     public String getDefaultValue() {
         PdfBase dv = dict.get("DV");
         if (dv instanceof PdfString) return ((PdfString) dv).getString();
@@ -216,76 +185,62 @@ Field extends WidgetAnnotation implements Iterable<Field> {
         return null;
     }
 
-    /**
-     * Returns the field flags (/Ff entry).
-     *
-     * @return the flags integer (0 if not set)
-     */
+    /// Returns the field flags (/Ff entry).
+    ///
+    /// @return the flags integer (0 if not set)
     public int getFieldFlags() {
         return dict.getInt("Ff", 0);
     }
 
-    /**
-     * Sets the field flags (/Ff entry).
-     *
-     * @param flags the flags integer
-     */
+    /// Sets the field flags (/Ff entry).
+    ///
+    /// @param flags the flags integer
     public void setFieldFlags(int flags) {
         dict.set(PdfName.of("Ff"), PdfInteger.valueOf(flags));
     }
 
-    /**
-     * Returns whether this field is read-only (bit 1 of /Ff).
-     *
-     * @return true if read-only
-     */
+    /// Returns whether this field is read-only (bit 1 of /Ff).
+    ///
+    /// @return true if read-only
     public boolean isReadOnly() {
         return (getFieldFlags() & 1) != 0;
     }
 
-    /**
-     * Returns whether this field is required (bit 2 of /Ff).
-     *
-     * @return true if required
-     */
+    /// Returns whether this field is required (bit 2 of /Ff).
+    ///
+    /// @return true if required
     public boolean isRequired() {
         return (getFieldFlags() & 2) != 0;
     }
 
-    /**
-     * Returns whether this field is excluded from export (bit 3 of /Ff).
-     *
-     * @return true if no-export
-     */
+    /// Returns whether this field is excluded from export (bit 3 of /Ff).
+    ///
+    /// @return true if no-export
     public boolean isNoExport() {
         return (getFieldFlags() & 4) != 0;
     }
 
-    /**
-     * Returns the default appearance string (/DA entry).
-     *
-     * @return the DA string, or null
-     */
+    /// Returns the default appearance string (/DA entry).
+    ///
+    /// @return the DA string, or null
     public String getDefaultAppearance() {
         PdfBase da = dict.get("DA");
         return (da instanceof PdfString) ? ((PdfString) da).getString() : null;
     }
 
-    /**
-     * Sets the field's default appearance string (/DA entry).
-     *
-     * <p>Per ISO 32000-1:2008 §12.7.3.3, /DA shall contain at least a font
-     * selector (Tf) and a colour-setting operator. For example
-     * {@code "/Helv 12 Tf 0 g"} selects the Helvetica resource named
-     * {@code "Helv"} at 12pt and sets non-stroking colour to black.</p>
-     *
-     * <p>The font resource name referenced here must be present in the
-     * AcroForm's {@code /DR /Font} dictionary; {@link Form#add(Field)}
-     * lazily populates {@code /DR} with {@code /Helv} (Helvetica) and
-     * {@code /ZaDb} (ZapfDingbats) entries.</p>
-     *
-     * @param da the /DA string, or {@code null} to clear the entry
-     */
+    /// Sets the field's default appearance string (/DA entry).
+    ///
+    /// Per ISO 32000-1:2008 §12.7.3.3, /DA shall contain at least a font
+    /// selector (Tf) and a colour-setting operator. For example
+    /// `"/Helv 12 Tf 0 g"` selects the Helvetica resource named
+    /// `"Helv"` at 12pt and sets non-stroking colour to black.
+    ///
+    /// The font resource name referenced here must be present in the
+    /// AcroForm's `/DR /Font` dictionary; [Form#add(Field)]
+    /// lazily populates `/DR` with `/Helv` (Helvetica) and
+    /// `/ZaDb` (ZapfDingbats) entries.
+    ///
+    /// @param da the /DA string, or `null` to clear the entry
     public void setDefaultAppearance(String da) {
         if (da == null) {
             dict.remove(PdfName.of("DA"));
@@ -294,42 +249,36 @@ Field extends WidgetAnnotation implements Iterable<Field> {
         }
     }
 
-    /**
-     * Sets the field's text-alignment quadding ({@code /Q}, ISO 32000-1 §12.7.3.1): 0 = left-justified,
-     * 1 = centred, 2 = right-justified. Controls where the generated value appearance places the text
-     * within the widget box (e.g. a right-aligned numeric/currency column).
-     *
-     * @param quadding 0 (left), 1 (centre) or 2 (right); other values are ignored
-     */
+    /// Sets the field's text-alignment quadding (`/Q`, ISO 32000-1 §12.7.3.1): 0 = left-justified,
+    /// 1 = centred, 2 = right-justified. Controls where the generated value appearance places the text
+    /// within the widget box (e.g. a right-aligned numeric/currency column).
+    ///
+    /// @param quadding 0 (left), 1 (centre) or 2 (right); other values are ignored
     public void setQuadding(int quadding) {
         if (quadding >= 0 && quadding <= 2) {
             dict.set(PdfName.of("Q"), PdfInteger.valueOf(quadding));
         }
     }
 
-    /**
-     * Returns the appearance characteristics helper backed by the /MK dictionary.
-     *
-     * @return the appearance characteristics wrapper
-     */
+    /// Returns the appearance characteristics helper backed by the /MK dictionary.
+    ///
+    /// @return the appearance characteristics wrapper
     public AppearanceCharacteristics getCharacteristics() {
         return new AppearanceCharacteristics(dict);
     }
 
-    /**
-     * Returns a typed view over this field's {@code /AP} appearance dictionary
-     * (ISO 32000-1:2008 §12.5.5).
-     *
-     * <p>For multi-state fields (checkbox, radio), iterate with
-     * {@link AppearanceDictionary#getStateNames()} and fetch each with
-     * {@link AppearanceDictionary#get(String)}. For single-state fields (text,
-     * button), use {@link AppearanceDictionary#getNormal()}.</p>
-     *
-     * <p>The /AP sub-dictionary is lazily created if absent so this method
-     * never returns {@code null}.</p>
-     *
-     * @return the typed appearance dictionary (never null)
-     */
+    /// Returns a typed view over this field's `/AP` appearance dictionary
+    /// (ISO 32000-1:2008 §12.5.5).
+    ///
+    /// For multi-state fields (checkbox, radio), iterate with
+    /// [AppearanceDictionary#getStateNames()] and fetch each with
+    /// [AppearanceDictionary#get(String)]. For single-state fields (text,
+    /// button), use [AppearanceDictionary#getNormal()].
+    ///
+    /// The /AP sub-dictionary is lazily created if absent so this method
+    /// never returns `null`.
+    ///
+    /// @return the typed appearance dictionary (never null)
     public AppearanceDictionary getAppearance() {
         PdfBase ap = dict.get(PdfName.of("AP"));
         PdfDictionary apDict;
@@ -342,16 +291,14 @@ Field extends WidgetAnnotation implements Iterable<Field> {
         return new AppearanceDictionary(apDict);
     }
 
-    /**
-     * Factory method: creates the appropriate {@link Field} subclass from a PDF dictionary.
-     *
-     * @param dict     the field dictionary
-     * @param ftObj    the field type PDF object (may be null)
-     * @param fullName the fully-qualified field name
-     * @param page     the page (may be null)
-     * @param parser   the PDF parser (may be null)
-     * @return the concrete field instance
-     */
+    /// Factory method: creates the appropriate [Field] subclass from a PDF dictionary.
+    ///
+    /// @param dict     the field dictionary
+    /// @param ftObj    the field type PDF object (may be null)
+    /// @param fullName the fully-qualified field name
+    /// @param page     the page (may be null)
+    /// @param parser   the PDF parser (may be null)
+    /// @return the concrete field instance
     public static Field fromDictionary(PdfDictionary dict, PdfBase ftObj, String fullName,
                                        Page page, PDFParser parser) {
         String ft = null;
@@ -382,9 +329,7 @@ Field extends WidgetAnnotation implements Iterable<Field> {
         }
     }
 
-    /**
-     * Creates the appropriate button field subclass based on /Ff flags.
-     */
+    /// Creates the appropriate button field subclass based on /Ff flags.
     private static Field createButtonField(PdfDictionary dict, Page page, String fullName) {
         int ff = effectiveFieldFlags(dict);
         if ((ff & (1 << 16)) != 0) return new ButtonField(dict, page, fullName);
@@ -392,20 +337,16 @@ Field extends WidgetAnnotation implements Iterable<Field> {
         return new CheckboxField(dict, page, fullName);
     }
 
-    /**
-     * Creates the appropriate choice field subclass based on /Ff flags.
-     */
+    /// Creates the appropriate choice field subclass based on /Ff flags.
     private static Field createChoiceField(PdfDictionary dict, Page page, String fullName) {
         int ff = effectiveFieldFlags(dict);
         if ((ff & (1 << 17)) != 0) return new ComboBoxField(dict, page, fullName);
         return new ListBoxField(dict, page, fullName);
     }
 
-    /**
-     * Returns the field flags (/Ff), falling back to a kid widget's /Ff when the
-     * field dictionary itself has none — some files (e.g. corpus 31735) keep the
-     * radio/pushbutton flags on the merged widget kids instead of the parent field.
-     */
+    /// Returns the field flags (/Ff), falling back to a kid widget's /Ff when the
+    /// field dictionary itself has none — some files (e.g. corpus 31735) keep the
+    /// radio/pushbutton flags on the merged widget kids instead of the parent field.
     private static int effectiveFieldFlags(PdfDictionary dict) {
         int ff = dict.getInt("Ff", 0);
         if (ff != 0) return ff;
@@ -416,11 +357,9 @@ Field extends WidgetAnnotation implements Iterable<Field> {
         return 0;
     }
 
-    /**
-     * Resolves the field's /Kids array to the list of kid (widget) dictionaries.
-     * Used to recover /FT and /Ff that some files place on the widget kids rather
-     * than on the field dictionary. Returns an empty list when there are no kids.
-     */
+    /// Resolves the field's /Kids array to the list of kid (widget) dictionaries.
+    /// Used to recover /FT and /Ff that some files place on the widget kids rather
+    /// than on the field dictionary. Returns an empty list when there are no kids.
     private static List<PdfDictionary> kidWidgetDicts(PdfDictionary dict) {
         List<PdfDictionary> out = new ArrayList<>();
         PdfBase kids = dict.get("Kids");
@@ -442,26 +381,21 @@ Field extends WidgetAnnotation implements Iterable<Field> {
         return out;
     }
 
-    /**
-     * Returns the number of child fields (sub-widgets) of this field.
-     * <p>
-     * Returns the number of entries in the /Kids array that represent
-     * field dictionaries. For leaf fields with no children, returns 0.
-     * </p>
-     *
-     * @return the number of child fields
-     */
+    /// Returns the number of child fields (sub-widgets) of this field.
+    ///
+    /// Returns the number of entries in the /Kids array that represent
+    /// field dictionaries. For leaf fields with no children, returns 0.
+    ///
+    /// @return the number of child fields
     public int getCount() {
         return ensureChildFields().size();
     }
 
-    /**
-     * Returns the child field at the given 1-based index.
-     *
-     * @param index the 1-based index
-     * @return the child field
-     * @throws IndexOutOfBoundsException if the index is out of range
-     */
+    /// Returns the child field at the given 1-based index.
+    ///
+    /// @param index the 1-based index
+    /// @return the child field
+    /// @throws IndexOutOfBoundsException if the index is out of range
     public Field get(int index) {
         List<Field> children = ensureChildFields();
         if (index < 1 || index > children.size()) {
@@ -471,30 +405,24 @@ Field extends WidgetAnnotation implements Iterable<Field> {
         return children.get(index - 1);
     }
 
-    /**
-     * Returns an iterator over child fields (sub-widgets) of this field.
-     * <p>
-     * Iterates over the /Kids array entries that represent field or widget
-     * annotation dictionaries. For leaf fields with no children, this returns
-     * an empty iterator.
-     * </p>
-     *
-     * @return an iterator over child fields
-     */
+    /// Returns an iterator over child fields (sub-widgets) of this field.
+    ///
+    /// Iterates over the /Kids array entries that represent field or widget
+    /// annotation dictionaries. For leaf fields with no children, this returns
+    /// an empty iterator.
+    ///
+    /// @return an iterator over child fields
     @Override
     public Iterator<Field> iterator() {
         return ensureChildFields().iterator();
     }
 
-    /**
-     * Returns the 1-based page index on which this field's widget annotation resides.
-     * <p>
-     * Looks up the page associated with this field via its /P entry or the page
-     * set during field loading. Returns 0 if the page cannot be determined.
-     * </p>
-     *
-     * @return the 1-based page index, or 0 if unknown
-     */
+    /// Returns the 1-based page index on which this field's widget annotation resides.
+    ///
+    /// Looks up the page associated with this field via its /P entry or the page
+    /// set during field loading. Returns 0 if the page cannot be determined.
+    ///
+    /// @return the 1-based page index, or 0 if unknown
     public int getPageIndex() {
         Page p = getPage();
         if (p != null) {
@@ -503,12 +431,10 @@ Field extends WidgetAnnotation implements Iterable<Field> {
         return 0;
     }
 
-    /**
-     * Returns the 0-based annotation index of this field within its page's
-     * annotation array. Returns -1 if not found or the page is unknown.
-     *
-     * @return the 0-based annotation index, or -1
-     */
+    /// Returns the 0-based annotation index of this field within its page's
+    /// annotation array. Returns -1 if not found or the page is unknown.
+    ///
+    /// @return the 0-based annotation index, or -1
     public int getAnnotationIndex() {
         Page p = getPage();
         if (p == null) return -1;
@@ -527,11 +453,9 @@ Field extends WidgetAnnotation implements Iterable<Field> {
         return -1;
     }
 
-    /**
-     * Loads and caches child fields from the /Kids array.
-     *
-     * @return the list of child fields (never null)
-     */
+    /// Loads and caches child fields from the /Kids array.
+    ///
+    /// @return the list of child fields (never null)
     private List<Field> ensureChildFields() {
         if (childFields != null) return childFields;
         childFields = new ArrayList<>();

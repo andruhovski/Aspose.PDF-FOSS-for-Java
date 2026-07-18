@@ -5,8 +5,7 @@ import org.aspose.pdf.engine.font.FontEncoding;
 import org.aspose.pdf.engine.font.PdfFont;
 import org.aspose.pdf.engine.pdfobjects.PdfStream;
 
-import java.awt.Font;
-import java.awt.FontFormatException;
+import java.awt.*;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Collections;
@@ -15,22 +14,19 @@ import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
-/**
- * Loads an AWT {@link java.awt.Font} from a PDF font that has an embedded
- * Type1C / CIDFontType0C / OpenType-CFF font program in its
- * {@code /FontDescriptor /FontFile3} stream.
- *
- * <p>Workflow:</p>
- * <ol>
- *   <li>Parse the CFF via {@link CFFParser} to learn glyph count and the
- *       glyph-id → glyph-name table</li>
- *   <li>Walk the PDF's {@code /Encoding} (charcode → glyph name) and map
- *       each charcode's Unicode codepoint to the CFF glyph id, producing the
- *       cmap input for {@link OpenTypeBuilder}</li>
- *   <li>Wrap the CFF in a synthetic OTF and hand the bytes to
- *       {@code Font.createFont(TRUETYPE_FONT, …)}</li>
- * </ol>
- */
+/// Loads an AWT [java.awt.Font] from a PDF font that has an embedded
+/// Type1C / CIDFontType0C / OpenType-CFF font program in its
+/// `/FontDescriptor /FontFile3` stream.
+///
+/// Workflow:
+///
+///   1. Parse the CFF via [CFFParser] to learn glyph count and the
+///     glyph-id → glyph-name table
+///   2. Walk the PDF's `/Encoding` (charcode → glyph name) and map
+///     each charcode's Unicode codepoint to the CFF glyph id, producing the
+///     cmap input for [OpenTypeBuilder]
+///   3. Wrap the CFF in a synthetic OTF and hand the bytes to
+///     `Font.createFont(TRUETYPE_FONT, …)`
 public final class CFFFontLoader {
 
     private static final Logger LOG = Logger.getLogger(CFFFontLoader.class.getName());
@@ -45,35 +41,33 @@ public final class CFFFontLoader {
     // document's distinct dictionary instance gets its own entry while
     // intra-document reuse (the parser hands back the same instance) still hits.
 
-    /** Cache: font-dict instance → loaded AWT Font (or null on failure). */
+    /// Cache: font-dict instance → loaded AWT Font (or null on failure).
     private static final Map<Object, Font> CACHE =
             Collections.synchronizedMap(new IdentityHashMap<>());
 
-    /** Cache: font-dict instance → 256-entry charcode→CFF gid map for simple CFF fonts (or null). */
+    /// Cache: font-dict instance → 256-entry charcode→CFF gid map for simple CFF fonts (or null).
     private static final Map<Object, int[]> CODE_TO_GID =
             Collections.synchronizedMap(new IdentityHashMap<>());
 
     private CFFFontLoader() {}
 
-    /**
-     * Returns a 256-entry array mapping each 1-byte character code to its glyph
-     * id in the embedded CFF program, resolved through the PDF {@code /Encoding}
-     * (charcode → glyph name → CFF charset gid). Entry is {@code -1} when the
-     * code maps to no glyph.
-     * <p>
-     * Used by the renderer to draw a <em>simple</em> (non-composite) Type1/Type1C
-     * font with an embedded {@code FontFile3} CFF directly by glyph id, instead
-     * of routing the decoded Unicode through {@code java.awt.Font#drawString}.
-     * The latter renders {@code .notdef} boxes when the PDF uses a custom
-     * {@code /Differences} encoding whose glyph names carry Unicode values that
-     * the synthetic OpenType cmap does not cover (e.g. Arabic Hacen subsets in
-     * PDFNEWNET_38043). The CFF gid order is preserved by {@link OpenTypeBuilder},
-     * so these ids index the synthetic OTF handed to {@code Font.createFont}.
-     *
-     * @param pdfFont the font; must be non-composite with an embedded CFF
-     * @return the charcode→gid map, or {@code null} if not a simple CFF font or
-     *         the CFF cannot be parsed
-     */
+    /// Returns a 256-entry array mapping each 1-byte character code to its glyph
+    /// id in the embedded CFF program, resolved through the PDF `/Encoding`
+    /// (charcode → glyph name → CFF charset gid). Entry is `-1` when the
+    /// code maps to no glyph.
+    ///
+    /// Used by the renderer to draw a _simple_ (non-composite) Type1/Type1C
+    /// font with an embedded `FontFile3` CFF directly by glyph id, instead
+    /// of routing the decoded Unicode through `java.awt.Font#drawString`.
+    /// The latter renders `.notdef` boxes when the PDF uses a custom
+    /// `/Differences` encoding whose glyph names carry Unicode values that
+    /// the synthetic OpenType cmap does not cover (e.g. Arabic Hacen subsets in
+    /// PDFNEWNET\_38043). The CFF gid order is preserved by [OpenTypeBuilder],
+    /// so these ids index the synthetic OTF handed to `Font.createFont`.
+    ///
+    /// @param pdfFont the font; must be non-composite with an embedded CFF
+    /// @return the charcode→gid map, or `null` if not a simple CFF font or
+    ///         the CFF cannot be parsed
     public static int[] simpleCffCodeToGid(PdfFont pdfFont) {
         if (pdfFont == null || pdfFont.isComposite()) return null;
         Object key = pdfFont.getFontDictionary();
@@ -127,12 +121,10 @@ public final class CFFFontLoader {
         return any ? codeToGid : null;
     }
 
-    /**
-     * Returns a Java {@code Font} backed by the embedded CFF, or {@code null}
-     * if the font has no FontFile3 stream or parsing fails. The returned font
-     * has size 1 pt; callers should derive a sized variant via
-     * {@link Font#deriveFont}.
-     */
+    /// Returns a Java `Font` backed by the embedded CFF, or `null`
+    /// if the font has no FontFile3 stream or parsing fails. The returned font
+    /// has size 1 pt; callers should derive a sized variant via
+    /// [Font#deriveFont].
     public static Font load(PdfFont pdfFont) {
         if (pdfFont == null) return null;
         Object key = pdfFont.getFontDictionary();
@@ -271,7 +263,7 @@ public final class CFFFontLoader {
         }
     }
 
-    /** Removes the "XXXXXX+" subset prefix from a base font name, if present. */
+    /// Removes the "XXXXXX+" subset prefix from a base font name, if present.
     private static String stripSubsetPrefix(String name) {
         if (name == null) return null;
         if (name.length() > 7 && name.charAt(6) == '+') return name.substring(7);

@@ -2,33 +2,30 @@ package org.aspose.pdf.engine.pdfa.fixes;
 
 import org.aspose.pdf.ConvertErrorAction;
 import org.aspose.pdf.PdfFormat;
+import org.aspose.pdf.engine.parser.PDFParser;
+import org.aspose.pdf.engine.pdfa.PdfAValidationResult;
 import org.aspose.pdf.engine.pdfobjects.PdfArray;
 import org.aspose.pdf.engine.pdfobjects.PdfBase;
 import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
 import org.aspose.pdf.engine.pdfobjects.PdfObjectKey;
-import org.aspose.pdf.engine.pdfa.PdfAValidationResult;
-import org.aspose.pdf.engine.parser.PDFParser;
 
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Logger;
 
-/**
- * Action-related fixes for PDF/A compliance.
- * <p>
- * PDF/A forbids additional-actions dictionaries ({@code /AA}) on the catalog,
- * pages, and widget annotations.  It also forbids certain action types such as
- * JavaScript, Launch, Sound, Movie, ResetForm, ImportData, and others
- * (ISO 19005-1:2005, 6.6.1 / 6.6.2).
- * </p>
- */
+/// Action-related fixes for PDF/A compliance.
+///
+/// PDF/A forbids additional-actions dictionaries (`/AA`) on the catalog,
+/// pages, and widget annotations.  It also forbids certain action types such as
+/// JavaScript, Launch, Sound, Movie, ResetForm, ImportData, and others
+/// (ISO 19005-1:2005, 6.6.1 / 6.6.2).
+///
 public final class ActionFixes {
 
     private static final Logger LOG = Logger.getLogger(ActionFixes.class.getName());
 
-    /** Action types forbidden in PDF/A. */
+    /// Action types forbidden in PDF/A.
     private static final Set<String> FORBIDDEN_ACTION_TYPES = new HashSet<>();
     static {
         FORBIDDEN_ACTION_TYPES.add("JavaScript");
@@ -41,22 +38,18 @@ public final class ActionFixes {
         FORBIDDEN_ACTION_TYPES.add("NOP");           // deprecated
     }
 
-    /**
-     * Creates a new ActionFixes instance.
-     */
+    /// Creates a new ActionFixes instance.
     public ActionFixes() {
         // default
     }
 
-    /**
-     * Removes the {@code /AA} (additional-actions) dictionary from the catalog.
-     *
-     * @param parser      the parsed PDF
-     * @param format      the target format
-     * @param errorAction the error action strategy
-     * @param result      the validation result
-     * @throws IOException if an I/O error occurs
-     */
+    /// Removes the `/AA` (additional-actions) dictionary from the catalog.
+    ///
+    /// @param parser      the parsed PDF
+    /// @param format      the target format
+    /// @param errorAction the error action strategy
+    /// @param result      the validation result
+    /// @throws IOException if an I/O error occurs
     public void removeCatalogAA(PDFParser parser, PdfFormat format,
                                 ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
         PdfDictionary catalog = parser.getCatalog();
@@ -68,15 +61,13 @@ public final class ActionFixes {
         }
     }
 
-    /**
-     * Removes the {@code /AA} dictionary from all page objects.
-     *
-     * @param parser      the parsed PDF
-     * @param format      the target format
-     * @param errorAction the error action strategy
-     * @param result      the validation result
-     * @throws IOException if an I/O error occurs
-     */
+    /// Removes the `/AA` dictionary from all page objects.
+    ///
+    /// @param parser      the parsed PDF
+    /// @param format      the target format
+    /// @param errorAction the error action strategy
+    /// @param result      the validation result
+    /// @throws IOException if an I/O error occurs
     public void removePageAA(PDFParser parser, PdfFormat format,
                              ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
         PdfDictionary catalog = parser.getCatalog();
@@ -91,16 +82,14 @@ public final class ActionFixes {
         removeAAFromPageTree(parser, (PdfDictionary) pagesObj, result);
     }
 
-    /**
-     * Removes the {@code /AA} dictionary from all annotation and widget
-     * dictionaries found across all pages.
-     *
-     * @param parser      the parsed PDF
-     * @param format      the target format
-     * @param errorAction the error action strategy
-     * @param result      the validation result
-     * @throws IOException if an I/O error occurs
-     */
+    /// Removes the `/AA` dictionary from all annotation and widget
+    /// dictionaries found across all pages.
+    ///
+    /// @param parser      the parsed PDF
+    /// @param format      the target format
+    /// @param errorAction the error action strategy
+    /// @param result      the validation result
+    /// @throws IOException if an I/O error occurs
     public void removeWidgetAA(PDFParser parser, PdfFormat format,
                                ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
         PdfDictionary catalog = parser.getCatalog();
@@ -115,16 +104,14 @@ public final class ActionFixes {
         removeAAFromAnnotations(parser, (PdfDictionary) pagesObj, result);
     }
 
-    /**
-     * Removes {@code /A} entries with forbidden action types from all annotation
-     * dictionaries.
-     *
-     * @param parser      the parsed PDF
-     * @param format      the target format
-     * @param errorAction the error action strategy
-     * @param result      the validation result
-     * @throws IOException if an I/O error occurs
-     */
+    /// Removes `/A` entries with forbidden action types from all annotation
+    /// dictionaries.
+    ///
+    /// @param parser      the parsed PDF
+    /// @param format      the target format
+    /// @param errorAction the error action strategy
+    /// @param result      the validation result
+    /// @throws IOException if an I/O error occurs
     public void removeForbiddenActions(PDFParser parser, PdfFormat format,
                                        ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
         for (PdfObjectKey key : parser.getAllObjectKeys()) {
@@ -146,9 +133,7 @@ public final class ActionFixes {
     // Internal helpers
     // -------------------------------------------------------------------------
 
-    /**
-     * Recursively walks the page tree removing /AA from page dictionaries.
-     */
+    /// Recursively walks the page tree removing /AA from page dictionaries.
     private void removeAAFromPageTree(PDFParser parser, PdfDictionary node,
                                       PdfAValidationResult result) throws IOException {
         String type = node.getNameAsString("Type");
@@ -178,9 +163,7 @@ public final class ActionFixes {
         }
     }
 
-    /**
-     * Recursively walks the page tree removing /AA from annotations.
-     */
+    /// Recursively walks the page tree removing /AA from annotations.
     private void removeAAFromAnnotations(PDFParser parser, PdfDictionary node,
                                          PdfAValidationResult result) throws IOException {
         String type = node.getNameAsString("Type");
@@ -226,9 +209,7 @@ public final class ActionFixes {
         }
     }
 
-    /**
-     * Removes the /A entry from a dictionary if it references a forbidden action type.
-     */
+    /// Removes the /A entry from a dictionary if it references a forbidden action type.
     private void removeForbiddenActionEntry(PDFParser parser, PdfDictionary dict,
                                             PdfObjectKey key, ConvertErrorAction errorAction,
                                             PdfAValidationResult result) throws IOException {

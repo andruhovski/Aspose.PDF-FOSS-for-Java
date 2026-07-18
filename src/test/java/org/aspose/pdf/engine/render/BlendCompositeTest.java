@@ -10,11 +10,9 @@ import java.awt.image.BufferedImage;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link BlendComposite} — the /BM Multiply blend (§11.3.5).
- * Regression for corpus 30894: Highlight annotation appearance streams use
- * {@code /BM /Multiply}; painting them SRC_OVER covered the text below.
- */
+/// Tests for [BlendComposite] — the /BM Multiply blend (§11.3.5).
+/// Regression for corpus 30894: Highlight annotation appearance streams use
+/// `/BM /Multiply`; painting them SRC\_OVER covered the text below.
 public class BlendCompositeTest {
 
     @Test

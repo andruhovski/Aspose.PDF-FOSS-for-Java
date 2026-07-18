@@ -10,13 +10,11 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * Sprint 63 — content-stream parser tolerance.
- *
- * <p>A content stream with an out-of-int-range operand or a malformed inline
- * dictionary must not abort the whole page; the parser returns the operators it
- * could read (best-effort, mirroring Acrobat / pdf.js).</p>
- */
+/// Sprint 63 — content-stream parser tolerance.
+///
+/// A content stream with an out-of-int-range operand or a malformed inline
+/// dictionary must not abort the whole page; the parser returns the operators it
+/// could read (best-effort, mirroring Acrobat / pdf.js).
 public class ContentStreamToleranceTest {
 
     private static List<Operator> parse(String content) {

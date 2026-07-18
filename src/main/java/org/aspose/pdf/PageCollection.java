@@ -1,31 +1,19 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.engine.pdfobjects.PdfArray;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfInteger;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectKey;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
 import org.aspose.pdf.engine.parser.PDFParser;
+import org.aspose.pdf.engine.pdfobjects.*;
 import org.aspose.pdf.text.TextAbsorber;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.logging.Logger;
 
-/**
- * Represents the collection of pages in a PDF document (ISO 32000-1:2008, §7.7.3.2).
- * <p>
- * Wraps the /Pages root dictionary and flattens the page tree into a linear list.
- * Intermediate /Pages nodes are recursed, and /Page leaf nodes become {@link Page} objects.
- * Uses 1-based indexing: {@code get(1)} returns the first page.
- * </p>
- */
+/// Represents the collection of pages in a PDF document (ISO 32000-1:2008, §7.7.3.2).
+///
+/// Wraps the /Pages root dictionary and flattens the page tree into a linear list.
+/// Intermediate /Pages nodes are recursed, and /Page leaf nodes become [Page] objects.
+/// Uses 1-based indexing: `get(1)` returns the first page.
+///
 public class PageCollection implements Iterable<Page> {
 
     private static final Logger LOG = Logger.getLogger(PageCollection.class.getName());
@@ -38,18 +26,16 @@ public class PageCollection implements Iterable<Page> {
     // that the legacy lazy-init pattern exposed during concurrent first access.
     private volatile List<Page> flatPages;
     private final java.util.Map<PdfDictionary, Page> pageCache = new java.util.IdentityHashMap<>();
-    /** One importer per foreign source document — keeps shared resources deduplicated across successive page imports. */
+    /// One importer per foreign source document — keeps shared resources deduplicated across successive page imports.
     private final java.util.Map<Document, DocumentPageImporter> importers = new java.util.IdentityHashMap<>();
     private boolean treeRepairAttempted;
     private boolean treeRepaired;
 
-    /**
-     * Creates a PageCollection wrapping the /Pages root dictionary.
-     *
-     * @param pagesDict the /Pages dictionary (must have /Type /Pages)
-     * @param parser    the PDF parser for resolving indirect references, may be null
-     * @throws IllegalArgumentException if pagesDict is null
-     */
+    /// Creates a PageCollection wrapping the /Pages root dictionary.
+    ///
+    /// @param pagesDict the /Pages dictionary (must have /Type /Pages)
+    /// @param parser    the PDF parser for resolving indirect references, may be null
+    /// @throws IllegalArgumentException if pagesDict is null
     public PageCollection(PdfDictionary pagesDict, PDFParser parser) {
         if (pagesDict == null) {
             throw new IllegalArgumentException("Pages dictionary must not be null");
@@ -59,27 +45,23 @@ public class PageCollection implements Iterable<Page> {
         LOG.fine(() -> "PageCollection created");
     }
 
-    /** Sets the document that owns this collection (used for cross-doc detection in add/insert). */
+    /// Sets the document that owns this collection (used for cross-doc detection in add/insert).
     void setOwningDocument(Document owningDocument) {
         this.owningDocument = owningDocument;
     }
 
-    /**
-     * The page-tree root dictionary this collection is backed by. May be a
-     * synthetic in-memory root (no object key) when the source catalog's
-     * {@code /Pages} was broken and the tree was recovered by scanning.
-     */
+    /// The page-tree root dictionary this collection is backed by. May be a
+    /// synthetic in-memory root (no object key) when the source catalog's
+    /// `/Pages` was broken and the tree was recovered by scanning.
     PdfDictionary getPagesDictionary() {
         return pagesDict;
     }
 
-    /**
-     * Re-runs the flatten pass and refreshes {@code page.setNumber(...)} so the
-     * Page's stored 1-based index reflects the current document order.
-     * Called from {@link Page#getNumber()} so that callers always see an
-     * up-to-date page number after insert/delete/clear mutations.
-     * Package-private — internal hook only.
-     */
+    /// Re-runs the flatten pass and refreshes `page.setNumber(...)` so the
+    /// Page's stored 1-based index reflects the current document order.
+    /// Called from [Page#getNumber()] so that callers always see an
+    /// up-to-date page number after insert/delete/clear mutations.
+    /// Package-private — internal hook only.
     void refreshNumber(Page page) {
         ensureFlattened();
         // ensureFlattened sets number on every flatPage during build; nothing
@@ -87,13 +69,11 @@ public class PageCollection implements Iterable<Page> {
         // without going through add/insert/delete (which is not supported).
     }
 
-    /**
-     * Returns the page at the given 1-based index.
-     *
-     * @param index the 1-based page index
-     * @return the Page at the given index
-     * @throws IndexOutOfBoundsException if index is out of range [1, size()]
-     */
+    /// Returns the page at the given 1-based index.
+    ///
+    /// @param index the 1-based page index
+    /// @return the Page at the given index
+    /// @throws IndexOutOfBoundsException if index is out of range [1, size()]
     public Page get(int index) {
         ensureFlattened();
         if (index < 1 || index > flatPages.size()) {
@@ -103,42 +83,34 @@ public class PageCollection implements Iterable<Page> {
         return flatPages.get(index - 1);
     }
 
-    /**
-     * Returns the number of pages.
-     *
-     * @return the page count
-     */
+    /// Returns the number of pages.
+    ///
+    /// @return the page count
     public int getCount() {
         ensureFlattened();
         return flatPages.size();
     }
 
-    /**
-     * Returns the number of pages (alias for {@link #getCount()}).
-     *
-     * @return the page count
-     */
+    /// Returns the number of pages (alias for [#getCount()]).
+    ///
+    /// @return the page count
     public int size() {
         return getCount();
     }
 
-    /**
-     * Returns an iterator over all pages.
-     *
-     * @return the page iterator
-     */
+    /// Returns an iterator over all pages.
+    ///
+    /// @return the page iterator
     @Override
     public Iterator<Page> iterator() {
         ensureFlattened();
         return flatPages.iterator();
     }
 
-    /**
-     * Accepts a text absorber to extract text from all pages in this collection.
-     *
-     * @param absorber the text absorber
-     * @throws IOException if text extraction fails
-     */
+    /// Accepts a text absorber to extract text from all pages in this collection.
+    ///
+    /// @param absorber the text absorber
+    /// @throws IOException if text extraction fails
     public void accept(TextAbsorber absorber) throws IOException {
         if (absorber == null) {
             throw new IllegalArgumentException("Absorber must not be null");
@@ -148,12 +120,10 @@ public class PageCollection implements Iterable<Page> {
         }
     }
 
-    /**
-     * Accepts an image placement absorber to find images on all pages.
-     *
-     * @param absorber the image placement absorber
-     * @throws IOException if processing fails
-     */
+    /// Accepts an image placement absorber to find images on all pages.
+    ///
+    /// @param absorber the image placement absorber
+    /// @throws IOException if processing fails
     public void accept(ImagePlacementAbsorber absorber) throws IOException {
         if (absorber == null) {
             throw new IllegalArgumentException("Absorber must not be null");
@@ -163,12 +133,10 @@ public class PageCollection implements Iterable<Page> {
         }
     }
 
-    /**
-     * Creates a new page with standard A4 page bounds [0 0 595 842], adds it to the
-     * end of this collection, and returns it.
-     *
-     * @return the newly created Page
-     */
+    /// Creates a new page with standard A4 page bounds [0 0 595 842], adds it to the
+    /// end of this collection, and returns it.
+    ///
+    /// @return the newly created Page
     public Page add() {
         PdfDictionary pageDict = new PdfDictionary();
         pageDict.set(PdfName.TYPE, PdfName.PAGE);
@@ -183,12 +151,10 @@ public class PageCollection implements Iterable<Page> {
         return page;
     }
 
-    /**
-     * Adds an existing page to the end of this collection.
-     *
-     * @param page the page to add
-     * @throws IllegalArgumentException if page is null
-     */
+    /// Adds an existing page to the end of this collection.
+    ///
+    /// @param page the page to add
+    /// @throws IllegalArgumentException if page is null
     public void add(Page page) {
         if (page == null) {
             throw new IllegalArgumentException("Page must not be null");
@@ -202,11 +168,9 @@ public class PageCollection implements Iterable<Page> {
         LOG.fine(() -> "Added existing page, count=" + getCount());
     }
 
-    /**
-     * If {@code page} belongs to a different document, deep-copies it into the
-     * owning document and returns the new Page. Same-document pages are returned
-     * as-is — preserving the pre-existing reparent-in-place semantics.
-     */
+    /// If `page` belongs to a different document, deep-copies it into the
+    /// owning document and returns the new Page. Same-document pages are returned
+    /// as-is — preserving the pre-existing reparent-in-place semantics.
     private Page importIfForeign(Page page) {
         if (owningDocument == null) return page;
         Document foreign = page.getOwningDocument();
@@ -220,13 +184,11 @@ public class PageCollection implements Iterable<Page> {
         }
     }
 
-    /**
-     * Adds all pages from another PageCollection to the end of this collection.
-     * Equivalent to Aspose's Pages.Add(doc2.Pages).
-     *
-     * @param otherPages the page collection to add
-     * @throws IllegalArgumentException if otherPages is null
-     */
+    /// Adds all pages from another PageCollection to the end of this collection.
+    /// Equivalent to Aspose's Pages.Add(doc2.Pages).
+    ///
+    /// @param otherPages the page collection to add
+    /// @throws IllegalArgumentException if otherPages is null
     public void add(PageCollection otherPages) {
         if (otherPages == null) {
             throw new IllegalArgumentException("PageCollection must not be null");
@@ -277,13 +239,11 @@ public class PageCollection implements Iterable<Page> {
         }
     }
 
-    /**
-     * Inserts a new blank page (A4) at the given 1-based index and returns it.
-     *
-     * @param index the 1-based index at which to insert the page
-     * @return the newly created Page
-     * @throws IndexOutOfBoundsException if index is out of range [1, size()+1]
-     */
+    /// Inserts a new blank page (A4) at the given 1-based index and returns it.
+    ///
+    /// @param index the 1-based index at which to insert the page
+    /// @return the newly created Page
+    /// @throws IndexOutOfBoundsException if index is out of range [1, size()+1]
     public Page insert(int index) {
         ensureFlattened();
         int currentSize = flatPages.size();
@@ -305,14 +265,12 @@ public class PageCollection implements Iterable<Page> {
         return page;
     }
 
-    /**
-     * Inserts a page at the given 1-based index.
-     *
-     * @param index the 1-based index at which to insert the page
-     * @param page  the page to insert
-     * @throws IllegalArgumentException  if page is null
-     * @throws IndexOutOfBoundsException if index is out of range [1, size()+1]
-     */
+    /// Inserts a page at the given 1-based index.
+    ///
+    /// @param index the 1-based index at which to insert the page
+    /// @param page  the page to insert
+    /// @throws IllegalArgumentException  if page is null
+    /// @throws IndexOutOfBoundsException if index is out of range [1, size()+1]
     public void insert(int index, Page page) {
         if (page == null) {
             throw new IllegalArgumentException("Page must not be null");
@@ -331,11 +289,9 @@ public class PageCollection implements Iterable<Page> {
         LOG.fine(() -> "Inserted page at index " + index + ", count=" + getCount());
     }
 
-    /**
-     * Removes all pages from the document. After this call, {@link #getCount()}
-     * returns 0; new pages can be added via {@link #add()} / {@link #add(Page)}
-     * exactly as for an empty document.
-     */
+    /// Removes all pages from the document. After this call, [#getCount()]
+    /// returns 0; new pages can be added via [#add()] / [#add(Page)]
+    /// exactly as for an empty document.
     public void clear() {
         ensureFlattened();
         // Reset the root /Kids and /Count entries on the pagesDict directly —
@@ -348,12 +304,10 @@ public class PageCollection implements Iterable<Page> {
         LOG.fine("Cleared all pages");
     }
 
-    /**
-     * Removes the page at the given 1-based index.
-     *
-     * @param index the 1-based index of the page to remove
-     * @throws IndexOutOfBoundsException if index is out of range [1, size()]
-     */
+    /// Removes the page at the given 1-based index.
+    ///
+    /// @param index the 1-based index of the page to remove
+    /// @throws IndexOutOfBoundsException if index is out of range [1, size()]
     public void delete(int index) {
         ensureFlattened();
         if (index < 1 || index > flatPages.size()) {
@@ -489,14 +443,12 @@ public class PageCollection implements Iterable<Page> {
         return null;
     }
 
-    /**
-     * Drops widget {@code /Parent} links that point to a field outside the
-     * document's {@code /AcroForm /Fields} tree. Such a parent is dangling (a
-     * source with no AcroForm, or a junk grouping field) and would otherwise
-     * surface a malformed field name. Only widgets that carry their own {@code /T}
-     * are detached, so their name is preserved; widgets without {@code /T} (e.g.
-     * radio kids, whose parent is a real form field anyway) are left untouched.
-     */
+    /// Drops widget `/Parent` links that point to a field outside the
+    /// document's `/AcroForm /Fields` tree. Such a parent is dangling (a
+    /// source with no AcroForm, or a junk grouping field) and would otherwise
+    /// surface a malformed field name. Only widgets that carry their own `/T`
+    /// are detached, so their name is preserved; widgets without `/T` (e.g.
+    /// radio kids, whose parent is a real form field anyway) are left untouched.
     private void dropDanglingWidgetParents(Document doc) {
         if (doc == null) {
             return;
@@ -556,12 +508,10 @@ public class PageCollection implements Iterable<Page> {
         }
     }
 
-    /**
-     * Builds an identity map from every widget-annotation dictionary that sits on
-     * an imported source page to that page's 1-based target index, by scanning
-     * each source page's {@code /Annots}. Used to resolve a form field's target
-     * page when its widget annotations carry no {@code /P} entry.
-     */
+    /// Builds an identity map from every widget-annotation dictionary that sits on
+    /// an imported source page to that page's 1-based target index, by scanning
+    /// each source page's `/Annots`. Used to resolve a form field's target
+    /// page when its widget annotations carry no `/P` entry.
     private java.util.Map<PdfDictionary, Integer> buildWidgetPageMap(
             java.util.Map<PdfDictionary, Integer> importedPages) {
         java.util.Map<PdfDictionary, Integer> map = new java.util.IdentityHashMap<>();
@@ -581,9 +531,7 @@ public class PageCollection implements Iterable<Page> {
         return map;
     }
 
-    /**
-     * Returns the /Kids array, creating it if absent.
-     */
+    /// Returns the /Kids array, creating it if absent.
     private PdfArray getKidsArray() {
         PdfBase kidsValue = pagesDict.get(PdfName.KIDS);
         kidsValue = resolveRef(kidsValue);
@@ -595,9 +543,7 @@ public class PageCollection implements Iterable<Page> {
         return kids;
     }
 
-    /**
-     * Adds a page dictionary to /Kids at the specified 0-based position and updates /Count.
-     */
+    /// Adds a page dictionary to /Kids at the specified 0-based position and updates /Count.
     private void addToKids(PdfDictionary pageDict, int position) {
         PdfArray kids = getKidsArray();
         kids.add(position, pageDict);
@@ -646,30 +592,24 @@ public class PageCollection implements Iterable<Page> {
         incrementCountsUpward(parent);
     }
 
-    /**
-     * Updates the /Count entry in the pages dictionary.
-     */
+    /// Updates the /Count entry in the pages dictionary.
     private void updateCount(int count) {
         pagesDict.set(PdfName.COUNT, PdfInteger.valueOf(count));
     }
 
-    /**
-     * Invalidates the cached flat page list so it will be rebuilt on next access.
-     */
+    /// Invalidates the cached flat page list so it will be rebuilt on next access.
     private synchronized void invalidateCache() {
         flatPages = null;
     }
 
-    /**
-     * Lazily flattens the page tree on first access. Thread-safe: readers can
-     * call this concurrently; the first thread builds the list, the rest block
-     * on the monitor and then return immediately once the volatile
-     * {@link #flatPages} is published. We deliberately do <em>not</em> use a
-     * lock-free fast-path read here, because {@link #flattenNode} writes into
-     * {@code flatPages} as it goes — a reader could otherwise observe a
-     * partially-built list. The synchronized block both serializes builders
-     * and guarantees the happens-before edge readers need.
-     */
+    /// Lazily flattens the page tree on first access. Thread-safe: readers can
+    /// call this concurrently; the first thread builds the list, the rest block
+    /// on the monitor and then return immediately once the volatile
+    /// [#flatPages] is published. We deliberately do _not_ use a
+    /// lock-free fast-path read here, because [#flattenNode] writes into
+    /// `flatPages` as it goes — a reader could otherwise observe a
+    /// partially-built list. The synchronized block both serializes builders
+    /// and guarantees the happens-before edge readers need.
     private synchronized void ensureFlattened() {
         if (flatPages != null) {
             return;
@@ -690,14 +630,12 @@ public class PageCollection implements Iterable<Page> {
         LOG.fine(() -> "Page tree flattened: " + flatPages.size() + " pages");
     }
 
-    /**
-     * Repairs a malformed page tree when /Count declares more pages than are
-     * reachable through /Kids. Recovery rebuilds the root /Kids array from
-     * page-like objects in object-number order so save/reopen roundtrips remain
-     * stable for damaged inputs.
-     *
-     * @throws IOException if parser-backed objects cannot be read
-     */
+    /// Repairs a malformed page tree when /Count declares more pages than are
+    /// reachable through /Kids. Recovery rebuilds the root /Kids array from
+    /// page-like objects in object-number order so save/reopen roundtrips remain
+    /// stable for damaged inputs.
+    ///
+    /// @throws IOException if parser-backed objects cannot be read
     void repairBrokenTreeIfNeeded() throws IOException {
         if (parser == null || treeRepairAttempted) {
             return;
@@ -782,18 +720,17 @@ public class PageCollection implements Iterable<Page> {
         return treeRepaired;
     }
 
-    /**
-     * Recursively flattens a page tree node.
-     * /Type /Pages nodes have their /Kids recursed.
-     * /Type /Page nodes are added as leaf pages.
-     * <p>The {@code ancestors} set is treated as a traversal stack — a node is
-     * added before descending and removed on the way out — so cycles
-     * (node referencing one of its own ancestors) are caught while the same
-     * dictionary appearing twice at different paths is still flattened twice.</p>
-     *
-     * @param node the page tree node dictionary
-     * @param ancestors identity set of /Pages ancestors currently on the stack
-     */
+    /// Recursively flattens a page tree node.
+    /// /Type /Pages nodes have their /Kids recursed.
+    /// /Type /Page nodes are added as leaf pages.
+    ///
+    /// The `ancestors` set is treated as a traversal stack — a node is
+    /// added before descending and removed on the way out — so cycles
+    /// (node referencing one of its own ancestors) are caught while the same
+    /// dictionary appearing twice at different paths is still flattened twice.
+    ///
+    /// @param node the page tree node dictionary
+    /// @param ancestors identity set of /Pages ancestors currently on the stack
     private void flattenNode(PdfDictionary node, java.util.Set<PdfDictionary> ancestors) {
         if (ancestors.contains(node)) {
             LOG.warning(() -> "Cyclic /Pages tree detected; skipping repeated node");
@@ -890,12 +827,10 @@ public class PageCollection implements Iterable<Page> {
                 && node.get(PdfName.RESOURCES) != null;
     }
 
-    /**
-     * Resolves an indirect object reference.
-     *
-     * @param value the PDF value
-     * @return the resolved value, or null
-     */
+    /// Resolves an indirect object reference.
+    ///
+    /// @param value the PDF value
+    /// @return the resolved value, or null
     private PdfBase resolveRef(PdfBase value) {
         if (value == null) {
             return null;

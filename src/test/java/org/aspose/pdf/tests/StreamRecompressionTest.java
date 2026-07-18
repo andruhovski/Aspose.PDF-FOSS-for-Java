@@ -18,21 +18,17 @@ import java.nio.file.Path;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * Guards the stream-recompression pass of {@code optimizeResources()}:
- * raster image streams gain a PNG predictor + max-effort Flate and shrink,
- * while the decoded pixels stay bit-identical.
- */
+/// Guards the stream-recompression pass of `optimizeResources()`:
+/// raster image streams gain a PNG predictor + max-effort Flate and shrink,
+/// while the decoded pixels stay bit-identical.
 public class StreamRecompressionTest {
 
     @TempDir
     Path tempDir;
 
-    /**
-     * A synthetic "screenshot-like" image: smooth gradients compress far
-     * better with a PNG predictor than with plain Flate, so this exercises
-     * the predictor candidate path specifically.
-     */
+    /// A synthetic "screenshot-like" image: smooth gradients compress far
+    /// better with a PNG predictor than with plain Flate, so this exercises
+    /// the predictor candidate path specifically.
     private File writeGradientPng() throws Exception {
         BufferedImage img = new BufferedImage(300, 200, BufferedImage.TYPE_INT_RGB);
         for (int y = 0; y < 200; y++) {
@@ -88,7 +84,7 @@ public class StreamRecompressionTest {
         }
     }
 
-    /** Text-only documents must also round-trip through the pass unharmed. */
+    /// Text-only documents must also round-trip through the pass unharmed.
     @Test
     public void textContentSurvivesRecompression() throws Exception {
         Path src = tempDir.resolve("text.pdf");

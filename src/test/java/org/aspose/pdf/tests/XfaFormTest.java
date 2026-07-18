@@ -13,9 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import javax.xml.namespace.NamespaceContext;
 
-/**
- * Tests for XFA Forms support: XfaPacketParser, XfaNamespaceContext, XfaForm, and Form integration.
- */
+/// Tests for XFA Forms support: XfaPacketParser, XfaNamespaceContext, XfaForm, and Form integration.
 public class XfaFormTest {
 
     // ── Test XML Data ──
@@ -603,8 +601,8 @@ public class XfaFormTest {
     // Repeated-instance set/get (indexed rows)
     // ══════════════════════════════════════════════
 
-    /** A repeated row subform bound via a renamed MULTI-COMPONENT dataRef (the common SAP/LiveCycle
-     *  table shape: "body" rows stored as IM_ITEMS/DATA groups). */
+    /// A repeated row subform bound via a renamed MULTI-COMPONENT dataRef (the common SAP/LiveCycle
+    ///  table shape: "body" rows stored as IM\_ITEMS/DATA groups).
     private static final String TEMPLATE_TABLE_XML =
         "<template xmlns=\"http://www.xfa.org/schema/xfa-template/3.0/\">" +
         "  <subform name=\"data\">" +
@@ -633,7 +631,7 @@ public class XfaFormTest {
         "  </xfa:data>" +
         "</xfa:datasets>";
 
-    /** A repeated subform whose rows are absent from the (sparse) data entirely. */
+    /// A repeated subform whose rows are absent from the (sparse) data entirely.
     private static final String TEMPLATE_ROWS_XML =
         "<template xmlns=\"http://www.xfa.org/schema/xfa-template/3.0/\">" +
         "  <subform name=\"form1\">" +

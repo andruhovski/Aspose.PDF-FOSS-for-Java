@@ -1,15 +1,8 @@
 package org.aspose.pdf.facades;
 
 import org.aspose.pdf.Document;
-import org.aspose.pdf.forms.ButtonField;
-import org.aspose.pdf.forms.CheckboxField;
-import org.aspose.pdf.forms.ComboBoxField;
-import org.aspose.pdf.forms.Field;
+import org.aspose.pdf.forms.*;
 import org.aspose.pdf.forms.Form;
-import org.aspose.pdf.forms.ListBoxField;
-import org.aspose.pdf.forms.RadioButtonField;
-import org.aspose.pdf.forms.SignatureField;
-import org.aspose.pdf.forms.TextBoxField;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,84 +10,68 @@ import java.io.OutputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Provides methods for editing form fields in a PDF document:
- * listing fields, filling values, flattening, and removing fields.
- */
+/// Provides methods for editing form fields in a PDF document:
+/// listing fields, filling values, flattening, and removing fields.
 public class FormEditor {
 
     private static final Logger LOG = Logger.getLogger(FormEditor.class.getName());
 
     private Document document;
-    /** Output file supplied via {@link #FormEditor(String, String)}; {@link #save()}
-     *  writes the modified document here. */
+    /// Output file supplied via [#FormEditor(String, String)]; [#save()]
+    ///  writes the modified document here.
     private String pendingOutputFile;
-    /** Visual-style facade applied to fields created via
-     *  {@link #addField(FieldType, String, String, int, double, double, double, double)}. */
+    /// Visual-style facade applied to fields created via
+    ///  [#addField(FieldType, String, String, int, double, double, double, double)].
     private FormFieldFacade facade;
 
-    /**
-     * Creates a new {@code FormEditor} instance.
-     */
+    /// Creates a new `FormEditor` instance.
     public FormEditor() {
     }
 
-    /**
-     * Creates a new editor bound to the specified file.
-     *
-     * @param inputFile path to the PDF file
-     */
+    /// Creates a new editor bound to the specified file.
+    ///
+    /// @param inputFile path to the PDF file
     public FormEditor(String inputFile) {
         bindPdf(inputFile);
     }
 
-    /**
-     * Creates a new editor bound to {@code inputFile} and configured to write
-     * the result to {@code outputFile} when {@link #save()} is called. Mirrors
-     * the C# {@code FormEditor(string, string)} constructor.
-     *
-     * @param inputFile  path to the input PDF file
-     * @param outputFile path the modified PDF will be written to on {@link #save()}
-     */
+    /// Creates a new editor bound to `inputFile` and configured to write
+    /// the result to `outputFile` when [#save()] is called. Mirrors
+    /// the C# `FormEditor(string, string)` constructor.
+    ///
+    /// @param inputFile  path to the input PDF file
+    /// @param outputFile path the modified PDF will be written to on [#save()]
     public FormEditor(String inputFile, String outputFile) {
         bindPdf(inputFile);
         this.pendingOutputFile = outputFile;
     }
 
-    /**
-     * Creates a {@code FormEditor} bound to an already-loaded document and
-     * configured to write the result to {@code outputFile} on {@link #save()}.
-     * Mirrors the C# {@code FormEditor(Document, string)} constructor.
-     */
+    /// Creates a `FormEditor` bound to an already-loaded document and
+    /// configured to write the result to `outputFile` on [#save()].
+    /// Mirrors the C# `FormEditor(Document, string)` constructor.
     public FormEditor(Document document, String outputFile) {
         bindPdf(document);
         this.pendingOutputFile = outputFile;
     }
 
-    /**
-     * 7-arg {@link #addField} overload (no initial value). Mirrors the C#
-     * {@code AddField(FieldType, string, int, double, double, double, double)} signature.
-     */
+    /// 7-arg [#addField] overload (no initial value). Mirrors the C#
+    /// `AddField(FieldType, string, int, double, double, double, double)` signature.
     public boolean addField(FieldType type, String fieldName,
                             int pageNumber, double llx, double lly, double urx, double ury) {
         return addField(type, fieldName, null, pageNumber, llx, lly, urx, ury);
     }
 
-    /**
-     * Creates a new editor bound to the specified document.
-     *
-     * @param document the document to bind
-     */
+    /// Creates a new editor bound to the specified document.
+    ///
+    /// @param document the document to bind
     public FormEditor(Document document) {
         bindPdf(document);
     }
 
-    /**
-     * Binds a PDF file to this editor.
-     *
-     * @param inputFile path to the PDF file
-     * @return {@code true} on success
-     */
+    /// Binds a PDF file to this editor.
+    ///
+    /// @param inputFile path to the PDF file
+    /// @return `true` on success
     public boolean bindPdf(String inputFile) {
         try {
             this.document = new Document(inputFile);
@@ -105,12 +82,10 @@ public class FormEditor {
         }
     }
 
-    /**
-     * Binds a PDF from an input stream.
-     *
-     * @param inputStream the input stream containing PDF data
-     * @return {@code true} on success
-     */
+    /// Binds a PDF from an input stream.
+    ///
+    /// @param inputStream the input stream containing PDF data
+    /// @return `true` on success
     public boolean bindPdf(InputStream inputStream) {
         try {
             this.document = new Document(inputStream);
@@ -121,12 +96,10 @@ public class FormEditor {
         }
     }
 
-    /**
-     * Binds an existing {@link Document} to this editor.
-     *
-     * @param document the document to bind
-     * @return {@code true} on success
-     */
+    /// Binds an existing [Document] to this editor.
+    ///
+    /// @param document the document to bind
+    /// @return `true` on success
     public boolean bindPdf(Document document) {
         if (document == null) {
             LOG.warning("Cannot bind null document");
@@ -136,20 +109,16 @@ public class FormEditor {
         return true;
     }
 
-    /**
-     * Returns the bound document.
-     *
-     * @return the bound document, or {@code null}
-     */
+    /// Returns the bound document.
+    ///
+    /// @return the bound document, or `null`
     public Document getDocument() {
         return document;
     }
 
-    /**
-     * Returns the names of all form fields in the document.
-     *
-     * @return array of field names, or an empty array on error
-     */
+    /// Returns the names of all form fields in the document.
+    ///
+    /// @return array of field names, or an empty array on error
     public String[] getFieldNames() {
         try {
             Form form = document.getForm();
@@ -171,13 +140,11 @@ public class FormEditor {
         }
     }
 
-    /**
-     * Fills a form field with the specified value.
-     *
-     * @param fieldName the full name of the field
-     * @param value     the value to set
-     * @return {@code true} on success
-     */
+    /// Fills a form field with the specified value.
+    ///
+    /// @param fieldName the full name of the field
+    /// @param value     the value to set
+    /// @return `true` on success
     public boolean fillField(String fieldName, String value) {
         try {
             Form form = requireBoundForm();
@@ -198,13 +165,11 @@ public class FormEditor {
         }
     }
 
-    /**
-     * Fills a checkbox-like field using a boolean value.
-     *
-     * @param fieldName the full name of the field
-     * @param value the value to set
-     * @return {@code true} on success
-     */
+    /// Fills a checkbox-like field using a boolean value.
+    ///
+    /// @param fieldName the full name of the field
+    /// @param value the value to set
+    /// @return `true` on success
     public boolean fillField(String fieldName, boolean value) {
         try {
             Form form = requireBoundForm();
@@ -228,12 +193,10 @@ public class FormEditor {
         }
     }
 
-    /**
-     * Returns the current value of a field.
-     *
-     * @param fieldName the full name of the field
-     * @return the field value, or {@code null} if the field is absent
-     */
+    /// Returns the current value of a field.
+    ///
+    /// @param fieldName the full name of the field
+    /// @return the field value, or `null` if the field is absent
     public String getField(String fieldName) {
         try {
             Form form = requireBoundForm();
@@ -248,11 +211,9 @@ public class FormEditor {
         }
     }
 
-    /**
-     * Flattens all form fields, making them non-interactive.
-     *
-     * @return {@code true} on success
-     */
+    /// Flattens all form fields, making them non-interactive.
+    ///
+    /// @return `true` on success
     public boolean flattenAllFields() {
         try {
             Form form = requireBoundForm();
@@ -268,12 +229,10 @@ public class FormEditor {
         }
     }
 
-    /**
-     * Flattens a single field and removes it from the interactive form.
-     *
-     * @param fieldName the full name of the field
-     * @return {@code true} on success
-     */
+    /// Flattens a single field and removes it from the interactive form.
+    ///
+    /// @param fieldName the full name of the field
+    /// @return `true` on success
     public boolean flattenField(String fieldName) {
         try {
             Form form = requireBoundForm();
@@ -294,24 +253,21 @@ public class FormEditor {
         }
     }
 
-    /**
-     * Copies a named field from {@code sourceFile} into the bound document
-     * onto {@code pageNumber}. Mirrors C# {@code FormEditor.CopyOuterField}.
-     * <p>
-     * The field is located by walking the source's AcroForm /Fields array and,
-     * if not found there, every page's widget annotations (some PDFs declare
-     * fields only as annotations and never register them in /AcroForm/Fields —
-     * 27304-1.pdf is one such case). The annotation dictionary is deep-cloned
-     * via {@link org.aspose.pdf.engine.pdfobjects.PdfObjectCloner}, retargeted at the
-     * destination page, and inserted into both the page's /Annots array and
-     * the bound document's /AcroForm/Fields array (which is created on demand).
-     * </p>
-     *
-     * @param sourceFile path to the source PDF that holds the field
-     * @param fieldName  partial-name of the field to copy
-     * @param pageNumber 1-based page in the bound document where the widget should appear
-     * @return {@code true} if the field was found and copied
-     */
+    /// Copies a named field from `sourceFile` into the bound document
+    /// onto `pageNumber`. Mirrors C# `FormEditor.CopyOuterField`.
+    ///
+    /// The field is located by walking the source's AcroForm /Fields array and,
+    /// if not found there, every page's widget annotations (some PDFs declare
+    /// fields only as annotations and never register them in /AcroForm/Fields —
+    /// 27304-1.pdf is one such case). The annotation dictionary is deep-cloned
+    /// via [org.aspose.pdf.engine.pdfobjects.PdfObjectCloner], retargeted at the
+    /// destination page, and inserted into both the page's /Annots array and
+    /// the bound document's /AcroForm/Fields array (which is created on demand).
+    ///
+    /// @param sourceFile path to the source PDF that holds the field
+    /// @param fieldName  partial-name of the field to copy
+    /// @param pageNumber 1-based page in the bound document where the widget should appear
+    /// @return `true` if the field was found and copied
     public boolean copyOuterField(String sourceFile, String fieldName, int pageNumber) {
         if (document == null) {
             LOG.warning("copyOuterField requires a bound document");
@@ -413,11 +369,9 @@ public class FormEditor {
         }
     }
 
-    /**
-     * Locates a field by partial-name in {@code source}. Walks the AcroForm
-     * /Fields array first; falls back to scanning every page's widget
-     * annotations for a /T entry that matches.
-     */
+    /// Locates a field by partial-name in `source`. Walks the AcroForm
+    /// /Fields array first; falls back to scanning every page's widget
+    /// annotations for a /T entry that matches.
     private static org.aspose.pdf.engine.pdfobjects.PdfDictionary findFieldDictByName(
             Document source, String fieldName) throws java.io.IOException {
         org.aspose.pdf.engine.pdfobjects.PdfBase ac = source.getCatalog().get("AcroForm");
@@ -499,50 +453,44 @@ public class FormEditor {
         return null;
     }
 
-    /**
-     * Returns an indirect reference to the page's PdfDictionary, registering
-     * the dict as an indirect object first if it isn't already.
-     */
+    /// Returns an indirect reference to the page's PdfDictionary, registering
+    /// the dict as an indirect object first if it isn't already.
     private org.aspose.pdf.engine.pdfobjects.PdfObjectReference pageRefOf(
             org.aspose.pdf.Page page) {
         return document.registerImportedObject(page.getPdfDictionary());
     }
 
-    /** Returns the visual-style facade applied to subsequently-created fields. */
+    /// Returns the visual-style facade applied to subsequently-created fields.
     public FormFieldFacade getFacade() {
         return facade;
     }
 
-    /**
-     * Mirrors the C# property {@code FormEditor.Facade}: sets the visual-style
-     * facade used by {@link #addField(FieldType, String, String, int, double, double, double, double)}
-     * to dress newly-created widget annotations (background colour, border style, etc.).
-     */
+    /// Mirrors the C# property `FormEditor.Facade`: sets the visual-style
+    /// facade used by [#addField(FieldType, String, String, int, double, double, double, double)]
+    /// to dress newly-created widget annotations (background colour, border style, etc.).
     public void setFacade(FormFieldFacade facade) {
         this.facade = facade;
     }
 
-    /** Drops any previously-set facade so the next {@code addField} uses defaults. */
+    /// Drops any previously-set facade so the next `addField` uses defaults.
     public void resetFacade() {
         this.facade = null;
     }
 
-    /**
-     * Adds a new form field to {@code pageNumber} at the given rectangle.
-     * Mirrors C# {@code FormEditor.AddField(FieldType, string, string, int, double, double, double, double)}.
-     *
-     * @param type        the field subtype (currently supports ListBox, ComboBox,
-     *                    Text, CheckBox, RadioButton, PushButton, Signature)
-     * @param fieldName   the partial field name (assigned to /T)
-     * @param value       initial /V value (also added as the first option for
-     *                    list/combo fields)
-     * @param pageNumber  1-based page where the widget should appear
-     * @param llx         lower-left X
-     * @param lly         lower-left Y
-     * @param urx         upper-right X
-     * @param ury         upper-right Y
-     * @return {@code true} on success
-     */
+    /// Adds a new form field to `pageNumber` at the given rectangle.
+    /// Mirrors C# `FormEditor.AddField(FieldType, string, string, int, double, double, double, double)`.
+    ///
+    /// @param type        the field subtype (currently supports ListBox, ComboBox,
+    ///                    Text, CheckBox, RadioButton, PushButton, Signature)
+    /// @param fieldName   the partial field name (assigned to /T)
+    /// @param value       initial /V value (also added as the first option for
+    ///                    list/combo fields)
+    /// @param pageNumber  1-based page where the widget should appear
+    /// @param llx         lower-left X
+    /// @param lly         lower-left Y
+    /// @param urx         upper-right X
+    /// @param ury         upper-right Y
+    /// @return `true` on success
     public boolean addField(FieldType type, String fieldName, String value,
                             int pageNumber, double llx, double lly, double urx, double ury) {
         if (document == null) {
@@ -628,32 +576,29 @@ public class FormEditor {
         }
     }
 
-    /**
-     * Creates a push button on {@code pageNumber} that submits the form to
-     * {@code url} when activated. Mirrors C# {@code FormEditor.AddSubmitBtn}.
-     * <p>
-     * The button is configured with:
-     * <ul>
-     *   <li>partial name {@code fieldName} and caption {@code caption}
-     *       (written to /MK /CA),</li>
-     *   <li>a {@link org.aspose.pdf.SubmitFormAction} pointing at
-     *       {@code url} attached as the /A entry,</li>
-     *   <li>a freshly-built /AP /N Form XObject whose content stream uses
-     *       {@code /Helv 12.5} to render the caption — matching the layout
-     *       Aspose's reference implementation produces and which the
-     *       PDFNEWNET-31552 regression test asserts.</li>
-     * </ul>
-     *
-     * @param fieldName  the partial field name (assigned to /T)
-     * @param pageNumber 1-based page on which the button appears
-     * @param caption    button caption rendered in the appearance stream
-     * @param url        submission URL passed to {@code SubmitFormAction}
-     * @param llx lower-left X
-     * @param lly lower-left Y
-     * @param urx upper-right X
-     * @param ury upper-right Y
-     * @return {@code true} on success
-     */
+    /// Creates a push button on `pageNumber` that submits the form to
+    /// `url` when activated. Mirrors C# `FormEditor.AddSubmitBtn`.
+    ///
+    /// The button is configured with:
+    ///
+    ///   - partial name `fieldName` and caption `caption`
+    ///     (written to /MK /CA),
+    ///   - a [org.aspose.pdf.SubmitFormAction] pointing at
+    ///     `url` attached as the /A entry,
+    ///   - a freshly-built /AP /N Form XObject whose content stream uses
+    ///     `/Helv 12.5` to render the caption — matching the layout
+    ///     Aspose's reference implementation produces and which the
+    ///     PDFNEWNET-31552 regression test asserts.
+    ///
+    /// @param fieldName  the partial field name (assigned to /T)
+    /// @param pageNumber 1-based page on which the button appears
+    /// @param caption    button caption rendered in the appearance stream
+    /// @param url        submission URL passed to `SubmitFormAction`
+    /// @param llx lower-left X
+    /// @param lly lower-left Y
+    /// @param urx upper-right X
+    /// @param ury upper-right Y
+    /// @return `true` on success
     public boolean addSubmitBtn(String fieldName, int pageNumber, String caption,
                                 String url, double llx, double lly, double urx, double ury) {
         if (document == null) {
@@ -704,11 +649,9 @@ public class FormEditor {
         }
     }
 
-    /**
-     * Builds a Form XObject PdfStream that renders {@code caption} with
-     * {@code /Helv 12.5}. Used as the /AP /N entry of push buttons created via
-     * {@link #addSubmitBtn(String, int, String, String, double, double, double, double)}.
-     */
+    /// Builds a Form XObject PdfStream that renders `caption` with
+    /// `/Helv 12.5`. Used as the /AP /N entry of push buttons created via
+    /// [#addSubmitBtn(String, int, String, String, double, double, double, double)].
     private static org.aspose.pdf.engine.pdfobjects.PdfStream
     buildPushButtonAppearance(String caption, double width, double height) {
         String text = caption != null ? caption : "";
@@ -805,14 +748,12 @@ public class FormEditor {
         return out.toString();
     }
 
-    /**
-     * Adds an option to an existing list-box or combo-box field.
-     * Mirrors C# {@code FormEditor.AddListItem(string, string)}.
-     *
-     * @param fieldName the field's full name
-     * @param item      the option label to add
-     * @return {@code true} on success
-     */
+    /// Adds an option to an existing list-box or combo-box field.
+    /// Mirrors C# `FormEditor.AddListItem(string, string)`.
+    ///
+    /// @param fieldName the field's full name
+    /// @param item      the option label to add
+    /// @return `true` on success
     public boolean addListItem(String fieldName, String item) {
         try {
             org.aspose.pdf.forms.Form form = requireBoundForm();
@@ -834,11 +775,9 @@ public class FormEditor {
         }
     }
 
-    /**
-     * Writes the current facade's background colour, border style and font
-     * attributes onto the field's underlying PDF dictionary so that PDF
-     * viewers render the widget with the configured skin.
-     */
+    /// Writes the current facade's background colour, border style and font
+    /// attributes onto the field's underlying PDF dictionary so that PDF
+    /// viewers render the widget with the configured skin.
     private void applyFacadeTo(org.aspose.pdf.forms.Field field) {
         if (facade == null || field == null) return;
         org.aspose.pdf.engine.pdfobjects.PdfDictionary dict = field.getPdfDictionary();
@@ -902,12 +841,10 @@ public class FormEditor {
         return arr;
     }
 
-    /**
-     * Removes a form field by name.
-     * <p>
-     * @param fieldName the full name of the field to remove
-     * @return {@code true} if the field was removed
-     */
+    /// Removes a form field by name.
+    ///
+    /// @param fieldName the full name of the field to remove
+    /// @return `true` if the field was removed
     public boolean removeField(String fieldName) {
         try {
             Form form = requireBoundForm();
@@ -926,12 +863,10 @@ public class FormEditor {
         }
     }
 
-    /**
-     * Returns the type of the specified field.
-     * <p>
-     * @param fieldName the full name of the field
-     * @return the logical field type name, or {@code null} if absent
-     */
+    /// Returns the type of the specified field.
+    ///
+    /// @param fieldName the full name of the field
+    /// @return the logical field type name, or `null` if absent
     public String getFieldType(String fieldName) {
         try {
             Form form = requireBoundForm();
@@ -945,13 +880,11 @@ public class FormEditor {
         }
     }
 
-    /**
-     * Sets the maximum text length for a text box field.
-     *
-     * @param fieldName the full name of the field
-     * @param limit the maximum length to set
-     * @return {@code true} on success
-     */
+    /// Sets the maximum text length for a text box field.
+    ///
+    /// @param fieldName the full name of the field
+    /// @param limit the maximum length to set
+    /// @return `true` on success
     public boolean setFieldLimit(String fieldName, int limit) {
         try {
             Form form = requireBoundForm();
@@ -971,12 +904,10 @@ public class FormEditor {
         }
     }
 
-    /**
-     * Returns the maximum text length for a text box field.
-     *
-     * @param fieldName the full name of the field
-     * @return the configured maximum length, or {@code -1} if unavailable
-     */
+    /// Returns the maximum text length for a text box field.
+    ///
+    /// @param fieldName the full name of the field
+    /// @return the configured maximum length, or `-1` if unavailable
     public int getFieldLimit(String fieldName) {
         try {
             Form form = requireBoundForm();
@@ -994,14 +925,12 @@ public class FormEditor {
         }
     }
 
-    /**
-     * Saves the bound document to the output file supplied via the
-     * {@link #FormEditor(String, String)} constructor. Mirrors the C# no-arg
-     * {@code FormEditor.Save()} overload.
-     *
-     * @return {@code true} on success
-     * @throws IllegalStateException if the editor was not bound with an output path
-     */
+    /// Saves the bound document to the output file supplied via the
+    /// [#FormEditor(String, String)] constructor. Mirrors the C# no-arg
+    /// `FormEditor.Save()` overload.
+    ///
+    /// @return `true` on success
+    /// @throws IllegalStateException if the editor was not bound with an output path
     public boolean save() {
         if (pendingOutputFile == null) {
             throw new IllegalStateException(
@@ -1010,12 +939,10 @@ public class FormEditor {
         return save(pendingOutputFile);
     }
 
-    /**
-     * Saves the bound document to a file.
-     *
-     * @param outputFile path to the output file
-     * @return {@code true} on success
-     */
+    /// Saves the bound document to a file.
+    ///
+    /// @param outputFile path to the output file
+    /// @return `true` on success
     public boolean save(String outputFile) {
         try {
             document.requestFullRewrite();
@@ -1027,12 +954,10 @@ public class FormEditor {
         }
     }
 
-    /**
-     * Saves the bound document to an output stream.
-     *
-     * @param outputStream the output stream
-     * @return {@code true} on success
-     */
+    /// Saves the bound document to an output stream.
+    ///
+    /// @param outputStream the output stream
+    /// @return `true` on success
     public boolean save(OutputStream outputStream) {
         try {
             document.requestFullRewrite();
@@ -1044,9 +969,7 @@ public class FormEditor {
         }
     }
 
-    /**
-     * Closes the editor and releases the bound document.
-     */
+    /// Closes the editor and releases the bound document.
     public void close() {
         if (document != null) {
             try {

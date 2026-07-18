@@ -2,61 +2,54 @@ package org.aspose.pdf.engine.font.cff;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-/**
- * Builds a synthetic CFF-flavored OpenType ({@code .otf}) file in memory from
- * a parsed CFF font + a PDF /Encoding + PDF /Widths. The resulting OTF can be
- * fed to {@link java.awt.Font#createFont(int, java.io.InputStream)} with
- * {@code Font.TRUETYPE_FONT} (Java's font engine accepts both TT-outlined and
- * CFF-outlined OTF).
- *
- * <p>Tables emitted, in OpenType-required ordering:</p>
- * <pre>
- *   'CFF '  — the raw CFF data verbatim
- *   'OS/2'  — minimal OS/2 metrics (xAvgCharWidth, weight, range bits)
- *   'cmap'  — format 4 segmented map from Unicode → glyph-id
- *   'head'  — font header (units/em, bbox, flags)
- *   'hhea'  — horizontal header (ascent/descent + numberOfHMetrics)
- *   'hmtx'  — per-glyph advance widths
- *   'maxp'  — version 0.5 (CFF), numGlyphs only
- *   'name'  — minimum name records (FontFamily, FullName, PSName)
- *   'post'  — version 3.0 (no glyph names, since CFF provides them)
- * </pre>
- *
- * <p>The cmap maps PDF charcodes (after passing through the PDF /Encoding to
- * get a glyph name, then looking that name up in the CFF Charset to get a
- * glyph id) to Unicode codepoints. When Java's text engine calls
- * drawString(text) the Unicode is mapped back to the glyph id via this cmap,
- * and the CFF rasteriser does the actual outline painting.</p>
- */
+/// Builds a synthetic CFF-flavored OpenType (`.otf`) file in memory from
+/// a parsed CFF font + a PDF /Encoding + PDF /Widths. The resulting OTF can be
+/// fed to [java.awt.Font#createFont(int, java.io.InputStream)] with
+/// `Font.TRUETYPE_FONT` (Java's font engine accepts both TT-outlined and
+/// CFF-outlined OTF).
+///
+/// Tables emitted, in OpenType-required ordering:
+///
+/// <pre>
+///   'CFF '  — the raw CFF data verbatim
+///   'OS/2'  — minimal OS/2 metrics (xAvgCharWidth, weight, range bits)
+///   'cmap'  — format 4 segmented map from Unicode → glyph-id
+///   'head'  — font header (units/em, bbox, flags)
+///   'hhea'  — horizontal header (ascent/descent + numberOfHMetrics)
+///   'hmtx'  — per-glyph advance widths
+///   'maxp'  — version 0.5 (CFF), numGlyphs only
+///   'name'  — minimum name records (FontFamily, FullName, PSName)
+///   'post'  — version 3.0 (no glyph names, since CFF provides them)
+/// </pre>
+///
+/// The cmap maps PDF charcodes (after passing through the PDF /Encoding to
+/// get a glyph name, then looking that name up in the CFF Charset to get a
+/// glyph id) to Unicode codepoints. When Java's text engine calls
+/// drawString(text) the Unicode is mapped back to the glyph id via this cmap,
+/// and the CFF rasteriser does the actual outline painting.
 public final class OpenTypeBuilder {
 
     private static final int UNITS_PER_EM = 1000;
 
-    /** Inputs needed to build the OTF. */
+    /// Inputs needed to build the OTF.
     public static final class Inputs {
         public CFFParser cff;
-        /** Glyph name → glyph-id reverse map of {@link CFFParser#glyphNames}. */
+        /// Glyph name → glyph-id reverse map of [CFFParser#glyphNames].
         public Map<String, Integer> nameToGid;
-        /** Unicode codepoint → glyph-id (built from PDF /Encoding + name→gid). */
+        /// Unicode codepoint → glyph-id (built from PDF /Encoding + name→gid).
         public Map<Integer, Integer> unicodeToGid;
-        /** Per-glyph advance width in 1/1000 em (length == numGlyphs). */
+        /// Per-glyph advance width in 1/1000 em (length == numGlyphs).
         public int[] advanceWidths;
-        /** Display name (FontFamily / FullName). */
+        /// Display name (FontFamily / FullName).
         public String displayName;
-        /** PostScript name (PSName). */
+        /// PostScript name (PSName).
         public String psName;
     }
 
-    /**
-     * Wraps a CFF font into an OTF and returns the bytes ready for
-     * {@link java.awt.Font#createFont}.
-     */
+    /// Wraps a CFF font into an OTF and returns the bytes ready for
+    /// [java.awt.Font#createFont].
     public static byte[] build(Inputs in) throws IOException {
         Map<String, byte[]> tables = new HashMap<>();
         tables.put("CFF ", in.cff.cffBytes);
@@ -282,10 +275,8 @@ public final class OpenTypeBuilder {
         return b.toByteArray();
     }
 
-    /**
-     * Builds a format-4 cmap (segmented mapping to delta values) from the
-     * Unicode → glyph-id map.
-     */
+    /// Builds a format-4 cmap (segmented mapping to delta values) from the
+    /// Unicode → glyph-id map.
     private static byte[] buildCmap(Map<Integer, Integer> unicodeToGid) throws IOException {
         // Sort code points + group consecutive runs of (cp, gid) where gid increases monotonically.
         List<int[]> segs = buildSegments(unicodeToGid);
@@ -335,12 +326,10 @@ public final class OpenTypeBuilder {
         return b.toByteArray();
     }
 
-    /**
-     * Coalesces a {@code (codepoint → glyphId)} map into format-4 segments
-     * where each segment is {@code (startCode, endCode, idDelta)} and
-     * {@code glyphId == (codepoint + idDelta) & 0xFFFF} for every codepoint
-     * in the range.
-     */
+    /// Coalesces a `(codepoint → glyphId)` map into format-4 segments
+    /// where each segment is `(startCode, endCode, idDelta)` and
+    /// `glyphId == (codepoint + idDelta) & 0xFFFF` for every codepoint
+    /// in the range.
     private static List<int[]> buildSegments(Map<Integer, Integer> map) {
         Integer[] codes = map.keySet().stream()
                 .filter(c -> c >= 0 && c <= 0xFFFE)

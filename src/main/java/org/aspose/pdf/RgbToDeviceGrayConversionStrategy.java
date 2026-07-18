@@ -1,64 +1,42 @@
 package org.aspose.pdf;
 
-import org.aspose.pdf.operators.SetColor;
-import org.aspose.pdf.operators.SetColorStroke;
-import org.aspose.pdf.operators.SetAdvancedColor;
-import org.aspose.pdf.operators.SetAdvancedColorStroke;
-import org.aspose.pdf.operators.SetColorSpace;
-import org.aspose.pdf.operators.SetColorSpaceStroke;
-import org.aspose.pdf.operators.SetGray;
-import org.aspose.pdf.operators.SetGrayStroke;
-import org.aspose.pdf.operators.SetRGBColor;
-import org.aspose.pdf.operators.SetRGBColorStroke;
+import org.aspose.pdf.operators.*;
 
 import java.io.IOException;
 import java.util.logging.Logger;
 
-/**
- * Converts RGB color values in a page's content stream to DeviceGray equivalents.
- * <p>
- * Uses the standard luminance formula:
- * {@code gray = 0.299 * R + 0.587 * G + 0.114 * B}
- * </p>
- * <p>
- * The following operator replacements are performed:
- * <ul>
- *   <li>{@code rg} (SetRGBColor) is replaced with {@code g} (SetGray)</li>
- *   <li>{@code RG} (SetRGBColorStroke) is replaced with {@code G} (SetGrayStroke)</li>
- *   <li>{@code sc} with 3 components is replaced with {@code sc} with 1 component</li>
- *   <li>{@code SC} with 3 components is replaced with {@code SC} with 1 component</li>
- *   <li>{@code cs DeviceRGB} is replaced with {@code cs DeviceGray}</li>
- *   <li>{@code CS DeviceRGB} is replaced with {@code CS DeviceGray}</li>
- * </ul>
- * </p>
- *
- * @see <a href="https://reference.aspose.com/pdf/net/aspose.pdf/rgbtodevicegrayconversionstrategy/">
- *     Aspose.PDF RgbToDeviceGrayConversionStrategy</a>
- */
+/// Converts RGB color values in a page's content stream to DeviceGray equivalents.
+///
+/// Uses the standard luminance formula:
+/// `gray = 0.299 * R + 0.587 * G + 0.114 * B`
+///
+/// The following operator replacements are performed:
+///
+///   - `rg` (SetRGBColor) is replaced with `g` (SetGray)
+///   - `RG` (SetRGBColorStroke) is replaced with `G` (SetGrayStroke)
+///   - `sc` with 3 components is replaced with `sc` with 1 component
+///   - `SC` with 3 components is replaced with `SC` with 1 component
+///   - `cs DeviceRGB` is replaced with `cs DeviceGray`
+///   - `CS DeviceRGB` is replaced with `CS DeviceGray`
 public class RgbToDeviceGrayConversionStrategy {
 
     private static final Logger LOG = Logger.getLogger(RgbToDeviceGrayConversionStrategy.class.getName());
 
-    /**
-     * Creates a new RGB to DeviceGray conversion strategy.
-     */
+    /// Creates a new RGB to DeviceGray conversion strategy.
     public RgbToDeviceGrayConversionStrategy() {
         // default constructor
     }
 
-    /**
-     * Converts all RGB color operators in the given page's content stream to their
-     * DeviceGray equivalents.
-     * <p>
-     * The page's content stream is parsed, RGB color operators are replaced with
-     * gray equivalents using the luminance formula, and the modified content stream
-     * is written back to the page.
-     * </p>
-     *
-     * @param page the page to convert
-     * @throws IOException if reading or writing the content stream fails
-     * @throws IllegalArgumentException if page is null
-     */
+    /// Converts all RGB color operators in the given page's content stream to their
+    /// DeviceGray equivalents.
+    ///
+    /// The page's content stream is parsed, RGB color operators are replaced with
+    /// gray equivalents using the luminance formula, and the modified content stream
+    /// is written back to the page.
+    ///
+    /// @param page the page to convert
+    /// @throws IOException if reading or writing the content stream fails
+    /// @throws IllegalArgumentException if page is null
     public void convert(Page page) throws IOException {
         if (page == null) {
             throw new IllegalArgumentException("Page must not be null");
@@ -132,15 +110,13 @@ public class RgbToDeviceGrayConversionStrategy {
         }
     }
 
-    /**
-     * Converts RGB color components to a single gray value using the standard
-     * luminance formula (ITU-R BT.601).
-     *
-     * @param r the red component (0.0 to 1.0)
-     * @param g the green component (0.0 to 1.0)
-     * @param b the blue component (0.0 to 1.0)
-     * @return the gray value (0.0 to 1.0)
-     */
+    /// Converts RGB color components to a single gray value using the standard
+    /// luminance formula (ITU-R BT.601).
+    ///
+    /// @param r the red component (0.0 to 1.0)
+    /// @param g the green component (0.0 to 1.0)
+    /// @param b the blue component (0.0 to 1.0)
+    /// @return the gray value (0.0 to 1.0)
     private static double rgbToGray(double r, double g, double b) {
         return 0.299 * r + 0.587 * g + 0.114 * b;
     }

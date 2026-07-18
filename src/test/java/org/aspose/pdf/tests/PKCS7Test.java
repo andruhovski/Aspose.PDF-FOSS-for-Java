@@ -17,9 +17,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for PKCS#7 SignedData creation, encoding, parsing, and verification.
- */
+/// Tests for PKCS#7 SignedData creation, encoding, parsing, and verification.
 public class PKCS7Test {
 
     private static PrivateKey privateKey;
@@ -217,10 +215,8 @@ public class PKCS7Test {
 
     // ── Helper: self-signed X.509 certificate ──
 
-    /**
-     * Creates a minimal self-signed X.509 v3 certificate by manually
-     * constructing the DER encoding. No sun.security internals needed.
-     */
+    /// Creates a minimal self-signed X.509 v3 certificate by manually
+    /// constructing the DER encoding. No sun.security internals needed.
     static X509Certificate createSelfSignedCertificate(KeyPair keyPair, String dn) throws Exception {
         // Build TBSCertificate DER
         byte[] serialBytes = org.aspose.pdf.engine.security.asn1.DEREncoder.encodeInteger(
@@ -267,9 +263,7 @@ public class PKCS7Test {
         return (X509Certificate) cf.generateCertificate(new ByteArrayInputStream(certDER));
     }
 
-    /**
-     * Encodes a simple DN string like "CN=Test, O=Org" into DER.
-     */
+    /// Encodes a simple DN string like "CN=Test, O=Org" into DER.
     private static byte[] encodeDN(String dn) {
         // Parse key=value pairs
         String[] parts = dn.split(",\\s*");

@@ -3,17 +3,14 @@ package org.aspose.pdf.engine.font;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Static mapping from Adobe glyph names to Unicode codepoints.
- * <p>
- * Provides a subset of ~600 entries from Adobe's glyphlist.txt, covering
- * Latin-1, Latin Extended, currency, math symbols, ligatures, and common
- * typographic characters. Used by {@link FontEncoding} to convert glyph
- * names to Unicode characters during text extraction.
- * </p>
- *
- * @see <a href="https://github.com/adobe-type-tools/agl-aglfn">Adobe Glyph List</a>
- */
+/// Static mapping from Adobe glyph names to Unicode codepoints.
+///
+/// Provides a subset of \~600 entries from Adobe's glyphlist.txt, covering
+/// Latin-1, Latin Extended, currency, math symbols, ligatures, and common
+/// typographic characters. Used by [FontEncoding] to convert glyph
+/// names to Unicode characters during text extraction.
+///
+/// @see <a href="https://github.com/adobe-type-tools/agl-aglfn">Adobe Glyph List</a>
 public final class AdobeGlyphList {
 
     private static final Map<String, Integer> MAP = new HashMap<>(700);
@@ -398,12 +395,10 @@ public final class AdobeGlyphList {
         // Utility class — no instantiation
     }
 
-    /**
-     * Returns the Unicode codepoint for the given Adobe glyph name.
-     *
-     * @param glyphName the glyph name (e.g., "A", "space", "fi")
-     * @return the Unicode codepoint, or -1 if the glyph name is not found
-     */
+    /// Returns the Unicode codepoint for the given Adobe glyph name.
+    ///
+    /// @param glyphName the glyph name (e.g., "A", "space", "fi")
+    /// @return the Unicode codepoint, or -1 if the glyph name is not found
     public static int getUnicode(String glyphName) {
         if (glyphName == null) {
             return -1;
@@ -448,12 +443,10 @@ public final class AdobeGlyphList {
         return result != null ? result : -1;
     }
 
-    /**
-     * Returns whether the given glyph name is present in the Adobe Glyph List.
-     *
-     * @param glyphName the glyph name to check
-     * @return true if the mapping exists
-     */
+    /// Returns whether the given glyph name is present in the Adobe Glyph List.
+    ///
+    /// @param glyphName the glyph name to check
+    /// @return true if the mapping exists
     public static boolean contains(String glyphName) {
         return glyphName != null && MAP.containsKey(glyphName);
     }

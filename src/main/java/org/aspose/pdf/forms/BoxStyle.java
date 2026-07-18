@@ -1,19 +1,17 @@
 package org.aspose.pdf.forms;
 
-/**
- * Represents the style of a checkbox check mark.
- */
+/// Represents the style of a checkbox check mark.
 public enum BoxStyle {
-    /** A check mark (✓). */
+    /// A check mark (✓).
     Check,
-    /** A circle (●). */
+    /// A circle (●).
     Circle,
-    /** A cross (✕). */
+    /// A cross (✕).
     Cross,
-    /** A diamond (◆). */
+    /// A diamond (◆).
     Diamond,
-    /** A square (■). */
+    /// A square (■).
     Square,
-    /** A star (★). */
+    /// A star (★).
     Star
 }

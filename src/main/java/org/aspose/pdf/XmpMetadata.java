@@ -8,17 +8,14 @@ import org.aspose.pdf.engine.xmp.XmpWriter;
 import java.util.*;
 import java.util.logging.Logger;
 
-/**
- * Provides access to XMP metadata of a PDF document (ISO 32000-1 §14.3.2, ISO 16684-1).
- * <p>
- * Implements a Map-like interface with string keys in "prefix:localName" format.
- * Iterable over key-value pairs. Lazy-parses the XMP XML on first access.
- * </p>
- * <p>
- * Standard key prefixes: {@code dc:}, {@code xmp:}, {@code pdf:}, {@code xmpMM:},
- * {@code xmpRights:}, {@code pdfaid:}. See {@link DefaultMetadataProperties} for constants.
- * </p>
- */
+/// Provides access to XMP metadata of a PDF document (ISO 32000-1 §14.3.2, ISO 16684-1).
+///
+/// Implements a Map-like interface with string keys in "prefix:localName" format.
+/// Iterable over key-value pairs. Lazy-parses the XMP XML on first access.
+///
+/// Standard key prefixes: `dc:`, `xmp:`, `pdf:`, `xmpMM:`,
+/// `xmpRights:`, `pdfaid:`. See [DefaultMetadataProperties] for constants.
+///
 public class XmpMetadata implements Iterable<Map.Entry<String, XmpValue>> {
 
     private static final Logger LOG = Logger.getLogger(XmpMetadata.class.getName());
@@ -37,20 +34,16 @@ public class XmpMetadata implements Iterable<Map.Entry<String, XmpValue>> {
             "dc:subject", "dc:language", "dc:publisher", "dc:relation",
             "dc:type", "dc:contributor"));
 
-    /**
-     * Creates empty XMP metadata.
-     */
+    /// Creates empty XMP metadata.
     public XmpMetadata() {
         this.registry = new XmpNamespaceRegistry();
         this.properties = new LinkedHashMap<>();
         this.dirty = false;
     }
 
-    /**
-     * Creates XMP metadata from raw XML bytes.
-     *
-     * @param xmpBytes the UTF-8 XMP XML bytes
-     */
+    /// Creates XMP metadata from raw XML bytes.
+    ///
+    /// @param xmpBytes the UTF-8 XMP XML bytes
     public XmpMetadata(byte[] xmpBytes) {
         this.registry = new XmpNamespaceRegistry();
         this.rawBytes = xmpBytes;
@@ -58,12 +51,10 @@ public class XmpMetadata implements Iterable<Map.Entry<String, XmpValue>> {
         this.dirty = false;
     }
 
-    /**
-     * Returns the value for the given key, or null if not present.
-     *
-     * @param key the property key ("prefix:localName")
-     * @return the value, or null
-     */
+    /// Returns the value for the given key, or null if not present.
+    ///
+    /// @param key the property key ("prefix:localName")
+    /// @return the value, or null
     public XmpValue get(String key) {
         ensureParsed();
         XmpProperty prop = properties.get(key);
@@ -71,33 +62,27 @@ public class XmpMetadata implements Iterable<Map.Entry<String, XmpValue>> {
         return propertyToValue(prop);
     }
 
-    /**
-     * Returns true if the given key is present.
-     *
-     * @param key the property key
-     * @return true if present
-     */
+    /// Returns true if the given key is present.
+    ///
+    /// @param key the property key
+    /// @return true if present
     public boolean contains(String key) {
         ensureParsed();
         return properties.containsKey(key);
     }
 
-    /**
-     * Returns all property keys.
-     *
-     * @return collection of keys
-     */
+    /// Returns all property keys.
+    ///
+    /// @return collection of keys
     public java.util.Collection<String> getKeys() {
         ensureParsed();
         return Collections.unmodifiableSet(properties.keySet());
     }
 
-    /**
-     * Sets a property value. Creates or replaces the property.
-     *
-     * @param key   the property key
-     * @param value the value
-     */
+    /// Sets a property value. Creates or replaces the property.
+    ///
+    /// @param key   the property key
+    /// @param value the value
     public void set(String key, XmpValue value) {
         ensureParsed();
         XmpProperty prop = createProperty(key, value);
@@ -105,41 +90,33 @@ public class XmpMetadata implements Iterable<Map.Entry<String, XmpValue>> {
         dirty = true;
     }
 
-    /**
-     * Sets a property value from a string.
-     *
-     * @param key   the property key
-     * @param value the string value
-     */
+    /// Sets a property value from a string.
+    ///
+    /// @param key   the property key
+    /// @param value the string value
     public void set(String key, String value) {
         set(key, new XmpValue(value));
     }
 
-    /**
-     * Adds a property value. Same as set() — creates or replaces.
-     *
-     * @param key   the property key
-     * @param value the value
-     */
+    /// Adds a property value. Same as set() — creates or replaces.
+    ///
+    /// @param key   the property key
+    /// @param value the value
     public void add(String key, XmpValue value) {
         set(key, value);
     }
 
-    /**
-     * Adds a property value from a string.
-     *
-     * @param key   the property key
-     * @param value the string value
-     */
+    /// Adds a property value from a string.
+    ///
+    /// @param key   the property key
+    /// @param value the string value
     public void add(String key, String value) {
         set(key, value);
     }
 
-    /**
-     * Removes a property.
-     *
-     * @param key the property key
-     */
+    /// Removes a property.
+    ///
+    /// @param key the property key
     public void remove(String key) {
         ensureParsed();
         if (properties.remove(key) != null) {
@@ -147,52 +124,42 @@ public class XmpMetadata implements Iterable<Map.Entry<String, XmpValue>> {
         }
     }
 
-    /**
-     * Registers a custom namespace prefix-URI mapping.
-     *
-     * @param prefix       the prefix
-     * @param namespaceUri the namespace URI
-     */
+    /// Registers a custom namespace prefix-URI mapping.
+    ///
+    /// @param prefix       the prefix
+    /// @param namespaceUri the namespace URI
     public void registerNamespaceUri(String prefix, String namespaceUri) {
         registry.register(prefix, namespaceUri);
     }
 
-    /**
-     * Registers a custom namespace with description.
-     *
-     * @param prefix            the prefix
-     * @param namespaceUri      the namespace URI
-     * @param schemaDescription ignored (for API compatibility)
-     */
+    /// Registers a custom namespace with description.
+    ///
+    /// @param prefix            the prefix
+    /// @param namespaceUri      the namespace URI
+    /// @param schemaDescription ignored (for API compatibility)
     public void registerNamespaceUri(String prefix, String namespaceUri, String schemaDescription) {
         registry.register(prefix, namespaceUri);
     }
 
-    /**
-     * Returns the namespace URI for a prefix.
-     *
-     * @param prefix the prefix
-     * @return the URI, or null
-     */
+    /// Returns the namespace URI for a prefix.
+    ///
+    /// @param prefix the prefix
+    /// @return the URI, or null
     public String getNamespaceUriByPrefix(String prefix) {
         return registry.getUri(prefix);
     }
 
-    /**
-     * Returns the prefix for a namespace URI.
-     *
-     * @param namespaceUri the URI
-     * @return the prefix, or null
-     */
+    /// Returns the prefix for a namespace URI.
+    ///
+    /// @param namespaceUri the URI
+    /// @return the prefix, or null
     public String getPrefixByNamespaceUri(String namespaceUri) {
         return registry.getPrefix(namespaceUri);
     }
 
-    /**
-     * Returns the full XMP XML as UTF-8 bytes.
-     *
-     * @return the XMP XML bytes
-     */
+    /// Returns the full XMP XML as UTF-8 bytes.
+    ///
+    /// @return the XMP XML bytes
     public byte[] getBytes() {
         // If we still hold the raw input bytes and nothing has been mutated
         // through the typed API, prefer the original byte payload. This keeps
@@ -207,9 +174,7 @@ public class XmpMetadata implements Iterable<Map.Entry<String, XmpValue>> {
         return XmpWriter.serialize(properties, registry);
     }
 
-    /**
-     * Returns an iterator over all key-value pairs.
-     */
+    /// Returns an iterator over all key-value pairs.
     @Override
     public Iterator<Map.Entry<String, XmpValue>> iterator() {
         ensureParsed();
@@ -220,29 +185,23 @@ public class XmpMetadata implements Iterable<Map.Entry<String, XmpValue>> {
         return entries.iterator();
     }
 
-    /**
-     * Returns true if properties have been modified since parsing.
-     *
-     * @return true if dirty
-     */
+    /// Returns true if properties have been modified since parsing.
+    ///
+    /// @return true if dirty
     public boolean isDirty() {
         return dirty;
     }
 
-    /**
-     * Returns the internal namespace registry.
-     *
-     * @return the registry
-     */
+    /// Returns the internal namespace registry.
+    ///
+    /// @return the registry
     public XmpNamespaceRegistry getRegistry() {
         return registry;
     }
 
-    /**
-     * Returns the internal properties map (for serialization by Document).
-     *
-     * @return the properties map
-     */
+    /// Returns the internal properties map (for serialization by Document).
+    ///
+    /// @return the properties map
     public Map<String, XmpProperty> getProperties() {
         ensureParsed();
         return properties;

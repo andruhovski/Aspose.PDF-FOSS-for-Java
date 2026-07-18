@@ -7,14 +7,12 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Sprint 19 T1 — verifies that {@link Cell#add(BaseParagraph)} and the
- * form-field overloads correctly wrap and append to a cell's paragraphs.
- *
- * <p>Closes the structural blocker surfaced in Sprint 18 Part B where
- * {@code cell.getParagraphs().add(option)} failed to compile because
- * {@link RadioButtonOptionField} does not extend {@link BaseParagraph}.</p>
- */
+/// Sprint 19 T1 — verifies that [Cell#add(BaseParagraph)] and the
+/// form-field overloads correctly wrap and append to a cell's paragraphs.
+///
+/// Closes the structural blocker surfaced in Sprint 18 Part B where
+/// `cell.getParagraphs().add(option)` failed to compile because
+/// [RadioButtonOptionField] does not extend [BaseParagraph].
 class CellFormFieldTest {
 
     @Test

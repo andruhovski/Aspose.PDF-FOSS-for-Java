@@ -18,9 +18,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for thread safety of core components.
- */
+/// Tests for thread safety of core components.
 public class ThreadSafetyTest {
 
     @Test

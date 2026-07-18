@@ -1,8 +1,8 @@
 package org.aspose.pdf.engine.security.signature;
 
-import org.aspose.pdf.*;
-import org.aspose.pdf.engine.pdfobjects.*;
+import org.aspose.pdf.Document;
 import org.aspose.pdf.engine.parser.PDFParser;
+import org.aspose.pdf.engine.pdfobjects.*;
 import org.aspose.pdf.engine.security.pkcs7.PKCS7SignedData;
 import org.aspose.pdf.engine.writer.PDFWriter;
 import org.aspose.pdf.forms.Field;
@@ -10,49 +10,45 @@ import org.aspose.pdf.forms.Form;
 import org.aspose.pdf.forms.Signature;
 import org.aspose.pdf.forms.SignatureField;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.logging.Logger;
 
-/**
- * Signs and verifies PDF documents using PKCS#7 detached signatures
- * (ISO 32000-1:2008, §12.8).
- * <p>
- * The signing process:
- * <ol>
- *   <li>Build a signature dictionary with placeholder /ByteRange and /Contents</li>
- *   <li>Attach it to a SignatureField's /V entry</li>
- *   <li>Serialize the document to bytes</li>
- *   <li>Locate the /Contents hex placeholder and compute actual byte ranges</li>
- *   <li>Extract signed bytes, create PKCS#7, embed into /Contents</li>
- *   <li>Update /ByteRange with actual values</li>
- * </ol>
- * </p>
- */
+/// Signs and verifies PDF documents using PKCS#7 detached signatures
+/// (ISO 32000-1:2008, §12.8).
+///
+/// The signing process:
+///
+///   1. Build a signature dictionary with placeholder /ByteRange and /Contents
+///   2. Attach it to a SignatureField's /V entry
+///   3. Serialize the document to bytes
+///   4. Locate the /Contents hex placeholder and compute actual byte ranges
+///   5. Extract signed bytes, create PKCS#7, embed into /Contents
+///   6. Update /ByteRange with actual values
 public class PdfSigner {
 
     private static final Logger LOG = Logger.getLogger(PdfSigner.class.getName());
     private static final int SIGNATURE_SIZE = 8192; // bytes for PKCS#7 container
 
-    /**
-     * Signs a PDF document using raw key material.
-     *
-     * @param document        the document to sign
-     * @param sigFieldName    signature field name (null to create new "Signature1")
-     * @param privateKey      the signing private key
-     * @param certificate     the signer's certificate
-     * @param chain           certificate chain (may be null)
-     * @param digestAlgorithm "SHA-256", "SHA-1", etc.
-     * @param reason          signing reason (may be null)
-     * @param contact         signer contact info (may be null)
-     * @param location        signing location (may be null)
-     * @param output          output stream for signed PDF
-     * @throws Exception if signing fails
-     */
+    /// Signs a PDF document using raw key material.
+    ///
+    /// @param document        the document to sign
+    /// @param sigFieldName    signature field name (null to create new "Signature1")
+    /// @param privateKey      the signing private key
+    /// @param certificate     the signer's certificate
+    /// @param chain           certificate chain (may be null)
+    /// @param digestAlgorithm "SHA-256", "SHA-1", etc.
+    /// @param reason          signing reason (may be null)
+    /// @param contact         signer contact info (may be null)
+    /// @param location        signing location (may be null)
+    /// @param output          output stream for signed PDF
+    /// @throws Exception if signing fails
     public void sign(Document document, String sigFieldName, PrivateKey privateKey,
                      X509Certificate certificate, X509Certificate[] chain,
                      String digestAlgorithm, String reason, String contact,
@@ -71,15 +67,13 @@ public class PdfSigner {
         output.write(signedPdf);
     }
 
-    /**
-     * Signs a PDF document using a {@link Signature} object (public API).
-     *
-     * @param document     the document to sign
-     * @param sigFieldName signature field name (null to create new)
-     * @param signature    the signature object containing key material and metadata
-     * @param output       output stream for signed PDF
-     * @throws Exception if signing fails
-     */
+    /// Signs a PDF document using a [Signature] object (public API).
+    ///
+    /// @param document     the document to sign
+    /// @param sigFieldName signature field name (null to create new)
+    /// @param signature    the signature object containing key material and metadata
+    /// @param output       output stream for signed PDF
+    /// @throws Exception if signing fails
     public void sign(Document document, String sigFieldName, Signature signature,
                      OutputStream output) throws Exception {
         sign(document, sigFieldName,
@@ -93,13 +87,11 @@ public class PdfSigner {
                 output);
     }
 
-    /**
-     * Verifies all signatures in a PDF document.
-     *
-     * @param document the document to verify
-     * @return list of verification results
-     * @throws Exception if verification fails
-     */
+    /// Verifies all signatures in a PDF document.
+    ///
+    /// @param document the document to verify
+    /// @return list of verification results
+    /// @throws Exception if verification fails
     public List<SignatureVerificationResult> verify(Document document) throws Exception {
         List<SignatureVerificationResult> results = new ArrayList<>();
         Form form = document.getForm();
@@ -114,13 +106,11 @@ public class PdfSigner {
         return results;
     }
 
-    /**
-     * Verifies all signatures in a PDF loaded from raw bytes, using byte-range integrity.
-     *
-     * @param pdfBytes the raw PDF bytes
-     * @return list of verification results
-     * @throws Exception if verification fails
-     */
+    /// Verifies all signatures in a PDF loaded from raw bytes, using byte-range integrity.
+    ///
+    /// @param pdfBytes the raw PDF bytes
+    /// @return list of verification results
+    /// @throws Exception if verification fails
     public List<SignatureVerificationResult> verify(byte[] pdfBytes) throws Exception {
         Document document = new Document(new ByteArrayInputStream(pdfBytes));
         List<SignatureVerificationResult> results = new ArrayList<>();
@@ -265,10 +255,8 @@ public class PdfSigner {
         return pdfBytes;
     }
 
-    /**
-     * Serializes a document including any new objects added to the model
-     * (such as signature fields and signature dictionaries).
-     */
+    /// Serializes a document including any new objects added to the model
+    /// (such as signature fields and signature dictionaries).
     private void serializeDocumentWithNewObjects(Document document,
                                                   OutputStream output) throws IOException {
         PDFParser parser = document.getParser();

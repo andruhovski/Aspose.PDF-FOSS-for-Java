@@ -3,31 +3,23 @@ package org.aspose.pdf;
 import org.aspose.pdf.engine.pdfobjects.PdfBase;
 import org.aspose.pdf.engine.pdfobjects.PdfFloat;
 import org.aspose.pdf.engine.pdfobjects.PdfInteger;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.logging.Logger;
 
-/**
- * Represents a PDF content stream operator (e.g., "BT", "Tf", "Td", "Tj", "q", "Q", "cm", "re").
- * <p>
- * A content stream is a sequence of operators, each preceded by zero or more operands.
- * This class captures both the operator keyword and its operands as PDF objects.
- * See ISO 32000-1:2008, §7.8.2.
- * </p>
- * <p>
- * Typed subclasses in {@code org.aspose.pdf.operators} provide convenience
- * constructors and typed getters for each PDF operator.
- * </p>
- */
+/// Represents a PDF content stream operator (e.g., "BT", "Tf", "Td", "Tj", "q", "Q", "cm", "re").
+///
+/// A content stream is a sequence of operators, each preceded by zero or more operands.
+/// This class captures both the operator keyword and its operands as PDF objects.
+/// See ISO 32000-1:2008, §7.8.2.
+///
+/// Typed subclasses in `org.aspose.pdf.operators` provide convenience
+/// constructors and typed getters for each PDF operator.
+///
 public class Operator {
 
     private static final Logger LOGGER = Logger.getLogger(Operator.class.getName());
@@ -36,13 +28,11 @@ public class Operator {
     private final List<PdfBase> operands;
     private int index = -1;
 
-    /**
-     * Creates an operator with the given name and operands.
-     *
-     * @param name     the operator keyword (e.g., "BT", "Tf", "cm")
-     * @param operands the operands preceding this operator in the content stream
-     * @throws IllegalArgumentException if name is null or empty
-     */
+    /// Creates an operator with the given name and operands.
+    ///
+    /// @param name     the operator keyword (e.g., "BT", "Tf", "cm")
+    /// @param operands the operands preceding this operator in the content stream
+    /// @throws IllegalArgumentException if name is null or empty
     public Operator(String name, List<PdfBase> operands) {
         if (name == null || name.isEmpty()) {
             throw new IllegalArgumentException("Operator name must not be null or empty");
@@ -53,60 +43,48 @@ public class Operator {
                 : Collections.emptyList();
     }
 
-    /**
-     * Creates an operator with no operands.
-     *
-     * @param name the operator keyword (e.g., "BT", "ET", "q", "Q")
-     * @throws IllegalArgumentException if name is null or empty
-     */
+    /// Creates an operator with no operands.
+    ///
+    /// @param name the operator keyword (e.g., "BT", "ET", "q", "Q")
+    /// @throws IllegalArgumentException if name is null or empty
     public Operator(String name) {
         this(name, Collections.emptyList());
     }
 
-    /**
-     * Returns the operator keyword.
-     *
-     * @return the operator name
-     */
+    /// Returns the operator keyword.
+    ///
+    /// @return the operator name
     public String getName() {
         return name;
     }
 
-    /**
-     * Returns the index of this operator within its parent {@link OperatorCollection},
-     * or -1 if not set.
-     *
-     * @return the zero-based index, or -1 if unknown
-     */
+    /// Returns the index of this operator within its parent [OperatorCollection],
+    /// or -1 if not set.
+    ///
+    /// @return the zero-based index, or -1 if unknown
     public int getIndex() {
         return index;
     }
 
-    /**
-     * Sets the index of this operator within its parent collection.
-     * Typically called by {@link OperatorCollection}.
-     *
-     * @param index the zero-based index
-     */
+    /// Sets the index of this operator within its parent collection.
+    /// Typically called by [OperatorCollection].
+    ///
+    /// @param index the zero-based index
     public void setIndex(int index) {
         this.index = index;
     }
 
-    /**
-     * Returns the operands as an unmodifiable list.
-     *
-     * @return the operands
-     */
+    /// Returns the operands as an unmodifiable list.
+    ///
+    /// @return the operands
     public List<PdfBase> getOperands() {
         return operands;
     }
 
-    /**
-     * Returns a string representation of this operator in content stream syntax.
-     * For example: "BT", "12 0 0 12 100 700 cm", "/F1 12 Tf".
-     *
-     * @return the string representation
-     */
+    /// Returns a string representation of this operator in content stream syntax.
+    /// For example: "BT", "12 0 0 12 100 700 cm", "/F1 12 Tf".
+    ///
+    /// @return the string representation
     @Override
     public String toString() {
         if (operands.isEmpty()) {
@@ -124,17 +102,15 @@ public class Operator {
         return sb.toString();
     }
 
-    /**
-     * Writes this operator's content-stream serialization to {@code os} preserving
-     * exact operand bytes. Unlike {@link #toString()} (which routes operands through
-     * a {@code US-ASCII} String and replaces any byte &ge; 0x80), this delegates to
-     * each operand's {@link PdfBase#writeTo(OutputStream)} directly — so PdfString
-     * operands carrying high bytes (CID/Identity-H glyph codes, MacRoman, raw binary)
-     * survive a serialize→reparse round-trip intact. ISO 32000-1:2008 §7.8.2.
-     *
-     * @param os the output stream to write to
-     * @throws IOException if writing fails
-     */
+    /// Writes this operator's content-stream serialization to `os` preserving
+    /// exact operand bytes. Unlike [#toString()] (which routes operands through
+    /// a `US-ASCII` String and replaces any byte ≥ 0x80), this delegates to
+    /// each operand's [PdfBase#writeTo(OutputStream)] directly — so PdfString
+    /// operands carrying high bytes (CID/Identity-H glyph codes, MacRoman, raw binary)
+    /// survive a serialize→reparse round-trip intact. ISO 32000-1:2008 §7.8.2.
+    ///
+    /// @param os the output stream to write to
+    /// @throws IOException if writing fails
     public void writeTo(OutputStream os) throws IOException {
         boolean first = true;
         for (PdfBase operand : operands) {
@@ -166,12 +142,10 @@ public class Operator {
 
     // ---- Static helper methods for subclasses ----
 
-    /**
-     * Extracts a numeric value from a PDF object.
-     *
-     * @param val the PDF object
-     * @return the numeric value, or 0 if not a number
-     */
+    /// Extracts a numeric value from a PDF object.
+    ///
+    /// @param val the PDF object
+    /// @return the numeric value, or 0 if not a number
     protected static double getNumber(PdfBase val) {
         // Use longValue(), not intValue(): operands are returned as double, and a
         // bogus-but-large coordinate (e.g. a corrupt content stream with a value
@@ -181,12 +155,10 @@ public class Operator {
         return 0;
     }
 
-    /**
-     * Creates a PdfBase number — PdfInteger for whole numbers, PdfFloat otherwise.
-     *
-     * @param v the numeric value
-     * @return the PDF number object
-     */
+    /// Creates a PdfBase number — PdfInteger for whole numbers, PdfFloat otherwise.
+    ///
+    /// @param v the numeric value
+    /// @return the PDF number object
     protected static PdfBase num(double v) {
         if (v == Math.floor(v) && !Double.isInfinite(v) && Math.abs(v) < Long.MAX_VALUE) {
             return PdfInteger.valueOf((long) v);
@@ -194,31 +166,25 @@ public class Operator {
         return new PdfFloat(v);
     }
 
-    /**
-     * Creates an operand list from two coordinate values.
-     *
-     * @param x the x coordinate
-     * @param y the y coordinate
-     * @return a two-element list
-     */
+    /// Creates an operand list from two coordinate values.
+    ///
+    /// @param x the x coordinate
+    /// @param y the y coordinate
+    /// @return a two-element list
     protected static List<PdfBase> coords(double x, double y) {
         return Arrays.asList(num(x), num(y));
     }
 
-    /**
-     * Creates an operand list from a Matrix's six values.
-     *
-     * @param m the matrix
-     * @return a six-element list
-     */
+    /// Creates an operand list from a Matrix's six values.
+    ///
+    /// @param m the matrix
+    /// @return a six-element list
     protected static List<PdfBase> matrixToOperands(Matrix m) {
         double[] v = m.getValues();
         return Arrays.asList(num(v[0]), num(v[1]), num(v[2]), num(v[3]), num(v[4]), num(v[5]));
     }
 
-    /**
-     * Formats a single operand for content stream output.
-     */
+    /// Formats a single operand for content stream output.
     private String formatOperand(PdfBase operand) {
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();

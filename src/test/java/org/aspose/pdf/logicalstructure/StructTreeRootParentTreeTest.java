@@ -10,19 +10,17 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Verifies {@link StructTreeRoot#getParentTree()} and the convenience
- * helpers built on top of it. Mirrors a minimal tagged-PDF /ParentTree
- * shape (§14.7.4.4):
- * <pre>
- *   /ParentTree &lt;&lt;
- *     /Nums [
- *       0  [ &lt;structElemForMcid0&gt; &lt;structElemForMcid1&gt; ]
- *       1  &lt;structElemForAnnotation&gt;
- *     ]
- *   &gt;&gt;
- * </pre>
- */
+/// Verifies [StructTreeRoot#getParentTree()] and the convenience
+/// helpers built on top of it. Mirrors a minimal tagged-PDF /ParentTree
+/// shape (§14.7.4.4):
+/// <pre>
+///   /ParentTree &lt;&lt;
+///     /Nums [
+///       0  [ &lt;structElemForMcid0&gt; &lt;structElemForMcid1&gt; ]
+///       1  &lt;structElemForAnnotation&gt;
+///     ]
+///   &gt;&gt;
+/// </pre>
 public class StructTreeRootParentTreeTest {
 
     @Test

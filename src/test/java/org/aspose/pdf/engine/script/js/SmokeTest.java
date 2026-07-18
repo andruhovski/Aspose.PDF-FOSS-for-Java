@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-/** Quick smoke checks for the ES3 engine bring-up. */
+/// Quick smoke checks for the ES3 engine bring-up.
 public class SmokeTest {
 
     private static Object run(String s) {

@@ -18,17 +18,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * L1.1 + L1.3 oracles for the flowed-root Layout DOM.
- *
- * <p><b>B (formula):</b> placed Y values equal the cumulative sum of preceding sibling
- * heights; a positioned child offsets from its flowed parent's placed origin; a growable
- * container's height equals the sum of its children + insets.</p>
- *
- * <p><b>C (self-consistency):</b> flowed siblings are monotonic top-to-bottom with no
- * overlap; container height is conserved (= Σ children + spacing); the single-region fill
- * reports overflow = contentHeight − regionHeight without splitting.</p>
- */
+/// L1.1 + L1.3 oracles for the flowed-root Layout DOM.
+///
+/// **B (formula):** placed Y values equal the cumulative sum of preceding sibling
+/// heights; a positioned child offsets from its flowed parent's placed origin; a growable
+/// container's height equals the sum of its children + insets.
+///
+/// **C (self-consistency):** flowed siblings are monotonic top-to-bottom with no
+/// overlap; container height is conserved (= Σ children + spacing); the single-region fill
+/// reports overflow = contentHeight − regionHeight without splitting.
 public class XfaFlowLayoutTest {
 
     private static final String TPL = XfaNode.TEMPLATE_NS;
@@ -36,7 +34,7 @@ public class XfaFlowLayoutTest {
     private static final double EPS = 1e-6;
     private static final double LH = TextLayoutHelper.getLineHeight("Helvetica", 10);
 
-    /** A 400×500 content region wrapper to make overflow assertions concrete. */
+    /// A 400×500 content region wrapper to make overflow assertions concrete.
     private static String wrap(String rootChildren, String rootAttrs) {
         return "<template xmlns='" + TPL + "'>"
                 + "<subform name='form1' " + rootAttrs + ">" + rootChildren + "</subform>"

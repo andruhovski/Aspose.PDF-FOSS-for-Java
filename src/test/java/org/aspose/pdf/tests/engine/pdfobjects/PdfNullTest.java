@@ -8,9 +8,7 @@ import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link PdfNull}.
- */
+/// Tests for [PdfNull].
 public class PdfNullTest {
 
     @Test

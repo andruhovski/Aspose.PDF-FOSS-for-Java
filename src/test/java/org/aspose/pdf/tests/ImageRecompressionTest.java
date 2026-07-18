@@ -17,17 +17,15 @@ import java.nio.file.Path;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * Guards the image passes of {@code optimizeResources(OptimizationOptions)}:
- * {@code compressImages/imageQuality} converts photographic rasters to JPEG,
- * {@code resizeImages/maxResolution} downsamples oversized images.
- */
+/// Guards the image passes of `optimizeResources(OptimizationOptions)`:
+/// `compressImages/imageQuality` converts photographic rasters to JPEG,
+/// `resizeImages/maxResolution` downsamples oversized images.
 public class ImageRecompressionTest {
 
     @TempDir
     Path tempDir;
 
-    /** A photo-like image: smooth 2-D gradients with mild noise. */
+    /// A photo-like image: smooth 2-D gradients with mild noise.
     private File writePhotoPng(int w, int h) throws Exception {
         BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
         java.util.Random rnd = new java.util.Random(7);
@@ -129,7 +127,7 @@ public class ImageRecompressionTest {
         }
     }
 
-    /** Images with transparency (SMask) must never be touched by the JPEG pass. */
+    /// Images with transparency (SMask) must never be touched by the JPEG pass.
     @Test
     public void maskedImagesAreLeftAlone() throws Exception {
         // A PNG with an alpha channel becomes an image + SMask pair.

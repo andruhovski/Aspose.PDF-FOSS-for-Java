@@ -1,34 +1,29 @@
 package org.aspose.pdf.forms;
 
-import org.aspose.pdf.*;
+import org.aspose.pdf.Page;
+import org.aspose.pdf.Rectangle;
 import org.aspose.pdf.engine.pdfobjects.*;
 
-/**
- * List box field (/FT /Ch, no combo flag) (ISO 32000-1:2008, §12.7.4.4).
- * <p>
- * A list box displays a scrollable list of options from which one (or more,
- * if multi-select is enabled) can be selected.
- * </p>
- */
+/// List box field (/FT /Ch, no combo flag) (ISO 32000-1:2008, §12.7.4.4).
+///
+/// A list box displays a scrollable list of options from which one (or more,
+/// if multi-select is enabled) can be selected.
+///
 public class ListBoxField extends Field {
 
-    /**
-     * Constructs a list box field from an existing PDF dictionary.
-     *
-     * @param dict     the PDF dictionary backing this field
-     * @param page     the page this field belongs to (may be null)
-     * @param fullName the fully-qualified dotted name
-     */
+    /// Constructs a list box field from an existing PDF dictionary.
+    ///
+    /// @param dict     the PDF dictionary backing this field
+    /// @param page     the page this field belongs to (may be null)
+    /// @param fullName the fully-qualified dotted name
     public ListBoxField(PdfDictionary dict, Page page, String fullName) {
         super(dict, page, fullName);
     }
 
-    /**
-     * Constructs a new list box field on the given page with the specified rectangle.
-     *
-     * @param page the page
-     * @param rect the field rectangle
-     */
+    /// Constructs a new list box field on the given page with the specified rectangle.
+    ///
+    /// @param page the page
+    /// @param rect the field rectangle
     public ListBoxField(Page page, Rectangle rect) {
         super(new PdfDictionary(), page, "");
         dict.set(PdfName.of("Type"), PdfName.of("Annot"));
@@ -40,48 +35,38 @@ public class ListBoxField extends Field {
         }
     }
 
-    /**
-     * Returns the options (/Opt array) for this list box.
-     *
-     * @return the option collection (never null)
-     */
+    /// Returns the options (/Opt array) for this list box.
+    ///
+    /// @return the option collection (never null)
     public OptionCollection getOptions() {
         PdfBase opt = dict.get("Opt");
         return new OptionCollection(opt instanceof PdfArray ? (PdfArray) opt : new PdfArray());
     }
 
-    /**
-     * Returns whether multi-select is enabled (/Ff bit 22).
-     *
-     * @return true if multiple options can be selected
-     */
+    /// Returns whether multi-select is enabled (/Ff bit 22).
+    ///
+    /// @return true if multiple options can be selected
     public boolean isMultiSelect() {
         return (getFieldFlags() & (1 << 21)) != 0;
     }
 
-    /**
-     * Returns the currently selected value.
-     *
-     * @return the selected value, or null
-     */
+    /// Returns the currently selected value.
+    ///
+    /// @return the selected value, or null
     public String getSelected() {
         return getValue();
     }
 
-    /**
-     * Sets the selected value by string.
-     *
-     * @param value the value to select
-     */
+    /// Sets the selected value by string.
+    ///
+    /// @param value the value to select
     public void setSelected(String value) {
         setValue(value);
     }
 
-    /**
-     * Sets the selected option by 1-based index.
-     *
-     * @param index 1-based index of the option to select
-     */
+    /// Sets the selected option by 1-based index.
+    ///
+    /// @param index 1-based index of the option to select
     public void setSelected(int index) {
         OptionCollection opts = getOptions();
         if (index >= 1 && index <= opts.size()) {
@@ -89,11 +74,9 @@ public class ListBoxField extends Field {
         }
     }
 
-    /**
-     * Adds an option to this list box (/Opt array).
-     *
-     * @param value the option value to add
-     */
+    /// Adds an option to this list box (/Opt array).
+    ///
+    /// @param value the option value to add
     public void addOption(String value) {
         PdfBase opt = dict.get("Opt");
         PdfArray arr;
@@ -106,11 +89,9 @@ public class ListBoxField extends Field {
         arr.add(new PdfString(value.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
     }
 
-    /**
-     * Returns the top index (/TI entry) — the index of the first visible option.
-     *
-     * @return the top index, or 0 if not set
-     */
+    /// Returns the top index (/TI entry) — the index of the first visible option.
+    ///
+    /// @return the top index, or 0 if not set
     public int getTopIndex() {
         return dict.getInt("TI", 0);
     }

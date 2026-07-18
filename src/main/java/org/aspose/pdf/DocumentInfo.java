@@ -11,26 +11,22 @@ import java.util.Date;
 import java.util.TimeZone;
 import java.util.logging.Logger;
 
-/**
- * Wraps the PDF document information dictionary (ISO 32000-1:2008, §14.3.3).
- * <p>
- * Provides access to metadata fields such as Title, Author, Subject, Keywords,
- * Creator, Producer, CreationDate, and ModDate. Date fields are stored as
- * PDF date strings and converted to {@link Date} via {@link PdfString#getAsDate()}.
- * </p>
- */
+/// Wraps the PDF document information dictionary (ISO 32000-1:2008, §14.3.3).
+///
+/// Provides access to metadata fields such as Title, Author, Subject, Keywords,
+/// Creator, Producer, CreationDate, and ModDate. Date fields are stored as
+/// PDF date strings and converted to [Date] via [PdfString#getAsDate()].
+///
 public class DocumentInfo {
 
     private static final Logger LOG = Logger.getLogger(DocumentInfo.class.getName());
 
     private final PdfDictionary dict;
 
-    /**
-     * Creates a DocumentInfo wrapper around the given /Info dictionary.
-     *
-     * @param infoDict the /Info dictionary from the trailer
-     * @throws IllegalArgumentException if infoDict is null
-     */
+    /// Creates a DocumentInfo wrapper around the given /Info dictionary.
+    ///
+    /// @param infoDict the /Info dictionary from the trailer
+    /// @throws IllegalArgumentException if infoDict is null
     public DocumentInfo(PdfDictionary infoDict) {
         if (infoDict == null) {
             throw new IllegalArgumentException("Info dictionary must not be null");
@@ -39,159 +35,124 @@ public class DocumentInfo {
         LOG.fine(() -> "DocumentInfo created with " + dict.size() + " entries");
     }
 
-    /**
-     * Returns the document title, or null if not set.
-     *
-     * @return the title string, or null
-     */
+    /// Returns the document title, or null if not set.
+    ///
+    /// @return the title string, or null
     public String getTitle() {
         return dict.getString("Title");
     }
 
-    /**
-     * Sets the document title.
-     *
-     * @param title the title string
-     */
+    /// Sets the document title.
+    ///
+    /// @param title the title string
     public void setTitle(String title) {
         setStringValue("Title", title);
     }
 
-    /**
-     * Returns the document author, or null if not set.
-     *
-     * @return the author string, or null
-     */
+    /// Returns the document author, or null if not set.
+    ///
+    /// @return the author string, or null
     public String getAuthor() {
         return dict.getString("Author");
     }
 
-    /**
-     * Sets the document author.
-     *
-     * @param author the author string
-     */
+    /// Sets the document author.
+    ///
+    /// @param author the author string
     public void setAuthor(String author) {
         setStringValue("Author", author);
     }
 
-    /**
-     * Returns the document subject, or null if not set.
-     *
-     * @return the subject string, or null
-     */
+    /// Returns the document subject, or null if not set.
+    ///
+    /// @return the subject string, or null
     public String getSubject() {
         return dict.getString("Subject");
     }
 
-    /**
-     * Sets the document subject.
-     *
-     * @param subject the subject string
-     */
+    /// Sets the document subject.
+    ///
+    /// @param subject the subject string
     public void setSubject(String subject) {
         setStringValue("Subject", subject);
     }
 
-    /**
-     * Returns the document keywords, or null if not set.
-     *
-     * @return the keywords string, or null
-     */
+    /// Returns the document keywords, or null if not set.
+    ///
+    /// @return the keywords string, or null
     public String getKeywords() {
         return dict.getString("Keywords");
     }
 
-    /**
-     * Sets the document keywords.
-     *
-     * @param keywords the keywords string
-     */
+    /// Sets the document keywords.
+    ///
+    /// @param keywords the keywords string
     public void setKeywords(String keywords) {
         setStringValue("Keywords", keywords);
     }
 
-    /**
-     * Returns the creator application name, or null if not set.
-     *
-     * @return the creator string, or null
-     */
+    /// Returns the creator application name, or null if not set.
+    ///
+    /// @return the creator string, or null
     public String getCreator() {
         return dict.getString("Creator");
     }
 
-    /**
-     * Sets the creator application name.
-     *
-     * @param creator the creator string
-     */
+    /// Sets the creator application name.
+    ///
+    /// @param creator the creator string
     public void setCreator(String creator) {
         setStringValue("Creator", creator);
     }
 
-    /**
-     * Returns the producer application name, or null if not set.
-     *
-     * @return the producer string, or null
-     */
+    /// Returns the producer application name, or null if not set.
+    ///
+    /// @return the producer string, or null
     public String getProducer() {
         return dict.getString("Producer");
     }
 
-    /**
-     * Sets the producer application name.
-     *
-     * @param producer the producer string
-     */
+    /// Sets the producer application name.
+    ///
+    /// @param producer the producer string
     public void setProducer(String producer) {
         setStringValue("Producer", producer);
     }
 
-    /**
-     * Returns the document creation date, or null if not set or not parseable.
-     *
-     * @return the creation date, or null
-     */
+    /// Returns the document creation date, or null if not set or not parseable.
+    ///
+    /// @return the creation date, or null
     public Date getCreationDate() {
         return getDateValue("CreationDate");
     }
 
-    /**
-     * Sets the document creation date.
-     *
-     * @param date the creation date
-     */
+    /// Sets the document creation date.
+    ///
+    /// @param date the creation date
     public void setCreationDate(Date date) {
         setDateValue("CreationDate", date);
     }
 
-    /**
-     * Returns the document modification date, or null if not set or not parseable.
-     *
-     * @return the modification date, or null
-     */
+    /// Returns the document modification date, or null if not set or not parseable.
+    ///
+    /// @return the modification date, or null
     public Date getModDate() {
         return getDateValue("ModDate");
     }
 
-    /**
-     * Sets the document modification date.
-     *
-     * @param date the modification date
-     */
+    /// Sets the document modification date.
+    ///
+    /// @param date the modification date
     public void setModDate(Date date) {
         setDateValue("ModDate", date);
     }
 
-    /**
-     * Returns the time zone parsed from the /CreationDate PDF date string.
-     * <p>
-     * PDF date format: {@code D:YYYYMMDDHHmmSSOHH'mm'} where O is + or - or Z.
-     * If no timezone offset is present, returns the system default timezone.
-     * </p>
-     *
-     * @return the timezone from the creation date, or the system default if not parseable
-     */
+    /// Returns the time zone parsed from the /CreationDate PDF date string.
+    ///
+    /// PDF date format: `D:YYYYMMDDHHmmSSOHH'mm'` where O is + or - or Z.
+    /// If no timezone offset is present, returns the system default timezone.
+    ///
+    /// @return the timezone from the creation date, or the system default if not parseable
     public TimeZone getCreationTimeZone() {
         PdfBase obj = dict.get("CreationDate");
         if (!(obj instanceof PdfString)) {
@@ -201,24 +162,20 @@ public class DocumentInfo {
         return parseTimeZone(dateStr);
     }
 
-    /**
-     * Returns the underlying PDF dictionary.
-     *
-     * @return the raw /Info dictionary
-     */
+    /// Returns the underlying PDF dictionary.
+    ///
+    /// @return the raw /Info dictionary
     public PdfDictionary getPdfDictionary() {
         return dict;
     }
 
-    /**
-     * Clears all standard document information entries from the underlying
-     * dictionary.
-     * <p>
-     * This is a pragmatic Aspose-compatible helper used by facade workflows
-     * that need to remove document metadata without replacing the /Info
-     * dictionary object itself.
-     * </p>
-     */
+    /// Clears all standard document information entries from the underlying
+    /// dictionary.
+    ///
+    /// This is a pragmatic Aspose-compatible helper used by facade workflows
+    /// that need to remove document metadata without replacing the /Info
+    /// dictionary object itself.
+    ///
     public void clear() {
         setTitle(null);
         setAuthor(null);
@@ -230,13 +187,11 @@ public class DocumentInfo {
         setModDate(null);
     }
 
-    /**
-     * Retrieves a date value from the dictionary.
-     * The value is expected to be a PdfString containing a PDF date string.
-     *
-     * @param key the dictionary key
-     * @return the parsed date, or null
-     */
+    /// Retrieves a date value from the dictionary.
+    /// The value is expected to be a PdfString containing a PDF date string.
+    ///
+    /// @param key the dictionary key
+    /// @return the parsed date, or null
     private Date getDateValue(String key) {
         PdfBase obj = dict.get(key);
         if (!(obj instanceof PdfString)) {
@@ -249,12 +204,10 @@ public class DocumentInfo {
         return Date.from(ldt.atZone(ZoneId.systemDefault()).toInstant());
     }
 
-    /**
-     * Sets a string value in the dictionary. If value is null, the key is removed.
-     *
-     * @param key   the dictionary key
-     * @param value the string value, or null to remove
-     */
+    /// Sets a string value in the dictionary. If value is null, the key is removed.
+    ///
+    /// @param key   the dictionary key
+    /// @param value the string value, or null to remove
     private void setStringValue(String key, String value) {
         if (value == null) {
             dict.set(key, null);
@@ -264,13 +217,11 @@ public class DocumentInfo {
     }
 
 
-    /**
-     * Parses the timezone offset from a PDF date string.
-     * PDF date format: D:YYYYMMDDHHmmSSOHH'mm' where O is +, -, or Z.
-     *
-     * @param dateStr the PDF date string
-     * @return the parsed timezone, or system default if not parseable
-     */
+    /// Parses the timezone offset from a PDF date string.
+    /// PDF date format: D:YYYYMMDDHHmmSSOHH'mm' where O is +, -, or Z.
+    ///
+    /// @param dateStr the PDF date string
+    /// @return the parsed timezone, or system default if not parseable
     private TimeZone parseTimeZone(String dateStr) {
         if (dateStr == null) return TimeZone.getDefault();
         // Strip "D:" prefix
@@ -297,13 +248,11 @@ public class DocumentInfo {
         return TimeZone.getDefault();
     }
 
-    /**
-     * Sets a date value in the dictionary as a PDF date string.
-     * Format: D:YYYYMMDDHHmmSS
-     *
-     * @param key  the dictionary key
-     * @param date the date, or null to remove
-     */
+    /// Sets a date value in the dictionary as a PDF date string.
+    /// Format: D:YYYYMMDDHHmmSS
+    ///
+    /// @param key  the dictionary key
+    /// @param date the date, or null to remove
     private void setDateValue(String key, Date date) {
         if (date == null) {
             dict.set(key, null);

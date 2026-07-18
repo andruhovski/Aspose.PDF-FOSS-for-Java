@@ -1,60 +1,53 @@
 package org.aspose.pdf.annotations;
 
-import org.aspose.pdf.*;
+import org.aspose.pdf.Color;
+import org.aspose.pdf.Page;
+import org.aspose.pdf.Point;
+import org.aspose.pdf.Rectangle;
 import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Redaction annotation (ISO 32000-1:2008, Section 12.5.6.23, /Subtype /Redact).
- * <p>
- * A redaction annotation identifies content that is intended to be removed from
- * the document. The intent is to mark regions of a page for redaction prior to
- * actually applying the redaction (removing the content permanently).
- * </p>
- */
+/// Redaction annotation (ISO 32000-1:2008, Section 12.5.6.23, /Subtype /Redact).
+///
+/// A redaction annotation identifies content that is intended to be removed from
+/// the document. The intent is to mark regions of a page for redaction prior to
+/// actually applying the redaction (removing the content permanently).
+///
 public class RedactionAnnotation extends MarkupAnnotation {
 
     private static final Logger LOG = Logger.getLogger(RedactionAnnotation.class.getName());
 
-    /**
-     * Constructs a redaction annotation from an existing PDF dictionary.
-     *
-     * @param dict the PDF dictionary backing this annotation
-     * @param page the page this annotation belongs to
-     */
+    /// Constructs a redaction annotation from an existing PDF dictionary.
+    ///
+    /// @param dict the PDF dictionary backing this annotation
+    /// @param page the page this annotation belongs to
     public RedactionAnnotation(PdfDictionary dict, Page page) {
         super(dict, page);
     }
 
-    /**
-     * Constructs a new redaction annotation with the given rectangle on the specified page.
-     *
-     * @param page the page this annotation belongs to
-     * @param rect the annotation rectangle
-     */
+    /// Constructs a new redaction annotation with the given rectangle on the specified page.
+    ///
+    /// @param page the page this annotation belongs to
+    /// @param rect the annotation rectangle
     public RedactionAnnotation(Page page, Rectangle rect) {
         super(page, rect);
         dict.set(PdfName.of("Subtype"), PdfName.of("Redact"));
     }
 
-    /**
-     * Returns the overlay text to be displayed over the redacted region after redaction is applied.
-     *
-     * @return the overlay text string, or null if not set
-     */
+    /// Returns the overlay text to be displayed over the redacted region after redaction is applied.
+    ///
+    /// @return the overlay text string, or null if not set
     public String getOverlayText() {
         PdfBase ot = dict.get("OverlayText");
         return (ot instanceof PdfString) ? ((PdfString) ot).getString() : null;
     }
 
-    /**
-     * Sets the overlay text to be displayed over the redacted region after redaction is applied.
-     *
-     * @param text the overlay text string, or null to remove
-     */
+    /// Sets the overlay text to be displayed over the redacted region after redaction is applied.
+    ///
+    /// @param text the overlay text string, or null to remove
     public void setOverlayText(String text) {
         if (text != null) {
             dict.set(PdfName.of("OverlayText"), new PdfString(text));
@@ -63,12 +56,10 @@ public class RedactionAnnotation extends MarkupAnnotation {
         }
     }
 
-    /**
-     * Returns the fill color used to paint the redacted area after applying redaction.
-     * This is stored as the /IC (interior color) entry per ISO 32000.
-     *
-     * @return the fill color, or null if not set
-     */
+    /// Returns the fill color used to paint the redacted area after applying redaction.
+    /// This is stored as the /IC (interior color) entry per ISO 32000.
+    ///
+    /// @return the fill color, or null if not set
     public Color getFillColor() {
         PdfBase ic = dict.get("IC");
         if (ic instanceof PdfArray) {
@@ -87,12 +78,10 @@ public class RedactionAnnotation extends MarkupAnnotation {
         return null;
     }
 
-    /**
-     * Sets the fill color used to paint the redacted area after applying redaction.
-     * This is stored as the /IC (interior color) entry per ISO 32000.
-     *
-     * @param color the fill color, or null to remove
-     */
+    /// Sets the fill color used to paint the redacted area after applying redaction.
+    /// This is stored as the /IC (interior color) entry per ISO 32000.
+    ///
+    /// @param color the fill color, or null to remove
     public void setFillColor(Color color) {
         if (color == null) {
             dict.remove(PdfName.of("IC"));
@@ -105,31 +94,25 @@ public class RedactionAnnotation extends MarkupAnnotation {
         dict.set(PdfName.of("IC"), arr);
     }
 
-    /**
-     * Returns the border color of the redaction annotation.
-     * This is the annotation color (/C entry) which defines the border appearance.
-     *
-     * @return the border color, or null if not set
-     */
+    /// Returns the border color of the redaction annotation.
+    /// This is the annotation color (/C entry) which defines the border appearance.
+    ///
+    /// @return the border color, or null if not set
     public Color getBorderColor() {
         return getColor();
     }
 
-    /**
-     * Sets the border color of the redaction annotation.
-     * This is the annotation color (/C entry) which defines the border appearance.
-     *
-     * @param color the border color, or null to remove
-     */
+    /// Sets the border color of the redaction annotation.
+    /// This is the annotation color (/C entry) which defines the border appearance.
+    ///
+    /// @param color the border color, or null to remove
     public void setBorderColor(Color color) {
         setColor(color);
     }
 
-    /**
-     * Returns the quad points defining the redaction region as an array of {@link Point} objects.
-     *
-     * @return the quad points, or null if not set
-     */
+    /// Returns the quad points defining the redaction region as an array of [Point] objects.
+    ///
+    /// @return the quad points, or null if not set
     public Point[] getQuadPoint() {
         PdfBase qp = dict.get("QuadPoints");
         if (qp instanceof PdfArray) {
@@ -145,11 +128,9 @@ public class RedactionAnnotation extends MarkupAnnotation {
         return null;
     }
 
-    /**
-     * Sets the quad points defining the redaction region from an array of {@link Point} objects.
-     *
-     * @param points the quad points, or null to remove
-     */
+    /// Sets the quad points defining the redaction region from an array of [Point] objects.
+    ///
+    /// @param points the quad points, or null to remove
     public void setQuadPoint(Point[] points) {
         if (points == null) {
             dict.remove(PdfName.of("QuadPoints"));
@@ -163,15 +144,13 @@ public class RedactionAnnotation extends MarkupAnnotation {
         dict.set(PdfName.of("QuadPoints"), arr);
     }
 
-    /**
-     * Applies the redaction: draws a filled rectangle over the annotation area
-     * in the page content stream and removes the annotation from the page.
-     * <p>
-     * After calling this method, the content under the redaction area is visually
-     * obscured by a filled rectangle. The annotation itself is removed from the
-     * page's annotation list.
-     * </p>
-     */
+    /// Applies the redaction: draws a filled rectangle over the annotation area
+    /// in the page content stream and removes the annotation from the page.
+    ///
+    /// After calling this method, the content under the redaction area is visually
+    /// obscured by a filled rectangle. The annotation itself is removed from the
+    /// page's annotation list.
+    ///
     public void redact() {
         if (page == null) {
             LOG.warning("Cannot redact: annotation has no associated page");
@@ -265,23 +244,20 @@ public class RedactionAnnotation extends MarkupAnnotation {
         }
     }
 
-    /**
-     * Computes the text of a fragment with the characters covered by the
-     * redaction area removed.
-     * <p>
-     * A fragment whose rectangle lies (almost) entirely inside the area loses
-     * all its text. For a partial horizontal overlap the covered character
-     * range is derived from the extractor's per-character X boundaries when
-     * available, else by linear interpolation across the fragment width — a
-     * character is removed when the redaction covers most (&gt;60%) of its
-     * cell. Returns {@code null} when nothing is covered.
-     * </p>
-     *
-     * @param tf   the fragment overlapping the redaction area
-     * @param fr   the fragment rectangle (non-null)
-     * @param rect the redaction rectangle (non-null)
-     * @return the remaining text, {@code ""} to delete all, or {@code null} to keep as is
-     */
+    /// Computes the text of a fragment with the characters covered by the
+    /// redaction area removed.
+    ///
+    /// A fragment whose rectangle lies (almost) entirely inside the area loses
+    /// all its text. For a partial horizontal overlap the covered character
+    /// range is derived from the extractor's per-character X boundaries when
+    /// available, else by linear interpolation across the fragment width — a
+    /// character is removed when the redaction covers most (>60%) of its
+    /// cell. Returns `null` when nothing is covered.
+    ///
+    /// @param tf   the fragment overlapping the redaction area
+    /// @param fr   the fragment rectangle (non-null)
+    /// @param rect the redaction rectangle (non-null)
+    /// @return the remaining text, `""` to delete all, or `null` to keep as is
     private static String textOutsideRedaction(org.aspose.pdf.text.TextFragment tf,
                                                Rectangle fr, Rectangle rect) {
         String text = tf.getText();
@@ -342,12 +318,10 @@ public class RedactionAnnotation extends MarkupAnnotation {
         return removedAny ? remaining.toString() : null;
     }
 
-    /**
-     * Formats a double value for PDF content stream output.
-     *
-     * @param val the value to format
-     * @return the formatted string
-     */
+    /// Formats a double value for PDF content stream output.
+    ///
+    /// @param val the value to format
+    /// @return the formatted string
     private static String formatDouble(double val) {
         if (val == (long) val) {
             return String.valueOf((long) val);
@@ -355,12 +329,10 @@ public class RedactionAnnotation extends MarkupAnnotation {
         return String.valueOf(val);
     }
 
-    /**
-     * Escapes a string for use in a PDF literal string.
-     *
-     * @param s the string to escape
-     * @return the escaped string
-     */
+    /// Escapes a string for use in a PDF literal string.
+    ///
+    /// @param s the string to escape
+    /// @return the escaped string
     private static String escapePdfString(String s) {
         if (s == null) return "";
         return s.replace("\\", "\\\\")

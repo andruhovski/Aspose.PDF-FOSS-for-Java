@@ -7,10 +7,8 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Unit tests for {@link NumberTree}: parallel to {@link NameTreeTest} but with
- * integer keys and {@code /Nums} leaf arrays.
- */
+/// Unit tests for [NumberTree]: parallel to [NameTreeTest] but with
+/// integer keys and `/Nums` leaf arrays.
 public class NumberTreeTest {
 
     // ────────────────────────────────────────────────────────────────────

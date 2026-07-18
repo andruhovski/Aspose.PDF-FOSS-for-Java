@@ -8,11 +8,9 @@ import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Sprint 24 Part B — {@link AsposePdfLogging} library-logging discipline.
- * The library is silent ({@link Level#OFF}) by default and opt-in via the
- * {@code aspose.pdf.log} system property or {@link AsposePdfLogging#setLevel}.
- */
+/// Sprint 24 Part B — [AsposePdfLogging] library-logging discipline.
+/// The library is silent ([Level#OFF]) by default and opt-in via the
+/// `aspose.pdf.log` system property or [AsposePdfLogging#setLevel].
 class AsposePdfLoggingTest {
 
     @AfterEach

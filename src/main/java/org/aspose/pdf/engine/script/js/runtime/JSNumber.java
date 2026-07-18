@@ -2,23 +2,19 @@ package org.aspose.pdf.engine.script.js.runtime;
 
 import java.math.BigInteger;
 
-/**
- * Numeric abstract operations: Number-to-String (sec 9.8.1), String-to-Number
- * (sec 9.3.1), ToInteger/ToInt32/ToUint32 (sec 9.4-9.6) and radix conversion
- * for {@code Number.prototype.toString}.
- */
+/// Numeric abstract operations: Number-to-String (sec 9.8.1), String-to-Number
+/// (sec 9.3.1), ToInteger/ToInt32/ToUint32 (sec 9.4-9.6) and radix conversion
+/// for `Number.prototype.toString`.
 public final class JSNumber {
 
     private JSNumber() { }
 
-    /**
-     * ECMAScript Number-to-String (sec 9.8.1) for radix 10. Produces the
-     * shortest decimal that round-trips, formatted with JavaScript's rules
-     * (no trailing {@code .0}, exponential only outside 1e-6..1e21).
-     *
-     * @param d the number
-     * @return its canonical string form
-     */
+    /// ECMAScript Number-to-String (sec 9.8.1) for radix 10. Produces the
+    /// shortest decimal that round-trips, formatted with JavaScript's rules
+    /// (no trailing `.0`, exponential only outside 1e-6..1e21).
+    ///
+    /// @param d the number
+    /// @return its canonical string form
     public static String toStr(double d) {
         if (Double.isNaN(d)) {
             return "NaN";
@@ -89,13 +85,11 @@ public final class JSNumber {
         return sb.toString();
     }
 
-    /**
-     * Number-to-String in an arbitrary radix 2..36 (sec 15.7.4.2).
-     *
-     * @param d     number
-     * @param radix radix (2..36)
-     * @return string representation
-     */
+    /// Number-to-String in an arbitrary radix 2..36 (sec 15.7.4.2).
+    ///
+    /// @param d     number
+    /// @param radix radix (2..36)
+    /// @return string representation
     public static String toStringRadix(double d, int radix) {
         if (radix == 10) {
             return toStr(d);
@@ -136,13 +130,11 @@ public final class JSNumber {
         return (neg ? "-" : "") + sb;
     }
 
-    /**
-     * ECMAScript String-to-Number (sec 9.3.1): trims whitespace, accepts
-     * decimal/hex/Infinity, empty string is {@code 0}, otherwise {@code NaN}.
-     *
-     * @param s the string
-     * @return the numeric value
-     */
+    /// ECMAScript String-to-Number (sec 9.3.1): trims whitespace, accepts
+    /// decimal/hex/Infinity, empty string is `0`, otherwise `NaN`.
+    ///
+    /// @param s the string
+    /// @return the numeric value
     public static double fromString(String s) {
         String t = trimJs(s);
         if (t.isEmpty()) {
@@ -168,7 +160,7 @@ public final class JSNumber {
         }
     }
 
-    /** ToInteger (sec 9.4). */
+    /// ToInteger (sec 9.4).
     public static double toInteger(double d) {
         if (Double.isNaN(d)) {
             return 0;
@@ -179,7 +171,7 @@ public final class JSNumber {
         return (d < 0 ? Math.ceil(d) : Math.floor(d));
     }
 
-    /** ToInt32 (sec 9.5). */
+    /// ToInt32 (sec 9.5).
     public static int toInt32(double d) {
         if (Double.isNaN(d) || Double.isInfinite(d) || d == 0) {
             return 0;
@@ -192,7 +184,7 @@ public final class JSNumber {
         return (int) (long) m;
     }
 
-    /** ToUint32 (sec 9.6). */
+    /// ToUint32 (sec 9.6).
     public static long toUint32(double d) {
         if (Double.isNaN(d) || Double.isInfinite(d) || d == 0) {
             return 0;
@@ -207,7 +199,7 @@ public final class JSNumber {
         return r < 0 ? r + b : r;
     }
 
-    /** Trims ECMAScript whitespace and line terminators from both ends. */
+    /// Trims ECMAScript whitespace and line terminators from both ends.
     public static String trimJs(String s) {
         int a = 0;
         int b = s.length();

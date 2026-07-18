@@ -8,9 +8,7 @@ import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link PdfArray}.
- */
+/// Tests for [PdfArray].
 public class PdfArrayTest {
 
     @Test

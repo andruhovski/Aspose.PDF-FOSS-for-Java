@@ -17,16 +17,13 @@ import java.io.OutputStream;
 import java.util.*;
 import java.util.logging.Logger;
 
-/**
- * Exports annotations and form field data from a PDF document to XFDF
- * (XML Forms Data Format) per XFDF Specification Version 3.0 (August 2009).
- * <p>
- * Produces XML with structure: {@code <xfdf><f/><fields/><annots/></xfdf>}.
- * All annotation attributes, child elements, and form field values are exported.
- * </p>
- *
- * @see XfdfImporter
- */
+/// Exports annotations and form field data from a PDF document to XFDF
+/// (XML Forms Data Format) per XFDF Specification Version 3.0 (August 2009).
+///
+/// Produces XML with structure: `<xfdf><f/><fields/><annots/></xfdf>`.
+/// All annotation attributes, child elements, and form field values are exported.
+///
+/// @see XfdfImporter
 public final class XfdfExporter {
 
     private static final Logger LOG = Logger.getLogger(XfdfExporter.class.getName());
@@ -56,7 +53,7 @@ public final class XfdfExporter {
         SUBTYPE_TO_ELEMENT.put("Redact", "redact");
     }
 
-    /** Flag bit positions and their XFDF string names per spec §3.3. */
+    /// Flag bit positions and their XFDF string names per spec §3.3.
     private static final String[] FLAG_NAMES = {
         "invisible", "hidden", "print", "nozoom", "norotate",
         "noview", "readonly", "locked", "togglenoview", "lockedcontents"
@@ -66,14 +63,12 @@ public final class XfdfExporter {
         // utility class
     }
 
-    /**
-     * Exports all annotations and form fields from the document to an XFDF file.
-     *
-     * @param document the document whose data to export
-     * @param filePath the output file path
-     * @throws IOException              if writing fails
-     * @throws IllegalArgumentException if document or filePath is null
-     */
+    /// Exports all annotations and form fields from the document to an XFDF file.
+    ///
+    /// @param document the document whose data to export
+    /// @param filePath the output file path
+    /// @throws IOException              if writing fails
+    /// @throws IllegalArgumentException if document or filePath is null
     public static void export(Document document, String filePath) throws IOException {
         if (filePath == null) {
             throw new IllegalArgumentException("File path must not be null");
@@ -83,27 +78,23 @@ public final class XfdfExporter {
         }
     }
 
-    /**
-     * Exports all annotations and form fields from the document to an XFDF output stream.
-     *
-     * @param document the document whose data to export
-     * @param output   the output stream to write XFDF XML to
-     * @throws IOException              if writing fails
-     * @throws IllegalArgumentException if document or output is null
-     */
+    /// Exports all annotations and form fields from the document to an XFDF output stream.
+    ///
+    /// @param document the document whose data to export
+    /// @param output   the output stream to write XFDF XML to
+    /// @throws IOException              if writing fails
+    /// @throws IllegalArgumentException if document or output is null
     public static void export(Document document, OutputStream output) throws IOException {
         export(document, output, null);
     }
 
-    /**
-     * Exports annotations from the document to an XFDF output stream,
-     * optionally filtering by page range and annotation type.
-     *
-     * @param document the document whose data to export
-     * @param output   the output stream to write XFDF XML to
-     * @param filter   optional export filter (null = export all)
-     * @throws IOException if writing fails
-     */
+    /// Exports annotations from the document to an XFDF output stream,
+    /// optionally filtering by page range and annotation type.
+    ///
+    /// @param document the document whose data to export
+    /// @param output   the output stream to write XFDF XML to
+    /// @param filter   optional export filter (null = export all)
+    /// @throws IOException if writing fails
     public static void export(Document document, OutputStream output, ExportFilter filter) throws IOException {
         if (document == null) {
             throw new IllegalArgumentException("Document must not be null");
@@ -174,9 +165,7 @@ public final class XfdfExporter {
         }
     }
 
-    /**
-     * Exports form field values to the {@code <fields>} section.
-     */
+    /// Exports form field values to the `<fields>` section.
     private static void exportFields(Document document, org.w3c.dom.Document xmlDoc,
                                      org.w3c.dom.Element xfdf) {
         try {
@@ -221,9 +210,7 @@ public final class XfdfExporter {
         }
     }
 
-    /**
-     * Writes a single annotation as an XFDF element with all attributes and child elements.
-     */
+    /// Writes a single annotation as an XFDF element with all attributes and child elements.
     private static void writeAnnotation(org.w3c.dom.Document xmlDoc, org.w3c.dom.Element annots,
                                         Annotation annot, int pageIndex) {
         String subtype = annot.getSubtype();
@@ -418,9 +405,7 @@ public final class XfdfExporter {
         annots.appendChild(elem);
     }
 
-    /**
-     * Writes quad points as the "coords" attribute.
-     */
+    /// Writes quad points as the "coords" attribute.
     private static void writeQuadPoints(org.w3c.dom.Element elem, double[] quadPoints) {
         if (quadPoints == null || quadPoints.length == 0) return;
         StringBuilder sb = new StringBuilder();
@@ -431,9 +416,7 @@ public final class XfdfExporter {
         elem.setAttribute("coords", sb.toString());
     }
 
-    /**
-     * Writes vertices as a {@code <vertices>} child element.
-     */
+    /// Writes vertices as a `<vertices>` child element.
     private static void writeVertices(org.w3c.dom.Document xmlDoc, org.w3c.dom.Element elem, double[] vertices) {
         if (vertices == null || vertices.length == 0) return;
         org.w3c.dom.Element vertElem = xmlDoc.createElement("vertices");
@@ -446,12 +429,10 @@ public final class XfdfExporter {
         elem.appendChild(vertElem);
     }
 
-    /**
-     * Converts annotation flags bitmask to comma-separated string names per XFDF spec.
-     *
-     * @param flags the flags bitmask
-     * @return comma-separated flag names (e.g. "print,nozoom,norotate")
-     */
+    /// Converts annotation flags bitmask to comma-separated string names per XFDF spec.
+    ///
+    /// @param flags the flags bitmask
+    /// @return comma-separated flag names (e.g. "print,nozoom,norotate")
     public static String flagsToString(int flags) {
         List<String> names = new ArrayList<>();
         for (int i = 0; i < FLAG_NAMES.length; i++) {
@@ -462,9 +443,7 @@ public final class XfdfExporter {
         return String.join(",", names);
     }
 
-    /**
-     * Converts a Color to a hex string like "#RRGGBB".
-     */
+    /// Converts a Color to a hex string like "#RRGGBB".
     static String colorToHex(Color color) {
         int r = clamp((int) Math.round(color.getR() * 255));
         int g = clamp((int) Math.round(color.getG() * 255));
@@ -476,9 +455,7 @@ public final class XfdfExporter {
         return Math.max(0, Math.min(255, v));
     }
 
-    /**
-     * Formats a double value, removing unnecessary trailing zeros.
-     */
+    /// Formats a double value, removing unnecessary trailing zeros.
     static String formatDouble(double v) {
         if (v == (long) v) {
             return Long.toString((long) v);
@@ -486,12 +463,10 @@ public final class XfdfExporter {
         return String.valueOf(v);
     }
 
-    /**
-     * Escapes special XML characters in a string for safe use in XML attributes or text.
-     *
-     * @param s the string to escape
-     * @return the escaped string
-     */
+    /// Escapes special XML characters in a string for safe use in XML attributes or text.
+    ///
+    /// @param s the string to escape
+    /// @return the escaped string
     public static String escapeXml(String s) {
         if (s == null) return "";
         StringBuilder sb = new StringBuilder(s.length());
@@ -509,15 +484,13 @@ public final class XfdfExporter {
         return sb.toString();
     }
 
-    /**
-     * Filter for controlling which annotations are exported.
-     */
+    /// Filter for controlling which annotations are exported.
     public static class ExportFilter {
-        /** 1-based start page (inclusive). */
+        /// 1-based start page (inclusive).
         public int startPage = 1;
-        /** 1-based end page (inclusive). 0 = all pages. */
+        /// 1-based end page (inclusive). 0 = all pages.
         public int endPage = 0;
-        /** Annotation subtypes to include (null = all). */
+        /// Annotation subtypes to include (null = all).
         public String[] annotationTypes;
     }
 }

@@ -6,9 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link StandardFonts}.
- */
+/// Tests for [StandardFonts].
 public class StandardFontsTest {
 
     @Test

@@ -1,42 +1,34 @@
 package org.aspose.pdf.text;
 
-/**
- * Represents a position on a PDF page (x, y coordinates in page space).
- * <p>
- * Used by {@link TextFragment} and {@link TextSegment} to store the
- * starting position of text on the page.
- * </p>
- */
+/// Represents a position on a PDF page (x, y coordinates in page space).
+///
+/// Used by [TextFragment] and [TextSegment] to store the
+/// starting position of text on the page.
+///
 public class Position {
 
     private final double xIndent;
     private final double yIndent;
 
-    /**
-     * Creates a Position with the given coordinates.
-     *
-     * @param xIndent the X coordinate (horizontal offset from left edge)
-     * @param yIndent the Y coordinate (vertical offset from bottom edge)
-     */
+    /// Creates a Position with the given coordinates.
+    ///
+    /// @param xIndent the X coordinate (horizontal offset from left edge)
+    /// @param yIndent the Y coordinate (vertical offset from bottom edge)
     public Position(double xIndent, double yIndent) {
         this.xIndent = xIndent;
         this.yIndent = yIndent;
     }
 
-    /**
-     * Returns the X coordinate.
-     *
-     * @return the X indent
-     */
+    /// Returns the X coordinate.
+    ///
+    /// @return the X indent
     public double getXIndent() {
         return xIndent;
     }
 
-    /**
-     * Returns the Y coordinate.
-     *
-     * @return the Y indent
-     */
+    /// Returns the Y coordinate.
+    ///
+    /// @return the Y indent
     public double getYIndent() {
         return yIndent;
     }

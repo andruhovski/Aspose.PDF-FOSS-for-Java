@@ -28,11 +28,9 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for incremental update functionality:
- * dirty tracking on PDF objects, incremental save, same-file save,
- * and full write for new documents.
- */
+/// Tests for incremental update functionality:
+/// dirty tracking on PDF objects, incremental save, same-file save,
+/// and full write for new documents.
 public class IncrementalUpdateTest {
 
     @TempDir
@@ -460,9 +458,7 @@ public class IncrementalUpdateTest {
     //  Helpers
     // ═══════════════════════════════════════════════════════════════
 
-    /**
-     * Creates a minimal valid PDF byte array using PDFWriter.
-     */
+    /// Creates a minimal valid PDF byte array using PDFWriter.
     private byte[] createMinimalPDF() throws IOException {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         PDFWriter writer = new PDFWriter(bos, 1.7f);
@@ -499,9 +495,7 @@ public class IncrementalUpdateTest {
         return bos.toByteArray();
     }
 
-    /**
-     * Creates a minimal set of modified objects for incremental write tests.
-     */
+    /// Creates a minimal set of modified objects for incremental write tests.
     private Map<PdfObjectKey, PdfBase> createModifiedCatalog() {
         Map<PdfObjectKey, PdfBase> modObjects = new LinkedHashMap<>();
         PdfDictionary modCatalog = new PdfDictionary();
@@ -511,17 +505,13 @@ public class IncrementalUpdateTest {
         return modObjects;
     }
 
-    /**
-     * Writes a minimal PDF to a temp file and returns the File.
-     */
+    /// Writes a minimal PDF to a temp file and returns the File.
     private File writePdfToTempFile(String name) throws IOException {
         byte[] pdfBytes = createMinimalPDF();
         return writeBytesToTempFile(pdfBytes, name);
     }
 
-    /**
-     * Writes bytes to a temp file and returns the File.
-     */
+    /// Writes bytes to a temp file and returns the File.
     private File writeBytesToTempFile(byte[] data, String name) throws IOException {
         File file = tempDir.resolve(name).toFile();
         try (FileOutputStream fos = new FileOutputStream(file)) {
@@ -530,9 +520,7 @@ public class IncrementalUpdateTest {
         return file;
     }
 
-    /**
-     * Counts occurrences of a substring in a string.
-     */
+    /// Counts occurrences of a substring in a string.
     private int countOccurrences(String str, String sub) {
         int count = 0;
         int idx = 0;
@@ -547,19 +535,17 @@ public class IncrementalUpdateTest {
     //  Object-number collision on incremental update
     // ═══════════════════════════════════════════════════════════════
 
-    /**
-     * Regression: in an incremental update the original objects are preserved
-     * verbatim in the copied prefix but are absent from the modified-objects
-     * map. A freshly-created orphan stream must therefore be numbered above the
-     * original {@code /Size}, never reusing a still-live original number.
-     *
-     * <p>The real-world failure: a redaction appends a content stream that the
-     * writer numbered using only the small modified set, colliding with an
-     * {@code /ObjStm} that backed compressed objects. On reopen, loading those
-     * compressed objects threw "Invalid index 0 in object stream N" because the
-     * reused number now pointed at a non-{@code /ObjStm} dictionary (no
-     * {@code /N}). Corpus repro: 45502.pdf (RegressionTests_v24_09).</p>
-     */
+    /// Regression: in an incremental update the original objects are preserved
+    /// verbatim in the copied prefix but are absent from the modified-objects
+    /// map. A freshly-created orphan stream must therefore be numbered above the
+    /// original `/Size`, never reusing a still-live original number.
+    ///
+    /// The real-world failure: a redaction appends a content stream that the
+    /// writer numbered using only the small modified set, colliding with an
+    /// `/ObjStm` that backed compressed objects. On reopen, loading those
+    /// compressed objects threw "Invalid index 0 in object stream N" because the
+    /// reused number now pointed at a non-`/ObjStm` dictionary (no
+    /// `/N`). Corpus repro: 45502.pdf (RegressionTests\_v24\_09).
     @Test
     public void incrementalSaveDoesNotReuseOriginalObjectNumbers() throws IOException {
         // Minimal original whose trailer declares /Size 50 — i.e. objects up to

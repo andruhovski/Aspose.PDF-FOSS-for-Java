@@ -1,49 +1,34 @@
 package org.aspose.pdf.engine.linearization;
 
-import org.aspose.pdf.engine.pdfobjects.PdfArray;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfInteger;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfNull;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectKey;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
-import org.aspose.pdf.engine.pdfobjects.PdfStream;
 import org.aspose.pdf.engine.parser.PDFParser;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Writes a linearized PDF file conforming to ISO 32000-1:2008 Annex F.
- *
- * <p>Linearized structure (11 parts):</p>
- * <ol>
- *   <li>Header</li>
- *   <li>Linearization parameter dictionary</li>
- *   <li>First-page cross-reference table + trailer</li>
- *   <li>Document catalog + document-level objects</li>
- *   <li>Primary hint stream</li>
- *   <li>First-page section (page object + resources)</li>
- *   <li>Remaining pages</li>
- *   <li>Shared objects</li>
- *   <li>Non-page objects</li>
- *   <li>(overflow hint stream — omitted)</li>
- *   <li>Main cross-reference table + trailer</li>
- * </ol>
- *
- * <p>Uses a two-pass approach: pass 1 with placeholder hint stream to measure offsets,
- * pass 2 with real hint stream data.</p>
- */
+/// Writes a linearized PDF file conforming to ISO 32000-1:2008 Annex F.
+///
+/// Linearized structure (11 parts):
+///
+///   1. Header
+///   2. Linearization parameter dictionary
+///   3. First-page cross-reference table + trailer
+///   4. Document catalog + document-level objects
+///   5. Primary hint stream
+///   6. First-page section (page object + resources)
+///   7. Remaining pages
+///   8. Shared objects
+///   9. Non-page objects
+///   10. (overflow hint stream — omitted)
+///   11. Main cross-reference table + trailer
+///
+/// Uses a two-pass approach: pass 1 with placeholder hint stream to measure offsets,
+/// pass 2 with real hint stream data.
 public final class LinearizedPDFWriter {
 
     private static final Logger LOG = Logger.getLogger(LinearizedPDFWriter.class.getName());
@@ -52,14 +37,12 @@ public final class LinearizedPDFWriter {
         (byte) 0xE2, (byte) 0xE3, (byte) 0xCF, (byte) 0xD3
     };
 
-    /**
-     * Writes a linearized PDF to the output stream.
-     *
-     * @param output  the output stream
-     * @param parser  the PDF parser with all objects accessible
-     * @param trailer the document trailer dictionary
-     * @throws IOException if writing fails
-     */
+    /// Writes a linearized PDF to the output stream.
+    ///
+    /// @param output  the output stream
+    /// @param parser  the PDF parser with all objects accessible
+    /// @param trailer the document trailer dictionary
+    /// @throws IOException if writing fails
     public void write(OutputStream output, PDFParser parser,
                        PdfDictionary trailer) throws IOException {
         LOG.fine("Starting linearized PDF write");
@@ -102,10 +85,8 @@ public final class LinearizedPDFWriter {
     //  Core write logic
     // ═══════════════════════════════════════════════════════════════
 
-    /**
-     * Writes all 11 parts of a linearized PDF to the buffer.
-     * Returns an OffsetTracker with all recorded positions.
-     */
+    /// Writes all 11 parts of a linearized PDF to the buffer.
+    /// Returns an OffsetTracker with all recorded positions.
     private OffsetTracker writeParts(ByteArrayOutputStream buffer, PDFParser parser,
                                      PdfDictionary trailer, LinearizationPlan plan,
                                      byte[] hintData) throws IOException {
@@ -270,12 +251,10 @@ public final class LinearizedPDFWriter {
         return out.toByteArray();
     }
 
-    /**
-     * Formats a padded linearization dict placeholder.
-     * Must fit within the first 1024 bytes of the file.
-     * Written as object number "0 0 obj" (a special marker for linearization).
-     * We use a high object number to avoid conflicts.
-     */
+    /// Formats a padded linearization dict placeholder.
+    /// Must fit within the first 1024 bytes of the file.
+    /// Written as object number "0 0 obj" (a special marker for linearization).
+    /// We use a high object number to avoid conflicts.
     private byte[] formatLinearizationDictPlaceholder(LinearizationPlan plan, int objNum) {
         // Use a fixed-size padded dict so offsets don't shift between passes
         StringBuilder sb = new StringBuilder();
@@ -396,10 +375,8 @@ public final class LinearizedPDFWriter {
                 t.sharedObjRefs != null ? t.sharedObjRefs : new ArrayList<>());
     }
 
-    /**
-     * Fixes up the linearization dictionary in the output bytes with actual values.
-     * Scans for the placeholder values and replaces them.
-     */
+    /// Fixes up the linearization dictionary in the output bytes with actual values.
+    /// Scans for the placeholder values and replaces them.
     private void fixupLinearizationDict(byte[] data, OffsetTracker t, int hintLen) {
         // The linearization dict is the first object. We replace its placeholder
         // /L, /H, /O, /E, /T values in place, then write the fixed prefix back.
@@ -429,14 +406,12 @@ public final class LinearizedPDFWriter {
         System.arraycopy(fixed, 0, data, 0, Math.min(fixed.length, window));
     }
 
-    /**
-     * Restores {@code str} to {@code targetLen} characters by resizing the space
-     * run in the linearization dict's padding comment ({@code "% &lt;spaces&gt;"} just
-     * before its {@code endobj}). Keeps {@link #fixupLinearizationDict} length-
-     * neutral so baked xref offsets stay valid. Returns {@code str} unchanged if
-     * the padding comment can't absorb the delta (then the caller copies only the
-     * shorter prefix, matching the previous non-preserving behaviour).
-     */
+    /// Restores `str` to `targetLen` characters by resizing the space
+    /// run in the linearization dict's padding comment (`"% &lt;spaces&gt;"` just
+    /// before its `endobj`). Keeps [#fixupLinearizationDict] length-
+    /// neutral so baked xref offsets stay valid. Returns `str` unchanged if
+    /// the padding comment can't absorb the delta (then the caller copies only the
+    /// shorter prefix, matching the previous non-preserving behaviour).
     private String restorePrefixLength(String str, int targetLen) {
         int delta = str.length() - targetLen; // > 0: too long, trim padding
         if (delta == 0) return str;
@@ -490,9 +465,7 @@ public final class LinearizedPDFWriter {
     //  Offset tracker
     // ═══════════════════════════════════════════════════════════════
 
-    /**
-     * Tracks byte offsets of all parts during the write passes.
-     */
+    /// Tracks byte offsets of all parts during the write passes.
     static final class OffsetTracker {
         long linDictOffset;
         long firstXrefOffset;

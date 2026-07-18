@@ -5,10 +5,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Sprint 19 T2 — {@link Border#Border(RadioButtonOptionField)} convenience
- * ctor for radio-button options that don't extend {@link Annotation}.
- */
+/// Sprint 19 T2 — [Border#Border(RadioButtonOptionField)] convenience
+/// ctor for radio-button options that don't extend [Annotation].
 class BorderRBOFCtorTest {
 
     @Test

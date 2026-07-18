@@ -25,14 +25,10 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for Document.save() methods.
- */
+/// Tests for Document.save() methods.
 public class DocumentSaveTest {
 
-    /**
-     * Creates a minimal valid PDF in memory and returns its bytes.
-     */
+    /// Creates a minimal valid PDF in memory and returns its bytes.
     private byte[] createMinimalPdf() throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 

@@ -14,14 +14,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
-/**
- * PDF stream object (§7.3.8, ISO 32000-1:2008).
- * <p>
- * A dictionary plus a sequence of bytes. Streams are always indirect objects.
- * The bytes may be encoded (compressed) via one or more filters specified in /Filter.
- * Provides lazy decoding with SoftReference caching.
- * </p>
- */
+/// PDF stream object (§7.3.8, ISO 32000-1:2008).
+///
+/// A dictionary plus a sequence of bytes. Streams are always indirect objects.
+/// The bytes may be encoded (compressed) via one or more filters specified in /Filter.
+/// Provides lazy decoding with SoftReference caching.
+///
 public class PdfStream extends PdfDictionary {
 
     private static final Logger LOG = Logger.getLogger(PdfStream.class.getName());
@@ -31,45 +29,39 @@ public class PdfStream extends PdfDictionary {
     private static final byte[] CRLF = {'\r', '\n'};
     private static final byte[] LF = {'\n'};
 
-    /** Encoded data (as stored in the PDF file). */
+    /// Encoded data (as stored in the PDF file).
     private byte[] encodedData;
 
-    /** Decoded data (lazy, cached via SoftReference). */
+    /// Decoded data (lazy, cached via SoftReference).
     private SoftReference<byte[]> decodedData = new SoftReference<>(null);
 
-    /** Pending decoded data that needs encoding on write. */
+    /// Pending decoded data that needs encoding on write.
     private byte[] pendingDecodedData;
 
-    /** Decryptor for encrypted PDFs (set by parser). */
+    /// Decryptor for encrypted PDFs (set by parser).
     private PDFDecryptor decryptor;
-    /** Object number for decryption context. */
+    /// Object number for decryption context.
     private int decryptObjNum;
-    /** Generation number for decryption context. */
+    /// Generation number for decryption context.
     private int decryptGenNum;
 
-    /**
-     * Creates an empty stream.
-     */
+    /// Creates an empty stream.
     public PdfStream() {
         this.encodedData = new byte[0];
     }
 
-    /**
-     * Creates a stream with the given encoded data.
-     *
-     * @param encodedData the encoded bytes
-     */
+    /// Creates a stream with the given encoded data.
+    ///
+    /// @param encodedData the encoded bytes
     public PdfStream(byte[] encodedData) {
         this.encodedData = encodedData != null ? encodedData.clone() : new byte[0];
     }
 
-    /**
-     * Creates a stream from an existing dictionary and encoded data.
-     * The dictionary entries are copied into this stream's dictionary.
-     *
-     * @param dict        the dictionary with stream metadata
-     * @param encodedData the encoded bytes
-     */
+    /// Creates a stream from an existing dictionary and encoded data.
+    /// The dictionary entries are copied into this stream's dictionary.
+    ///
+    /// @param dict        the dictionary with stream metadata
+    /// @param encodedData the encoded bytes
     public PdfStream(PdfDictionary dict, byte[] encodedData) {
         if (dict != null) {
             this.map.putAll(dict.map);
@@ -77,41 +69,33 @@ public class PdfStream extends PdfDictionary {
         this.encodedData = encodedData != null ? encodedData.clone() : new byte[0];
     }
 
-    /**
-     * Returns this stream as a dictionary. Since PdfStream extends PdfDictionary,
-     * this method returns {@code this}.
-     *
-     * @return this stream (which is also a dictionary)
-     */
+    /// Returns this stream as a dictionary. Since PdfStream extends PdfDictionary,
+    /// this method returns `this`.
+    ///
+    /// @return this stream (which is also a dictionary)
     public PdfDictionary getDictionary() {
         return this;
     }
 
-    /**
-     * Returns the encoded data (as stored in the PDF file).
-     *
-     * @return the encoded bytes
-     */
+    /// Returns the encoded data (as stored in the PDF file).
+    ///
+    /// @return the encoded bytes
     public byte[] getEncodedData() {
         return encodedData != null ? encodedData.clone() : new byte[0];
     }
 
-    /**
-     * Returns the encoded data as an InputStream.
-     *
-     * @return input stream over encoded data
-     */
+    /// Returns the encoded data as an InputStream.
+    ///
+    /// @return input stream over encoded data
     public InputStream getEncodedStream() {
         return new ByteArrayInputStream(encodedData != null ? encodedData : new byte[0]);
     }
 
-    /**
-     * Returns the decoded data (after applying filters in reverse order).
-     * Results are cached via SoftReference.
-     *
-     * @return the decoded bytes
-     * @throws IOException if decoding fails
-     */
+    /// Returns the decoded data (after applying filters in reverse order).
+    /// Results are cached via SoftReference.
+    ///
+    /// @return the decoded bytes
+    /// @throws IOException if decoding fails
     public byte[] getDecodedData() throws IOException {
         // If we have pending decoded data, return it directly
         if (pendingDecodedData != null) {
@@ -151,28 +135,22 @@ public class PdfStream extends PdfDictionary {
         return decoded;
     }
 
-    /**
-     * Decoded buffers up to this size (16 MB) are soft-cached and returned as
-     * defensive clones; larger ones are re-decoded per call — see
-     * {@link #getDecodedData()}.
-     */
+    /// Decoded buffers up to this size (16 MB) are soft-cached and returned as
+    /// defensive clones; larger ones are re-decoded per call — see
+    /// [#getDecodedData()].
     private static final int CACHE_AND_CLONE_LIMIT = 16 << 20;
 
-    /**
-     * Returns the decoded data as an InputStream.
-     *
-     * @return input stream over decoded data
-     * @throws IOException if decoding fails
-     */
+    /// Returns the decoded data as an InputStream.
+    ///
+    /// @return input stream over decoded data
+    /// @throws IOException if decoding fails
     public InputStream getDecodedStream() throws IOException {
         return new ByteArrayInputStream(getDecodedData());
     }
 
-    /**
-     * Sets the decoded data. The data will be encoded when written.
-     *
-     * @param data the decoded bytes
-     */
+    /// Sets the decoded data. The data will be encoded when written.
+    ///
+    /// @param data the decoded bytes
     public void setDecodedData(byte[] data) {
         this.pendingDecodedData = data != null ? data.clone() : new byte[0];
         this.decodedData = new SoftReference<>(this.pendingDecodedData);
@@ -181,11 +159,9 @@ public class PdfStream extends PdfDictionary {
         markDirty();
     }
 
-    /**
-     * Sets the encoded data directly.
-     *
-     * @param data the encoded bytes
-     */
+    /// Sets the encoded data directly.
+    ///
+    /// @param data the encoded bytes
     public void setEncodedData(byte[] data) {
         this.encodedData = data != null ? data.clone() : new byte[0];
         this.pendingDecodedData = null;
@@ -193,32 +169,27 @@ public class PdfStream extends PdfDictionary {
         markDirty();
     }
 
-    /**
-     * Returns true if this stream has an active decryptor attached (i.e. its
-     * encoded bytes are ciphertext in the source document).
-     */
+    /// Returns true if this stream has an active decryptor attached (i.e. its
+    /// encoded bytes are ciphertext in the source document).
     public boolean hasActiveDecryptor() {
         return decryptor != null && decryptor.isActive();
     }
 
-    /**
-     * Decrypts {@code encodedData} in place and detaches the decryptor, leaving
-     * the stream looking exactly like an equivalent unencrypted stream loaded
-     * from disk.
-     * <p>
-     * This is the right primitive for {@link org.aspose.pdf.Document#decrypt()}:
-     * it avoids touching the filter chain entirely, so streams whose filters we
-     * can decode but not re-encode (JBIG2, CCITTFax, DCT, JPX) survive a
-     * {@code decrypt → save} round-trip. Decoding+re-encoding via
-     * {@link #setDecodedData(byte[])} would force a re-encode through every
-     * filter, which throws {@code "JBIG2Decode encoding not implemented"} on
-     * any image stream that uses JBIG2.
-     * </p>
-     *
-     * @return true if anything was decrypted (i.e. a decryptor was attached and
-     *         had encoded bytes to operate on); false if there was no active
-     *         decryptor and the call was a no-op
-     */
+    /// Decrypts `encodedData` in place and detaches the decryptor, leaving
+    /// the stream looking exactly like an equivalent unencrypted stream loaded
+    /// from disk.
+    ///
+    /// This is the right primitive for [org.aspose.pdf.Document#decrypt()]:
+    /// it avoids touching the filter chain entirely, so streams whose filters we
+    /// can decode but not re-encode (JBIG2, CCITTFax, DCT, JPX) survive a
+    /// `decrypt → save` round-trip. Decoding+re-encoding via
+    /// [#setDecodedData(byte\[\])] would force a re-encode through every
+    /// filter, which throws `"JBIG2Decode encoding not implemented"` on
+    /// any image stream that uses JBIG2.
+    ///
+    /// @return true if anything was decrypted (i.e. a decryptor was attached and
+    ///         had encoded bytes to operate on); false if there was no active
+    ///         decryptor and the call was a no-op
     public boolean materializeDecryption() {
         if (decryptor == null || !decryptor.isActive()) {
             return false;
@@ -237,30 +208,25 @@ public class PdfStream extends PdfDictionary {
         return true;
     }
 
-    /**
-     * Returns whether the stream has pending decoded data set via
-     * {@link #setDecodedData(byte[])} that has not yet been re-encoded by
-     * {@link #prepareEncodedData()}.
-     * <p>
-     * Used by the writer to distinguish freshly-modified content (that needs
-     * re-encryption) from content that is still the original bytes loaded
-     * from disk (which is already ciphertext under {@link #hasActiveDecryptor()}).
-     * </p>
-     *
-     * @return true if {@link #setDecodedData(byte[])} was called and the new
-     *         decoded bytes have not yet been re-encoded
-     */
+    /// Returns whether the stream has pending decoded data set via
+    /// [#setDecodedData(byte\[\])] that has not yet been re-encoded by
+    /// [#prepareEncodedData()].
+    ///
+    /// Used by the writer to distinguish freshly-modified content (that needs
+    /// re-encryption) from content that is still the original bytes loaded
+    /// from disk (which is already ciphertext under [#hasActiveDecryptor()]).
+    ///
+    /// @return true if [#setDecodedData(byte\[\])] was called and the new
+    ///         decoded bytes have not yet been re-encoded
     public boolean hasPendingDecodedData() {
         return pendingDecodedData != null;
     }
 
-    /**
-     * Sets the decryptor for this stream (called by PDFParser for encrypted PDFs).
-     *
-     * @param decryptor the decryptor
-     * @param objNum    the object number
-     * @param genNum    the generation number
-     */
+    /// Sets the decryptor for this stream (called by PDFParser for encrypted PDFs).
+    ///
+    /// @param decryptor the decryptor
+    /// @param objNum    the object number
+    /// @param genNum    the generation number
     public void setDecryptor(PDFDecryptor decryptor, int objNum, int genNum) {
         this.decryptor = decryptor;
         this.decryptObjNum = objNum;
@@ -269,11 +235,9 @@ public class PdfStream extends PdfDictionary {
         this.decodedData = new SoftReference<>(null);
     }
 
-    /**
-     * Returns the length of the encoded data.
-     *
-     * @return the encoded data length
-     */
+    /// Returns the length of the encoded data.
+    ///
+    /// @return the encoded data length
     public long getLength() {
         if (encodedData != null) {
             return encodedData.length;
@@ -281,11 +245,9 @@ public class PdfStream extends PdfDictionary {
         return 0;
     }
 
-    /**
-     * Returns the list of filter names from /Filter.
-     *
-     * @return the filter names (may be empty)
-     */
+    /// Returns the list of filter names from /Filter.
+    ///
+    /// @return the filter names (may be empty)
     public List<PdfName> getFilters() {
         PdfBase filterObj = get(PdfName.FILTER);
         if (filterObj == null) {
@@ -308,11 +270,9 @@ public class PdfStream extends PdfDictionary {
         return Collections.emptyList();
     }
 
-    /**
-     * Sets a single filter.
-     *
-     * @param filter the filter name
-     */
+    /// Sets a single filter.
+    ///
+    /// @param filter the filter name
     public void setFilter(PdfName filter) {
         if (filter == null) {
             set(PdfName.FILTER, null);
@@ -321,11 +281,9 @@ public class PdfStream extends PdfDictionary {
         }
     }
 
-    /**
-     * Sets multiple filters.
-     *
-     * @param filters the filter names
-     */
+    /// Sets multiple filters.
+    ///
+    /// @param filters the filter names
     public void setFilters(List<PdfName> filters) {
         if (filters == null || filters.isEmpty()) {
             set(PdfName.FILTER, null);
@@ -340,14 +298,12 @@ public class PdfStream extends PdfDictionary {
         }
     }
 
-    /**
-     * Ensures pending decoded data is encoded through filters and returns the
-     * encoded bytes. Used by PDFWriter for write-side encryption: the writer
-     * needs the compressed bytes before encrypting them.
-     *
-     * @return the encoded data (compressed but not encrypted)
-     * @throws IOException if filter encoding fails
-     */
+    /// Ensures pending decoded data is encoded through filters and returns the
+    /// encoded bytes. Used by PDFWriter for write-side encryption: the writer
+    /// needs the compressed bytes before encrypting them.
+    ///
+    /// @return the encoded data (compressed but not encrypted)
+    /// @throws IOException if filter encoding fails
     public byte[] prepareEncodedData() throws IOException {
         if (pendingDecodedData != null && encodedData == null) {
             List<PdfName> filters = getFilters();
@@ -394,27 +350,23 @@ public class PdfStream extends PdfDictionary {
         return "PdfStream{dictSize=" + map.size() + ", length=" + getLength() + "}";
     }
 
-    /**
-     * Decodes data through the filter chain using FilterFactory.
-     * Filters are applied left-to-right per §7.4.1.
-     */
+    /// Decodes data through the filter chain using FilterFactory.
+    /// Filters are applied left-to-right per §7.4.1.
     private byte[] decodeWithFilters(byte[] data, List<PdfName> filters) throws IOException {
         LOG.fine(() -> "Decoding stream with " + filters.size() + " filter(s)");
         return FilterFactory.decodeChain(data, filters, getEffectiveDecodeParams(filters));
     }
 
-    /**
-     * Returns per-filter parameter dictionaries for the decode chain, augmenting
-     * the raw {@code /DecodeParms} with image-dictionary fallbacks where the
-     * filter expects them.
-     *
-     * <p>Specifically, {@link org.aspose.pdf.engine.filter.CCITTFaxDecodeFilter}
-     * relies on {@code /Rows} to know when to stop decoding; PDF writers
-     * routinely omit {@code /Rows} from {@code /DecodeParms} on the assumption
-     * that consumers will fall back to the Image XObject's {@code /Height}.
-     * We materialize that fallback here so the filter receives a self-contained
-     * parameter dictionary.</p>
-     */
+    /// Returns per-filter parameter dictionaries for the decode chain, augmenting
+    /// the raw `/DecodeParms` with image-dictionary fallbacks where the
+    /// filter expects them.
+    ///
+    /// Specifically, [org.aspose.pdf.engine.filter.CCITTFaxDecodeFilter]
+    /// relies on `/Rows` to know when to stop decoding; PDF writers
+    /// routinely omit `/Rows` from `/DecodeParms` on the assumption
+    /// that consumers will fall back to the Image XObject's `/Height`.
+    /// We materialize that fallback here so the filter receives a self-contained
+    /// parameter dictionary.
     private List<PdfDictionary> getEffectiveDecodeParams(List<PdfName> filters) {
         List<PdfDictionary> base = getDecodeParams();
         if (filters == null || filters.isEmpty()) return base;
@@ -447,20 +399,16 @@ public class PdfStream extends PdfDictionary {
         return result;
     }
 
-    /**
-     * Encodes data through the filter chain using FilterFactory.
-     * Filters are applied right-to-left per §7.4.1.
-     */
+    /// Encodes data through the filter chain using FilterFactory.
+    /// Filters are applied right-to-left per §7.4.1.
     private byte[] encodeWithFilters(byte[] data, List<PdfName> filters) throws IOException {
         LOG.fine(() -> "Encoding stream with " + filters.size() + " filter(s)");
         return FilterFactory.encodeChain(data, filters, getEncodeParams(filters));
     }
 
-    /**
-     * Reads the /DecodeParms entry and returns it as a list of PdfDictionary.
-     * If absent, returns null. If a single dictionary, returns a singleton list.
-     * If an array, iterates and casts each element.
-     */
+    /// Reads the /DecodeParms entry and returns it as a list of PdfDictionary.
+    /// If absent, returns null. If a single dictionary, returns a singleton list.
+    /// If an array, iterates and casts each element.
     private List<PdfDictionary> getDecodeParams() {
         PdfBase dp = get(PdfName.DECODE_PARMS);
         if (dp == null) {
@@ -485,14 +433,12 @@ public class PdfStream extends PdfDictionary {
         return null;
     }
 
-    /**
-     * Returns parameter dictionaries for write-side filter encoding.
-     *
-     * <p>For image filters, encode needs not only /DecodeParms but also stream
-     * dictionary entries such as /Width, /Height, /BitsPerComponent and
-     * /ColorSpace. We therefore merge each filter's decode-parameter dictionary
-     * over a shallow copy of the stream dictionary.</p>
-     */
+    /// Returns parameter dictionaries for write-side filter encoding.
+    ///
+    /// For image filters, encode needs not only /DecodeParms but also stream
+    /// dictionary entries such as /Width, /Height, /BitsPerComponent and
+    /// /ColorSpace. We therefore merge each filter's decode-parameter dictionary
+    /// over a shallow copy of the stream dictionary.
     private List<PdfDictionary> getEncodeParams(List<PdfName> filters) {
         if (filters == null || filters.isEmpty()) {
             return null;

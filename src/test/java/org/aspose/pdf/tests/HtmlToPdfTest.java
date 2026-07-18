@@ -12,9 +12,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
-/**
- * Tests for HTML → PDF conversion.
- */
+/// Tests for HTML → PDF conversion.
 public class HtmlToPdfTest {
 
     private Document convertHtml(String html) throws IOException {

@@ -1,36 +1,31 @@
 package org.aspose.pdf.engine.pdfa.rules;
 
 import org.aspose.pdf.PdfFormat;
+import org.aspose.pdf.engine.parser.PDFParser;
+import org.aspose.pdf.engine.pdfa.PdfARule;
+import org.aspose.pdf.engine.pdfa.PdfAValidationResult;
 import org.aspose.pdf.engine.pdfobjects.PdfBase;
 import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
 import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
 import org.aspose.pdf.engine.pdfobjects.PdfStream;
-import org.aspose.pdf.engine.pdfa.PdfARule;
-import org.aspose.pdf.engine.pdfa.PdfAValidationResult;
-import org.aspose.pdf.engine.parser.PDFParser;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Validates metadata requirements for PDF/A compliance.
- *
- * <p>Checks the following ISO 19005 clauses:</p>
- * <ul>
- *   <li>6.7.2 &mdash; Catalog must have /Metadata pointing to a stream</li>
- *   <li>6.7.2 &mdash; Metadata stream must not have /Filter</li>
- *   <li>6.7.11 &mdash; XMP must contain pdfaid:part and pdfaid:conformance matching target</li>
- * </ul>
- */
+/// Validates metadata requirements for PDF/A compliance.
+///
+/// Checks the following ISO 19005 clauses:
+///
+///   - 6.7.2 — Catalog must have /Metadata pointing to a stream
+///   - 6.7.2 — Metadata stream must not have /Filter
+///   - 6.7.11 — XMP must contain pdfaid:part and pdfaid:conformance matching target
 public final class MetadataRules implements PdfARule {
 
     private static final Logger LOG = Logger.getLogger(MetadataRules.class.getName());
 
-    /**
-     * Creates a new metadata rules checker.
-     */
+    /// Creates a new metadata rules checker.
     public MetadataRules() {
         // default constructor
     }
@@ -81,12 +76,10 @@ public final class MetadataRules implements PdfARule {
         checkXmpIdentification(metaStream, format, result);
     }
 
-    /**
-     * Checks that the XMP metadata contains correct pdfaid:part and pdfaid:conformance.
-     *
-     * <p>This is a string-based check on the raw XMP data. If an XmpMetadataHandler
-     * is available in the future, it should be used for proper XML parsing.</p>
-     */
+    /// Checks that the XMP metadata contains correct pdfaid:part and pdfaid:conformance.
+    ///
+    /// This is a string-based check on the raw XMP data. If an XmpMetadataHandler
+    /// is available in the future, it should be used for proper XML parsing.
     private void checkXmpIdentification(PdfStream metaStream, PdfFormat format,
                                          PdfAValidationResult result) {
         byte[] data;
@@ -156,14 +149,12 @@ public final class MetadataRules implements PdfARule {
         }
     }
 
-    /**
-     * Attempts to extract a simple XMP element value from raw text.
-     * Handles both {@code <tag>value</tag>} and {@code tag="value"} forms.
-     *
-     * @param xmp the XMP text
-     * @param tag the tag name to search for (e.g. "pdfaid:part")
-     * @return the extracted value, or null if not found
-     */
+    /// Attempts to extract a simple XMP element value from raw text.
+    /// Handles both `<tag>value</tag>` and `tag="value"` forms.
+    ///
+    /// @param xmp the XMP text
+    /// @param tag the tag name to search for (e.g. "pdfaid:part")
+    /// @return the extracted value, or null if not found
     private static String extractXmpValue(String xmp, String tag) {
         // Try <tag>value</tag> form
         String openTag = "<" + tag + ">";
@@ -191,9 +182,7 @@ public final class MetadataRules implements PdfARule {
         return null;
     }
 
-    /**
-     * Resolves a PdfBase value, dereferencing indirect references.
-     */
+    /// Resolves a PdfBase value, dereferencing indirect references.
     private static PdfBase resolve(PdfBase val) {
         if (val instanceof PdfObjectReference) {
             try {

@@ -19,55 +19,52 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Applies an L2 {@link XfaPageSplitter.SplitPlan} to produce a <b>paginated Layout DOM</b> and
- * emits the resulting multi-page PDF (Stage C, sprint L3).
- *
- * <p>L3 is where the split is finally <em>acted on</em>: content is distributed across N
- * physical pages of the medium size, each object rebased to its page's content-region top, and
- * each page painted by REUSING the validated C2 {@link XfaPainter} primitives per object (no
- * paint logic is rewritten — final composition polish is L5, leaders/trailers are L4).</p>
- *
- * <p>Two pagination modes are handled:
- * <ul>
- *   <li><b>FLOWED</b> — a flowed root paginates by the L2 {@link XfaPageSplitter.SplitPlan}:
- *       each page range is a page, units rebased to the page top.</li>
- *   <li><b>POSITIONED_PAGES</b> — a positioned root authored as multiple page-sized subforms
- *       (each filling the content region) maps each such subform to its own page. This is the
- *       408975 pattern (3 full-page subforms → 3 pages, matching Adobe).</li>
- *   <li><b>POSITIONED_SINGLE</b> — a genuine single-page positioned form: delegated verbatim to
- *       the validated C2 painter (keeps the proven single-page fidelity).</li>
- * </ul></p>
- */
+/// Applies an L2 [XfaPageSplitter.SplitPlan] to produce a **paginated Layout DOM** and
+/// emits the resulting multi-page PDF (Stage C, sprint L3).
+///
+/// L3 is where the split is finally _acted on_: content is distributed across N
+/// physical pages of the medium size, each object rebased to its page's content-region top, and
+/// each page painted by REUSING the validated C2 [XfaPainter] primitives per object (no
+/// paint logic is rewritten — final composition polish is L5, leaders/trailers are L4).
+///
+/// Two pagination modes are handled:
+///
+///   - **FLOWED** — a flowed root paginates by the L2 [XfaPageSplitter.SplitPlan]:
+///     each page range is a page, units rebased to the page top.
+///   - **POSITIONED\_PAGES** — a positioned root authored as multiple page-sized subforms
+///     (each filling the content region) maps each such subform to its own page. This is the
+///     408975 pattern (3 full-page subforms → 3 pages, matching Adobe).
+///   - **POSITIONED\_SINGLE** — a genuine single-page positioned form: delegated verbatim to
+///     the validated C2 painter (keeps the proven single-page fidelity).
 public final class XfaPaginator {
 
     private XfaPaginator() {
     }
 
-    /** Pagination mode chosen for a form. */
+    /// Pagination mode chosen for a form.
     public enum Mode {
-        /** Flowed root paginated by the split plan. */
+        /// Flowed root paginated by the split plan.
         FLOWED,
-        /** Positioned root authored as multiple page-sized subforms. */
+        /// Positioned root authored as multiple page-sized subforms.
         POSITIONED_PAGES,
-        /** Genuine single-page positioned form (delegated to the C2 painter). */
+        /// Genuine single-page positioned form (delegated to the C2 painter).
         POSITIONED_SINGLE
     }
 
-    /** The content region a page draws into: the chosen pageArea's contentArea box. */
+    /// The content region a page draws into: the chosen pageArea's contentArea box.
     public static final class PageRegion {
-        /** Source pageArea element, or {@code null} (medium fallback). */
+        /// Source pageArea element, or `null` (medium fallback).
         public final Element pageArea;
-        /** Index of {@code pageArea} in the pageSet declaration order, or {@code -1} (fallback). */
+        /// Index of `pageArea` in the pageSet declaration order, or `-1` (fallback).
         public final int pageAreaIndex;
-        /** contentArea origin X on the medium (points, from page left). */
+        /// contentArea origin X on the medium (points, from page left).
         public final double contentX;
-        /** contentArea origin Y on the medium (points, from page top). */
+        /// contentArea origin Y on the medium (points, from page top).
         public final double contentY;
-        /** contentArea width / height in points. */
+        /// contentArea width / height in points.
         public final double contentW;
         public final double contentH;
-        /** This pageArea's own medium (page) size in points — its {@code <medium>}, else the global medium. */
+        /// This pageArea's own medium (page) size in points — its `<medium>`, else the global medium.
         public final double mediumW;
         public final double mediumH;
 
@@ -84,11 +81,11 @@ public final class XfaPaginator {
         }
     }
 
-    /** One physical page of placed content (page-local coordinates). */
+    /// One physical page of placed content (page-local coordinates).
     public static final class PageLayout {
-        /** Top-level placed objects on this page, rebased to the content-region top. */
+        /// Top-level placed objects on this page, rebased to the content-region top.
         public final List<XfaLayoutNode> units;
-        /** The page's content region. */
+        /// The page's content region.
         public final PageRegion region;
 
         PageLayout(List<XfaLayoutNode> units, PageRegion region) {
@@ -97,14 +94,14 @@ public final class XfaPaginator {
         }
     }
 
-    /** The full paginated layout (pre-emit). */
+    /// The full paginated layout (pre-emit).
     public static final class PaginatedLayout {
-        /** The physical pages, in order. */
+        /// The physical pages, in order.
         public final List<PageLayout> pages;
-        /** Medium page size in points. */
+        /// Medium page size in points.
         public final double mediumW;
         public final double mediumH;
-        /** The pagination mode chosen. */
+        /// The pagination mode chosen.
         public final Mode mode;
 
         PaginatedLayout(List<PageLayout> pages, double mediumW, double mediumH, Mode mode) {
@@ -114,48 +111,44 @@ public final class XfaPaginator {
             this.mode = mode;
         }
 
-        /** @return the number of physical pages. */
+        /// @return the number of physical pages.
         public int pageCount() {
             return pages.size();
         }
     }
 
-    /** Outcome of a paginate-and-paint pass. */
+    /// Outcome of a paginate-and-paint pass.
     public static final class Result {
-        /** Physical pages emitted. */
+        /// Physical pages emitted.
         public int pages;
-        /** Pagination mode. */
+        /// Pagination mode.
         public Mode mode;
-        /** Aggregate paint counters across all pages. */
+        /// Aggregate paint counters across all pages.
         public int painted, fills, borders, texts, captions, presenceHidden, printSkipped, images;
     }
 
     /* ------------------------------ L3.1 + L3.2 ------------------------------ */
 
-    /**
-     * Builds the paginated Layout DOM for a laid-out form: applies the split plan (flowed) or the
-     * page-subform pattern (positioned), assigning each page its content region from the
-     * {@code <pageSet>}.
-     *
-     * @param layout the L1/L2 layout result
-     * @param plan   the L2 split plan
-     * @param tpl    the template (medium + pageSet), or {@code null}
-     * @return the paginated layout
-     */
+    /// Builds the paginated Layout DOM for a laid-out form: applies the split plan (flowed) or the
+    /// page-subform pattern (positioned), assigning each page its content region from the
+    /// `<pageSet>`.
+    ///
+    /// @param layout the L1/L2 layout result
+    /// @param plan   the L2 split plan
+    /// @param tpl    the template (medium + pageSet), or `null`
+    /// @return the paginated layout
     public static PaginatedLayout paginate(XfaFlowLayout.Result layout, XfaPageSplitter.SplitPlan plan,
                                            Template tpl) {
         return paginate(layout, plan, tpl, XfaBookends.NONE, null);
     }
 
-    /**
-     * Paginates as {@link #paginate(XfaFlowLayout.Result, XfaPageSplitter.SplitPlan, Template)} but
-     * decorates each flowed page with the L4 <b>boundary content</b>: overflow leaders/trailers
-     * (bookends) repeated within their occurrence cap, and leaders/trailers at explicit breaks. A
-     * positioned form has no flow boundaries and is unaffected (the bookends spec is ignored).
-     *
-     * @param bookends the resolved overflow boundary content (use {@link XfaBookends#NONE} for none)
-     * @param dom      the merged Form DOM (for resolving explicit-break leader/trailer refs), or {@code null}
-     */
+    /// Paginates as [#paginate(XfaFlowLayout.Result, XfaPageSplitter.SplitPlan, Template)] but
+    /// decorates each flowed page with the L4 **boundary content**: overflow leaders/trailers
+    /// (bookends) repeated within their occurrence cap, and leaders/trailers at explicit breaks. A
+    /// positioned form has no flow boundaries and is unaffected (the bookends spec is ignored).
+    ///
+    /// @param bookends the resolved overflow boundary content (use [XfaBookends#NONE] for none)
+    /// @param dom      the merged Form DOM (for resolving explicit-break leader/trailer refs), or `null`
     public static PaginatedLayout paginate(XfaFlowLayout.Result layout, XfaPageSplitter.SplitPlan plan,
                                            Template tpl, XfaBookends.Spec bookends, FormDom dom) {
         double[] medium = tpl != null ? XfaMedium.resolve(tpl) : XfaMedium.LETTER.clone();
@@ -236,13 +229,11 @@ public final class XfaPaginator {
 
     /* ------------------------------ L4 decoration ------------------------------ */
 
-    /**
-     * Inserts the L4 boundary content into each flowed page: overflow leaders/trailers (bookends)
-     * on every page within their occurrence cap, and explicit-break leaders/trailers at forced
-     * breaks. Leaders go at the page top (content shifted down to make room); trailers at the page
-     * bottom (after the content). The split that produced {@code pages} already reserved the
-     * overflow leader/trailer height, so the content + boilerplate fits the region.
-     */
+    /// Inserts the L4 boundary content into each flowed page: overflow leaders/trailers (bookends)
+    /// on every page within their occurrence cap, and explicit-break leaders/trailers at forced
+    /// breaks. Leaders go at the page top (content shifted down to make room); trailers at the page
+    /// bottom (after the content). The split that produced `pages` already reserved the
+    /// overflow leader/trailer height, so the content + boilerplate fits the region.
     private static void decorateFlowed(List<List<XfaLayoutNode>> pages, List<Element> boundarySources,
                                        XfaBookends.Spec bk, FormDom dom, Template tpl, double regionWidth) {
         if (pages.isEmpty()) {
@@ -297,12 +288,10 @@ public final class XfaPaginator {
         }
     }
 
-    /**
-     * Whether the overflow leader applies to page {@code p}: the owning container's content must
-     * continue onto this page from the previous one (it spans the page boundary). With no owner the
-     * leader is global (legacy single-table behaviour); page 0 never gets a leader (the table's own
-     * header is part of its first-page content).
-     */
+    /// Whether the overflow leader applies to page `p`: the owning container's content must
+    /// continue onto this page from the previous one (it spans the page boundary). With no owner the
+    /// leader is global (legacy single-table behaviour); page 0 never gets a leader (the table's own
+    /// header is part of its first-page content).
     private static boolean leaderAppliesToPage(List<List<XfaLayoutNode>> pages, int p, String owner,
                                                boolean inBody) {
         if (owner == null || owner.isEmpty()) {
@@ -316,11 +305,9 @@ public final class XfaPaginator {
         return !inBody || (p > 0 && pageHasOwner(pages.get(p - 1), owner));
     }
 
-    /**
-     * Whether the overflow trailer applies to page {@code p}: the owner spans this page, and — when the
-     * trailer is part of the body — the owner also continues onto the NEXT page (the trailer marks a
-     * mid-table page break, not the table's natural end).
-     */
+    /// Whether the overflow trailer applies to page `p`: the owner spans this page, and — when the
+    /// trailer is part of the body — the owner also continues onto the NEXT page (the trailer marks a
+    /// mid-table page break, not the table's natural end).
     private static boolean trailerAppliesToPage(List<List<XfaLayoutNode>> pages, int p, String owner,
                                                 boolean inBody) {
         if (owner == null || owner.isEmpty()) {
@@ -332,7 +319,7 @@ public final class XfaPaginator {
         return !inBody || (p + 1 < pages.size() && pageHasOwner(pages.get(p + 1), owner));
     }
 
-    /** Whether any unit on {@code page} descends from a form-DOM container named {@code owner}. */
+    /// Whether any unit on `page` descends from a form-DOM container named `owner`.
     private static boolean pageHasOwner(List<XfaLayoutNode> page, String owner) {
         for (XfaLayoutNode u : page) {
             for (Node n = u.getSource(); n instanceof Element; n = n.getParentNode()) {
@@ -344,7 +331,7 @@ public final class XfaPaginator {
         return false;
     }
 
-    /** Shifts a page's content down by the leader height and inserts the leader at the page top. */
+    /// Shifts a page's content down by the leader height and inserts the leader at the page top.
     private static void prependLeader(List<XfaLayoutNode> page, XfaLayoutNode leaderProto) {
         double h = leaderProto.getHeight();
         for (int i = 0; i < page.size(); i++) {
@@ -353,7 +340,7 @@ public final class XfaPaginator {
         page.add(0, leaderProto.translated(0, 0));
     }
 
-    /** Appends the trailer at the page's current content bottom (its last/lowest object). */
+    /// Appends the trailer at the page's current content bottom (its last/lowest object).
     private static void appendTrailer(List<XfaLayoutNode> page, XfaLayoutNode trailerProto) {
         double bottom = 0;
         for (XfaLayoutNode u : page) {
@@ -364,29 +351,25 @@ public final class XfaPaginator {
 
     /* -------------------------------- L3.3 --------------------------------- */
 
-    /**
-     * Paginates {@code dom} and emits the multi-page result onto {@code doc}, painting each page
-     * by reusing the C2 painter per object. A genuine single-page positioned form is delegated
-     * verbatim to {@link XfaPainter#paint} (preserving the validated single-page fidelity).
-     *
-     * @param doc the target document (pages are added as needed)
-     * @param dom the merged Form DOM
-     * @param tpl the template, or {@code null}
-     * @return the paginate-and-paint result
-     * @throws Exception on document access failure
-     */
+    /// Paginates `dom` and emits the multi-page result onto `doc`, painting each page
+    /// by reusing the C2 painter per object. A genuine single-page positioned form is delegated
+    /// verbatim to [XfaPainter#paint] (preserving the validated single-page fidelity).
+    ///
+    /// @param doc the target document (pages are added as needed)
+    /// @param dom the merged Form DOM
+    /// @param tpl the template, or `null`
+    /// @return the paginate-and-paint result
+    /// @throws Exception on document access failure
     public static Result paint(Document doc, FormDom dom, Template tpl) throws Exception {
         // Resolve fonts from the source document's embedded programs first (extracted before the
         // placeholder pages are deleted), then host/fallback faces.
         return paint(doc, dom, tpl, org.aspose.pdf.engine.xfa.flatten.paint.XfaFontResolver.create(doc));
     }
 
-    /**
-     * Paginates and paints {@code dom}, embedding real fonts via {@code resolver} (XFA-FONTEMBED) where
-     * resolvable, else the standard-14 substitute.
-     *
-     * @param resolver the font resolver (embedded&gt;host&gt;substitution); never {@code null}
-     */
+    /// Paginates and paints `dom`, embedding real fonts via `resolver` (XFA-FONTEMBED) where
+    /// resolvable, else the standard-14 substitute.
+    ///
+    /// @param resolver the font resolver (embedded>host>substitution); never `null`
     public static Result paint(Document doc, FormDom dom, Template tpl,
                                org.aspose.pdf.engine.xfa.flatten.paint.XfaFontResolver resolver) throws Exception {
         XfaFlowLayout.Result layout = XfaFlowLayout.layout(dom, tpl);
@@ -469,21 +452,19 @@ public final class XfaPaginator {
         return out;
     }
 
-    /**
-     * Prepends background-only box nodes for the styled flowed container subforms overlapping a page's
-     * Y band to {@code page} (so they paint behind the page's units). A flowed container is transparent
-     * to the splitter — its leaf children become the units while the container's own {@code <fill>}/
-     * {@code <border>} (the grey section panel + box outline of the Czech insolvency forms) is dropped.
-     * Each match is re-added as a <i>childless</i> box node (its children are already unit-painted),
-     * rebased by {@code yOff} to the page top. Only transparent containers are walked, so a subtree
-     * already painted whole as one atomic unit is never double-drawn.
-     *
-     * @param root       the flowed layout root
-     * @param bandTop    the page band's top in absolute content-region Y (= {@code yOff})
-     * @param bandBottom the page band's bottom in absolute content-region Y
-     * @param yOff       the offset that rebases this page's content to the region top
-     * @param page       the page's unit list; backgrounds are inserted at its front
-     */
+    /// Prepends background-only box nodes for the styled flowed container subforms overlapping a page's
+    /// Y band to `page` (so they paint behind the page's units). A flowed container is transparent
+    /// to the splitter — its leaf children become the units while the container's own `<fill>`/
+    /// `<border>` (the grey section panel + box outline of the Czech insolvency forms) is dropped.
+    /// Each match is re-added as a _childless_ box node (its children are already unit-painted),
+    /// rebased by `yOff` to the page top. Only transparent containers are walked, so a subtree
+    /// already painted whole as one atomic unit is never double-drawn.
+    ///
+    /// @param root       the flowed layout root
+    /// @param bandTop    the page band's top in absolute content-region Y (= `yOff`)
+    /// @param bandBottom the page band's bottom in absolute content-region Y
+    /// @param yOff       the offset that rebases this page's content to the region top
+    /// @param page       the page's unit list; backgrounds are inserted at its front
     private static void addStyledBackgrounds(XfaLayoutNode root, double bandTop, double bandBottom,
                                              double yOff, List<XfaLayoutNode> page) {
         if (root == null) {
@@ -509,7 +490,7 @@ public final class XfaPaginator {
         }
     }
 
-    /** Whether {@code el} carries its own box styling (a {@code <fill>} or {@code <border>} child). */
+    /// Whether `el` carries its own box styling (a `<fill>` or `<border>` child).
     private static boolean hasBoxStyling(Element el) {
         if (el == null) {
             return false;
@@ -525,11 +506,9 @@ public final class XfaPaginator {
         return false;
     }
 
-    /**
-     * Walks a placed Layout-DOM node, painting each object at its page-local PDF rectangle via
-     * the reused C2 primitives. Presence/relevant gating mirrors the C2 walk (a suppressed
-     * subtree is not painted).
-     */
+    /// Walks a placed Layout-DOM node, painting each object at its page-local PDF rectangle via
+    /// the reused C2 primitives. Presence/relevant gating mirrors the C2 walk (a suppressed
+    /// subtree is not painted).
     private static void paintNode(XfaLayoutNode node, Map<Element, FormField> byElement, double mediumH,
                                   double contentX, double contentY, ContentStreamBuilder b, XfaPainter.Result r,
                                   org.aspose.pdf.engine.xfa.flatten.paint.XfaFontResolver resolver) {
@@ -554,18 +533,16 @@ public final class XfaPaginator {
         }
     }
 
-    /**
-     * Paints a physical page's master-page furniture: the bound {@code <pageArea>} assigned to it
-     * (header / footer / address blocks), with this page's "Page N of M" numbers resolved and any
-     * last-/first-page-only presence applied. Shared by the render track ({@link #paint}) and the
-     * AcroForm converter so both pages look the same. No-op when the page has no assigned pageArea.
-     *
-     * @param dom             the merged Form DOM (its master channel supplies the furniture)
-     * @param masterByElement element→field map over {@link FormDom#getMasterFields()}
-     * @param pl              the page layout (its region carries the pageArea index)
-     * @param pageNum         this physical page's 1-based number
-     * @param pageCount       the total physical page count
-     */
+    /// Paints a physical page's master-page furniture: the bound `<pageArea>` assigned to it
+    /// (header / footer / address blocks), with this page's "Page N of M" numbers resolved and any
+    /// last-/first-page-only presence applied. Shared by the render track ([#paint]) and the
+    /// AcroForm converter so both pages look the same. No-op when the page has no assigned pageArea.
+    ///
+    /// @param dom             the merged Form DOM (its master channel supplies the furniture)
+    /// @param masterByElement element→field map over [FormDom#getMasterFields()]
+    /// @param pl              the page layout (its region carries the pageArea index)
+    /// @param pageNum         this physical page's 1-based number
+    /// @param pageCount       the total physical page count
     public static void paintPageFurniture(FormDom dom, Map<Element, FormField> masterByElement,
                                           PageLayout pl, int pageNum, int pageCount,
                                           double pageW, double pageH, ContentStreamBuilder b,
@@ -582,14 +559,12 @@ public final class XfaPaginator {
         paintMasterFurniture(area, masterByElement, dom.getMasterFields(), pageW, pageH, b, r, resolver);
     }
 
-    /**
-     * Paints the master-page <b>furniture</b> of a bound {@code <pageArea>} onto the current page:
-     * its positioned child subforms / draws / fields (the page header, footer, address blocks),
-     * laid out at their medium-relative coordinates and painted via the reused C2 primitives. The
-     * pageArea's structural children ({@code medium}, {@code contentArea}, {@code occur}) carry no
-     * ink and are skipped. Resolves bound values from the FormDom master-field channel. Defensive:
-     * a furniture failure never aborts the page.
-     */
+    /// Paints the master-page **furniture** of a bound `<pageArea>` onto the current page:
+    /// its positioned child subforms / draws / fields (the page header, footer, address blocks),
+    /// laid out at their medium-relative coordinates and painted via the reused C2 primitives. The
+    /// pageArea's structural children (`medium`, `contentArea`, `occur`) carry no
+    /// ink and are skipped. Resolves bound values from the FormDom master-field channel. Defensive:
+    /// a furniture failure never aborts the page.
     private static void paintMasterFurniture(Element pageArea, Map<Element, FormField> byElement,
                                              List<FormField> masterFields, double mediumW, double mediumH,
                                              ContentStreamBuilder b, XfaPainter.Result r,
@@ -620,15 +595,13 @@ public final class XfaPaginator {
         }
     }
 
-    /**
-     * Resolves a master page's "Page N of M" numbering for the given physical page. XFA computes the
-     * current page / page count in hidden fields via {@code xfa.layout.page(this)} /
-     * {@code xfa.layout.pageCount()} (run at a {@code layout:ready} event we do not execute headlessly)
-     * and embeds them into a rich-text {@code <draw>} through {@code <span xfa:embed="#fieldId">}. This
-     * (1) finds those fields by their script and maps each {@code id} to this page's number / the total,
-     * then (2) writes that number as the text content of every matching {@code xfa:embed} span, so the
-     * rich-text painter renders "Page 1 of 3". Re-run per page (CurrentPage differs); idempotent.
-     */
+    /// Resolves a master page's "Page N of M" numbering for the given physical page. XFA computes the
+    /// current page / page count in hidden fields via `xfa.layout.page(this)` /
+    /// `xfa.layout.pageCount()` (run at a `layout:ready` event we do not execute headlessly)
+    /// and embeds them into a rich-text `<draw>` through `<span xfa:embed="#fieldId">`. This
+    /// (1) finds those fields by their script and maps each `id` to this page's number / the total,
+    /// then (2) writes that number as the text content of every matching `xfa:embed` span, so the
+    /// rich-text painter renders "Page 1 of 3". Re-run per page (CurrentPage differs); idempotent.
     private static void resolvePageNumberEmbeds(Element pageArea, int pageNum, int pageCount) {
         java.util.Map<String, String> byId = new java.util.HashMap<>();
         collectPageNumberFields(pageArea, pageNum, pageCount, byId);
@@ -637,7 +610,7 @@ public final class XfaPaginator {
         }
     }
 
-    /** Maps the {@code id} of each page-number field (its script calls xfa.layout.page/pageCount) to its value. */
+    /// Maps the `id` of each page-number field (its script calls xfa.layout.page/pageCount) to its value.
     private static void collectPageNumberFields(Element el, int pageNum, int pageCount,
                                                 java.util.Map<String, String> byId) {
         if ("field".equals(local(el))) {
@@ -659,7 +632,7 @@ public final class XfaPaginator {
         }
     }
 
-    /** The concatenated text of all {@code <script>} descendants of {@code el}, or null if none. */
+    /// The concatenated text of all `<script>` descendants of `el`, or null if none.
     private static String descendantScriptText(Element el) {
         StringBuilder sb = new StringBuilder();
         collectScriptText(el, sb);
@@ -679,7 +652,7 @@ public final class XfaPaginator {
         }
     }
 
-    /** Writes the mapped value as text content of every element carrying an {@code xfa:embed="#id"} attribute. */
+    /// Writes the mapped value as text content of every element carrying an `xfa:embed="#id"` attribute.
     private static void applyEmbedText(Element el, java.util.Map<String, String> byId) {
         String embed = embedRef(el);
         if (embed != null) {
@@ -694,14 +667,12 @@ public final class XfaPaginator {
         }
     }
 
-    /**
-     * Applies a master-furniture object's page-conditional presence for the given physical page. Some
-     * page furniture is shown only on the LAST page (XFA idiom: an {@code initialize} script
-     * {@code if (curpage ne totpages) then $.presence = "hidden"}) or only on the FIRST page. We do not
-     * run those scripts headlessly, so detect the idiom from the object's own event script and set its
-     * {@code presence} per page: 14758's "END OF PURCHASE ORDER" ({@code END_PO}) then appears only on
-     * the final page instead of every page. Re-applied per page (sets visible/hidden explicitly).
-     */
+    /// Applies a master-furniture object's page-conditional presence for the given physical page. Some
+    /// page furniture is shown only on the LAST page (XFA idiom: an `initialize` script
+    /// `if (curpage ne totpages) then $.presence = "hidden"`) or only on the FIRST page. We do not
+    /// run those scripts headlessly, so detect the idiom from the object's own event script and set its
+    /// `presence` per page: 14758's "END OF PURCHASE ORDER" (`END_PO`) then appears only on
+    /// the final page instead of every page. Re-applied per page (sets visible/hidden explicitly).
     private static void applyPagePresence(Element el, int pageNum, int pageCount) {
         String ln = local(el);
         if ("subform".equals(ln) || "draw".equals(ln) || "field".equals(ln)) {
@@ -724,7 +695,7 @@ public final class XfaPaginator {
         }
     }
 
-    /** The concatenated text of {@code el}'s OWN direct {@code <event><script>} children (not descendants'). */
+    /// The concatenated text of `el`'s OWN direct `<event><script>` children (not descendants').
     private static String ownEventScript(Element el) {
         StringBuilder sb = new StringBuilder();
         for (Element c = firstEl(el); c != null; c = nextEl(c)) {
@@ -742,7 +713,7 @@ public final class XfaPaginator {
         return sb.length() == 0 ? null : sb.toString();
     }
 
-    /** The {@code xfa:embed} attribute value of {@code el} (matched by local name, namespace-agnostic), or null. */
+    /// The `xfa:embed` attribute value of `el` (matched by local name, namespace-agnostic), or null.
     private static String embedRef(Element el) {
         if (!el.hasAttributes()) {
             return null;
@@ -771,10 +742,8 @@ public final class XfaPaginator {
                 || "row".equals(layout) || "table".equals(layout);
     }
 
-    /**
-     * A positioned root's page-sized child subforms (each filling the content region) — the
-     * authored "page subform" pattern. A subform whose box covers most of the region is a page.
-     */
+    /// A positioned root's page-sized child subforms (each filling the content region) — the
+    /// authored "page subform" pattern. A subform whose box covers most of the region is a page.
     private static List<XfaLayoutNode> pageFillers(XfaLayoutNode root, double regionW, double regionH) {
         List<XfaLayoutNode> fillers = new ArrayList<>();
         if (root == null || regionW <= 0 || regionH <= 0) {
@@ -791,12 +760,10 @@ public final class XfaPaginator {
 
     /* ------------------------- L3.2 pageArea selection ------------------------- */
 
-    /**
-     * Assigns each page its content region from the template {@code <pageSet>}: ordered
-     * {@code <pageArea>}s with {@code <occur max>} limits (a pageArea repeats up to its max, then
-     * the next is used; the last repeats while content remains). The medium-sized contentArea is
-     * the fallback when the template declares none.
-     */
+    /// Assigns each page its content region from the template `<pageSet>`: ordered
+    /// `<pageArea>`s with `<occur max>` limits (a pageArea repeats up to its max, then
+    /// the next is used; the last repeats while content remains). The medium-sized contentArea is
+    /// the fallback when the template declares none.
     private static List<PageRegion> assignPageRegions(Template tpl, List<List<XfaLayoutNode>> pageUnitLists,
                                                       double mediumW, double mediumH) {
         int pageCount = pageUnitLists.size();
@@ -844,7 +811,7 @@ public final class XfaPaginator {
         return out;
     }
 
-    /** The page's content width = the rightmost extent of its top-level units (0 if empty). */
+    /// The page's content width = the rightmost extent of its top-level units (0 if empty).
     private static double pageContentWidth(List<XfaLayoutNode> units) {
         double w = 0;
         for (XfaLayoutNode u : units) {
@@ -853,11 +820,9 @@ public final class XfaPaginator {
         return w;
     }
 
-    /**
-     * Picks the pageArea best fitting a page {@code width}: the narrowest contentArea that still holds
-     * the content ({@code contentW >= width}); if none is wide enough, the widest available. Ties and
-     * zero-width content keep the first (declaration order).
-     */
+    /// Picks the pageArea best fitting a page `width`: the narrowest contentArea that still holds
+    /// the content (`contentW >= width`); if none is wide enough, the widest available. Ties and
+    /// zero-width content keep the first (declaration order).
     private static PageRegion bestFitArea(List<PageRegion> areas, double width) {
         PageRegion fit = null;
         PageRegion widest = areas.get(0);
@@ -872,7 +837,7 @@ public final class XfaPaginator {
         return fit != null ? fit : widest;
     }
 
-    /** Collects the ordered pageAreas (with their contentArea boxes and own medium size) of the first pageSet. */
+    /// Collects the ordered pageAreas (with their contentArea boxes and own medium size) of the first pageSet.
     private static List<PageRegion> collectPageAreas(Template tpl, double mediumW, double mediumH) {
         List<PageRegion> out = new ArrayList<>();
         if (tpl == null) {
@@ -899,7 +864,7 @@ public final class XfaPaginator {
         return out;
     }
 
-    /** A pageArea's {@code <occur max>} (default 1; {@code -1} = unbounded). */
+    /// A pageArea's `<occur max>` (default 1; `-1` = unbounded).
     private static int occurMax(Element pageArea) {
         if (pageArea == null) {
             return 1;

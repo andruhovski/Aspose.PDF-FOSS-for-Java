@@ -3,31 +3,26 @@ package org.aspose.pdf.engine.security;
 import java.security.MessageDigest;
 import java.util.Arrays;
 
-/**
- * Shared cryptographic utilities for PDF encryption and decryption.
- * <p>
- * Contains Algorithm 1 (§7.6.2): per-object key computation, used by
- * both {@link PDFDecryptor} and {@code PDFEncryptor}.
- * </p>
- */
+/// Shared cryptographic utilities for PDF encryption and decryption.
+///
+/// Contains Algorithm 1 (§7.6.2): per-object key computation, used by
+/// both [PDFDecryptor] and `PDFEncryptor`.
+///
 public final class PDFCryptoUtils {
 
     private PDFCryptoUtils() {}
 
-    /**
-     * Algorithm 1 (ISO 32000-1:2008, §7.6.2): computes the per-object encryption key.
-     * <p>
-     * The file encryption key is extended with the object number and generation number
-     * (low-order bytes first), hashed with MD5, and truncated to the key length + 5
-     * (maximum 16 bytes). For AES-128, the salt bytes {@code sAlT} are appended before hashing.
-     * </p>
-     *
-     * @param encryptionKey the file encryption key
-     * @param objectNumber  the PDF object number
-     * @param generationNumber the PDF generation number
-     * @param cipherType    the cipher type (affects salt bytes for AES-128)
-     * @return the per-object key (5..16 bytes)
-     */
+    /// Algorithm 1 (ISO 32000-1:2008, §7.6.2): computes the per-object encryption key.
+    ///
+    /// The file encryption key is extended with the object number and generation number
+    /// (low-order bytes first), hashed with MD5, and truncated to the key length + 5
+    /// (maximum 16 bytes). For AES-128, the salt bytes `sAlT` are appended before hashing.
+    ///
+    /// @param encryptionKey the file encryption key
+    /// @param objectNumber  the PDF object number
+    /// @param generationNumber the PDF generation number
+    /// @param cipherType    the cipher type (affects salt bytes for AES-128)
+    /// @return the per-object key (5..16 bytes)
     public static byte[] computeObjectKey(byte[] encryptionKey, int objectNumber,
                                            int generationNumber,
                                            PDFEncryptionDict.CipherType cipherType) {

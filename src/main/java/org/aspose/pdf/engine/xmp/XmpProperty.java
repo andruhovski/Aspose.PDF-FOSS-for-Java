@@ -4,17 +4,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Internal representation of an XMP property value.
- * <p>
- * Supports simple text, URI, Language Alternative (rdf:Alt),
- * ordered array (rdf:Seq), unordered array (rdf:Bag), and
- * structure (nested properties) value types.
- * </p>
- */
+/// Internal representation of an XMP property value.
+///
+/// Supports simple text, URI, Language Alternative (rdf:Alt),
+/// ordered array (rdf:Seq), unordered array (rdf:Bag), and
+/// structure (nested properties) value types.
+///
 public class XmpProperty {
 
-    /** The type of XMP property value. */
+    /// The type of XMP property value.
     public enum ValueType {
         SIMPLE,
         URI,
@@ -31,23 +29,21 @@ public class XmpProperty {
     private List<LangAltEntry> langAltEntries;
     private List<XmpProperty> structFields;
 
-    /**
-     * Creates a simple text property.
-     *
-     * @param key   the property key ("prefix:localName")
-     * @param value the string value
-     * @param type  the value type
-     */
+    /// Creates a simple text property.
+    ///
+    /// @param key   the property key ("prefix:localName")
+    /// @param value the string value
+    /// @param type  the value type
     public XmpProperty(String key, String value, ValueType type) {
         this.key = key;
         this.value = value;
         this.type = type;
     }
 
-    /** Returns the property key. */
+    /// Returns the property key.
     public String getKey() { return key; }
 
-    /** Returns the simple string value (or x-default for lang-alt, first item for arrays). */
+    /// Returns the simple string value (or x-default for lang-alt, first item for arrays).
     public String getValue() {
         if (type == ValueType.LANG_ALT && langAltEntries != null && !langAltEntries.isEmpty()) {
             for (LangAltEntry e : langAltEntries) {
@@ -62,56 +58,56 @@ public class XmpProperty {
         return value;
     }
 
-    /** Sets the simple string value. */
+    /// Sets the simple string value.
     public void setValue(String value) { this.value = value; }
 
-    /** Returns the value type. */
+    /// Returns the value type.
     public ValueType getType() { return type; }
 
-    /** Sets the value type. */
+    /// Sets the value type.
     public void setType(ValueType type) { this.type = type; }
 
-    /** Returns array items (for SEQ/BAG types). */
+    /// Returns array items (for SEQ/BAG types).
     public List<String> getArrayItems() {
         return arrayItems != null ? arrayItems : Collections.emptyList();
     }
 
-    /** Sets array items. */
+    /// Sets array items.
     public void setArrayItems(List<String> items) { this.arrayItems = items; }
 
-    /** Returns language alternative entries (for LANG_ALT type). */
+    /// Returns language alternative entries (for LANG\_ALT type).
     public List<LangAltEntry> getLangAltEntries() {
         return langAltEntries != null ? langAltEntries : Collections.emptyList();
     }
 
-    /** Sets language alternative entries. */
+    /// Sets language alternative entries.
     public void setLangAltEntries(List<LangAltEntry> entries) { this.langAltEntries = entries; }
 
-    /** Returns structure fields (for STRUCT type). */
+    /// Returns structure fields (for STRUCT type).
     public List<XmpProperty> getStructFields() {
         return structFields != null ? structFields : Collections.emptyList();
     }
 
-    /** Sets structure fields. */
+    /// Sets structure fields.
     public void setStructFields(List<XmpProperty> fields) { this.structFields = fields; }
 
-    /** Adds an array item. */
+    /// Adds an array item.
     public void addArrayItem(String item) {
         if (arrayItems == null) arrayItems = new ArrayList<>();
         arrayItems.add(item);
     }
 
-    /** Adds a language alternative entry. */
+    /// Adds a language alternative entry.
     public void addLangAltEntry(String lang, String text) {
         if (langAltEntries == null) langAltEntries = new ArrayList<>();
         langAltEntries.add(new LangAltEntry(lang, text));
     }
 
-    /** A language-tagged value entry in a Language Alternative. */
+    /// A language-tagged value entry in a Language Alternative.
     public static class LangAltEntry {
-        /** The language tag (e.g. "x-default", "en-US"). */
+        /// The language tag (e.g. "x-default", "en-US").
         public final String lang;
-        /** The text value. */
+        /// The text value.
         public final String value;
 
         public LangAltEntry(String lang, String value) {

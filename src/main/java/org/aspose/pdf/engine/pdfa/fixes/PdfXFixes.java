@@ -2,57 +2,40 @@ package org.aspose.pdf.engine.pdfa.fixes;
 
 import org.aspose.pdf.ConvertErrorAction;
 import org.aspose.pdf.PdfFormat;
-import org.aspose.pdf.engine.pdfobjects.PdfArray;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfInteger;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectKey;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
-import org.aspose.pdf.engine.pdfobjects.PdfStream;
-import org.aspose.pdf.engine.pdfobjects.PdfString;
-import org.aspose.pdf.engine.pdfa.PdfAValidationResult;
 import org.aspose.pdf.engine.parser.PDFParser;
+import org.aspose.pdf.engine.pdfa.PdfAValidationResult;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.awt.color.ColorSpace;
 import java.awt.color.ICC_Profile;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.logging.Logger;
-import java.util.zip.DeflaterOutputStream;
 
-/**
- * PDF/X-specific fixes (ISO 15930).
- * <p>
- * These fixes are only applied when the target format is a PDF/X variant.
- * They ensure that the document carries the mandatory PDF/X version and
- * conformance markers, trap information, page geometry (TrimBox), and an
- * output intent with the correct subtype.
- * </p>
- */
+/// PDF/X-specific fixes (ISO 15930).
+///
+/// These fixes are only applied when the target format is a PDF/X variant.
+/// They ensure that the document carries the mandatory PDF/X version and
+/// conformance markers, trap information, page geometry (TrimBox), and an
+/// output intent with the correct subtype.
+///
 public final class PdfXFixes {
 
     private static final Logger LOG = Logger.getLogger(PdfXFixes.class.getName());
 
-    /**
-     * Creates a new PdfXFixes instance.
-     */
+    /// Creates a new PdfXFixes instance.
     public PdfXFixes() {
         // default
     }
 
-    /**
-     * Sets the {@code /GTS_PDFXVersion} key in the Info dictionary.
-     * <p>
-     * For example, for PDF/X-1a:2001 the value is {@code "PDF/X-1a:2001"}.
-     * </p>
-     *
-     * @param parser      the parsed PDF
-     * @param format      the target format
-     * @param errorAction the error action strategy
-     * @param result      the validation result
-     * @throws IOException if an I/O error occurs
-     */
+    /// Sets the `/GTS_PDFXVersion` key in the Info dictionary.
+    ///
+    /// For example, for PDF/X-1a:2001 the value is `"PDF/X-1a:2001"`.
+    ///
+    /// @param parser      the parsed PDF
+    /// @param format      the target format
+    /// @param errorAction the error action strategy
+    /// @param result      the validation result
+    /// @throws IOException if an I/O error occurs
     public void addPdfXVersion(PDFParser parser, PdfFormat format,
                                ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
         PdfDictionary info = getOrCreateInfo(parser);
@@ -62,16 +45,14 @@ public final class PdfXFixes {
                 "Info/GTS_PDFXVersion", null);
     }
 
-    /**
-     * Sets the {@code /GTS_PDFXConformance} key in the Info dictionary for
-     * PDF/X-1a documents.
-     *
-     * @param parser      the parsed PDF
-     * @param format      the target format
-     * @param errorAction the error action strategy
-     * @param result      the validation result
-     * @throws IOException if an I/O error occurs
-     */
+    /// Sets the `/GTS_PDFXConformance` key in the Info dictionary for
+    /// PDF/X-1a documents.
+    ///
+    /// @param parser      the parsed PDF
+    /// @param format      the target format
+    /// @param errorAction the error action strategy
+    /// @param result      the validation result
+    /// @throws IOException if an I/O error occurs
     public void addPdfXConformance(PDFParser parser, PdfFormat format,
                                    ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
         if (!format.isPdfX1a()) {
@@ -84,16 +65,14 @@ public final class PdfXFixes {
                 "Info/GTS_PDFXConformance", null);
     }
 
-    /**
-     * Sets {@code /Trapped} to {@code /False} in the Info dictionary if it is
-     * missing or has an invalid value.
-     *
-     * @param parser      the parsed PDF
-     * @param format      the target format
-     * @param errorAction the error action strategy
-     * @param result      the validation result
-     * @throws IOException if an I/O error occurs
-     */
+    /// Sets `/Trapped` to `/False` in the Info dictionary if it is
+    /// missing or has an invalid value.
+    ///
+    /// @param parser      the parsed PDF
+    /// @param format      the target format
+    /// @param errorAction the error action strategy
+    /// @param result      the validation result
+    /// @throws IOException if an I/O error occurs
     public void addTrapped(PDFParser parser, PdfFormat format,
                            ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
         PdfDictionary info = getOrCreateInfo(parser);
@@ -105,18 +84,15 @@ public final class PdfXFixes {
         }
     }
 
-    /**
-     * Copies {@code /MediaBox} to {@code /TrimBox} on pages that lack a TrimBox.
-     * <p>
-     * PDF/X requires a TrimBox on every page (ISO 15930-1, 6.3).
-     * </p>
-     *
-     * @param parser      the parsed PDF
-     * @param format      the target format
-     * @param errorAction the error action strategy
-     * @param result      the validation result
-     * @throws IOException if an I/O error occurs
-     */
+    /// Copies `/MediaBox` to `/TrimBox` on pages that lack a TrimBox.
+    ///
+    /// PDF/X requires a TrimBox on every page (ISO 15930-1, 6.3).
+    ///
+    /// @param parser      the parsed PDF
+    /// @param format      the target format
+    /// @param errorAction the error action strategy
+    /// @param result      the validation result
+    /// @throws IOException if an I/O error occurs
     public void addTrimBox(PDFParser parser, PdfFormat format,
                            ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
         PdfDictionary catalog = parser.getCatalog();
@@ -131,16 +107,14 @@ public final class PdfXFixes {
         addTrimBoxToPageTree(parser, (PdfDictionary) pagesObj, result);
     }
 
-    /**
-     * Creates an OutputIntent with {@code /S = /GTS_PDFX} if no PDF/X output
-     * intent is present yet.
-     *
-     * @param parser      the parsed PDF
-     * @param format      the target format
-     * @param errorAction the error action strategy
-     * @param result      the validation result
-     * @throws IOException if an I/O error occurs
-     */
+    /// Creates an OutputIntent with `/S = /GTS_PDFX` if no PDF/X output
+    /// intent is present yet.
+    ///
+    /// @param parser      the parsed PDF
+    /// @param format      the target format
+    /// @param errorAction the error action strategy
+    /// @param result      the validation result
+    /// @throws IOException if an I/O error occurs
     public void addOutputIntentPdfX(PDFParser parser, PdfFormat format,
                                     ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
         PdfDictionary catalog = parser.getCatalog();
@@ -210,15 +184,13 @@ public final class PdfXFixes {
                 "catalog/OutputIntents", null);
     }
 
-    /**
-     * Removes {@code /Encrypt} from the trailer for PDF/X-1a compliance.
-     *
-     * @param parser      the parsed PDF
-     * @param format      the target format
-     * @param errorAction the error action strategy
-     * @param result      the validation result
-     * @throws IOException if an I/O error occurs
-     */
+    /// Removes `/Encrypt` from the trailer for PDF/X-1a compliance.
+    ///
+    /// @param parser      the parsed PDF
+    /// @param format      the target format
+    /// @param errorAction the error action strategy
+    /// @param result      the validation result
+    /// @throws IOException if an I/O error occurs
     public void removeEncryption(PDFParser parser, PdfFormat format,
                                  ConvertErrorAction errorAction, PdfAValidationResult result) throws IOException {
         PdfDictionary trailer = parser.getTrailer();
@@ -234,9 +206,7 @@ public final class PdfXFixes {
     // Internal helpers
     // -------------------------------------------------------------------------
 
-    /**
-     * Retrieves the Info dictionary, creating one if absent.
-     */
+    /// Retrieves the Info dictionary, creating one if absent.
     private PdfDictionary getOrCreateInfo(PDFParser parser) throws IOException {
         PdfDictionary trailer = parser.getTrailer();
         PdfBase infoRef = trailer.get("Info");
@@ -256,9 +226,7 @@ public final class PdfXFixes {
         return info;
     }
 
-    /**
-     * Recursively walks the page tree, copying MediaBox to TrimBox where needed.
-     */
+    /// Recursively walks the page tree, copying MediaBox to TrimBox where needed.
     private void addTrimBoxToPageTree(PDFParser parser, PdfDictionary node,
                                       PdfAValidationResult result) throws IOException {
         String type = node.getNameAsString("Type");
@@ -291,9 +259,7 @@ public final class PdfXFixes {
         }
     }
 
-    /**
-     * Determines the PDF/X version string for the given format.
-     */
+    /// Determines the PDF/X version string for the given format.
     private static String determinePdfXVersionString(PdfFormat format) {
         switch (format) {
             case PDF_X_1A:
@@ -306,9 +272,7 @@ public final class PdfXFixes {
         }
     }
 
-    /**
-     * Finds the maximum object number currently in the parser.
-     */
+    /// Finds the maximum object number currently in the parser.
     private static int findMaxObjectNumber(PDFParser parser) {
         int maxObj = 0;
         for (PdfObjectKey k : parser.getAllObjectKeys()) {

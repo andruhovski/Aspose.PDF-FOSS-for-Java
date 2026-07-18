@@ -1,23 +1,16 @@
 package org.aspose.pdf.engine.font;
 
-import org.aspose.pdf.engine.pdfobjects.PdfArray;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfInteger;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
+import org.aspose.pdf.engine.pdfobjects.*;
 
 import java.util.logging.Logger;
 
-/**
- * Maps character codes (0-255) to glyph names and Unicode codepoints.
- * <p>
- * Provides three built-in encodings per ISO 32000-1:2008, §9.6.6 and Annex D:
- * WinAnsiEncoding, MacRomanEncoding, and StandardEncoding.
- * Supports /Differences array overlay for custom encoding modifications.
- * </p>
- *
- * @see AdobeGlyphList
- */
+/// Maps character codes (0-255) to glyph names and Unicode codepoints.
+///
+/// Provides three built-in encodings per ISO 32000-1:2008, §9.6.6 and Annex D:
+/// WinAnsiEncoding, MacRomanEncoding, and StandardEncoding.
+/// Supports /Differences array overlay for custom encoding modifications.
+///
+/// @see AdobeGlyphList
 public class FontEncoding {
 
     private static final Logger LOG = Logger.getLogger(FontEncoding.class.getName());
@@ -25,17 +18,17 @@ public class FontEncoding {
     private final String name;
     private final String[] codeToName = new String[256];
 
-    /** WinAnsiEncoding singleton (ISO 32000, Table D.1). */
+    /// WinAnsiEncoding singleton (ISO 32000, Table D.1).
     public static final FontEncoding WIN_ANSI;
-    /** MacRomanEncoding singleton (ISO 32000, Table D.1). */
+    /// MacRomanEncoding singleton (ISO 32000, Table D.1).
     public static final FontEncoding MAC_ROMAN;
-    /** StandardEncoding singleton (ISO 32000, Table D.1). */
+    /// StandardEncoding singleton (ISO 32000, Table D.1).
     public static final FontEncoding STANDARD;
-    /** MacExpertEncoding singleton. */
+    /// MacExpertEncoding singleton.
     public static final FontEncoding MAC_EXPERT;
-    /** Symbol encoding for Symbol font. */
+    /// Symbol encoding for Symbol font.
     public static final FontEncoding SYMBOL;
-    /** ZapfDingbats encoding. */
+    /// ZapfDingbats encoding.
     public static final FontEncoding ZAPF_DINGBATS;
 
     static {
@@ -47,21 +40,17 @@ public class FontEncoding {
         ZAPF_DINGBATS = buildZapfDingbats();
     }
 
-    /**
-     * Creates a new FontEncoding with the given name.
-     *
-     * @param name the encoding name
-     */
+    /// Creates a new FontEncoding with the given name.
+    ///
+    /// @param name the encoding name
     public FontEncoding(String name) {
         this.name = name != null ? name : "Custom";
     }
 
-    /**
-     * Returns a built-in encoding by name.
-     *
-     * @param name the encoding name ("WinAnsiEncoding", "MacRomanEncoding", "StandardEncoding")
-     * @return the encoding instance, or null if unknown
-     */
+    /// Returns a built-in encoding by name.
+    ///
+    /// @param name the encoding name ("WinAnsiEncoding", "MacRomanEncoding", "StandardEncoding")
+    /// @return the encoding instance, or null if unknown
     public static FontEncoding getInstance(String name) {
         if (name == null) return null;
         switch (name) {
@@ -73,15 +62,12 @@ public class FontEncoding {
         }
     }
 
-    /**
-     * Creates a FontEncoding from a PDF /Encoding dictionary.
-     * <p>
-     * Reads /BaseEncoding name and /Differences array per §9.6.6.1.
-     * </p>
-     *
-     * @param encDict the encoding dictionary
-     * @return the constructed encoding
-     */
+    /// Creates a FontEncoding from a PDF /Encoding dictionary.
+    ///
+    /// Reads /BaseEncoding name and /Differences array per §9.6.6.1.
+    ///
+    /// @param encDict the encoding dictionary
+    /// @return the constructed encoding
     public static FontEncoding fromDictionary(PdfDictionary encDict) {
         if (encDict == null) return null;
 
@@ -104,27 +90,22 @@ public class FontEncoding {
         return base;
     }
 
-    /**
-     * Returns the glyph name for the given character code.
-     *
-     * @param charCode the character code (0-255)
-     * @return the glyph name, or null if unmapped
-     */
+    /// Returns the glyph name for the given character code.
+    ///
+    /// @param charCode the character code (0-255)
+    /// @return the glyph name, or null if unmapped
     public String getGlyphName(int charCode) {
         if (charCode < 0 || charCode > 255) return null;
         return codeToName[charCode];
     }
 
-    /**
-     * Returns the Unicode codepoint for the given character code.
-     * <p>
-     * Looks up the glyph name, then maps to Unicode via {@link AdobeGlyphList}.
-     * Falls back to identity mapping if the glyph name is not found.
-     * </p>
-     *
-     * @param charCode the character code (0-255)
-     * @return the Unicode codepoint
-     */
+    /// Returns the Unicode codepoint for the given character code.
+    ///
+    /// Looks up the glyph name, then maps to Unicode via [AdobeGlyphList].
+    /// Falls back to identity mapping if the glyph name is not found.
+    ///
+    /// @param charCode the character code (0-255)
+    /// @return the Unicode codepoint
     public int getUnicode(int charCode) {
         if (charCode < 0 || charCode > 255) return charCode;
         String glyphName = codeToName[charCode];
@@ -135,17 +116,14 @@ public class FontEncoding {
         return unicode >= 0 ? unicode : charCode;
     }
 
-    /**
-     * Creates a new encoding by cloning this one and applying a /Differences array.
-     * <p>
-     * The /Differences array format is: [code1 name1 name2 ... codeN nameN ...],
-     * where integer entries set the current code, and name entries assign glyph
-     * names to consecutive codes (ISO 32000, §9.6.6.1).
-     * </p>
-     *
-     * @param differences the /Differences PdfArray
-     * @return a new encoding with differences applied
-     */
+    /// Creates a new encoding by cloning this one and applying a /Differences array.
+    ///
+    /// The /Differences array format is: [code1 name1 name2 ... codeN nameN ...],
+    /// where integer entries set the current code, and name entries assign glyph
+    /// names to consecutive codes (ISO 32000, §9.6.6.1).
+    ///
+    /// @param differences the /Differences PdfArray
+    /// @return a new encoding with differences applied
     public FontEncoding withDifferences(PdfArray differences) {
         FontEncoding result = new FontEncoding(this.name + "+Diff");
         System.arraycopy(this.codeToName, 0, result.codeToName, 0, 256);
@@ -164,11 +142,9 @@ public class FontEncoding {
         return result;
     }
 
-    /**
-     * Returns the encoding name.
-     *
-     * @return the encoding name
-     */
+    /// Returns the encoding name.
+    ///
+    /// @return the encoding name
     public String getName() {
         return name;
     }
@@ -633,9 +609,7 @@ public class FontEncoding {
         return enc;
     }
 
-    /**
-     * Sets the standard ASCII glyph names for codes 0x20-0x7E.
-     */
+    /// Sets the standard ASCII glyph names for codes 0x20-0x7E.
     private static void setAsciiRange(FontEncoding enc) {
         enc.codeToName[0x20] = "space";
         enc.codeToName[0x21] = "exclam";

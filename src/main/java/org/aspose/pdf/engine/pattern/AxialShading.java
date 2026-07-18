@@ -1,17 +1,15 @@
 package org.aspose.pdf.engine.pattern;
 
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
 import org.aspose.pdf.engine.function.PdfFunction;
 import org.aspose.pdf.engine.parser.PDFParser;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
 
 import java.io.IOException;
 
-/**
- * Axial shading / linear gradient — ShadingType 2 (ISO 32000-1:2008, §8.7.4.5.2).
- * Defines a color gradient along an axis from (x0, y0) to (x1, y1).
- *
- * <p>A function maps parameter t ∈ [t0, t1] to color component values.</p>
- */
+/// Axial shading / linear gradient — ShadingType 2 (ISO 32000-1:2008, §8.7.4.5.2).
+/// Defines a color gradient along an axis from (x0, y0) to (x1, y1).
+///
+/// A function maps parameter t ∈ [t0, t1] to color component values.
 public final class AxialShading extends Shading {
 
     private final double x0, y0, x1, y1;
@@ -19,13 +17,11 @@ public final class AxialShading extends Shading {
     private final PdfFunction function;
     private final boolean extendStart, extendEnd;
 
-    /**
-     * Creates an AxialShading from its dictionary.
-     *
-     * @param dict   the shading dictionary
-     * @param parser the PDF parser
-     * @throws IOException if the function cannot be parsed
-     */
+    /// Creates an AxialShading from its dictionary.
+    ///
+    /// @param dict   the shading dictionary
+    /// @param parser the PDF parser
+    /// @throws IOException if the function cannot be parsed
     public AxialShading(PdfDictionary dict, PDFParser parser) throws IOException {
         super(dict, parser);
         double[] coords = getNumberArray(dict, "Coords");
@@ -79,20 +75,20 @@ public final class AxialShading extends Shading {
         return function.evaluate(new double[]{t});
     }
 
-    /** Returns the start point X coordinate. */
+    /// Returns the start point X coordinate.
     public double getX0() { return x0; }
-    /** Returns the start point Y coordinate. */
+    /// Returns the start point Y coordinate.
     public double getY0() { return y0; }
-    /** Returns the end point X coordinate. */
+    /// Returns the end point X coordinate.
     public double getX1() { return x1; }
-    /** Returns the end point Y coordinate. */
+    /// Returns the end point Y coordinate.
     public double getY1() { return y1; }
-    /** Returns the start of the parametric domain. */
+    /// Returns the start of the parametric domain.
     public double getT0() { return t0; }
-    /** Returns the end of the parametric domain. */
+    /// Returns the end of the parametric domain.
     public double getT1() { return t1; }
-    /** Returns whether the gradient extends before the start point. */
+    /// Returns whether the gradient extends before the start point.
     public boolean isExtendStart() { return extendStart; }
-    /** Returns whether the gradient extends past the end point. */
+    /// Returns whether the gradient extends past the end point.
     public boolean isExtendEnd() { return extendEnd; }
 }

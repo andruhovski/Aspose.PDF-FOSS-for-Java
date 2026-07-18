@@ -16,31 +16,26 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Absorbs text fragments matching a search phrase or regex from PDF pages.
- * <p>
- * Extends {@link TextAbsorber} with text search capabilities. Provides
- * results as a {@link TextFragmentCollection}.
- * </p>
- * <p>
- * Usage pattern (matching Aspose.PDF API):
- * <pre>
- *   TextFragmentAbsorber absorber = new TextFragmentAbsorber("search text");
- *   page.accept(absorber);
- *   TextFragmentCollection results = absorber.getTextFragments();
- * </pre>
- * </p>
- */
+/// Absorbs text fragments matching a search phrase or regex from PDF pages.
+///
+/// Extends [TextAbsorber] with text search capabilities. Provides
+/// results as a [TextFragmentCollection].
+///
+/// Usage pattern (matching Aspose.PDF API):
+///
+/// <pre>
+///   TextFragmentAbsorber absorber = new TextFragmentAbsorber("search text");
+///   page.accept(absorber);
+///   TextFragmentCollection results = absorber.getTextFragments();
+/// </pre>
 public class TextFragmentAbsorber extends TextAbsorber {
 
     private static final Logger LOG = Logger.getLogger(TextFragmentAbsorber.class.getName());
 
     private String searchPhrase;
-    /**
-     * /Rotate of the page currently being searched (0 when not searching or
-     * when combining multiple pages). buildSpans uses it to pick the reading
-     * axis on sideways pages — see visit(Page).
-     */
+    /// /Rotate of the page currently being searched (0 when not searching or
+    /// when combining multiple pages). buildSpans uses it to pick the reading
+    /// axis on sideways pages — see visit(Page).
     private int spanPageRotation;
     private final TextFragmentCollection textFragments = new TextFragmentCollection();
     private TextSearchOptions textSearchOptions;
@@ -52,39 +47,31 @@ public class TextFragmentAbsorber extends TextAbsorber {
     // `absorber.getTextEditOptions().setFontReplaceBehavior(...)` without a null check.
     private TextEditOptions textEditOptions = new TextEditOptions();
 
-    /**
-     * Creates a TextFragmentAbsorber that collects all text fragments (no filter).
-     */
+    /// Creates a TextFragmentAbsorber that collects all text fragments (no filter).
     public TextFragmentAbsorber() {
         this.searchPhrase = null;
     }
 
-    /**
-     * Creates a TextFragmentAbsorber that searches for the given phrase.
-     *
-     * @param phrase the search phrase (exact match or regex, depending on options)
-     */
+    /// Creates a TextFragmentAbsorber that searches for the given phrase.
+    ///
+    /// @param phrase the search phrase (exact match or regex, depending on options)
     public TextFragmentAbsorber(String phrase) {
         this.searchPhrase = phrase;
     }
 
-    /**
-     * Creates a TextFragmentAbsorber with search phrase and options.
-     *
-     * @param phrase  the search phrase
-     * @param options the search options (regex mode, area filter, etc.)
-     */
+    /// Creates a TextFragmentAbsorber with search phrase and options.
+    ///
+    /// @param phrase  the search phrase
+    /// @param options the search options (regex mode, area filter, etc.)
     public TextFragmentAbsorber(String phrase, TextSearchOptions options) {
         this.searchPhrase = phrase;
         this.textSearchOptions = options;
     }
 
-    /**
-     * Creates a TextFragmentAbsorber that collects all text fragments using the
-     * given edit options (e.g. {@link TextEditOptions.FontReplace#RemoveUnusedFonts}).
-     *
-     * @param editOptions the text edit options
-     */
+    /// Creates a TextFragmentAbsorber that collects all text fragments using the
+    /// given edit options (e.g. [TextEditOptions.FontReplace#RemoveUnusedFonts]).
+    ///
+    /// @param editOptions the text edit options
     public TextFragmentAbsorber(TextEditOptions editOptions) {
         this.searchPhrase = null;
         if (editOptions != null) {
@@ -92,23 +79,19 @@ public class TextFragmentAbsorber extends TextAbsorber {
         }
     }
 
-    /**
-     * Sets the search phrase for this absorber.
-     * Clears previous results.
-     *
-     * @param phrase the new search phrase
-     */
+    /// Sets the search phrase for this absorber.
+    /// Clears previous results.
+    ///
+    /// @param phrase the new search phrase
     public void setPhrase(String phrase) {
         this.searchPhrase = phrase;
         this.textFragments.clear();
     }
 
-    /**
-     * Visits a page and collects matching text fragments.
-     *
-     * @param page the PDF page to process
-     * @throws IOException if text extraction fails
-     */
+    /// Visits a page and collects matching text fragments.
+    ///
+    /// @param page the PDF page to process
+    /// @throws IOException if text extraction fails
     @Override
     public void visit(Page page) throws IOException {
         super.visit(page);
@@ -162,12 +145,10 @@ public class TextFragmentAbsorber extends TextAbsorber {
         LOG.fine(() -> "TextFragmentAbsorber visited page, matched: " + textFragments.size());
     }
 
-    /**
-     * Visits all pages of a document and collects matching text fragments.
-     *
-     * @param document the PDF document to process
-     * @throws IOException if text extraction fails
-     */
+    /// Visits all pages of a document and collects matching text fragments.
+    ///
+    /// @param document the PDF document to process
+    /// @throws IOException if text extraction fails
     public void visit(Document document) throws IOException {
         if (document == null) {
             throw new IllegalArgumentException("document must not be null");
@@ -181,13 +162,11 @@ public class TextFragmentAbsorber extends TextAbsorber {
         }
     }
 
-    /**
-     * Removes all text visible to this absorber from the document by clearing
-     * the source text-showing operators behind every extracted fragment.
-     *
-     * @param document the document to modify
-     * @throws IOException if text extraction fails
-     */
+    /// Removes all text visible to this absorber from the document by clearing
+    /// the source text-showing operators behind every extracted fragment.
+    ///
+    /// @param document the document to modify
+    /// @throws IOException if text extraction fails
     public void removeAllText(Document document) throws IOException {
         if (document == null) {
             throw new IllegalArgumentException("document must not be null");
@@ -200,15 +179,13 @@ public class TextFragmentAbsorber extends TextAbsorber {
         }
     }
 
-    /**
-     * Removes all text on a single page that matches this absorber's
-     * {@link TextSearchOptions} (rectangle filter, etc) by clearing the
-     * underlying text-showing operators. Mirrors Aspose's
-     * {@code RemoveAllText(Page)} overload used by PDFNET-45497.
-     *
-     * @param page the page to modify
-     * @throws IOException if text extraction fails
-     */
+    /// Removes all text on a single page that matches this absorber's
+    /// [TextSearchOptions] (rectangle filter, etc) by clearing the
+    /// underlying text-showing operators. Mirrors Aspose's
+    /// `RemoveAllText(Page)` overload used by PDFNET-45497.
+    ///
+    /// @param page the page to modify
+    /// @throws IOException if text extraction fails
     public void removeAllText(org.aspose.pdf.Page page) throws IOException {
         if (page == null) {
             throw new IllegalArgumentException("page must not be null");
@@ -221,35 +198,31 @@ public class TextFragmentAbsorber extends TextAbsorber {
         }
     }
 
-    /**
-     * Returns the collection of matched text fragments.
-     *
-     * @return the text fragment collection
-     */
+    /// Returns the collection of matched text fragments.
+    ///
+    /// @return the text fragment collection
     public TextFragmentCollection getTextFragments() {
         return textFragments;
     }
 
-    /**
-     * Returns the extracted text of the fragments this absorber matched.
-     *
-     * <p>For the empty/null-phrase "extract everything (optionally within a
-     * {@link TextSearchOptions} rectangle)" mode this returns the matched
-     * fragments — sorted into visual reading order and joined compactly (a single
-     * space across an intra-line gap, a newline across a line break) — which
-     * mirrors Aspose's {@code TextFragmentAbsorber.getText()} and honours the
-     * rectangle filter. The inherited {@link TextAbsorber#getText()} instead
-     * reconstructs a whole-page positional layout (proportional padding spaces,
-     * ignoring the rectangle), which is correct for a plain {@link TextAbsorber}/
-     * Pure extraction but not for a fragment absorber.</p>
-     *
-     * <p>When a real search phrase is set, behaviour is unchanged: it defers to
-     * the inherited positional output so existing phrase-search callers are
-     * unaffected.</p>
-     *
-     * @return the joined text of the matched fragments (empty-phrase mode), or
-     *         the inherited positional text otherwise
-     */
+    /// Returns the extracted text of the fragments this absorber matched.
+    ///
+    /// For the empty/null-phrase "extract everything (optionally within a
+    /// [TextSearchOptions] rectangle)" mode this returns the matched
+    /// fragments — sorted into visual reading order and joined compactly (a single
+    /// space across an intra-line gap, a newline across a line break) — which
+    /// mirrors Aspose's `TextFragmentAbsorber.getText()` and honours the
+    /// rectangle filter. The inherited [TextAbsorber#getText()] instead
+    /// reconstructs a whole-page positional layout (proportional padding spaces,
+    /// ignoring the rectangle), which is correct for a plain [TextAbsorber]/
+    /// Pure extraction but not for a fragment absorber.
+    ///
+    /// When a real search phrase is set, behaviour is unchanged: it defers to
+    /// the inherited positional output so existing phrase-search callers are
+    /// unaffected.
+    ///
+    /// @return the joined text of the matched fragments (empty-phrase mode), or
+    ///         the inherited positional text otherwise
     @Override
     public String getText() {
         boolean extractAll = searchPhrase == null || searchPhrase.isEmpty();
@@ -269,20 +242,16 @@ public class TextFragmentAbsorber extends TextAbsorber {
         return out.toString();
     }
 
-    /**
-     * Returns the search phrase.
-     *
-     * @return the search phrase, or null
-     */
+    /// Returns the search phrase.
+    ///
+    /// @return the search phrase, or null
     public String getPhrase() {
         return searchPhrase;
     }
 
-    /**
-     * Returns the text search options.
-     *
-     * @return the options, never {@code null}
-     */
+    /// Returns the text search options.
+    ///
+    /// @return the options, never `null`
     public TextSearchOptions getTextSearchOptions() {
         if (textSearchOptions == null) {
             textSearchOptions = new TextSearchOptions(false);
@@ -290,40 +259,32 @@ public class TextFragmentAbsorber extends TextAbsorber {
         return textSearchOptions;
     }
 
-    /**
-     * Sets the text search options.
-     *
-     * @param options the search options
-     */
+    /// Sets the text search options.
+    ///
+    /// @param options the search options
     public void setTextSearchOptions(TextSearchOptions options) {
         this.textSearchOptions = options;
     }
 
-    /**
-     * Returns the text replace options. Non-null by default
-     * (a {@link TextReplaceOptions} with scope {@link TextReplaceOptions.Scope#REPLACE_ALL}).
-     * Returns whatever was last passed to {@link #setTextReplaceOptions}, including {@code null}.
-     *
-     * @return the replace options
-     */
+    /// Returns the text replace options. Non-null by default
+    /// (a [TextReplaceOptions] with scope [TextReplaceOptions.Scope#REPLACE\_ALL]).
+    /// Returns whatever was last passed to [#setTextReplaceOptions], including `null`.
+    ///
+    /// @return the replace options
     public TextReplaceOptions getTextReplaceOptions() {
         return textReplaceOptions;
     }
 
-    /**
-     * Sets the text replace options. Accepts {@code null} to clear.
-     *
-     * @param options the replace options
-     */
+    /// Sets the text replace options. Accepts `null` to clear.
+    ///
+    /// @param options the replace options
     public void setTextReplaceOptions(TextReplaceOptions options) {
         this.textReplaceOptions = options;
     }
 
-    /**
-     * Returns the text edit options. Non-null by default.
-     *
-     * @return the edit options, never {@code null}
-     */
+    /// Returns the text edit options. Non-null by default.
+    ///
+    /// @return the edit options, never `null`
     public TextEditOptions getTextEditOptions() {
         if (textEditOptions == null) {
             textEditOptions = new TextEditOptions();
@@ -331,23 +292,20 @@ public class TextFragmentAbsorber extends TextAbsorber {
         return textEditOptions;
     }
 
-    /**
-     * Sets the text edit options.
-     *
-     * @param options the edit options
-     */
+    /// Sets the text edit options.
+    ///
+    /// @param options the edit options
     public void setTextEditOptions(TextEditOptions options) {
         this.textEditOptions = options;
     }
 
-    /**
-     * Applies the given font to all collected text fragments in a single pass.
-     * <p>Equivalent to iterating {@link #getTextFragments()} and setting
-     * {@code fragment.getTextState().setFont(font)} on each, but performed as one
-     * "mass operation" — matching {@code Aspose.Pdf.TextFragmentAbsorber.ApplyForAllFragments}.</p>
-     *
-     * @param font the font to apply to every fragment
-     */
+    /// Applies the given font to all collected text fragments in a single pass.
+    ///
+    /// Equivalent to iterating [#getTextFragments()] and setting
+    /// `fragment.getTextState().setFont(font)` on each, but performed as one
+    /// "mass operation" — matching `Aspose.Pdf.TextFragmentAbsorber.ApplyForAllFragments`.
+    ///
+    /// @param font the font to apply to every fragment
     public void applyForAllFragments(Font font) {
         for (TextFragment fragment : textFragments) {
             if (fragment.getTextState() != null) {
@@ -402,16 +360,14 @@ public class TextFragmentAbsorber extends TextAbsorber {
         }
     }
 
-    /**
-     * Maps a logical-order RTL phrase to the visual word order used by the
-     * search haystack: the space-separated tokens are emitted in reverse.
-     * Digit/Latin tokens (weak/LTR islands like {@code "777"}) keep their
-     * internal order — only their position in the line flips, matching the
-     * Unicode bidi display of an RTL paragraph.
-     *
-     * @return the visual-order needle, or {@code null} when the phrase has
-     *         no strong RTL character or reversing does not change it
-     */
+    /// Maps a logical-order RTL phrase to the visual word order used by the
+    /// search haystack: the space-separated tokens are emitted in reverse.
+    /// Digit/Latin tokens (weak/LTR islands like `"777"`) keep their
+    /// internal order — only their position in the line flips, matching the
+    /// Unicode bidi display of an RTL paragraph.
+    ///
+    /// @return the visual-order needle, or `null` when the phrase has
+    ///         no strong RTL character or reversing does not change it
     private static String rtlVisualNeedle(String needle) {
         boolean hasRtl = false;
         for (int i = 0; i < needle.length() && !hasRtl; i++) {
@@ -453,14 +409,12 @@ public class TextFragmentAbsorber extends TextAbsorber {
         }
     }
 
-    /**
-     * A regex such as {@code [a-zA-Z0-9 ]+} that permits spaces can match a
-     * lone synthetic separator space that {@link #buildSpans} inserts between
-     * two non-adjacent runs (e.g. between punctuation-only watermarks drawn at
-     * very different x positions). Such whitespace-only matches carry no
-     * searchable content and are not surfaced by Aspose, so they are skipped
-     * (PDFNET_47103). A genuinely empty pattern match is also skipped.
-     */
+    /// A regex such as `[a-zA-Z0-9 ]+` that permits spaces can match a
+    /// lone synthetic separator space that [#buildSpans] inserts between
+    /// two non-adjacent runs (e.g. between punctuation-only watermarks drawn at
+    /// very different x positions). Such whitespace-only matches carry no
+    /// searchable content and are not surfaced by Aspose, so they are skipped
+    /// (PDFNET\_47103). A genuinely empty pattern match is also skipped.
     private static boolean isWhitespaceOnlyMatch(String matchedText) {
         return matchedText == null || matchedText.trim().isEmpty();
     }
@@ -893,14 +847,12 @@ public class TextFragmentAbsorber extends TextAbsorber {
         return match;
     }
 
-    /**
-     * Propagates source-underline operator linkage from an extracted source
-     * fragment to a match fragment so that turning the match's underline off
-     * removes the underline operators on save. For multi-span matches this is
-     * called for every participating source, so {@code match.getTextState()
-     * .setUnderline(false)} strips the underline drawn under <em>all</em> of
-     * them, not just the first segment (PDFNET_36417 / PDFNEWNET_39490).
-     */
+    /// Propagates source-underline operator linkage from an extracted source
+    /// fragment to a match fragment so that turning the match's underline off
+    /// removes the underline operators on save. For multi-span matches this is
+    /// called for every participating source, so `match.getTextState()
+    /// .setUnderline(false)` strips the underline drawn under _all_ of
+    /// them, not just the first segment (PDFNET\_36417 / PDFNEWNET\_39490).
     private static void copyUnderlineLinkage(TextFragment source, TextFragment match) {
         if (source == null || match == null) {
             return;

@@ -11,16 +11,14 @@ import java.nio.charset.StandardCharsets;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * Regression tests for the permissive cross-reference / header recovery added
- * in Sprint 62: a malformed xref table must fall through to a full object-scan
- * rebuild, and a file whose {@code %PDF-} header is missing must still open when
- * it otherwise contains PDF structure. Both cases mirror Acrobat / pdf.js
- * tolerance.
- */
+/// Regression tests for the permissive cross-reference / header recovery added
+/// in Sprint 62: a malformed xref table must fall through to a full object-scan
+/// rebuild, and a file whose `%PDF-` header is missing must still open when
+/// it otherwise contains PDF structure. Both cases mirror Acrobat / pdf.js
+/// tolerance.
 public class XRefRecoveryTest {
 
-    /** Builds a valid {@code pages}-page PDF using the library writer (classic xref table). */
+    /// Builds a valid `pages`-page PDF using the library writer (classic xref table).
     private static byte[] makePdf(int pages) throws IOException {
         try (Document doc = new Document()) {
             for (int i = 0; i < pages; i++) {

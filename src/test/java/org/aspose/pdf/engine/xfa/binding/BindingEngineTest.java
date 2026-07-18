@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** A4.2/A4.3/A4.4: occur expansion, empty merge, the four match modes, Form DOM API. */
+/// A4.2/A4.3/A4.4: occur expansion, empty merge, the four match modes, Form DOM API.
 public class BindingEngineTest {
 
     private static final String TPL = XfaNode.TEMPLATE_NS;
@@ -175,7 +175,7 @@ public class BindingEngineTest {
         return (Template) XfaNodeFactory.load(parse(xml));
     }
 
-    /** Parses a full {@code <xfa:data>...</xfa:data>} string into its typed data root. */
+    /// Parses a full `<xfa:data>...</xfa:data>` string into its typed data root.
     private static XfaNode data(String xml) throws Exception {
         return XfaNodeFactory.load(parse(xml));
     }

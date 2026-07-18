@@ -25,19 +25,17 @@ import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Bug O — {@link Document#save(String)} must be idempotent: calling it
- * twice on the same {@code Document} must produce two files of equivalent
- * structure. The previous implementation mutated the page dict on the first
- * save (replacing {@code /Contents} and {@code /Resources/Font/*} entries
- * with {@code PdfObjectReference} values), so the second save's {@code
- * instanceof PdfStream} / {@code instanceof PdfDictionary} guards silently
- * skipped the re-promotion and emitted dangling references.
- *
- * <p>Especially severe in the {@code save → encrypt → save} demo flow:
- * encrypted output lost ~80% of its objects and rendered blank in Adobe
- * Reader / Ghostscript / mupdf.</p>
- */
+/// Bug O — [Document#save(String)] must be idempotent: calling it
+/// twice on the same `Document` must produce two files of equivalent
+/// structure. The previous implementation mutated the page dict on the first
+/// save (replacing `/Contents` and `/Resources/Font/*` entries
+/// with `PdfObjectReference` values), so the second save's
+/// `instanceof PdfStream` / `instanceof PdfDictionary` guards silently
+/// skipped the re-promotion and emitted dangling references.
+///
+/// Especially severe in the `save → encrypt → save` demo flow:
+/// encrypted output lost \~80% of its objects and rendered blank in Adobe
+/// Reader / Ghostscript / mupdf.
 class DocumentSaveIdempotenceTest {
 
     @TempDir Path tempDir;

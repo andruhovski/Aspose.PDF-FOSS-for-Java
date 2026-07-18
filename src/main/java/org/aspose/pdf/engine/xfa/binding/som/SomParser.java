@@ -4,27 +4,23 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Parses a SOM expression string into a {@link SomExpr}. Hand-written
- * char-scanner (no dependency on the JS engine). Recognises accessor roots,
- * dotted names, {@code [n]}/{@code [*]}/{@code [predicate]}, {@code #class},
- * {@code .#property} and {@code ..} parent steps.
- *
- * <p>A {@code #word} is a class step when {@code word} is a known element class
- * (supplied set) and a property step otherwise. Predicates are parsed as a
- * simple {@code path OP literal} comparison or a bare truthiness path; anything
- * that looks like script (function calls, etc.) is flagged
- * {@link SomExpr.Predicate#script} and left un-evaluated.</p>
- */
+/// Parses a SOM expression string into a [SomExpr]. Hand-written
+/// char-scanner (no dependency on the JS engine). Recognises accessor roots,
+/// dotted names, `[n]`/`[*]`/`[predicate]`, `#class`,
+/// `.#property` and `..` parent steps.
+///
+/// A `#word` is a class step when `word` is a known element class
+/// (supplied set) and a property step otherwise. Predicates are parsed as a
+/// simple `path OP literal` comparison or a bare truthiness path; anything
+/// that looks like script (function calls, etc.) is flagged
+/// [SomExpr.Predicate#script] and left un-evaluated.
 public final class SomParser {
 
     private final Set<String> classNames;
 
-    /**
-     * Creates a parser.
-     *
-     * @param classNames the set of element class names (for {@code #class} vs {@code .#property})
-     */
+    /// Creates a parser.
+    ///
+    /// @param classNames the set of element class names (for `#class` vs `.#property`)
     public SomParser(Set<String> classNames) {
         this.classNames = classNames;
     }
@@ -32,12 +28,10 @@ public final class SomParser {
     private String s;
     private int pos;
 
-    /**
-     * Parses an expression.
-     *
-     * @param expr the SOM text
-     * @return the parsed expression (never {@code null}; empty steps for blank input)
-     */
+    /// Parses an expression.
+    ///
+    /// @param expr the SOM text
+    /// @return the parsed expression (never `null`; empty steps for blank input)
     public synchronized SomExpr parse(String expr) {
         this.s = expr == null ? "" : expr.trim();
         this.pos = 0;

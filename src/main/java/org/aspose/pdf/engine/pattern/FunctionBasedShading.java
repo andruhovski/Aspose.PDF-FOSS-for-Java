@@ -1,30 +1,23 @@
 package org.aspose.pdf.engine.pattern;
 
-import org.aspose.pdf.Matrix;
-import org.aspose.pdf.engine.pdfobjects.PdfArray;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
 import org.aspose.pdf.engine.function.PdfFunction;
 import org.aspose.pdf.engine.parser.PDFParser;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
 
 import java.io.IOException;
 
-/**
- * Function-based shading — ShadingType 1 (ISO 32000-1:2008, §8.7.4.5.1).
- * A 2-input function maps (x, y) coordinates directly to color values.
- */
+/// Function-based shading — ShadingType 1 (ISO 32000-1:2008, §8.7.4.5.1).
+/// A 2-input function maps (x, y) coordinates directly to color values.
 public final class FunctionBasedShading extends Shading {
 
     private final double[] domain; // [xmin xmax ymin ymax]
     private final PdfFunction function;
 
-    /**
-     * Creates a FunctionBasedShading from its dictionary.
-     *
-     * @param dict   the shading dictionary
-     * @param parser the PDF parser
-     * @throws IOException if the function cannot be parsed
-     */
+    /// Creates a FunctionBasedShading from its dictionary.
+    ///
+    /// @param dict   the shading dictionary
+    /// @param parser the PDF parser
+    /// @throws IOException if the function cannot be parsed
     public FunctionBasedShading(PdfDictionary dict, PDFParser parser) throws IOException {
         super(dict, parser);
         double[] d = getNumberArray(dict, "Domain");
@@ -43,6 +36,6 @@ public final class FunctionBasedShading extends Shading {
         return function.evaluate(new double[]{dx, dy});
     }
 
-    /** Returns the function domain [xmin, xmax, ymin, ymax]. */
+    /// Returns the function domain [xmin, xmax, ymin, ymax].
     public double[] getDomain() { return domain.clone(); }
 }

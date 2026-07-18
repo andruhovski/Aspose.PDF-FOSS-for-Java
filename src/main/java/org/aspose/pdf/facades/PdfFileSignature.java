@@ -4,16 +4,19 @@ import org.aspose.pdf.Document;
 import org.aspose.pdf.Page;
 import org.aspose.pdf.Rectangle;
 import org.aspose.pdf.engine.pdfobjects.*;
+import org.aspose.pdf.engine.security.pkcs7.PKCS7SignedData;
+import org.aspose.pdf.engine.security.signature.PdfSigner;
 import org.aspose.pdf.forms.Field;
 import org.aspose.pdf.forms.Form;
 import org.aspose.pdf.forms.Signature;
 import org.aspose.pdf.forms.SignatureField;
-import org.aspose.pdf.engine.security.pkcs7.PKCS7SignedData;
-import org.aspose.pdf.engine.security.signature.PdfSigner;
 import org.aspose.pdf.security.ValidationOptions;
 import org.aspose.pdf.security.ValidationResult;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -22,55 +25,45 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Facade for working with PDF digital signatures.
- * <p>
- * Provides methods to enumerate signature fields, verify signatures,
- * and extract signature metadata from a PDF document.
- * </p>
- */
+/// Facade for working with PDF digital signatures.
+///
+/// Provides methods to enumerate signature fields, verify signatures,
+/// and extract signature metadata from a PDF document.
+///
 public class PdfFileSignature implements AutoCloseable {
 
     private static final Logger LOG = Logger.getLogger(PdfFileSignature.class.getName());
 
     private Document document;
     private boolean ownsDocument;
-    /** Signed PDF bytes produced by PdfSigner; emitted by save() instead of document.save(). */
+    /// Signed PDF bytes produced by PdfSigner; emitted by save() instead of document.save().
     private byte[] signedOutput;
 
-    /**
-     * Creates a new empty {@code PdfFileSignature} instance.
-     * Call {@link #bindPdf(Document)}, {@link #bindPdf(String)}, or
-     * {@link #bindPdf(InputStream)} before using other methods.
-     */
+    /// Creates a new empty `PdfFileSignature` instance.
+    /// Call [#bindPdf(Document)], [#bindPdf(String)], or
+    /// [#bindPdf(InputStream)] before using other methods.
     public PdfFileSignature() {
     }
 
-    /**
-     * Creates a {@code PdfFileSignature} bound to the specified document.
-     *
-     * @param document the PDF document
-     */
+    /// Creates a `PdfFileSignature` bound to the specified document.
+    ///
+    /// @param document the PDF document
     public PdfFileSignature(Document document) {
         this.document = document;
         this.ownsDocument = false;
     }
 
-    /**
-     * Creates a {@code PdfFileSignature} bound to the PDF at {@code inputFile}.
-     * The facade owns the underlying {@link Document} and will close it on {@link #close()}.
-     *
-     * @param inputFile path to the PDF file
-     */
+    /// Creates a `PdfFileSignature` bound to the PDF at `inputFile`.
+    /// The facade owns the underlying [Document] and will close it on [#close()].
+    ///
+    /// @param inputFile path to the PDF file
     public PdfFileSignature(String inputFile) {
         bindPdf(inputFile);
     }
 
-    /**
-     * Binds a PDF file to this signature facade.
-     *
-     * @param inputFile path to the PDF file
-     */
+    /// Binds a PDF file to this signature facade.
+    ///
+    /// @param inputFile path to the PDF file
     public void bindPdf(String inputFile) {
         try {
             this.document = new Document(inputFile);
@@ -80,11 +73,9 @@ public class PdfFileSignature implements AutoCloseable {
         }
     }
 
-    /**
-     * Binds a PDF from an input stream.
-     *
-     * @param inputStream the input stream containing PDF data
-     */
+    /// Binds a PDF from an input stream.
+    ///
+    /// @param inputStream the input stream containing PDF data
     public void bindPdf(InputStream inputStream) {
         try {
             this.document = new Document(inputStream);
@@ -94,11 +85,9 @@ public class PdfFileSignature implements AutoCloseable {
         }
     }
 
-    /**
-     * Binds an existing {@link Document} to this signature facade.
-     *
-     * @param document the document to bind
-     */
+    /// Binds an existing [Document] to this signature facade.
+    ///
+    /// @param document the document to bind
     public void bindPdf(Document document) {
         if (document == null) {
             LOG.warning("Cannot bind null document");
@@ -108,22 +97,19 @@ public class PdfFileSignature implements AutoCloseable {
         this.ownsDocument = false;
     }
 
-    /**
-     * Returns the names of the <em>signed</em> signature fields in the document.
-     * <p>
-     * Mirrors the C# {@code PdfFileSignature.GetSignNames()} semantic: a
-     * signature field is reported only when it actually carries a signature
-     * value (its {@code /V} entry is present — ISO 32000-1:2008 §12.8). A
-     * blank/unsigned signature field — including one left behind after
-     * {@link #removeSignature(String, boolean)} clears {@code /V} without
-     * deleting the field — is intentionally excluded; use
-     * {@link #getBlankSignNames()} for those. This uses the same
-     * {@link SignatureField#isSigned()} gate already applied by
-     * {@link #containsSignature()} and {@link #getTotalRevision()}.
-     * </p>
-     *
-     * @return list of signed signature field names
-     */
+    /// Returns the names of the _signed_ signature fields in the document.
+    ///
+    /// Mirrors the C# `PdfFileSignature.GetSignNames()` semantic: a
+    /// signature field is reported only when it actually carries a signature
+    /// value (its `/V` entry is present — ISO 32000-1:2008 §12.8). A
+    /// blank/unsigned signature field — including one left behind after
+    /// [#removeSignature(String, boolean)] clears `/V` without
+    /// deleting the field — is intentionally excluded; use
+    /// [#getBlankSignNames()] for those. This uses the same
+    /// [SignatureField#isSigned()] gate already applied by
+    /// [#containsSignature()] and [#getTotalRevision()].
+    ///
+    /// @return list of signed signature field names
     public List<String> getSignNames() {
         List<String> result = new ArrayList<>();
         if (document == null) return result;
@@ -141,14 +127,12 @@ public class PdfFileSignature implements AutoCloseable {
         return result;
     }
 
-    /**
-     * Returns the names of all signature fields in the document as
-     * {@link SignatureName} objects with metadata about whether each field is signed.
-     *
-     * @param onlyActive if {@code true}, return only signed fields;
-     *                   if {@code false}, return all signature fields
-     * @return list of signature name descriptors
-     */
+    /// Returns the names of all signature fields in the document as
+    /// [SignatureName] objects with metadata about whether each field is signed.
+    ///
+    /// @param onlyActive if `true`, return only signed fields;
+    ///                   if `false`, return all signature fields
+    /// @return list of signature name descriptors
     public List<SignatureName> getSignatureNames(boolean onlyActive) {
         List<SignatureName> result = new ArrayList<>();
         if (document == null) return result;
@@ -170,20 +154,16 @@ public class PdfFileSignature implements AutoCloseable {
         return result;
     }
 
-    /**
-     * Returns the names of all signature fields (both signed and unsigned).
-     *
-     * @return list of signature name descriptors
-     */
+    /// Returns the names of all signature fields (both signed and unsigned).
+    ///
+    /// @return list of signature name descriptors
     public List<SignatureName> getSignatureNames() {
         return getSignatureNames(false);
     }
 
-    /**
-     * Returns the names of unsigned (blank) signature fields.
-     *
-     * @return list of blank signature field names
-     */
+    /// Returns the names of unsigned (blank) signature fields.
+    ///
+    /// @return list of blank signature field names
     public List<String> getBlankSignNames() {
         List<String> result = new ArrayList<>();
         if (document == null) return result;
@@ -204,23 +184,19 @@ public class PdfFileSignature implements AutoCloseable {
         return result;
     }
 
-    /**
-     * Verifies the digital signature of the specified signature field.
-     *
-     * @param signatureName the name or {@link SignatureName} of the signature field
-     * @return {@code true} if the signature is valid
-     */
+    /// Verifies the digital signature of the specified signature field.
+    ///
+    /// @param signatureName the name or [SignatureName] of the signature field
+    /// @return `true` if the signature is valid
     public boolean verifySignature(SignatureName signatureName) {
         if (signatureName == null) return false;
         return verifySignature(signatureName.getFullName());
     }
 
-    /**
-     * Verifies the digital signature of the specified signature field.
-     *
-     * @param signName the fully-qualified name of the signature field
-     * @return {@code true} if the signature is valid
-     */
+    /// Verifies the digital signature of the specified signature field.
+    ///
+    /// @param signName the fully-qualified name of the signature field
+    /// @return `true` if the signature is valid
     public boolean verifySignature(String signName) {
         if (document == null || signName == null) return false;
         try {
@@ -275,27 +251,23 @@ public class PdfFileSignature implements AutoCloseable {
         }
     }
 
-    /**
-     * Verifies the digital signature with validation options.
-     *
-     * @param signName the fully-qualified name of the signature field
-     * @param options  the validation options
-     * @return {@code true} if the signature is valid
-     */
+    /// Verifies the digital signature with validation options.
+    ///
+    /// @param signName the fully-qualified name of the signature field
+    /// @param options  the validation options
+    /// @return `true` if the signature is valid
     public boolean verifySignature(String signName, ValidationOptions options) {
         // The current implementation does not differentiate based on options;
         // it performs the same core PKCS#7 verification regardless.
         return verifySignature(signName);
     }
 
-    /**
-     * Verifies the digital signature with validation options and returns a result.
-     *
-     * @param signName the fully-qualified name of the signature field
-     * @param options  the validation options
-     * @param result   output array of size 1 to receive the {@link ValidationResult}
-     * @return {@code true} if the signature is valid
-     */
+    /// Verifies the digital signature with validation options and returns a result.
+    ///
+    /// @param signName the fully-qualified name of the signature field
+    /// @param options  the validation options
+    /// @param result   output array of size 1 to receive the [ValidationResult]
+    /// @return `true` if the signature is valid
     public boolean verifySignature(String signName, ValidationOptions options, ValidationResult[] result) {
         boolean verified = verifySignature(signName, options);
         if (result != null && result.length > 0) {
@@ -305,32 +277,26 @@ public class PdfFileSignature implements AutoCloseable {
         return verified;
     }
 
-    /**
-     * Verifies the digital signature of the specified {@link SignatureName} with options.
-     *
-     * @param signatureName the signature name descriptor
-     * @param options       the validation options
-     * @return {@code true} if the signature is valid
-     */
+    /// Verifies the digital signature of the specified [SignatureName] with options.
+    ///
+    /// @param signatureName the signature name descriptor
+    /// @param options       the validation options
+    /// @return `true` if the signature is valid
     public boolean verifySignature(SignatureName signatureName, ValidationOptions options) {
         if (signatureName == null) return false;
         return verifySignature(signatureName.getFullName(), options);
     }
 
-    /**
-     * Alias for {@link #containsSignature()} matching the C# {@code IsContainSignature()} name.
-     *
-     * @return {@code true} if at least one signature field is signed
-     */
+    /// Alias for [#containsSignature()] matching the C# `IsContainSignature()` name.
+    ///
+    /// @return `true` if at least one signature field is signed
     public boolean isContainSignature() {
         return containsSignature();
     }
 
-    /**
-     * Returns whether the document contains at least one signed signature field.
-     *
-     * @return {@code true} if at least one signature field is signed
-     */
+    /// Returns whether the document contains at least one signed signature field.
+    ///
+    /// @return `true` if at least one signature field is signed
     public boolean containsSignature() {
         if (document == null) return false;
         try {
@@ -347,56 +313,46 @@ public class PdfFileSignature implements AutoCloseable {
         return false;
     }
 
-    /**
-     * Returns whether the specified signature field is signed.
-     *
-     * @param signName the fully-qualified name of the signature field
-     * @return {@code true} if the field is signed
-     */
+    /// Returns whether the specified signature field is signed.
+    ///
+    /// @param signName the fully-qualified name of the signature field
+    /// @return `true` if the field is signed
     public boolean isSigned(String signName) {
         SignatureField sf = findSignatureField(signName);
         return sf != null && sf.isSigned();
     }
 
-    /**
-     * Returns the signing reason for the specified signature field.
-     *
-     * @param signName the fully-qualified name of the signature field
-     * @return the reason string, or {@code null}
-     */
+    /// Returns the signing reason for the specified signature field.
+    ///
+    /// @param signName the fully-qualified name of the signature field
+    /// @return the reason string, or `null`
     public String getReason(String signName) {
         SignatureField sf = findSignatureField(signName);
         return sf != null ? sf.getReason() : null;
     }
 
-    /**
-     * Returns the signing location for the specified signature field.
-     *
-     * @param signName the fully-qualified name of the signature field
-     * @return the location string, or {@code null}
-     */
+    /// Returns the signing location for the specified signature field.
+    ///
+    /// @param signName the fully-qualified name of the signature field
+    /// @return the location string, or `null`
     public String getLocation(String signName) {
         SignatureField sf = findSignatureField(signName);
         return sf != null ? sf.getLocation() : null;
     }
 
-    /**
-     * Returns the signer name for the specified signature field.
-     *
-     * @param signName the fully-qualified name of the signature field
-     * @return the signer name, or {@code null}
-     */
+    /// Returns the signer name for the specified signature field.
+    ///
+    /// @param signName the fully-qualified name of the signature field
+    /// @return the signer name, or `null`
     public String getSignerName(String signName) {
         SignatureField sf = findSignatureField(signName);
         return sf != null ? sf.getSignerName() : null;
     }
 
-    /**
-     * Returns the signing date for the specified signature field.
-     *
-     * @param signName the fully-qualified name of the signature field
-     * @return the signing date, or {@code null}
-     */
+    /// Returns the signing date for the specified signature field.
+    ///
+    /// @param signName the fully-qualified name of the signature field
+    /// @return the signing date, or `null`
     public Date getDateTime(String signName) {
         SignatureField sf = findSignatureField(signName);
         if (sf == null) return null;
@@ -410,12 +366,10 @@ public class PdfFileSignature implements AutoCloseable {
         }
     }
 
-    /**
-     * Returns the contact info for the specified signature field.
-     *
-     * @param signName the fully-qualified name of the signature field
-     * @return the contact info, or {@code null}
-     */
+    /// Returns the contact info for the specified signature field.
+    ///
+    /// @param signName the fully-qualified name of the signature field
+    /// @return the contact info, or `null`
     public String getContactInfo(String signName) {
         // SignatureField does not expose contact info directly from the sig dict,
         // but we can try to get it from the signature dictionary
@@ -430,12 +384,10 @@ public class PdfFileSignature implements AutoCloseable {
         return null;
     }
 
-    /**
-     * Saves the bound document to a file.
-     *
-     * @param outputFile path to the output file
-     * @throws IOException if saving fails
-     */
+    /// Saves the bound document to a file.
+    ///
+    /// @param outputFile path to the output file
+    /// @throws IOException if saving fails
     public void save(String outputFile) throws IOException {
         if (signedOutput != null) {
             Files.write(Path.of(outputFile), signedOutput);
@@ -446,12 +398,10 @@ public class PdfFileSignature implements AutoCloseable {
         }
     }
 
-    /**
-     * Saves the bound document to an output stream.
-     *
-     * @param outputStream the output stream
-     * @throws IOException if saving fails
-     */
+    /// Saves the bound document to an output stream.
+    ///
+    /// @param outputStream the output stream
+    /// @throws IOException if saving fails
     public void save(OutputStream outputStream) throws IOException {
         if (signedOutput != null) {
             outputStream.write(signedOutput);
@@ -462,10 +412,8 @@ public class PdfFileSignature implements AutoCloseable {
         }
     }
 
-    /**
-     * Closes the signature facade and releases the bound document
-     * (if this facade owns it).
-     */
+    /// Closes the signature facade and releases the bound document
+    /// (if this facade owns it).
     @Override
     public void close() {
         if (document != null && ownsDocument) {
@@ -478,22 +426,19 @@ public class PdfFileSignature implements AutoCloseable {
         document = null;
     }
 
-    /**
-     * Signs the document by creating a new signature field on the given page.
-     * <p>
-     * Creates a new signature field at the specified rectangle, populates the
-     * signature dictionary with reason/contact/location metadata, and applies
-     * the signature from the provided {@link Signature} object.
-     * </p>
-     *
-     * @param pageNumber 1-based page number
-     * @param reason     the signing reason (may be null)
-     * @param contact    the signer contact info (may be null)
-     * @param location   the signing location (may be null)
-     * @param visible    whether the signature field should be visible
-     * @param rect       the rectangle for the visible signature (may be null if not visible)
-     * @param signature  the {@link Signature} object containing the certificate and key
-     */
+    /// Signs the document by creating a new signature field on the given page.
+    ///
+    /// Creates a new signature field at the specified rectangle, populates the
+    /// signature dictionary with reason/contact/location metadata, and applies
+    /// the signature from the provided [Signature] object.
+    ///
+    /// @param pageNumber 1-based page number
+    /// @param reason     the signing reason (may be null)
+    /// @param contact    the signer contact info (may be null)
+    /// @param location   the signing location (may be null)
+    /// @param visible    whether the signature field should be visible
+    /// @param rect       the rectangle for the visible signature (may be null if not visible)
+    /// @param signature  the [Signature] object containing the certificate and key
     public void sign(int pageNumber, String reason, String contact, String location,
                      boolean visible, Rectangle rect, Signature signature) {
         if (document == null) {
@@ -536,16 +481,13 @@ public class PdfFileSignature implements AutoCloseable {
         }
     }
 
-    /**
-     * Signs an existing signature field by name.
-     * <p>
-     * Locates the named field and populates its /V entry with a signature dictionary
-     * built from the provided {@link Signature} object.
-     * </p>
-     *
-     * @param fieldName the fully-qualified name of the signature field
-     * @param signature the {@link Signature} object containing the certificate and key
-     */
+    /// Signs an existing signature field by name.
+    ///
+    /// Locates the named field and populates its /V entry with a signature dictionary
+    /// built from the provided [Signature] object.
+    ///
+    /// @param fieldName the fully-qualified name of the signature field
+    /// @param signature the [Signature] object containing the certificate and key
     public void sign(String fieldName, Signature signature) {
         if (document == null || fieldName == null || signature == null) {
             LOG.warning("Cannot sign: invalid arguments");
@@ -563,23 +505,19 @@ public class PdfFileSignature implements AutoCloseable {
         }
     }
 
-    /**
-     * Removes a signature from the specified signature field.
-     * The field itself is preserved but its value (/V) is removed.
-     *
-     * @param signName the fully-qualified name of the signature field
-     */
+    /// Removes a signature from the specified signature field.
+    /// The field itself is preserved but its value (/V) is removed.
+    ///
+    /// @param signName the fully-qualified name of the signature field
     public void removeSignature(String signName) {
         removeSignature(signName, false);
     }
 
-    /**
-     * Removes a signature from the specified signature field.
-     *
-     * @param signName    the fully-qualified name of the signature field
-     * @param removeField if {@code true}, remove the field entirely;
-     *                    if {@code false}, only clear the signature value
-     */
+    /// Removes a signature from the specified signature field.
+    ///
+    /// @param signName    the fully-qualified name of the signature field
+    /// @param removeField if `true`, remove the field entirely;
+    ///                    if `false`, only clear the signature value
     public void removeSignature(String signName, boolean removeField) {
         if (document == null || signName == null) return;
         try {
@@ -605,15 +543,12 @@ public class PdfFileSignature implements AutoCloseable {
         }
     }
 
-    /**
-     * Returns whether the document contains usage rights (UR3 dictionary in the document catalog).
-     * <p>
-     * Usage rights allow a document to enable additional interactive features
-     * when opened in Adobe Reader.
-     * </p>
-     *
-     * @return {@code true} if the document contains usage rights
-     */
+    /// Returns whether the document contains usage rights (UR3 dictionary in the document catalog).
+    ///
+    /// Usage rights allow a document to enable additional interactive features
+    /// when opened in Adobe Reader.
+    ///
+    /// @return `true` if the document contains usage rights
     public boolean containsUsageRights() {
         if (document == null) return false;
         try {
@@ -636,12 +571,10 @@ public class PdfFileSignature implements AutoCloseable {
         return false;
     }
 
-    /**
-     * Removes usage rights from the document.
-     * <p>
-     * Removes the /UR3 and /UR entries from the document catalog's /Perms dictionary.
-     * </p>
-     */
+    /// Removes usage rights from the document.
+    ///
+    /// Removes the /UR3 and /UR entries from the document catalog's /Perms dictionary.
+    ///
     public void removeUsageRights() {
         if (document == null) return;
         try {
@@ -662,16 +595,13 @@ public class PdfFileSignature implements AutoCloseable {
         }
     }
 
-    /**
-     * Returns the total number of signed revisions in the document.
-     * <p>
-     * Each signature creates an incremental update revision (ISO 32000-1:2008 §12.8.1).
-     * This implementation returns the count of signed signature fields, which is
-     * equivalent for documents that follow the standard signing convention.
-     * </p>
-     *
-     * @return the number of signed revisions
-     */
+    /// Returns the total number of signed revisions in the document.
+    ///
+    /// Each signature creates an incremental update revision (ISO 32000-1:2008 §12.8.1).
+    /// This implementation returns the count of signed signature fields, which is
+    /// equivalent for documents that follow the standard signing convention.
+    ///
+    /// @return the number of signed revisions
     public int getTotalRevision() {
         if (document == null) return 0;
         int count = 0;
@@ -689,13 +619,11 @@ public class PdfFileSignature implements AutoCloseable {
         return count;
     }
 
-    /**
-     * Returns the 1-based revision number for the specified signature field.
-     * Revisions are numbered in the order signatures appear in the form fields.
-     *
-     * @param signName the fully-qualified name of the signature field
-     * @return the 1-based revision number, or 0 if the field is not signed
-     */
+    /// Returns the 1-based revision number for the specified signature field.
+    /// Revisions are numbered in the order signatures appear in the form fields.
+    ///
+    /// @param signName the fully-qualified name of the signature field
+    /// @return the 1-based revision number, or 0 if the field is not signed
     public int getRevision(String signName) {
         if (document == null || signName == null) return 0;
         try {
@@ -716,31 +644,26 @@ public class PdfFileSignature implements AutoCloseable {
         return 0;
     }
 
-    /**
-     * Returns the 1-based revision number for the specified signature field.
-     *
-     * @param signatureName the signature name descriptor
-     * @return the 1-based revision number, or 0 if not signed / not found
-     */
+    /// Returns the 1-based revision number for the specified signature field.
+    ///
+    /// @param signatureName the signature name descriptor
+    /// @return the 1-based revision number, or 0 if not signed / not found
     public int getRevision(SignatureName signatureName) {
         if (signatureName == null) return 0;
         return getRevision(signatureName.getFullName());
     }
 
-    /**
-     * Returns whether the byte range of the named signature covers the
-     * entire document (i.e. the signature is over the full current state).
-     * <p>
-     * Per ISO 32000-1:2008 §12.8.1, a signature's byte range is
-     * {@code [offset1, length1, offset2, length2]} where the gap between
-     * {@code offset1+length1} and {@code offset2} is the /Contents value
-     * placeholder. A signature covers the whole document when
-     * {@code offset2 + length2 == fileSize} (no bytes follow the signature).
-     * </p>
-     *
-     * @param signName the fully-qualified name of the signature field
-     * @return {@code true} if the signature covers the whole document
-     */
+    /// Returns whether the byte range of the named signature covers the
+    /// entire document (i.e. the signature is over the full current state).
+    ///
+    /// Per ISO 32000-1:2008 §12.8.1, a signature's byte range is
+    /// `[offset1, length1, offset2, length2]` where the gap between
+    /// `offset1+length1` and `offset2` is the /Contents value
+    /// placeholder. A signature covers the whole document when
+    /// `offset2 + length2 == fileSize` (no bytes follow the signature).
+    ///
+    /// @param signName the fully-qualified name of the signature field
+    /// @return `true` if the signature covers the whole document
     public boolean isCoversWholeDocument(String signName) {
         SignatureField sf = findSignatureField(signName);
         if (sf == null) return false;
@@ -756,49 +679,45 @@ public class PdfFileSignature implements AutoCloseable {
         return endOfCovered >= docBytes.length - 8;
     }
 
-    /**
-     * Returns whether the byte range of the named signature covers the
-     * entire document.
-     *
-     * @param signatureName the signature name descriptor
-     * @return {@code true} if the signature covers the whole document
-     */
+    /// Returns whether the byte range of the named signature covers the
+    /// entire document.
+    ///
+    /// @param signatureName the signature name descriptor
+    /// @return `true` if the signature covers the whole document
     public boolean coversWholeDocument(SignatureName signatureName) {
         if (signatureName == null) return false;
         return isCoversWholeDocument(signatureName.getFullName());
     }
 
-    /** {@link #getReason(String)} overload taking {@link SignatureName}. */
+    /// [#getReason(String)] overload taking [SignatureName].
     public String getReason(SignatureName name) {
         return name == null ? null : getReason(name.getFullName());
     }
 
-    /** {@link #getLocation(String)} overload taking {@link SignatureName}. */
+    /// [#getLocation(String)] overload taking [SignatureName].
     public String getLocation(SignatureName name) {
         return name == null ? null : getLocation(name.getFullName());
     }
 
-    /** {@link #getSignerName(String)} overload taking {@link SignatureName}. */
+    /// [#getSignerName(String)] overload taking [SignatureName].
     public String getSignerName(SignatureName name) {
         return name == null ? null : getSignerName(name.getFullName());
     }
 
-    /** {@link #getDateTime(String)} overload taking {@link SignatureName}. */
+    /// [#getDateTime(String)] overload taking [SignatureName].
     public Date getDateTime(SignatureName name) {
         return name == null ? null : getDateTime(name.getFullName());
     }
 
-    /** {@link #getContactInfo(String)} overload taking {@link SignatureName}. */
+    /// [#getContactInfo(String)] overload taking [SignatureName].
     public String getContactInfo(SignatureName name) {
         return name == null ? null : getContactInfo(name.getFullName());
     }
 
     // ── Internal helpers ──
 
-    /**
-     * Creates a SignatureField widget with the given name, rect, and page binding.
-     * Does NOT attach a /V (signature dictionary) — that is done by PdfSigner.
-     */
+    /// Creates a SignatureField widget with the given name, rect, and page binding.
+    /// Does NOT attach a /V (signature dictionary) — that is done by PdfSigner.
     private void ensureSignatureField(String fieldName, int pageNumber,
                                        boolean visible, Rectangle rect) throws IOException {
         Form form = document.getForm();
@@ -825,10 +744,8 @@ public class PdfFileSignature implements AutoCloseable {
         form.add(sf, pageNumber);
     }
 
-    /**
-     * Returns the first free {@code "Signature<N>"} field name (N ≥ 1) not already
-     * taken by an existing form field, matching Aspose's naming convention.
-     */
+    /// Returns the first free `"Signature<N>"` field name (N ≥ 1) not already
+    /// taken by an existing form field, matching Aspose's naming convention.
     private String nextSignatureFieldName() {
         java.util.Set<String> used = new java.util.HashSet<>();
         try {
@@ -886,16 +803,14 @@ public class PdfFileSignature implements AutoCloseable {
         return fmt.format(date);
     }
 
-    /**
-     * Verifies a signature with /SubFilter == {@code adbe.x509.rsa_sha1}
-     * (ISO 32000-1:2008 §12.8.3.4).
-     * <p>
-     * In this format, the signature value in /Contents is the raw RSA-encrypted
-     * SHA-1 digest of the byte range, and /Cert holds the DER-encoded X.509
-     * certificate of the signer (or an array of certificates whose first entry
-     * is the signer).
-     * </p>
-     */
+    /// Verifies a signature with /SubFilter == `adbe.x509.rsa_sha1`
+    /// (ISO 32000-1:2008 §12.8.3.4).
+    ///
+    /// In this format, the signature value in /Contents is the raw RSA-encrypted
+    /// SHA-1 digest of the byte range, and /Cert holds the DER-encoded X.509
+    /// certificate of the signer (or an array of certificates whose first entry
+    /// is the signer).
+    ///
     private boolean verifyX509RsaSha1(org.aspose.pdf.forms.SignatureField sf,
                                        byte[] sigBytes, byte[] signedData) throws Exception {
         PdfDictionary sigDict = sf.getSignatureDictionary();
@@ -937,10 +852,8 @@ public class PdfFileSignature implements AutoCloseable {
         return verifier.verify(rawSig);
     }
 
-    /**
-     * Strips a leading DER OCTET STRING TLV header if present, returning the inner value.
-     * Falls back to the input unchanged when the bytes are not a recognisable OCTET STRING.
-     */
+    /// Strips a leading DER OCTET STRING TLV header if present, returning the inner value.
+    /// Falls back to the input unchanged when the bytes are not a recognisable OCTET STRING.
     private static byte[] unwrapDerOctetString(byte[] data) {
         if (data == null || data.length < 2 || (data[0] & 0xFF) != 0x04) return data;
         int idx = 1;

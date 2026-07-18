@@ -21,13 +21,11 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Bug H — {@link TextBuilder} must encode the text-show payload using
- * WinAnsiEncoding (CP1252) and ensure the referenced font dict carries
- * {@code /Encoding /WinAnsiEncoding}. Before the fix the payload was
- * encoded as US-ASCII, mapping every non-ASCII character (em-dash, bullet,
- * middle dot, …) to a literal {@code '?'} even when the font supported it.
- */
+/// Bug H — [TextBuilder] must encode the text-show payload using
+/// WinAnsiEncoding (CP1252) and ensure the referenced font dict carries
+/// `/Encoding /WinAnsiEncoding`. Before the fix the payload was
+/// encoded as US-ASCII, mapping every non-ASCII character (em-dash, bullet,
+/// middle dot, …) to a literal `'?'` even when the font supported it.
 class TextBuilderWinAnsiEncodingTest {
 
     @TempDir Path tempDir;

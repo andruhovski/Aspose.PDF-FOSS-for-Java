@@ -7,40 +7,36 @@ import java.nio.file.Paths;
 import java.util.Locale;
 import java.util.logging.Logger;
 
-/**
- * Resolves a logical font name (e.g. {@code "SimSun"}) to its raw TrueType
- * bytes on disk, returning a freshly assembled TTF buffer suitable for
- * embedding into a PDF {@code /FontFile2} stream.
- *
- * <p>The lookup walks the OS-specific font directories (Windows
- * {@code C:\Windows\Fonts}, macOS {@code /Library/Fonts} +
- * {@code /System/Library/Fonts}, Linux {@code /usr/share/fonts}) and tries
- * a small set of filename variants for each: lowercase, no-spaces, and
- * common suffixes ({@code .ttf}, {@code .ttc}, {@code .otf}).</p>
- *
- * <p>When the match is a TrueType Collection ({@code .ttc} starting with
- * the {@code ttcf} magic), the first face is extracted into a brand-new
- * standalone TTF buffer — its sfnt header is rebuilt, table-directory
- * offsets are rewritten relative to the buffer start, and the shared
- * tables are copied from the source. PDF readers do not understand TTC
- * directly, so this re-packaging is what lets {@code SimSun} embed at all.</p>
- */
+/// Resolves a logical font name (e.g. `"SimSun"`) to its raw TrueType
+/// bytes on disk, returning a freshly assembled TTF buffer suitable for
+/// embedding into a PDF `/FontFile2` stream.
+///
+/// The lookup walks the OS-specific font directories (Windows
+/// `C:\\Windows\\Fonts`, macOS `/Library/Fonts` +
+/// `/System/Library/Fonts`, Linux `/usr/share/fonts`) and tries
+/// a small set of filename variants for each: lowercase, no-spaces, and
+/// common suffixes (`.ttf`, `.ttc`, `.otf`).
+///
+/// When the match is a TrueType Collection (`.ttc` starting with
+/// the `ttcf` magic), the first face is extracted into a brand-new
+/// standalone TTF buffer — its sfnt header is rebuilt, table-directory
+/// offsets are rewritten relative to the buffer start, and the shared
+/// tables are copied from the source. PDF readers do not understand TTC
+/// directly, so this re-packaging is what lets `SimSun` embed at all.
 public final class FontDiskLookup {
 
     private static final Logger LOG = Logger.getLogger(FontDiskLookup.class.getName());
 
     private FontDiskLookup() {}
 
-    /**
-     * Searches the OS font directories for {@code logicalName} and returns
-     * the bytes of a standalone TTF for the first matching face. Returns
-     * {@code null} if no candidate file is found or none decodes cleanly.
-     *
-     * @param logicalName the font name as a caller would type it
-     *                    ({@code "SimSun"}, {@code "Arial"}, etc.)
-     * @return TTF bytes (TTC's first face extracted to a standalone TTF), or
-     *         {@code null} if not resolvable
-     */
+    /// Searches the OS font directories for `logicalName` and returns
+    /// the bytes of a standalone TTF for the first matching face. Returns
+    /// `null` if no candidate file is found or none decodes cleanly.
+    ///
+    /// @param logicalName the font name as a caller would type it
+    ///                    (`"SimSun"`, `"Arial"`, etc.)
+    /// @return TTF bytes (TTC's first face extracted to a standalone TTF), or
+    ///         `null` if not resolvable
     public static byte[] loadByName(String logicalName) {
         if (logicalName == null || logicalName.isEmpty()) return null;
         String[] dirs = osFontDirs();
@@ -68,18 +64,16 @@ public final class FontDiskLookup {
         return null;
     }
 
-    /**
-     * Loads a font file by an exact basename (no candidate-list expansion).
-     * Returns the file's bytes unchanged when it's a standalone TTF/OTF, or
-     * the first face unpacked into a standalone TTF when it's a TTC.
-     *
-     * <p>Used by callers that have already narrowed the choice down to one
-     * physical face — e.g. picking {@code simsunb} over {@code simsun} when
-     * the text being rendered carries CJK Extension B characters.</p>
-     *
-     * @param basename file basename without extension (e.g. {@code "simsunb"})
-     * @return font bytes, or {@code null} when the file is missing
-     */
+    /// Loads a font file by an exact basename (no candidate-list expansion).
+    /// Returns the file's bytes unchanged when it's a standalone TTF/OTF, or
+    /// the first face unpacked into a standalone TTF when it's a TTC.
+    ///
+    /// Used by callers that have already narrowed the choice down to one
+    /// physical face — e.g. picking `simsunb` over `simsun` when
+    /// the text being rendered carries CJK Extension B characters.
+    ///
+    /// @param basename file basename without extension (e.g. `"simsunb"`)
+    /// @return font bytes, or `null` when the file is missing
     public static byte[] loadByExactBasename(String basename) {
         if (basename == null || basename.isEmpty()) return null;
         for (String dir : osFontDirs()) {
@@ -97,19 +91,17 @@ public final class FontDiskLookup {
         return null;
     }
 
-    /**
-     * Resolves a font by {@code family} + style, searching {@code extraDirs} first (e.g. a
-     * {@code -Dxfa.fontDir} override) then the OS font roots. Tries style-aware filename variants
-     * ({@code arial}+bold → {@code arialbd}, {@code …i}, {@code …bi}, plus {@code -Bold}/{@code -Italic}
-     * forms) and falls back to the regular face. Returns standalone TTF bytes (TTC first face
-     * unpacked) or {@code null}; never throws (a missing dir / unreadable / malformed file is skipped).
-     *
-     * @param family    the requested family, e.g. {@code "Arial"} (style words may be present)
-     * @param bold      bold requested
-     * @param italic    italic requested
-     * @param extraDirs directories to search before the OS roots ({@code null}/empty = OS roots only)
-     * @return TTF bytes or {@code null}
-     */
+    /// Resolves a font by `family` + style, searching `extraDirs` first (e.g. a
+    /// `-Dxfa.fontDir` override) then the OS font roots. Tries style-aware filename variants
+    /// (`arial`+bold → `arialbd`, `…i`, `…bi`, plus `-Bold`/`-Italic`
+    /// forms) and falls back to the regular face. Returns standalone TTF bytes (TTC first face
+    /// unpacked) or `null`; never throws (a missing dir / unreadable / malformed file is skipped).
+    ///
+    /// @param family    the requested family, e.g. `"Arial"` (style words may be present)
+    /// @param bold      bold requested
+    /// @param italic    italic requested
+    /// @param extraDirs directories to search before the OS roots (`null`/empty = OS roots only)
+    /// @return TTF bytes or `null`
     public static byte[] loadStyled(String family, boolean bold, boolean italic, String[] extraDirs) {
         if (family == null || family.isEmpty()) {
             return null;
@@ -151,22 +143,20 @@ public final class FontDiskLookup {
         return null;
     }
 
-    /**
-     * Last-resort lookup of a guaranteed Unicode-capable system font when the requested family
-     * cannot be resolved. Picks a real OS font that covers Latin Extended-A/B (Czech, Polish,
-     * Turkish, …) so non-WinAnsi text is never lost to a {@code '?'} substitution: a sans, serif or
-     * monospace face on Windows (Arial/Times New Roman/Courier New), Linux (DejaVu/Liberation) or
-     * macOS, matched to the requested category and style. Searches {@code extraDirs} then the OS
-     * roots, recursively (depth-limited) so the nested Linux font tree is covered. Returns standalone
-     * TTF bytes (TTC first face unpacked) or {@code null} if none of the well-known faces exist.
-     *
-     * @param serif     prefer a serif face (the requested family mapped to Times/serif)
-     * @param mono      prefer a monospace face (mapped to Courier/mono); takes precedence over serif
-     * @param bold      bold requested
-     * @param italic    italic requested
-     * @param extraDirs directories to search before the OS roots ({@code null}/empty = OS roots only)
-     * @return TTF bytes or {@code null}
-     */
+    /// Last-resort lookup of a guaranteed Unicode-capable system font when the requested family
+    /// cannot be resolved. Picks a real OS font that covers Latin Extended-A/B (Czech, Polish,
+    /// Turkish, …) so non-WinAnsi text is never lost to a `'?'` substitution: a sans, serif or
+    /// monospace face on Windows (Arial/Times New Roman/Courier New), Linux (DejaVu/Liberation) or
+    /// macOS, matched to the requested category and style. Searches `extraDirs` then the OS
+    /// roots, recursively (depth-limited) so the nested Linux font tree is covered. Returns standalone
+    /// TTF bytes (TTC first face unpacked) or `null` if none of the well-known faces exist.
+    ///
+    /// @param serif     prefer a serif face (the requested family mapped to Times/serif)
+    /// @param mono      prefer a monospace face (mapped to Courier/mono); takes precedence over serif
+    /// @param bold      bold requested
+    /// @param italic    italic requested
+    /// @param extraDirs directories to search before the OS roots (`null`/empty = OS roots only)
+    /// @return TTF bytes or `null`
     public static byte[] loadFallback(boolean serif, boolean mono, boolean bold, boolean italic,
                                       String[] extraDirs) {
         java.util.LinkedHashSet<String> bases = new java.util.LinkedHashSet<>(
@@ -190,7 +180,7 @@ public final class FontDiskLookup {
         return null;
     }
 
-    /** Candidate basenames for the fallback face, most-specific (styled, Windows-first) first. */
+    /// Candidate basenames for the fallback face, most-specific (styled, Windows-first) first.
     private static String[] fallbackBasenames(boolean serif, boolean mono, boolean bold, boolean italic) {
         String winShort;   // Windows short basename stem (arial/times/cour)
         String dejavu;     // Linux DejaVu stem
@@ -224,7 +214,7 @@ public final class FontDiskLookup {
         return out.toArray(new String[0]);
     }
 
-    /** Depth-limited recursive search for {@code <base>.{ttf,otf,ttc}} under {@code dir}. */
+    /// Depth-limited recursive search for `<base>.{ttf,otf,ttc}` under `dir`.
     private static byte[] searchRecursive(Path dir, java.util.Set<String> bases, int depth) {
         if (depth > 4 || !Files.isDirectory(dir)) {
             return null;
@@ -272,7 +262,7 @@ public final class FontDiskLookup {
         return null;
     }
 
-    /** Style-aware filename candidates for {@code family}: most-specific (styled) first, regular last. */
+    /// Style-aware filename candidates for `family`: most-specific (styled) first, regular last.
     private static String[] styledBasenames(String family, boolean bold, boolean italic) {
         String compact = family.toLowerCase(Locale.ROOT).replace(" ", "").replace("-", "");
         java.util.LinkedHashSet<String> out = new java.util.LinkedHashSet<>();
@@ -298,7 +288,7 @@ public final class FontDiskLookup {
         return out.toArray(new String[0]);
     }
 
-    /** OS-specific font search roots, ordered most-likely first. */
+    /// OS-specific font search roots, ordered most-likely first.
     private static String[] osFontDirs() {
         String os = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
         if (os.contains("win")) {
@@ -314,13 +304,11 @@ public final class FontDiskLookup {
                 System.getProperty("user.home") + "/.fonts"};
     }
 
-    /**
-     * Generates filename candidates from a logical font name. SimSun lives at
-     * {@code simsun.ttc}; {@code Arial Unicode MS} at {@code arialuni.ttf} —
-     * exact mapping is intractable without a font catalog, so we try a few
-     * sensible derivations (lowercase, strip spaces, well-known shortcuts)
-     * and rely on the caller catching a {@code null} return.
-     */
+    /// Generates filename candidates from a logical font name. SimSun lives at
+    /// `simsun.ttc`; `Arial Unicode MS` at `arialuni.ttf` —
+    /// exact mapping is intractable without a font catalog, so we try a few
+    /// sensible derivations (lowercase, strip spaces, well-known shortcuts)
+    /// and rely on the caller catching a `null` return.
     private static String[] candidateBasenames(String name) {
         String lower = name.toLowerCase(Locale.ROOT);
         String compact = lower.replace(" ", "").replace("-", "");
@@ -350,21 +338,17 @@ public final class FontDiskLookup {
     //  TTC → standalone TTF
     // ────────────────────────────────────────────────────────────────────
 
-    /**
-     * Returns {@code true} when {@code bytes} starts with the {@code ttcf}
-     * magic of a TrueType Collection.
-     */
+    /// Returns `true` when `bytes` starts with the `ttcf`
+    /// magic of a TrueType Collection.
     public static boolean isTTC(byte[] bytes) {
         return bytes != null && bytes.length >= 4
                 && bytes[0] == 't' && bytes[1] == 't'
                 && bytes[2] == 'c' && bytes[3] == 'f';
     }
 
-    /**
-     * Rewrites the first face of a TrueType Collection into a standalone
-     * TTF buffer. Returns {@code null} if the input is malformed or does
-     * not advertise at least one face.
-     */
+    /// Rewrites the first face of a TrueType Collection into a standalone
+    /// TTF buffer. Returns `null` if the input is malformed or does
+    /// not advertise at least one face.
     public static byte[] extractFirstFaceFromTTC(byte[] ttc) {
         if (!isTTC(ttc) || ttc.length < 16) return null;
         int numFonts = readInt32(ttc, 8);
@@ -373,11 +357,9 @@ public final class FontDiskLookup {
         return extractFaceAt(ttc, faceOffset);
     }
 
-    /**
-     * Extracts the face whose sfnt header begins at {@code faceOffset} into
-     * a fresh standalone TTF. Public for callers that pick non-default
-     * faces from a TTC.
-     */
+    /// Extracts the face whose sfnt header begins at `faceOffset` into
+    /// a fresh standalone TTF. Public for callers that pick non-default
+    /// faces from a TTC.
     public static byte[] extractFaceAt(byte[] ttc, int faceOffset) {
         if (ttc == null || faceOffset < 0 || faceOffset + 12 > ttc.length) return null;
         int sfntVersion = readInt32(ttc, faceOffset);

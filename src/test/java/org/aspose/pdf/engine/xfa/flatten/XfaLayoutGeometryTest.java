@@ -14,13 +14,11 @@ import java.nio.charset.StandardCharsets;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-/**
- * C1 (positioned-layout geometry) — the B oracle: absolute coordinates asserted
- * against the spec's own accumulation formula {@code Px = Σ(Cx + Mx + Ox)}, by
- * hand, with no reference image. Covers all nine {@code anchorType} values, margin
- * insets, multi-level positioned nesting, the contentArea base origin, the Y-flip,
- * and the positioned-vs-flowed gating. (C1.2 adds rotation in a sibling test.)
- */
+/// C1 (positioned-layout geometry) — the B oracle: absolute coordinates asserted
+/// against the spec's own accumulation formula `Px = Σ(Cx + Mx + Ox)`, by
+/// hand, with no reference image. Covers all nine `anchorType` values, margin
+/// insets, multi-level positioned nesting, the contentArea base origin, the Y-flip,
+/// and the positioned-vs-flowed gating. (C1.2 adds rotation in a sibling test.)
 public class XfaLayoutGeometryTest {
 
     private static final String TPL = XfaNode.TEMPLATE_NS;
@@ -44,7 +42,7 @@ public class XfaLayoutGeometryTest {
         assertAnchor("bottomRight",   60, 100, 100, 120);
     }
 
-    /** Asserts the PDF rect (llx,lly,urx,ury) for a w=40,h=20 box anchored at (100,100), page 200. */
+    /// Asserts the PDF rect (llx,lly,urx,ury) for a w=40,h=20 box anchored at (100,100), page 200.
     private void assertAnchor(String anchor, double llx, double lly, double urx, double ury) throws Exception {
         XfaNode field = field("<field name='f' x='100pt' y='100pt' w='40pt' h='20pt' anchorType='" + anchor + "'/>");
         Rectangle r = XfaGeometry.resolve(field, 200);
@@ -152,7 +150,7 @@ public class XfaLayoutGeometryTest {
         return wrapField(root);
     }
 
-    /** Wraps the first {@code <field>} descendant of a parsed template root. */
+    /// Wraps the first `<field>` descendant of a parsed template root.
     private static XfaNode wrapField(Element root) {
         Element f = (Element) root.getElementsByTagNameNS(TPL, "field").item(0);
         return XfaNodeFactory.wrap(f, null);

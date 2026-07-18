@@ -2,27 +2,23 @@ package org.aspose.pdf.drawing;
 
 import java.util.logging.Logger;
 
-/**
- * Represents a Bezier curve drawing shape.
- * <p>
- * The curve is defined by an array of control point coordinates. For a cubic
- * Bezier curve, the array contains 8 elements: the start point, two control
- * points, and the end point (x1, y1, cx1, cy1, cx2, cy2, x2, y2).
- * </p>
- */
+/// Represents a Bezier curve drawing shape.
+///
+/// The curve is defined by an array of control point coordinates. For a cubic
+/// Bezier curve, the array contains 8 elements: the start point, two control
+/// points, and the end point (x1, y1, cx1, cy1, cx2, cy2, x2, y2).
+///
 public class Curve extends Shape {
 
     private static final Logger LOG = Logger.getLogger(Curve.class.getName());
 
     private float[] positionArray;
 
-    /**
-     * Creates a new Bezier curve with the specified control points.
-     *
-     * @param positionArray alternating x,y coordinates for the control points;
-     *                      must have an even number of elements
-     * @throws IllegalArgumentException if the array is null or has an odd length
-     */
+    /// Creates a new Bezier curve with the specified control points.
+    ///
+    /// @param positionArray alternating x,y coordinates for the control points;
+    ///                      must have an even number of elements
+    /// @throws IllegalArgumentException if the array is null or has an odd length
     public Curve(float[] positionArray) {
         if (positionArray == null) {
             throw new IllegalArgumentException("Position array must not be null");
@@ -34,27 +30,21 @@ public class Curve extends Shape {
         this.positionArray = positionArray;
     }
 
-    /**
-     * Gets the array of control point coordinates.
-     *
-     * @return the position array
-     */
+    /// Gets the array of control point coordinates.
+    ///
+    /// @return the position array
     public float[] getPositionArray() {
         return positionArray;
     }
 
-    /**
-     * Sets the array of control point coordinates.
-     *
-     * @param positionArray the position array
-     */
+    /// Sets the array of control point coordinates.
+    ///
+    /// @param positionArray the position array
     public void setPositionArray(float[] positionArray) {
         this.positionArray = positionArray;
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /// {@inheritDoc}
     @Override
     public void checkBounds(double width, double height) {
         if (positionArray == null) {

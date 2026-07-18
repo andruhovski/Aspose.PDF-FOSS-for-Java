@@ -8,39 +8,33 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Evaluates a {@link SomExpr} over the typed XFA model (template/data/form
- * trees). Independent of the JavaScript engine: SOM is a structural expression
- * language; only structural and comparison predicates are evaluated, and
- * script-bearing predicates are reported (not run).
- *
- * <p>Name matching is space-agnostic: a step name matches a node's {@code name}
- * attribute (template space) or its element local name (data space).</p>
- */
+/// Evaluates a [SomExpr] over the typed XFA model (template/data/form
+/// trees). Independent of the JavaScript engine: SOM is a structural expression
+/// language; only structural and comparison predicates are evaluated, and
+/// script-bearing predicates are reported (not run).
+///
+/// Name matching is space-agnostic: a step name matches a node's `name`
+/// attribute (template space) or its element local name (data space).
 public final class SomResolver {
 
-    /** Resolution context: the accessor roots plus the current node. */
+    /// Resolution context: the accessor roots plus the current node.
     public static final class Context {
         public XfaNode template;
         public XfaNode data;
         public XfaNode form;
         public XfaNode record;
         public XfaNode current;
-        /**
-         * Script-context resolution (SOM-R, additive). When {@code true}, a leading <em>unqualified</em>
-         * relative name (no {@code $} root, e.g. {@code price}) is resolved with the XFA SOM
-         * relative-reference <em>scope search</em>: the current container's own children, then — if none
-         * match — each enclosing container's children (the current node's siblings, then the parent's
-         * siblings, &hellip;), nearest container first. This lets {@code xfa.resolveNode("price")} from a
-         * calculate script on a sibling field find {@code price}. The binding/flatten/render path leaves
-         * this {@code false}, so it keeps the strict child-only relative match (Stage A is unchanged).
-         */
+        /// Script-context resolution (SOM-R, additive). When `true`, a leading _unqualified_
+        /// relative name (no `$` root, e.g. `price`) is resolved with the XFA SOM
+        /// relative-reference _scope search_: the current container's own children, then — if none
+        /// match — each enclosing container's children (the current node's siblings, then the parent's
+        /// siblings, …), nearest container first. This lets `xfa.resolveNode("price")` from a
+        /// calculate script on a sibling field find `price`. The binding/flatten/render path leaves
+        /// this `false`, so it keeps the strict child-only relative match (Stage A is unchanged).
         public boolean scriptScope;
 
-        /**
-         * @param current the current (relative) node
-         * @return a context whose roots default to {@code current}'s tree
-         */
+        /// @param current the current (relative) node
+        /// @return a context whose roots default to `current`'s tree
         public static Context of(XfaNode current) {
             Context c = new Context();
             c.current = current;
@@ -51,7 +45,7 @@ public final class SomResolver {
     private final Set<String> classNames;
     private final SomParser parser;
 
-    /** Creates a resolver (class-name set seeded from the template element registry). */
+    /// Creates a resolver (class-name set seeded from the template element registry).
     public SomResolver() {
         this.classNames = buildClassNames();
         this.parser = new SomParser(classNames);
@@ -67,47 +61,39 @@ public final class SomResolver {
         return names;
     }
 
-    /**
-     * Parses a SOM string.
-     *
-     * @param expr the expression text
-     * @return the parsed expression
-     */
+    /// Parses a SOM string.
+    ///
+    /// @param expr the expression text
+    /// @return the parsed expression
     public SomExpr parse(String expr) {
         return parser.parse(expr);
     }
 
-    /**
-     * Resolves all matching nodes.
-     *
-     * @param expr SOM text
-     * @param ctx  resolution context
-     * @return the matching nodes (possibly empty, never {@code null})
-     */
+    /// Resolves all matching nodes.
+    ///
+    /// @param expr SOM text
+    /// @param ctx  resolution context
+    /// @return the matching nodes (possibly empty, never `null`)
     public List<XfaNode> resolveNodes(String expr, Context ctx) {
         return resolveNodes(parser.parse(expr), ctx);
     }
 
-    /**
-     * Resolves to a single node ({@code $xfa.resolveNode} semantics).
-     *
-     * @param expr SOM text
-     * @param ctx  resolution context
-     * @return the first matching node, or {@code null}
-     */
+    /// Resolves to a single node (`$xfa.resolveNode` semantics).
+    ///
+    /// @param expr SOM text
+    /// @param ctx  resolution context
+    /// @return the first matching node, or `null`
     public XfaNode resolveNode(String expr, Context ctx) {
         List<XfaNode> r = resolveNodes(expr, ctx);
         return r.isEmpty() ? null : r.get(0);
     }
 
-    /**
-     * Resolves a value: the property value when the expression ends in a property
-     * accessor ({@code .#name}/{@code .#x}), otherwise the resolved node's text.
-     *
-     * @param expr SOM text
-     * @param ctx  resolution context
-     * @return the value string, or {@code null}
-     */
+    /// Resolves a value: the property value when the expression ends in a property
+    /// accessor (`.#name`/`.#x`), otherwise the resolved node's text.
+    ///
+    /// @param expr SOM text
+    /// @param ctx  resolution context
+    /// @return the value string, or `null`
     public String resolveValue(String expr, Context ctx) {
         SomExpr e = parser.parse(expr);
         if (e.endsWithProperty()) {
@@ -122,39 +108,35 @@ public final class SomResolver {
         return n == null ? null : n.getTextContent();
     }
 
-    /** Resolves the nodes for a parsed expression. */
+    /// Resolves the nodes for a parsed expression.
     public List<XfaNode> resolveNodes(SomExpr e, Context ctx) {
         return evaluate(e, ctx, false);
     }
 
-    /**
-     * Automatic-binding scope search (XFA 3.0, "Basic Data Binding to Produce the
-     * XFA Form DOM", pp.180-183). Given the data node that is the nearest bound
-     * ancestor's data context ({@code start}), returns the data nodes named
-     * {@code name} in binding-precedence order:
-     *
-     * <ol>
-     *   <li><b>direct / ancestor match</b> &mdash; the children of {@code start}
-     *       (when intervening template subforms are unbound, {@code start} is an
-     *       ancestor of the would-be direct node, so a child of {@code start} is an
-     *       <em>ancestor match</em>; spec: "a scope match involving only direct
-     *       ancestors&hellip; is preferable");</li>
-     *   <li><b>sibling match</b> &mdash; ascending the data tree from {@code start},
-     *       at each ancestor the siblings of the node just left (spec: "a scope
-     *       match involving sibling(s) of ancestor(s)"), <em>nearest ancestor
-     *       first</em> so that "fewer generations ascended" wins.</li>
-     * </ol>
-     *
-     * <p>This never creates data nodes &mdash; it only locates existing ones. Type
-     * compatibility (field&rarr;data value, subform&rarr;data group) and
-     * single-binding (a consumed node binds at most one field) are applied by the
-     * caller. Returning <em>all</em> candidates in order lets the caller skip
-     * already-consumed nodes and still honour precedence and index inferral.</p>
-     *
-     * @param name  the container/field name to match (template name or data local name)
-     * @param start the nearest bound ancestor's data node (may be {@code null})
-     * @return the matching data nodes, highest binding-precedence first
-     */
+    /// Automatic-binding scope search (XFA 3.0, "Basic Data Binding to Produce the
+    /// XFA Form DOM", pp.180-183). Given the data node that is the nearest bound
+    /// ancestor's data context (`start`), returns the data nodes named
+    /// `name` in binding-precedence order:
+    ///
+    ///   1. **direct / ancestor match** — the children of `start`
+    ///     (when intervening template subforms are unbound, `start` is an
+    ///     ancestor of the would-be direct node, so a child of `start` is an
+    ///     _ancestor match_; spec: "a scope match involving only direct
+    ///     ancestors… is preferable");
+    ///   2. **sibling match** — ascending the data tree from `start`,
+    ///     at each ancestor the siblings of the node just left (spec: "a scope
+    ///     match involving sibling(s) of ancestor(s)"), _nearest ancestor
+    ///     first_ so that "fewer generations ascended" wins.
+    ///
+    /// This never creates data nodes — it only locates existing ones. Type
+    /// compatibility (field→data value, subform→data group) and
+    /// single-binding (a consumed node binds at most one field) are applied by the
+    /// caller. Returning _all_ candidates in order lets the caller skip
+    /// already-consumed nodes and still honour precedence and index inferral.
+    ///
+    /// @param name  the container/field name to match (template name or data local name)
+    /// @param start the nearest bound ancestor's data node (may be `null`)
+    /// @return the matching data nodes, highest binding-precedence first
     public List<XfaNode> scopeMatch(String name, XfaNode start) {
         List<XfaNode> out = new ArrayList<>();
         if (start == null) {
@@ -239,19 +221,17 @@ public final class SomResolver {
         return set;
     }
 
-    /**
-     * Resolves the leading unqualified name of a relative script expression by the XFA SOM scope
-     * search (script path only — see {@link Context#scriptScope}). Starting at {@code ctx.current},
-     * it matches the name among that container's children; if none match it ascends to the enclosing
-     * container and matches there (the current node's siblings), continuing up the tree. The
-     * <em>nearest</em> container with any match wins (XFA scope precedence), and every same-named node
-     * at that level is returned (so {@code resolveNodes} sees all occurrences and {@code resolveNode}
-     * takes the first). Returns empty when the name is nowhere in scope (a genuinely absent node).
-     *
-     * @param ns  the leading name step (with its optional index)
-     * @param ctx the resolution context (its {@code current} is the script's container)
-     * @return the matching nodes at the nearest scope, or empty
-     */
+    /// Resolves the leading unqualified name of a relative script expression by the XFA SOM scope
+    /// search (script path only — see [Context#scriptScope]). Starting at `ctx.current`,
+    /// it matches the name among that container's children; if none match it ascends to the enclosing
+    /// container and matches there (the current node's siblings), continuing up the tree. The
+    /// _nearest_ container with any match wins (XFA scope precedence), and every same-named node
+    /// at that level is returned (so `resolveNodes` sees all occurrences and `resolveNode`
+    /// takes the first). Returns empty when the name is nowhere in scope (a genuinely absent node).
+    ///
+    /// @param ns  the leading name step (with its optional index)
+    /// @param ctx the resolution context (its `current` is the script's container)
+    /// @return the matching nodes at the nearest scope, or empty
     private List<XfaNode> scopeResolveLeading(SomExpr.NameStep ns, Context ctx) {
         for (XfaNode scope = ctx.current; scope != null; scope = scope.getParent()) {
             List<XfaNode> hits = new ArrayList<>();

@@ -8,11 +8,9 @@ import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for AES encrypt/decrypt round-trip in AESCipher.
- * Covers AES-128 and AES-256, various data sizes, padding edge cases,
- * and encryptWithIV/decryptWithIV for R=6 key wrapping.
- */
+/// Tests for AES encrypt/decrypt round-trip in AESCipher.
+/// Covers AES-128 and AES-256, various data sizes, padding edge cases,
+/// and encryptWithIV/decryptWithIV for R=6 key wrapping.
 public class AESCipherTest {
 
     // ── encrypt() → decrypt() round-trip ──

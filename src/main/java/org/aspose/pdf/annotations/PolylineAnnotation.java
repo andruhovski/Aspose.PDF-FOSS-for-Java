@@ -1,43 +1,39 @@
 package org.aspose.pdf.annotations;
 
-import org.aspose.pdf.*;
-import org.aspose.pdf.engine.pdfobjects.*;
+import org.aspose.pdf.Page;
+import org.aspose.pdf.Rectangle;
+import org.aspose.pdf.engine.pdfobjects.PdfArray;
+import org.aspose.pdf.engine.pdfobjects.PdfBase;
+import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
+import org.aspose.pdf.engine.pdfobjects.PdfName;
 
-/**
- * Polyline annotation (ISO 32000-1:2008, Section 12.5.6.9, /Subtype /PolyLine).
- * <p>
- * A polyline annotation is similar to a polygon annotation, except that the
- * first and last vertices are not implicitly connected.
- * </p>
- */
+/// Polyline annotation (ISO 32000-1:2008, Section 12.5.6.9, /Subtype /PolyLine).
+///
+/// A polyline annotation is similar to a polygon annotation, except that the
+/// first and last vertices are not implicitly connected.
+///
 public class PolylineAnnotation extends MarkupAnnotation {
 
-    /**
-     * Constructs a polyline annotation from an existing PDF dictionary.
-     *
-     * @param dict the PDF dictionary backing this annotation
-     * @param page the page this annotation belongs to
-     */
+    /// Constructs a polyline annotation from an existing PDF dictionary.
+    ///
+    /// @param dict the PDF dictionary backing this annotation
+    /// @param page the page this annotation belongs to
     public PolylineAnnotation(PdfDictionary dict, Page page) {
         super(dict, page);
     }
 
-    /**
-     * Constructs a new polyline annotation with the given rectangle on the specified page.
-     *
-     * @param page the page this annotation belongs to
-     * @param rect the annotation rectangle
-     */
+    /// Constructs a new polyline annotation with the given rectangle on the specified page.
+    ///
+    /// @param page the page this annotation belongs to
+    /// @param rect the annotation rectangle
     public PolylineAnnotation(Page page, Rectangle rect) {
         super(page, rect);
         dict.set(PdfName.of("Subtype"), PdfName.of("PolyLine"));
     }
 
-    /**
-     * Returns the vertices of the polyline as an array of coordinate pairs [x1, y1, x2, y2, ...].
-     *
-     * @return the vertices array, or null if not set
-     */
+    /// Returns the vertices of the polyline as an array of coordinate pairs [x1, y1, x2, y2, ...].
+    ///
+    /// @return the vertices array, or null if not set
     public double[] getVertices() {
         PdfBase v = dict.get("Vertices");
         if (v instanceof PdfArray) {

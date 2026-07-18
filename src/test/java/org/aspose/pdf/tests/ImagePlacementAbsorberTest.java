@@ -9,14 +9,10 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link ImagePlacementAbsorber} and {@link ImagePlacement}.
- */
+/// Tests for [ImagePlacementAbsorber] and [ImagePlacement].
 public class ImagePlacementAbsorberTest {
 
-    /**
-     * Creates a page with an image XObject and a content stream that references it.
-     */
+    /// Creates a page with an image XObject and a content stream that references it.
     private Page createPageWithImage(String imgName, int w, int h,
                                       double cmA, double cmB, double cmC, double cmD,
                                       double cmE, double cmF) {

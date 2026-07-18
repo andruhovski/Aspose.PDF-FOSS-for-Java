@@ -7,30 +7,24 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.logging.Logger;
 
-/**
- * ASCIIHexDecode filter (§7.4.2, ISO 32000-1:2008).
- * <p>
- * Decodes hexadecimal-encoded data. Each pair of hex digits represents one byte.
- * Whitespace is ignored. The end-of-data marker is {@code >}. If the final digit
- * is odd, it is treated as if followed by {@code 0}.
- * </p>
- */
+/// ASCIIHexDecode filter (§7.4.2, ISO 32000-1:2008).
+///
+/// Decodes hexadecimal-encoded data. Each pair of hex digits represents one byte.
+/// Whitespace is ignored. The end-of-data marker is `>`. If the final digit
+/// is odd, it is treated as if followed by `0`.
+///
 public final class ASCIIHexFilter implements PdfFilter {
 
     private static final Logger LOG = Logger.getLogger(ASCIIHexFilter.class.getName());
 
     private static final char[] HEX_UPPER = "0123456789ABCDEF".toCharArray();
 
-    /**
-     * Creates an ASCIIHexFilter instance.
-     */
+    /// Creates an ASCIIHexFilter instance.
     public ASCIIHexFilter() {
         // Stateless
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /// {@inheritDoc}
     @Override
     public byte[] decode(byte[] encoded, PdfDictionary params) throws IOException {
         if (encoded == null || encoded.length == 0) {
@@ -76,9 +70,7 @@ public final class ASCIIHexFilter implements PdfFilter {
         return out.toByteArray();
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /// {@inheritDoc}
     @Override
     public byte[] encode(byte[] decoded, PdfDictionary params) throws IOException {
         if (decoded == null || decoded.length == 0) {
@@ -99,9 +91,7 @@ public final class ASCIIHexFilter implements PdfFilter {
         return result;
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /// {@inheritDoc}
     @Override
     public PdfName getName() {
         return PdfName.ASCII_HEX_DECODE;

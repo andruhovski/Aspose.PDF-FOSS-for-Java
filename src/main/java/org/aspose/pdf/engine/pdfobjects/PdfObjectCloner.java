@@ -1,76 +1,68 @@
 package org.aspose.pdf.engine.pdfobjects;
 
 import java.io.IOException;
-import java.util.ArrayDeque;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Logger;
 
-/**
- * Recursively clones a PDF object graph from one document so the result is independent
- * of the source document and can be safely inserted into a target document.
- *
- * <p>Cycle-safe via an identity-keyed visited map populated before recursion
- * (put-before-recurse). Shared resources — e.g. the same font referenced by
- * many pages — are cloned once and reused through the same map.</p>
- *
- * <p>Streams are copied via their decoded bytes, because the encoded bytes
- * may be encrypted with the source document's key and would be
- * unintelligible to the target.</p>
- *
- * <p><b>Iterative fill.</b> Cloning is split into two phases — allocation
- * (creating an empty clone of every encountered node and recording the
- * source→clone mapping) and population (copying contents into each empty
- * clone). The population phase is driven by a {@link ArrayDeque work queue}
- * rather than recursion, so traversal of arbitrarily deep PDF graphs (deep
- * page trees, deeply nested structure trees, layered Form XObjects, etc.)
- * runs in O(1) Java stack depth instead of O(graph depth). PDFNET-40631_1
- * is the canonical regression — its 80-page deep page-tree clone used to
- * blow the default JVM stack.</p>
- *
- * <p>This class is single-use: create a new instance for each import operation.</p>
- */
+/// Recursively clones a PDF object graph from one document so the result is independent
+/// of the source document and can be safely inserted into a target document.
+///
+/// Cycle-safe via an identity-keyed visited map populated before recursion
+/// (put-before-recurse). Shared resources — e.g. the same font referenced by
+/// many pages — are cloned once and reused through the same map.
+///
+/// Streams are copied via their decoded bytes, because the encoded bytes
+/// may be encrypted with the source document's key and would be
+/// unintelligible to the target.
+///
+/// **Iterative fill.** Cloning is split into two phases — allocation
+/// (creating an empty clone of every encountered node and recording the
+/// source→clone mapping) and population (copying contents into each empty
+/// clone). The population phase is driven by a [`work queue`][ArrayDeque]
+/// rather than recursion, so traversal of arbitrarily deep PDF graphs (deep
+/// page trees, deeply nested structure trees, layered Form XObjects, etc.)
+/// runs in O(1) Java stack depth instead of O(graph depth). PDFNET-40631\_1
+/// is the canonical regression — its 80-page deep page-tree clone used to
+/// blow the default JVM stack.
+///
+/// This class is single-use: create a new instance for each import operation.
 public final class PdfObjectCloner {
 
     private static final Logger LOG = Logger.getLogger(PdfObjectCloner.class.getName());
 
-    /** Keys skipped when cloning a page dictionary. */
+    /// Keys skipped when cloning a page dictionary.
     public static final Set<String> PAGE_STOP_KEYS = Collections.unmodifiableSet(
             new HashSet<>(Arrays.asList("Parent", "StructParents", "StructParent")));
 
-    /** Keys skipped when cloning an annotation dictionary. */
+    /// Keys skipped when cloning an annotation dictionary.
     public static final Set<String> ANNOT_STOP_KEYS = Collections.unmodifiableSet(
             new HashSet<>(Arrays.asList("P", "Dest", "StructParent")));
 
-    /** Keys skipped in any dictionary. */
+    /// Keys skipped in any dictionary.
     public static final Set<String> GLOBAL_STOP_KEYS = Collections.unmodifiableSet(
             new HashSet<>(Collections.singletonList("ParentTree")));
 
-    /** visited: source PdfBase -> its clone. Prevents cycles and reuses shared refs. */
+    /// visited: source PdfBase -> its clone. Prevents cycles and reuses shared refs.
     private final IdentityHashMap<PdfBase, PdfBase> visited = new IdentityHashMap<>();
 
-    /** createdRefs: cloned-indirect-body -> the PdfObjectReference we built for it.
-     *  Guarantees registry idempotency: second dereference of the same source ref
-     *  returns the same target ref (not a duplicate). */
+    /// createdRefs: cloned-indirect-body -> the PdfObjectReference we built for it.
+    ///  Guarantees registry idempotency: second dereference of the same source ref
+    ///  returns the same target ref (not a duplicate).
     private final IdentityHashMap<PdfBase, PdfObjectReference> createdRefs = new IdentityHashMap<>();
 
-    /** Pending fills — populated by {@code enqueue*} helpers, drained by {@link #drain()}. */
+    /// Pending fills — populated by `enqueue*` helpers, drained by [#drain()].
     private final ArrayDeque<FillJob> pending = new ArrayDeque<>();
 
     private final ReferenceRegistry registry;
 
-    /** Allocates object keys in the target document. */
+    /// Allocates object keys in the target document.
     public interface ReferenceRegistry {
-        /** Stores {@code cloned} under a newly allocated key and returns
-         *  a reference pointing to it. Called exactly once per distinct clone. */
+        /// Stores `cloned` under a newly allocated key and returns
+        ///  a reference pointing to it. Called exactly once per distinct clone.
         PdfObjectReference registerIndirect(PdfBase cloned);
     }
 
-    /** Single (source → empty-clone) pair waiting to be populated. */
+    /// Single (source → empty-clone) pair waiting to be populated.
     private static final class FillJob {
         final PdfBase src;
         final PdfBase clone;
@@ -89,7 +81,7 @@ public final class PdfObjectCloner {
 
     // ─── Public entry points ────────────────────────────────────────────────
 
-    /** Clones a page dictionary (skipping /Parent and /StructParents). */
+    /// Clones a page dictionary (skipping /Parent and /StructParents).
     public PdfDictionary clonePageDict(PdfDictionary srcPageDict) throws IOException {
         if (srcPageDict == null) throw new IllegalArgumentException("srcPageDict must not be null");
         PdfDictionary out = enqueueDict(srcPageDict, PAGE_STOP_KEYS);
@@ -97,7 +89,7 @@ public final class PdfObjectCloner {
         return out;
     }
 
-    /** Clones an annotation dictionary (skipping /P and /Dest, clearing /A/D). */
+    /// Clones an annotation dictionary (skipping /P and /Dest, clearing /A/D).
     public PdfDictionary cloneAnnotationDict(PdfDictionary srcAnnot) throws IOException {
         if (srcAnnot == null) throw new IllegalArgumentException("srcAnnot must not be null");
         PdfDictionary out = enqueueDict(srcAnnot, ANNOT_STOP_KEYS);
@@ -110,25 +102,23 @@ public final class PdfObjectCloner {
         return out;
     }
 
-    /** Clones an arbitrary PDF object (no extra stop-keys beyond the global set). */
+    /// Clones an arbitrary PDF object (no extra stop-keys beyond the global set).
     public PdfBase cloneAny(PdfBase src) throws IOException {
         PdfBase out = cloneInternal(src);
         drain();
         return out;
     }
 
-    /**
-     * Evicts {@code src} from the visited cache so the next {@code clone*}
-     * call on it produces a fresh clone instead of returning the previously
-     * cached one. Does not touch sub-objects — fonts, images and other
-     * indirectly-referenced sub-resources reachable from {@code src} keep
-     * their cached clones, preserving cross-page deduplication.
-     * <p>
-     * Used by callers that legitimately need distinct clones of the same
-     * source object across multiple invocations (e.g. importing the same
-     * page into different /Kids slots — see
-     * {@code DocumentPageImporter.importPage} and PDFNEWNET-31533_3).
-     */
+    /// Evicts `src` from the visited cache so the next `clone*`
+    /// call on it produces a fresh clone instead of returning the previously
+    /// cached one. Does not touch sub-objects — fonts, images and other
+    /// indirectly-referenced sub-resources reachable from `src` keep
+    /// their cached clones, preserving cross-page deduplication.
+    ///
+    /// Used by callers that legitimately need distinct clones of the same
+    /// source object across multiple invocations (e.g. importing the same
+    /// page into different /Kids slots — see
+    /// `DocumentPageImporter.importPage` and PDFNEWNET-31533\_3).
     public void forgetSource(PdfBase src) {
         if (src == null) return;
         visited.remove(src);
@@ -136,12 +126,10 @@ public final class PdfObjectCloner {
 
     // ─── Iterative core ─────────────────────────────────────────────────────
 
-    /**
-     * Returns the clone of {@code src} immediately. Container types
-     * (dict/array/stream/ref) get an empty clone enqueued for later population;
-     * scalars are returned directly. Bounded stack depth — never recurses into
-     * fill operations.
-     */
+    /// Returns the clone of `src` immediately. Container types
+    /// (dict/array/stream/ref) get an empty clone enqueued for later population;
+    /// scalars are returned directly. Bounded stack depth — never recurses into
+    /// fill operations.
     private PdfBase cloneInternal(PdfBase src) throws IOException {
         if (src == null) return null;
 
@@ -254,11 +242,9 @@ public final class PdfObjectCloner {
         return out;
     }
 
-    /**
-     * Processes pending fill jobs until the queue is empty. Each filled value
-     * may discover new sub-objects, which append their own jobs to the back of
-     * the queue — classic breadth-first traversal with bounded stack depth.
-     */
+    /// Processes pending fill jobs until the queue is empty. Each filled value
+    /// may discover new sub-objects, which append their own jobs to the back of
+    /// the queue — classic breadth-first traversal with bounded stack depth.
     private void drain() throws IOException {
         while (!pending.isEmpty()) {
             FillJob job = pending.pollFirst();

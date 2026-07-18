@@ -37,10 +37,8 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for linearized PDF support:
- * detection, writing, hint tables, page classification, and round-trips.
- */
+/// Tests for linearized PDF support:
+/// detection, writing, hint tables, page classification, and round-trips.
 public class LinearizationTest {
 
     @TempDir
@@ -383,9 +381,7 @@ public class LinearizationTest {
         return bos.toByteArray();
     }
 
-    /**
-     * Creates a minimal PDF with one actual page (needed for linearization).
-     */
+    /// Creates a minimal PDF with one actual page (needed for linearization).
     private byte[] createMinimalPDFWithPage() throws IOException {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         PDFWriter writer = new PDFWriter(bos, 1.7f);
@@ -426,9 +422,7 @@ public class LinearizationTest {
         return bos.toByteArray();
     }
 
-    /**
-     * Creates a linearized PDF from a minimal 1-page document.
-     */
+    /// Creates a linearized PDF from a minimal 1-page document.
     private byte[] createLinearizedPDF() throws IOException {
         byte[] source = createMinimalPDFWithPage();
         RandomAccessReader reader = RandomAccessReader.fromBytes(source);
@@ -452,13 +446,11 @@ public class LinearizationTest {
         return file;
     }
 
-    /**
-     * Re-linearizing an already-linearized document must not accumulate a second
-     * {@code /Linearized} dictionary. The writer emits a fresh one as the first
-     * object; the stale one carried over from the source is dropped by
-     * {@link PageObjectCollector}. The result must remain a valid, linearized,
-     * same-page-count document. Mirrors the corpus repro (29360-1.pdf).
-     */
+    /// Re-linearizing an already-linearized document must not accumulate a second
+    /// `/Linearized` dictionary. The writer emits a fresh one as the first
+    /// object; the stale one carried over from the source is dropped by
+    /// [PageObjectCollector]. The result must remain a valid, linearized,
+    /// same-page-count document. Mirrors the corpus repro (29360-1.pdf).
     @Test
     public void reLinearizingKeepsExactlyOneLinearizationDict() throws IOException {
         File src = createMinimalPDFFile("relin-src.pdf");
@@ -488,9 +480,7 @@ public class LinearizationTest {
         }
     }
 
-    /**
-     * Creates a test LinearizationPlan for hint table tests.
-     */
+    /// Creates a test LinearizationPlan for hint table tests.
     private LinearizationPlan createTestPlan(int numPages) {
         List<PdfObjectKey> pageKeys = new ArrayList<>();
         for (int i = 0; i < numPages; i++) {

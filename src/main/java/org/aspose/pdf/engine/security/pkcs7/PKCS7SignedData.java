@@ -5,16 +5,17 @@ import org.aspose.pdf.engine.security.asn1.DERNode;
 import org.aspose.pdf.engine.security.asn1.OIDs;
 
 import java.io.ByteArrayInputStream;
-import java.math.BigInteger;
-import java.security.*;
+import java.security.MessageDigest;
+import java.security.PrivateKey;
+import java.security.Signature;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 import java.util.logging.Logger;
 
-/**
- * Parses and creates PKCS#7 SignedData structures (RFC 2315 §9).
- */
+/// Parses and creates PKCS#7 SignedData structures (RFC 2315 §9).
 public class PKCS7SignedData {
 
     private static final Logger LOG = Logger.getLogger(PKCS7SignedData.class.getName());
@@ -27,7 +28,7 @@ public class PKCS7SignedData {
 
     // ── Parse ──
 
-    /** Parses PKCS#7 SignedData from DER-encoded bytes. */
+    /// Parses PKCS#7 SignedData from DER-encoded bytes.
     public static PKCS7SignedData parse(byte[] pkcs7Bytes) throws Exception {
         DERNode root = DERNode.parse(pkcs7Bytes);
         if (!root.isSequence() || root.getChildCount() < 2)
@@ -111,7 +112,7 @@ public class PKCS7SignedData {
 
     // ── Create (detached) ──
 
-    /** Creates a detached PKCS#7 signature. */
+    /// Creates a detached PKCS#7 signature.
     public static PKCS7SignedData createDetached(PrivateKey privateKey, X509Certificate certificate,
                                                   X509Certificate[] chain, String digestAlgorithm,
                                                   byte[] dataToSign) throws Exception {
@@ -193,7 +194,7 @@ public class PKCS7SignedData {
 
     // ── Verify ──
 
-    /** Verifies the signature against original data. */
+    /// Verifies the signature against original data.
     public boolean verify(byte[] originalData) throws Exception {
         if (signerInfos.isEmpty()) return false;
         SignerInfo si = signerInfos.get(0);
@@ -247,20 +248,18 @@ public class PKCS7SignedData {
         return verifier.verify(encDigest);
     }
 
-    /**
-     * Returns the encapsulated content data, if any. Used by callers that need
-     * to verify the binding between detached external content and the inner
-     * digest (e.g. {@code adbe.pkcs7.sha1}, where {@code eContent} = {@code SHA-1(byteRange)}).
-     *
-     * @return the encapsulated content bytes, or {@code null}
-     */
+    /// Returns the encapsulated content data, if any. Used by callers that need
+    /// to verify the binding between detached external content and the inner
+    /// digest (e.g. `adbe.pkcs7.sha1`, where `eContent` = `SHA-1(byteRange)`).
+    ///
+    /// @return the encapsulated content bytes, or `null`
     public byte[] getEncapsulatedContent() {
         return contentData;
     }
 
     // ── Encode ──
 
-    /** Encodes this SignedData to DER bytes. */
+    /// Encodes this SignedData to DER bytes.
     public byte[] encode() throws Exception {
         // Build digest algorithms SET
         byte[][] algIds = new byte[digestAlgorithms.size()][];

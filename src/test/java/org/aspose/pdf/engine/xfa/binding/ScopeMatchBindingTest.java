@@ -14,14 +14,12 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-/**
- * A4-FIX (FIX.2): exercises the automatic-binding scope-matching <em>mechanism</em>
- * beyond the two spec repros, so a patch that merely hard-codes Examples 4.51-4.53
- * cannot pass. Each case is a node-for-node assertion of the precedence rules from
- * XFA 3.0 "Basic Data Binding to Produce the XFA Form DOM" (pp.180-183):
- * direct &gt; ancestor &gt; sibling, fewer generations ascended wins, a data value
- * binds to at most one field (consumed / index inferral).
- */
+/// A4-FIX (FIX.2): exercises the automatic-binding scope-matching _mechanism_
+/// beyond the two spec repros, so a patch that merely hard-codes Examples 4.51-4.53
+/// cannot pass. Each case is a node-for-node assertion of the precedence rules from
+/// XFA 3.0 "Basic Data Binding to Produce the XFA Form DOM" (pp.180-183):
+/// direct > ancestor > sibling, fewer generations ascended wins, a data value
+/// binds to at most one field (consumed / index inferral).
 public class ScopeMatchBindingTest {
 
     private static final String TPL = XfaNode.TEMPLATE_NS;
@@ -29,7 +27,7 @@ public class ScopeMatchBindingTest {
 
     private final BindingEngine engine = new BindingEngine();
 
-    /** Ancestor match through TWO unbound subform generations (deeper than the repro). */
+    /// Ancestor match through TWO unbound subform generations (deeper than the repro).
     @Test
     void ancestorMatchThroughTwoGenerations() throws Exception {
         Template tpl = tpl("<template xmlns='" + TPL + "'><subform name='doc'>"
@@ -43,11 +41,9 @@ public class ScopeMatchBindingTest {
                 "field bound through two transparent (unbound) subforms to the ancestor data");
     }
 
-    /**
-     * Ancestor-vs-sibling precedence: {@code val} is reachable BOTH as a child of the
-     * bound ancestor (ancestor match) and as a sibling of the bound container's data
-     * (sibling match). The ancestor match must win (spec: ancestor preferable).
-     */
+    /// Ancestor-vs-sibling precedence: `val` is reachable BOTH as a child of the
+    /// bound ancestor (ancestor match) and as a sibling of the bound container's data
+    /// (sibling match). The ancestor match must win (spec: ancestor preferable).
     @Test
     void ancestorMatchPreferredOverSiblingMatch() throws Exception {
         Template tpl = tpl("<template xmlns='" + TPL + "'><subform name='doc'>"
@@ -63,11 +59,9 @@ public class ScopeMatchBindingTest {
                 "ancestor match (inside bound box) beats the sibling match at doc level");
     }
 
-    /**
-     * Fewer-generations tie-breaker among sibling matches: {@code y} is reachable by
-     * ascending one generation (parent {@code a}) and two ({@code doc}); the nearer
-     * (one generation) must win.
-     */
+    /// Fewer-generations tie-breaker among sibling matches: `y` is reachable by
+    /// ascending one generation (parent `a`) and two (`doc`); the nearer
+    /// (one generation) must win.
     @Test
     void nearerSiblingMatchWinsOverFartherOne() throws Exception {
         Template tpl = tpl("<template xmlns='" + TPL + "'><subform name='doc'>"
@@ -82,10 +76,8 @@ public class ScopeMatchBindingTest {
                 "nearer sibling (one generation up) wins over the farther one");
     }
 
-    /**
-     * Index inferral / single-binding: two same-named sibling subforms over two data
-     * records bind to DISTINCT records in order (no cross-binding, no double-consume).
-     */
+    /// Index inferral / single-binding: two same-named sibling subforms over two data
+    /// records bind to DISTINCT records in order (no cross-binding, no double-consume).
     @Test
     void repeatedSiblingSubformsBindDistinctRecords() throws Exception {
         Template tpl = tpl("<template xmlns='" + TPL + "'><subform name='doc'>"
@@ -105,11 +97,9 @@ public class ScopeMatchBindingTest {
                 "each repeated subform consumes a distinct data record, in order");
     }
 
-    /**
-     * Direct match co-exists with a scope match for the same name (spec's "common"
-     * case): the direct field consumes the first value; the scope field, finding it
-     * consumed, binds the OTHER same-named value rather than re-binding the first.
-     */
+    /// Direct match co-exists with a scope match for the same name (spec's "common"
+    /// case): the direct field consumes the first value; the scope field, finding it
+    /// consumed, binds the OTHER same-named value rather than re-binding the first.
     @Test
     void directMatchCoexistsWithScopeMatch() throws Exception {
         Template tpl = tpl("<template xmlns='" + TPL + "'><subform name='doc'>"
@@ -124,14 +114,12 @@ public class ScopeMatchBindingTest {
                 "scope field binds the other item (direct match consumed the first)");
     }
 
-    /**
-     * A4-DIAG repro: deep relative-{@code dataRef} chain through {@code match="none"}
-     * layout subforms whose names do NOT mirror the data groups — the FormB101 shape.
-     * Each container/field binds via {@code $record.X} (record-relative) then {@code $.Y}
-     * (current-context-relative), threading the bound data node down 5 levels. Before
-     * the A4-DIAG fix this bound nothing ({@code $record} resolved to the datasets root
-     * and {@code match="none"} nulled the inherited context).
-     */
+    /// A4-DIAG repro: deep relative-`dataRef` chain through `match="none"`
+    /// layout subforms whose names do NOT mirror the data groups — the FormB101 shape.
+    /// Each container/field binds via `$record.X` (record-relative) then `$.Y`
+    /// (current-context-relative), threading the bound data node down 5 levels. Before
+    /// the A4-DIAG fix this bound nothing (`$record` resolved to the datasets root
+    /// and `match="none"` nulled the inherited context).
     @Test
     void deepRelativeDataRefChainThroughLayoutSubforms() throws Exception {
         Template tpl = tpl("<template xmlns='" + TPL + "'><subform name='form1'>"

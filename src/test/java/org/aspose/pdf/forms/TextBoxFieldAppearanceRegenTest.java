@@ -11,11 +11,9 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * BUG-058 — {@code TextBoxField.setValue} must regenerate the {@code /AP /N}
- * appearance stream so that downstream readers can extract per-field font size
- * (used by auto-shrink-to-fit form widgets and by visual renderers).
- */
+/// BUG-058 — `TextBoxField.setValue` must regenerate the `/AP /N`
+/// appearance stream so that downstream readers can extract per-field font size
+/// (used by auto-shrink-to-fit form widgets and by visual renderers).
 class TextBoxFieldAppearanceRegenTest {
 
     @Test

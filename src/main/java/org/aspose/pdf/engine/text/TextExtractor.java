@@ -1,47 +1,25 @@
 package org.aspose.pdf.engine.text;
 
-import org.aspose.pdf.Color;
-import org.aspose.pdf.Matrix;
-import org.aspose.pdf.Operator;
-import org.aspose.pdf.OperatorCollection;
-import org.aspose.pdf.Page;
-import org.aspose.pdf.Rectangle;
-import org.aspose.pdf.Resources;
-import org.aspose.pdf.engine.pdfobjects.PdfArray;
-import org.aspose.pdf.engine.pdfobjects.PdfBase;
-import org.aspose.pdf.engine.pdfobjects.PdfDictionary;
-import org.aspose.pdf.engine.pdfobjects.PdfFloat;
-import org.aspose.pdf.engine.pdfobjects.PdfInteger;
-import org.aspose.pdf.engine.pdfobjects.PdfName;
-import org.aspose.pdf.engine.pdfobjects.PdfObjectReference;
-import org.aspose.pdf.engine.pdfobjects.PdfStream;
-import org.aspose.pdf.engine.pdfobjects.PdfString;
+import org.aspose.pdf.*;
 import org.aspose.pdf.engine.font.FontRepository;
 import org.aspose.pdf.engine.font.PdfFont;
 import org.aspose.pdf.engine.parser.PDFParser;
+import org.aspose.pdf.engine.pdfobjects.*;
 import org.aspose.pdf.text.Position;
 import org.aspose.pdf.text.TextFragment;
 import org.aspose.pdf.text.TextSegment;
 import org.aspose.pdf.text.TextState;
 
 import java.io.IOException;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Deque;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Logger;
 
-/**
- * Extracts text from PDF page content streams by processing text operators
- * (ISO 32000-1:2008, §9.4).
- * <p>
- * Maintains text state (font, size, position) across operator sequences and
- * produces {@link TextFragment} objects with position and styling information.
- * </p>
- */
+/// Extracts text from PDF page content streams by processing text operators
+/// (ISO 32000-1:2008, §9.4).
+///
+/// Maintains text state (font, size, position) across operator sequences and
+/// produces [TextFragment] objects with position and styling information.
+///
 public class TextExtractor {
 
     private static final Logger LOG = Logger.getLogger(TextExtractor.class.getName());
@@ -89,8 +67,8 @@ public class TextExtractor {
     // the last paint operator so a detected underline can be linked to its drawing ops.
     private final List<Operator> pendingPathOps = new ArrayList<>();
 
-    /** A thin rule painted in the content stream, in device space [llx,lly,urx,ury],
-     *  together with the operators that drew it and the collection that owns them. */
+    /// A thin rule painted in the content stream, in device space [llx,lly,urx,ury],
+    ///  together with the operators that drew it and the collection that owns them.
     private static final class Decoration {
         final double[] rect;
         final List<Operator> ops;
@@ -142,23 +120,19 @@ public class TextExtractor {
     // when a Form XObject references itself (directly or through a chain).
     private final Set<PdfStream> activeFormXObjects = Collections.newSetFromMap(new IdentityHashMap<>());
 
-    /**
-     * Creates a TextExtractor.
-     *
-     * @param parser the PDF parser for resolving font references (may be null)
-     */
+    /// Creates a TextExtractor.
+    ///
+    /// @param parser the PDF parser for resolving font references (may be null)
     public TextExtractor(PDFParser parser) {
         this.parser = parser;
         this.fontRepo = new FontRepository();
     }
 
-    /**
-     * Extracts all text fragments from a page.
-     *
-     * @param page the PDF page
-     * @return the list of extracted text fragments
-     * @throws IOException if reading content stream or fonts fails
-     */
+    /// Extracts all text fragments from a page.
+    ///
+    /// @param page the PDF page
+    /// @return the list of extracted text fragments
+    /// @throws IOException if reading content stream or fonts fails
     public List<TextFragment> extract(Page page) throws IOException {
         fragments.clear();
         resetState();
@@ -178,13 +152,11 @@ public class TextExtractor {
         return new ArrayList<>(fragments);
     }
 
-    /**
-     * Extracts all text from a page as a plain string.
-     *
-     * @param page the PDF page
-     * @return the extracted text
-     * @throws IOException if extraction fails
-     */
+    /// Extracts all text from a page as a plain string.
+    ///
+    /// @param page the PDF page
+    /// @return the extracted text
+    /// @throws IOException if extraction fails
     public String extractText(Page page) throws IOException {
         List<TextFragment> frags = extract(page);
         StringBuilder sb = new StringBuilder();
@@ -194,40 +166,36 @@ public class TextExtractor {
         return sb.toString();
     }
 
-    /**
-     * Detects underline and strikeout decorations drawn as thin filled rules and
-     * sets the corresponding {@link TextState} flags on the fragments they cover.
-     * A rule qualifies if it is thin (height ≤ 3pt), wider than tall, and overlaps
-     * a fragment's horizontal span by at least 40%. Its vertical position relative
-     * to the fragment box decides the kind: lower third → underline, middle → strikeout.
-     * Decoration rects are in raw device space; fragment rects were normalised to the
-     * page-box origin, so the same offset is applied here before comparing.
-     */
-    /**
-     * Upper bound on retained decoration rules per page. A thin filled rule under
-     * text is how underline/strikeout is drawn; but vector-heavy pages (scientific
-     * figures, hatching) can emit millions of filled rectangles. Since the detection
-     * loop is O(fragments × rules), we cap the rule list: beyond this many rules,
-     * decoration detection is best-effort. Underline/strikeout flags are a cosmetic
-     * enhancement — far better to drop a few than to spin for minutes on a page with
-     * tens of thousands of fragments. (Corpus pathology: 57236.pdf produced 5,027,972
-     * filled rects × 18,363 fragments ≈ 9×10^10 iterations.)
-     */
+    /// Detects underline and strikeout decorations drawn as thin filled rules and
+    /// sets the corresponding [TextState] flags on the fragments they cover.
+    /// A rule qualifies if it is thin (height ≤ 3pt), wider than tall, and overlaps
+    /// a fragment's horizontal span by at least 40%. Its vertical position relative
+    /// to the fragment box decides the kind: lower third → underline, middle → strikeout.
+    /// Decoration rects are in raw device space; fragment rects were normalised to the
+    /// page-box origin, so the same offset is applied here before comparing.
+    /// Upper bound on retained decoration rules per page. A thin filled rule under
+    /// text is how underline/strikeout is drawn; but vector-heavy pages (scientific
+    /// figures, hatching) can emit millions of filled rectangles. Since the detection
+    /// loop is O(fragments × rules), we cap the rule list: beyond this many rules,
+    /// decoration detection is best-effort. Underline/strikeout flags are a cosmetic
+    /// enhancement — far better to drop a few than to spin for minutes on a page with
+    /// tens of thousands of fragments. (Corpus pathology: 57236.pdf produced 5,027,972
+    /// filled rects × 18,363 fragments ≈ 9×10^10 iterations.)
     private static final int MAX_DECORATION_RECTS = 20_000;
 
-    /** True when a device-space rect is a thin horizontal rule (wider than tall,
-     *  height ≤ 3pt) — the only shape that can be an underline/strikeout. The test
-     *  is translation-invariant, so it is equivalent whether applied here or after
-     *  the page-origin offset in {@link #detectTextDecorations()}. */
+    /// True when a device-space rect is a thin horizontal rule (wider than tall,
+    ///  height ≤ 3pt) — the only shape that can be an underline/strikeout. The test
+    ///  is translation-invariant, so it is equivalent whether applied here or after
+    ///  the page-origin offset in [#detectTextDecorations()].
     private static boolean isThinRule(double[] r) {
         double w = r[2] - r[0], h = r[3] - r[1];
         return h > 0 && h <= 3.0 && w > h;
     }
 
-    /** Adds only the thin-horizontal-rule rectangles from {@code rects} to
-     *  {@link #decorations}, up to {@link #MAX_DECORATION_RECTS}. Filtering at
-     *  insertion keeps the detection loop's cost bounded by the number of genuine
-     *  rules rather than every filled rectangle on the page. */
+    /// Adds only the thin-horizontal-rule rectangles from `rects` to
+    ///  [#decorations], up to [#MAX\_DECORATION\_RECTS]. Filtering at
+    ///  insertion keeps the detection loop's cost bounded by the number of genuine
+    ///  rules rather than every filled rectangle on the page.
     private void addThinRuleRects(List<double[]> rects, List<Operator> ops, OperatorCollection coll) {
         for (double[] r : rects) {
             if (decorations.size() >= MAX_DECORATION_RECTS) return;
@@ -235,8 +203,8 @@ public class TextExtractor {
         }
     }
 
-    /** Converts pending near-horizontal stroked line segments into thin decoration
-     *  rects (a stroked rule under/through text is an underline/strikeout). */
+    /// Converts pending near-horizontal stroked line segments into thin decoration
+    ///  rects (a stroked rule under/through text is an underline/strikeout).
     private void addStrokedLineRules(List<Operator> ops, OperatorCollection coll) {
         if (pendingPathLines.isEmpty()) return;
         double scaleY = ctm != null ? Math.hypot(ctm[1], ctm[3]) : 1.0;
@@ -257,9 +225,9 @@ public class TextExtractor {
         hasPathPoint = false;
     }
 
-    /** Snapshot of the current subpath's constructing operators plus the paint
-     *  operator {@code paintOp} — the full set to remove if this subpath turns out
-     *  to be an underline that is later edited off. */
+    /// Snapshot of the current subpath's constructing operators plus the paint
+    ///  operator `paintOp` — the full set to remove if this subpath turns out
+    ///  to be an underline that is later edited off.
     private List<Operator> subpathOps(Operator paintOp) {
         List<Operator> sub = new ArrayList<>(pendingPathOps.size() + 1);
         sub.addAll(pendingPathOps);
@@ -331,8 +299,8 @@ public class TextExtractor {
         }
     }
 
-    /** Returns the index of the first element of {@code cys[0..len)} that is
-     *  ≥ {@code target} (i.e. a standard lower-bound binary search). */
+    /// Returns the index of the first element of `cys[0..len)` that is
+    ///  ≥ `target` (i.e. a standard lower-bound binary search).
     private static int lowerBound(double[] cys, int len, double target) {
         int lo = 0, hi = len;
         while (lo < hi) {
@@ -646,10 +614,8 @@ public class TextExtractor {
         }
     }
 
-    /**
-     * Processes a Form XObject invoked by the Do operator.
-     * Recursively extracts text from the form's content stream.
-     */
+    /// Processes a Form XObject invoked by the Do operator.
+    /// Recursively extracts text from the form's content stream.
     private void processFormXObject(String xobjName, PdfDictionary pageFontsDict) {
         if (currentResources == null) return;
 
@@ -1007,7 +973,7 @@ public class TextExtractor {
         fragOffsetsValid = false;
     }
 
-    /** Quantizes a device-space baseline angle (degrees) to {0,90,180,270}. */
+    /// Quantizes a device-space baseline angle (degrees) to {0,90,180,270}.
     private static int quantizeRotation(double deg) {
         double d = deg % 360.0;
         if (d < 0) d += 360.0;
@@ -1136,16 +1102,14 @@ public class TextExtractor {
         fontRepo.clear();
     }
 
-    /**
-     * Derives a {@link org.aspose.pdf.text.FontStyles} bitmask from a font
-     * name. PDF standard-14 and most embedded fonts encode weight/slant in
-     * the name ("Helvetica-Bold", "Arial,BoldItalic", "Times-Oblique"), which
-     * is the only style signal preserved through a save→reload cycle for
-     * non-embedded fonts.
-     *
-     * @param fontName the resolved BaseFont name (may be null)
-     * @return Bold|Italic bitmask, or 0 (Regular) when no marker is present
-     */
+    /// Derives a [org.aspose.pdf.text.FontStyles] bitmask from a font
+    /// name. PDF standard-14 and most embedded fonts encode weight/slant in
+    /// the name ("Helvetica-Bold", "Arial,BoldItalic", "Times-Oblique"), which
+    /// is the only style signal preserved through a save→reload cycle for
+    /// non-embedded fonts.
+    ///
+    /// @param fontName the resolved BaseFont name (may be null)
+    /// @return Bold|Italic bitmask, or 0 (Regular) when no marker is present
     private static int detectFontStyle(String fontName) {
         if (fontName == null) {
             return 0;
@@ -1161,10 +1125,8 @@ public class TextExtractor {
         return style;
     }
 
-    /**
-     * Multiplies two 3x3 matrices represented as [a, b, c, d, e, f].
-     * Result = m1 * m2 (post-multiply).
-     */
+    /// Multiplies two 3x3 matrices represented as [a, b, c, d, e, f].
+    /// Result = m1 \* m2 (post-multiply).
     private static double[] multiplyMatrix(double[] m1, double[] m2) {
         return new double[]{
             m1[0] * m2[0] + m1[1] * m2[2],
@@ -1182,13 +1144,11 @@ public class TextExtractor {
         return 0;
     }
 
-    /**
-     * Strips the 6-uppercase-letter subset prefix from a PDF BaseFont value
-     * (ISO 32000-1:2008 §9.6.4). For example {@code "KQHRYC+hakuyoxingshu7000"}
-     * → {@code "hakuyoxingshu7000"}. The PDF spec mandates exactly six
-     * uppercase ASCII letters followed by a single {@code '+'} when a font
-     * is subset-embedded; anything else is returned unchanged.
-     */
+    /// Strips the 6-uppercase-letter subset prefix from a PDF BaseFont value
+    /// (ISO 32000-1:2008 §9.6.4). For example `"KQHRYC+hakuyoxingshu7000"`
+    /// → `"hakuyoxingshu7000"`. The PDF spec mandates exactly six
+    /// uppercase ASCII letters followed by a single `'+'` when a font
+    /// is subset-embedded; anything else is returned unchanged.
     static String stripSubsetPrefix(String baseFont) {
         if (baseFont == null || baseFont.length() < 8) return baseFont;
         if (baseFont.charAt(6) != '+') return baseFont;

@@ -16,18 +16,16 @@ import java.nio.file.Paths;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Stage 10 / Bug I — {@link PageInfo} must accept the canonical top-level
- * {@link org.aspose.pdf.MarginInfo} (constructor order
- * {@code (left, bottom, right, top)}) in addition to the deprecated nested
- * {@link PageInfo.MarginInfo} (constructor order
- * {@code (top, bottom, left, right)}).
- *
- * <p>Per ISO 32000-1:2008 §14.8.2.4, page margins are a layout concept above
- * the PDF object model — they don't round-trip on their own, but they must
- * apply consistently regardless of which {@code MarginInfo} flavour the caller
- * uses.</p>
- */
+/// Stage 10 / Bug I — [PageInfo] must accept the canonical top-level
+/// [org.aspose.pdf.MarginInfo] (constructor order
+/// `(left, bottom, right, top)`) in addition to the deprecated nested
+/// [PageInfo.MarginInfo] (constructor order
+/// `(top, bottom, left, right)`).
+///
+/// Per ISO 32000-1:2008 §14.8.2.4, page margins are a layout concept above
+/// the PDF object model — they don't round-trip on their own, but they must
+/// apply consistently regardless of which `MarginInfo` flavour the caller
+/// uses.
 class PageInfoMarginInfoTest {
 
     @Test

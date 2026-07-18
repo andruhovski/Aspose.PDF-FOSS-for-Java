@@ -1,24 +1,17 @@
 package org.aspose.pdf.engine.script.js.builtins;
 
 import org.aspose.pdf.engine.script.js.interp.Interpreter;
-import org.aspose.pdf.engine.script.js.runtime.JSArray;
-import org.aspose.pdf.engine.script.js.runtime.JSFunction;
-import org.aspose.pdf.engine.script.js.runtime.JSNull;
-import org.aspose.pdf.engine.script.js.runtime.JSObject;
-import org.aspose.pdf.engine.script.js.runtime.NativeFunction;
-import org.aspose.pdf.engine.script.js.runtime.Undefined;
+import org.aspose.pdf.engine.script.js.runtime.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Installs Array and Array.prototype (ECMA-262 3rd ed., sec 15.4). Only the
- * ES3 method set is provided: {@code toString}, {@code join}, {@code concat},
- * {@code pop}, {@code push}, {@code reverse}, {@code shift}, {@code slice},
- * {@code sort}, {@code splice} and {@code unshift}. ES5 iterators
- * ({@code indexOf}, {@code forEach}, {@code map}, ...) are intentionally
- * excluded.
- */
+/// Installs Array and Array.prototype (ECMA-262 3rd ed., sec 15.4). Only the
+/// ES3 method set is provided: `toString`, `join`, `concat`,
+/// `pop`, `push`, `reverse`, `shift`, `slice`,
+/// `sort`, `splice` and `unshift`. ES5 iterators
+/// (`indexOf`, `forEach`, `map`, ...) are intentionally
+/// excluded.
 final class ArrayBuiltins {
 
     private static final Object UNDEF = Undefined.INSTANCE;

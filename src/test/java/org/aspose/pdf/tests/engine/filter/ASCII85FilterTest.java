@@ -8,9 +8,7 @@ import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for {@link ASCII85Filter}.
- */
+/// Tests for [ASCII85Filter].
 public class ASCII85FilterTest {
 
     private final ASCII85Filter filter = new ASCII85Filter();
